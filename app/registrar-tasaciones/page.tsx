@@ -20,7 +20,7 @@ type Tasacion = {
   observacion?: string | null;
 };
 
-const situaciones = [
+const situacionesOpciones = [
   { value: "pendiente_aprobacion", label: "Pendiente de aprobación" },
   { value: "en_negociacion", label: "En negociación" },
   { value: "aprobado", label: "Aprobado" },
@@ -156,7 +156,7 @@ export default function Page() {
                         <label className="text-xs font-semibold text-slate-600">Fecha de tasación *<input type="date" max={hoy} value={fechas[item.inmuebleId] ?? ""} onChange={(e) => setFechas(a => ({...a,[item.inmuebleId]:e.target.value}))} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
                         <label className="text-xs font-semibold text-slate-600">Valor referencial<input type="number" min="0" step="0.01" value={valores[item.inmuebleId] ?? ""} onChange={(e) => setValores(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder="320000" className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
                         <label className="text-xs font-semibold text-slate-600">Precio objetivo<input type="number" min="0" step="0.01" value={precios[item.inmuebleId] ?? ""} onChange={(e) => setPrecios(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder="315000" className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
-                        <label className="text-xs font-semibold text-slate-600">Situación *<select value={situaciones[item.inmuebleId] ?? ""} onChange={(e) => setSituaciones(a => ({...a,[item.inmuebleId]:e.target.value}))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700"><option value="">Seleccionar</option>{situaciones.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}</select></label>
+                        <label className="text-xs font-semibold text-slate-600">Situación *<select value={situaciones[item.inmuebleId] ?? ""} onChange={(e) => setSituaciones(a => ({...a,[item.inmuebleId]:e.target.value}))} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700"><option value="">Seleccionar</option>{situacionesOpciones.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}</select></label>
                       </div>
                       <label className="text-xs font-semibold text-slate-600">Observación<textarea rows={3} value={observaciones[item.inmuebleId] ?? ""} onChange={(e) => setObservaciones(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder="Precio conversado, ajustes, comentarios del propietario..." className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
                       <div className="flex flex-col gap-3 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-slate-500">Al guardar, el inmueble avanza automáticamente según la situación registrada.</p><button disabled={guardando === item.inmuebleId} onClick={() => registrar(item)} className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{guardando === item.inmuebleId ? "Guardando..." : "Registrar tasación"}</button></div>

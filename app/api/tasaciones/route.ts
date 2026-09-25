@@ -35,7 +35,7 @@ export async function POST(request:Request){
       const [property]=await tx.select().from(inmInmuebles).where(eq(inmInmuebles.id,inmuebleId)).limit(1); if(!property)throw new Error("El inmueble no existe."); if(property.estado!=="activo"||property.etapa!=="tasacion_pendiente")throw new Error("El inmueble ya no está pendiente de tasación.");
       const [existing]=await tx.select({id:inmTasaciones.id}).from(inmTasaciones).where(eq(inmTasaciones.inmuebleId,inmuebleId)).limit(1); if(existing)throw new Error("El inmueble ya tiene una tasación vigente registrada.");
       const user=await getSystemUser(tx);
-      await tx.insert(inmTasaciones).values({inmuebleId,fechaTasacion,valorReferencia,precioObjetivo,situacion,observacion:observacion||null,usuarioId:user.id});
+      await tx.insert(inmTasaciones).values({inmuebleId,fechaTasacion:fecha,valorReferencia,precioObjetivo,situacion,observacion:observacion||null,usuarioId:user.id});
       const etapa=etapaDe(situacion); await tx.update(inmInmuebles).set({etapa}).where(eq(inmInmuebles.id,inmuebleId)); await tx.insert(inmTimeline).values({inmuebleId,evento:"tasacion_realizada",observacion:observacion||`Tasación registrada. Situación: ${situacion}.`,usuarioId:user.id}); return {codigo:property.codigo,etapa};
     });
     return NextResponse.json({ok:true,...result},{status:201});
