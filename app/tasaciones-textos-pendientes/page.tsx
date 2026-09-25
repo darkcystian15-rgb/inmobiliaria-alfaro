@@ -59,7 +59,7 @@ export default function Page() {
     const driveLink = enlaces[item.inmuebleId]?.trim();
     setError(""); setMensaje("");
     if (!texto) return setError(`Escribe el texto de publicación de “${item.nombre}”.`);
-    if (!driveLink || !/^https?:\\/\\//i.test(driveLink)) return setError(`Agrega un enlace HTTP/HTTPS válido de Google Drive para “${item.nombre}”.`);
+    if (!driveLink || !/^https?:\/\//i.test(driveLink)) return setError(`Agrega un enlace HTTP/HTTPS válido de Google Drive para “${item.nombre}”.`);
 
     try {
       setGuardando(item.inmuebleId);

@@ -77,7 +77,7 @@ export const inmAsignacionesPosicion = mysqlTable("inm_asignaciones_posicion", {
   fechaInicio: timestamp("fecha_inicio", { mode: "date" }).defaultNow().notNull(),
   fechaFin: timestamp("fecha_fin", { mode: "date" }),
   activa: boolean("activa").notNull().default(true),
-}));
+});
 
 export const inmVisitas = mysqlTable("inm_visitas", {
   id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
