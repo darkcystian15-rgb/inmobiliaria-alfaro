@@ -77,8 +77,6 @@ export const inmAsignacionesPosicion = mysqlTable("inm_asignaciones_posicion", {
   fechaInicio: timestamp("fecha_inicio", { mode: "date" }).defaultNow().notNull(),
   fechaFin: timestamp("fecha_fin", { mode: "date" }),
   activa: boolean("activa").notNull().default(true),
-}, (table) => ({
-  posicionActivaIdx: uniqueIndex("uq_inm_posicion_activa").on(table.posicionId, table.activa),
 }));
 
 export const inmVisitas = mysqlTable("inm_visitas", {
@@ -134,9 +132,7 @@ export const inmLiberaciones = mysqlTable("inm_liberaciones", {
   usuarioConfirmacionId: bigint("usuario_confirmacion_id", { mode: "number", unsigned: true }).references(() => inmUsuarios.id),
   anulada: boolean("anulada").notNull().default(false),
   fechaAnulacion: timestamp("fecha_anulacion", { mode: "date" }),
-}, (table) => ({
-  pendienteIdx: uniqueIndex("uq_inm_liberacion_pendiente").on(table.inmuebleId, table.confirmado, table.anulada),
-}));
+});
 
 export const inmArchivos = mysqlTable("inm_archivos", {
   id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
