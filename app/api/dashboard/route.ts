@@ -5,8 +5,9 @@ import {
   inmAsignacionesPosicion,
   inmInmuebles,
   inmPosiciones,
-  inmPropietarios,
   inmTimeline,
+  inmPublicaciones,
+  inmTasaciones,
 } from "@/db/schema";
 
 const etapaMap: Record<string, string> = {
@@ -33,61 +34,56 @@ const eventoMap: Record<string, string> = {
 
 export async function GET() {
   try {
-    const [activosResult, posicionesResult, etapasResult, recientes] = await Promise.all([
-      db
-        .select({ total: sql<number>`count(*)` })
+    const [activosResult, posicionesResult, etapasResult, textosResult, recientes] = await Promise.all([
+      db.select({ total: sql<number>`count(*)` })
         .from(inmInmuebles)
         .where(eq(inmInmuebles.estado, "activo")),
 
-      db
-        .select({ total: sql<number>`count(*)` })
+      db.select({ total: sql<number>`count(*)` })
         .from(inmPosiciones)
         .leftJoin(
           inmAsignacionesPosicion,
-          and(
-            eq(inmAsignacionesPosicion.posicionId, inmPosiciones.id),
-            eq(inmAsignacionesPosicion.activa, true)
-          )
+          and(eq(inmAsignacionesPosicion.posicionId, inmPosiciones.id), eq(inmAsignacionesPosicion.activa, true))
         )
         .where(sql`inm_asignaciones_posicion.id is null`),
 
-      db
-        .select({
-          etapa: inmInmuebles.etapa,
-          total: sql<number>`count(*)`,
-        })
+      db.select({ etapa: inmInmuebles.etapa, total: sql<number>`count(*)` })
         .from(inmInmuebles)
         .where(eq(inmInmuebles.estado, "activo"))
         .groupBy(inmInmuebles.etapa),
 
-      db
-        .select({
-          numero: inmPosiciones.numero,
-          nombre: inmInmuebles.referencia,
-          etapa: inmInmuebles.etapa,
-          evento: inmTimeline.evento,
-          fecha: inmTimeline.fechaEvento,
-        })
+      db.select({ total: sql<number>`count(*)` })
+        .from(inmInmuebles)
+        .innerJoin(inmTasaciones, eq(inmTasaciones.inmuebleId, inmInmuebles.id))
+        .leftJoin(inmPublicaciones, eq(inmPublicaciones.inmuebleId, inmInmuebles.id))
+        .where(and(
+          eq(inmInmuebles.estado, "activo"),
+          eq(inmTasaciones.situacion, "aprobado"),
+          sql`inm_publicaciones.id is null`
+        )),
+
+      db.select({
+        numero: inmPosiciones.numero,
+        nombre: inmInmuebles.referencia,
+        etapa: inmInmuebles.etapa,
+        evento: inmTimeline.evento,
+        fecha: inmTimeline.fechaEvento,
+      })
         .from(inmTimeline)
         .innerJoin(inmInmuebles, eq(inmInmuebles.id, inmTimeline.inmuebleId))
         .leftJoin(
           inmAsignacionesPosicion,
-          and(
-            eq(inmAsignacionesPosicion.inmuebleId, inmInmuebles.id),
-            eq(inmAsignacionesPosicion.activa, true)
-          )
+          and(eq(inmAsignacionesPosicion.inmuebleId, inmInmuebles.id), eq(inmAsignacionesPosicion.activa, true))
         )
         .leftJoin(inmPosiciones, eq(inmPosiciones.id, inmAsignacionesPosicion.posicionId))
         .orderBy(desc(inmTimeline.fechaEvento))
         .limit(5),
     ]);
 
-    const etapas = Object.fromEntries(
-      etapasResult.map((item) => [item.etapa, Number(item.total)])
-    );
-
+    const etapas = Object.fromEntries(etapasResult.map((item) => [item.etapa, Number(item.total)]));
     const totalActivos = Number(activosResult[0]?.total ?? 0);
     const posicionesDisponibles = Number(posicionesResult[0]?.total ?? 0);
+    const textosPendientes = Number(textosResult[0]?.total ?? 0);
 
     return NextResponse.json({
       resumen: {
@@ -97,7 +93,7 @@ export async function GET() {
         tasacionesPendientes: etapas.tasacion_pendiente ?? 0,
         aprobaciones: etapas.pendiente_aprobacion ?? 0,
         negociaciones: etapas.en_negociacion ?? 0,
-        textosPendientes: etapas.listo_para_publicar ? 0 : 0,
+        textosPendientes,
         listosParaPublicar: etapas.listo_para_publicar ?? 0,
       },
       pendientes: [
@@ -105,6 +101,7 @@ export async function GET() {
         { etapa: "Tasación pendiente", total: etapas.tasacion_pendiente ?? 0, tone: "orange" },
         { etapa: "Pendiente de aprobación", total: etapas.pendiente_aprobacion ?? 0, tone: "violet" },
         { etapa: "En negociación", total: etapas.en_negociacion ?? 0, tone: "violet" },
+        { etapa: "Texto pendiente", total: textosPendientes, tone: "rose" },
         { etapa: "Listo para publicar", total: etapas.listo_para_publicar ?? 0, tone: "emerald" },
       ],
       recientes: recientes.map((item) => ({
@@ -116,9 +113,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error al consultar dashboard:", error);
-    return NextResponse.json(
-      { error: "No se pudo consultar el dashboard." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "No se pudo consultar el dashboard." }, { status: 500 });
   }
 }
