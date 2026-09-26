@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   inmAsignacionesPosicion,
@@ -23,6 +23,17 @@ function numOrNull(value: unknown) {
   if (value === "" || value === null || value === undefined) return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function decimalOrNull(value: unknown) {
+  if (value === "" || value === null || value === undefined) return sql`NULL`;
+  const n = Number(value);
+  return Number.isFinite(n) ? String(n) : sql`NULL`;
+}
+
+function nullableSql(value: unknown) {
+  const v = clean(value);
+  return v || sql`NULL`;
 }
 
 async function findProperty(key: string) {
@@ -115,8 +126,8 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       distrito: nullable(body.distrito),
       provincia: nullable(body.provincia),
       departamento: nullable(body.departamento),
-      areaTerreno: numOrNull(body.areaTerreno),
-      areaConstruida: numOrNull(body.areaConstruida),
+      areaTerreno: decimalOrNull(body.areaTerreno),
+      areaConstruida: decimalOrNull(body.areaConstruida),
       habitaciones: numOrNull(body.habitaciones),
       banos: numOrNull(body.banos),
       caracteristicas: nullable(body.caracteristicas),
@@ -130,9 +141,9 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         dni: clean(body.propietario.dni) || row.propietarioDni,
         nombres: clean(body.propietario.nombres) || row.propietarioNombres,
         apellidos: clean(body.propietario.apellidos) || row.propietarioApellidos,
-        telefono: nullable(body.propietario.telefono),
-        email: nullable(body.propietario.email),
-        referenciaContacto: nullable(body.propietario.referenciaContacto),
+        telefono: nullableSql(body.propietario.telefono),
+        email: nullableSql(body.propietario.email),
+        referenciaContacto: nullableSql(body.propietario.referenciaContacto),
       }).where(eq(inmPropietarios.id, row.propietarioId));
     }
 
