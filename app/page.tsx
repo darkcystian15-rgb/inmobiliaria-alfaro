@@ -92,7 +92,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur">
         <div className="flex min-h-[76px] items-center justify-between px-6 lg:px-8">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Panel de control</p>
@@ -108,10 +108,13 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="p-6 lg:p-8">
+      <div className="p-5 sm:p-6 lg:p-8">
         <div className="mb-7">
-          <p className="text-sm font-medium text-slate-500">Buenos días, Alberto.</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">Estado de tu cartera inmobiliaria</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium text-slate-500">Buenos días, Alberto.</p>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Panel principal</span>
+          </div>
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-[28px]">Estado de tu cartera inmobiliaria</h2>
           <p className="mt-2 max-w-2xl text-sm text-slate-500">
             Una vista rápida de las posiciones, pendientes y avances del proceso comercial.
           </p>
@@ -129,7 +132,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
           {resumen.map((x) => (
             <div key={x.titulo} className={`rounded-2xl border p-5 shadow-sm ${toneStyles[x.tone]}`}>
               <div className="flex items-start justify-between gap-3">
@@ -142,7 +145,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-3.5 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
           {metricas.map((x) => (
             <div key={x.titulo} className={`rounded-2xl border bg-white p-4 shadow-sm ${toneStyles[x.tone]}`}>
               <p className="text-xs font-semibold text-slate-500">{x.titulo}</p>
@@ -202,7 +205,7 @@ export default function Home() {
           </section>
         </div>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
             <div>
               <h3 className="font-bold text-slate-950">Acciones rápidas</h3>

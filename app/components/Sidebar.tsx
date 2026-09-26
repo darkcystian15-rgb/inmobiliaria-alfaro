@@ -8,10 +8,10 @@ const fase1 = [
   { href: "/cartera", label: "Cartera de inmuebles", icon: "home", tone: "blue" },
   { href: "/registrar-inmueble", label: "Registrar inmueble", icon: "plus", tone: "emerald" },
   { href: "/liberar-inmuebles", label: "Liberar inmueble", icon: "release", tone: "rose" },
-  { href: "/registrar-visitas", label: "Registrar visitas realizadas", icon: "visit", tone: "violet" },
-  { href: "/registrar-tasaciones", label: "Registrar tasaciones realizadas", icon: "valuation", tone: "orange" },
+  { href: "/registrar-visitas", label: "Registrar visitas", icon: "visit", tone: "violet" },
+  { href: "/registrar-tasaciones", label: "Registrar tasaciones", icon: "valuation", tone: "orange" },
   { href: "/visitas-pendientes", label: "Visitas pendientes", icon: "clock", tone: "amber" },
-  { href: "/tasaciones-textos-pendientes", label: "Tasaciones y textos pendientes", icon: "clipboard", tone: "pink" },
+  { href: "/tasaciones-textos-pendientes", label: "Tasaciones y textos", icon: "clipboard", tone: "pink" },
   { href: "/reportes", label: "Reportes", icon: "report", tone: "indigo" },
 ];
 
@@ -44,7 +44,6 @@ function Icon({ name }: { name: string }) {
     database: <><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v7c0 1.7 3.1 3 7 3s7-1.3 7-3V5"/><path d="M5 12v7c0 1.7 3.1 3 7 3s7-1.3 7-3v-7"/></>,
     menu: <><path d="M4 7h16M4 12h16M4 17h16"/></>,
     close: <><path d="M6 6l12 12M18 6 6 18"/></>,
-    settings: <><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19 13 .9 1.5-1.5 2.6-1.7-.2a7.7 7.7 0 0 1-1.3.8l-.6 1.6h-3l-.6-1.6a7.7 7.7 0 0 1-1.3-.8l-1.7.2-1.5-2.6.9-1.5a7 7 0 0 1 0-1.5l-.9-1.5 1.5-2.6 1.7.2a7.7 7.7 0 0 1 1.3-.8l.6-1.6h3l.6 1.6a7.7 7.7 0 0 1 1.3.8l1.7-.2 1.5 2.6-.9 1.5a7 7 0 0 1 0 1.5Z"/></>,
   };
   return <svg {...common}>{paths[name]}</svg>;
 }
@@ -71,10 +70,27 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <MenuLink item={{ href: "/", label: "Dashboard", icon: "dashboard", tone: "indigo" }} onNavigate={onNavigate}/>
-      <div className="mb-2 mt-6 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Fase 1 · Flujo operativo</div>
-      <div className="space-y-1">{fase1.map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate}/>)}</div>
-      <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Fase 2 · Datos del inmueble</div>
-      <div className="space-y-1">{fase2.map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate}/>)}</div>
+
+      <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Operación</div>
+      <div className="space-y-1">{fase1.slice(0, 3).map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate}/>)}</div>
+
+      <div className="mb-2 mt-6 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Seguimiento</div>
+      <div className="space-y-1">{fase1.slice(3).map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate}/>)}</div>
+
+      <div className="mb-2 mt-7 flex items-center justify-between px-3">
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Próxima fase</span>
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400">PRÓXIMAMENTE</span>
+      </div>
+      <div className="space-y-1 opacity-60">
+        {fase2.map(item => (
+          <div key={item.href} className="flex cursor-default items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-500">
+            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${toneClasses[item.tone].bg} ${toneClasses[item.tone].text}`}>
+              <Icon name={item.icon}/>
+            </span>
+            <span className="leading-5">{item.label}</span>
+          </div>
+        ))}
+      </div>
     </>
   );
 }
@@ -94,28 +110,18 @@ export default function Sidebar() {
       </button>
 
       {open && (
-        <button
-          type="button"
-          aria-label="Cerrar menú"
-          onClick={() => setOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[1px] lg:hidden"
-        />
+        <button type="button" aria-label="Cerrar menú" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[1px] lg:hidden" />
       )}
 
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-[min(86vw,18rem)] flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 lg:top-0 lg:w-72 lg:translate-x-0 lg:shadow-none ${open ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="hidden h-[76px] shrink-0 items-center justify-between border-b border-slate-100 px-5 sm:px-6 lg:flex">
-          <div>
-            <div className="text-base font-bold tracking-tight text-slate-950">Inmobiliaria Alberto Alfaro</div>
-            <div className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Gestión inmobiliaria</div>
+        <div className="flex h-[76px] shrink-0 items-center border-b border-slate-100 px-5 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white shadow-sm">AA</div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-bold tracking-tight text-slate-950">Inmobiliaria Alberto Alfaro</div>
+              <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Secretaría virtual</div>
+            </div>
           </div>
-          <button
-            type="button"
-            aria-label="Cerrar menú"
-            onClick={() => setOpen(false)}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
-          >
-            <Icon name="close"/>
-          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-5">
@@ -123,9 +129,12 @@ export default function Sidebar() {
         </nav>
 
         <div className="shrink-0 border-t border-slate-100 p-4">
-          <div className="rounded-xl bg-slate-50 p-3">
-            <div className="text-xs font-semibold text-slate-700">Secretaria Virtual</div>
-            <div className="mt-1 text-[11px] leading-4 text-slate-500">Control de cartera y seguimiento de operaciones.</div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs font-semibold text-slate-700">Panel de gestión</div>
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            </div>
+            <div className="mt-1 text-[11px] leading-4 text-slate-500">Cartera, seguimiento y pendientes en un solo lugar.</div>
           </div>
         </div>
       </aside>
