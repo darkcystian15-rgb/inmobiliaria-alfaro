@@ -138,9 +138,9 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
     if (body.propietario) {
       await db.update(inmPropietarios).set({
-        dni: clean(body.propietario.dni) || row.propietarioDni,
-        nombres: clean(body.propietario.nombres) || row.propietarioNombres,
-        apellidos: clean(body.propietario.apellidos) || row.propietarioApellidos,
+        dni: clean(body.propietario.dni) || row.propietarioDni || "",
+        nombres: clean(body.propietario.nombres) || row.propietarioNombres || "",
+        apellidos: clean(body.propietario.apellidos) || row.propietarioApellidos || "",
         telefono: nullableSql(body.propietario.telefono),
         email: nullableSql(body.propietario.email),
         referenciaContacto: nullableSql(body.propietario.referenciaContacto),
