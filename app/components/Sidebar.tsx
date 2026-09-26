@@ -86,11 +86,6 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="space-y-1">
         {fase2.map(item => (
           <MenuLink key={item.href} item={item} onNavigate={onNavigate}/>
-            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${toneClasses[item.tone].bg} ${toneClasses[item.tone].text}`}>
-              <Icon name={item.icon}/>
-            </span>
-            <span className="leading-5">{item.label}</span>
-          </div>
         ))}
       </div>
     </>
