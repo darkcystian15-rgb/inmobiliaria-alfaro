@@ -91,7 +91,7 @@ export default function Home() {
     : [];
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-[#f5f7fa]">
       <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur">
         <div className="flex min-h-[76px] items-center justify-between px-6 lg:px-8">
           <div>
@@ -109,16 +109,19 @@ export default function Home() {
       </header>
 
       <div className="p-5 sm:p-6 lg:p-8">
-        <div className="mb-7">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-medium text-slate-500">Buenos días, Alberto.</p>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">Panel principal</span>
+        <section className="relative mb-7 overflow-hidden rounded-3xl bg-slate-900 px-6 py-7 text-white shadow-lg sm:px-8 sm:py-8">
+          <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/5" />
+          <div className="absolute -bottom-24 right-40 h-64 w-64 rounded-full bg-white/[0.03]" />
+          <div className="relative">
+            <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-300">Hoy · Resumen de cartera</span>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">Buenos días, Alberto.</h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">Aquí tienes lo importante: qué está pendiente, qué avanzó y dónde puedes continuar trabajando.</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <a href="/cartera" className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-slate-900 transition hover:bg-slate-100">Ver cartera →</a>
+              <a href="/reportes" className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-white/10">Ver reportes</a>
+            </div>
           </div>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-[28px]">Estado de tu cartera inmobiliaria</h2>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">
-            Una vista rápida de las posiciones, pendientes y avances del proceso comercial.
-          </p>
-        </div>
+        </section>
 
         {cargando && (
           <div className="mb-6 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-500 shadow-sm">
@@ -132,20 +135,20 @@ export default function Home() {
           </div>
         )}
 
-        <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {resumen.map((x) => (
             <div key={x.titulo} className={`rounded-2xl border p-5 shadow-sm ${toneStyles[x.tone]}`}>
               <div className="flex items-start justify-between gap-3">
                 <p className={`text-xs font-semibold ${x.tone === "dark" ? "text-slate-300" : "text-slate-600"}`}>{x.titulo}</p>
                 <span className={`h-2 w-2 rounded-full ${x.tone === "dark" ? "bg-white" : x.tone === "blue" ? "bg-blue-500" : x.tone === "amber" ? "bg-amber-500" : "bg-orange-500"}`} />
               </div>
-              <p className={`mt-3 text-3xl font-bold tracking-tight ${x.tone === "dark" ? "text-white" : "text-slate-950"}`}>{x.valor}</p>
+              <p className={`mt-4 text-4xl font-bold tracking-tight ${x.tone === "dark" ? "text-white" : "text-slate-950"}`}>{x.valor}</p>
               <p className={`mt-2 text-xs ${x.tone === "dark" ? "text-slate-400" : "text-slate-500"}`}>{x.detalle}</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-3.5 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {metricas.map((x) => (
             <div key={x.titulo} className={`rounded-2xl border bg-white p-4 shadow-sm ${toneStyles[x.tone]}`}>
               <p className="text-xs font-semibold text-slate-500">{x.titulo}</p>
@@ -205,13 +208,13 @@ export default function Home() {
           </section>
         </div>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+        <section className="mt-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
               <h3 className="font-bold text-slate-950">Acciones rápidas</h3>
               <p className="mt-1 text-xs text-slate-500">Accesos directos al trabajo operativo.</p>
             </div>
-            <a href="/cartera" className="text-xs font-semibold text-slate-500 hover:text-slate-900">Ver cartera completa →</a>
+            <a href="/cartera" className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-200 hover:text-slate-950">Abrir cartera →</a>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[

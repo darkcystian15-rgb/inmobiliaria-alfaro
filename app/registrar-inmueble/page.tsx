@@ -122,7 +122,7 @@ export default function RegistrarInmueblePage() {
   const puedeRegistrar = Boolean(posicion && tipo && nombre.trim() && dniValido && nombres.trim() && apellidos.trim() && !guardando);
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6 lg:p-8">
+    <main className="min-h-screen bg-[#f5f7fa] p-6 lg:p-8">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -130,11 +130,11 @@ export default function RegistrarInmueblePage() {
             <h1 className="mt-1 text-2xl font-bold text-slate-950">Registrar inmueble</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-500">Registra la posición, los datos mínimos del inmueble y el propietario. La información detallada puede completarse después.</p>
           </div>
-          <Link href="/cartera" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">← Volver a cartera</Link>
+          <Link href="/cartera" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300">← Volver a cartera</Link>
         </div>
 
         <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_320px]">
-          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
             <div className="border-b border-slate-100 px-6 py-5">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-xl font-bold text-emerald-600">+</span>
@@ -205,13 +205,13 @@ export default function RegistrarInmueblePage() {
               <div className="rounded-xl bg-amber-50 p-4"><p className="text-sm font-semibold text-amber-800">Después del registro</p><p className="mt-1 text-xs leading-5 text-amber-700">El inmueble quedará automáticamente en <strong>Visita pendiente</strong>, la posición quedará ocupada y se generará el primer evento de historial.</p></div>
 
               <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
-                <Link href="/cartera" className="rounded-xl border border-slate-200 px-5 py-2.5 text-center text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancelar</Link>
+                <Link href="/cartera" className="rounded-xl border border-slate-200 px-5 py-2.5 text-center text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300">Cancelar</Link>
                 <button onClick={registrar} disabled={!puedeRegistrar} className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200">{guardando ? "Registrando..." : "Registrar inmueble"}</button>
               </div>
             </div>
           </section>
 
-          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
             <p className="text-xs font-bold uppercase tracking-[.14em] text-slate-400">Flujo de ingreso</p>
             <div className="mt-4 space-y-4">
               <div className="flex gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-600">1</span><div><p className="text-sm font-semibold text-slate-800">Registrar inmueble</p><p className="mt-0.5 text-xs text-slate-500">Posición + tipo + referencia + propietario.</p></div></div>
@@ -220,7 +220,7 @@ export default function RegistrarInmueblePage() {
               <div className="ml-4 h-5 border-l border-dashed border-slate-200"/>
               <div className="flex gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-50 text-sm font-bold text-violet-600">3</span><div><p className="text-sm font-semibold text-slate-800">Tasación</p><p className="mt-0.5 text-xs text-slate-500">Se habilita al completar la visita.</p></div></div>
             </div>
-            <div className="mt-5 rounded-xl bg-slate-50 p-4"><p className="text-xs font-semibold text-slate-700">Capacidad</p><p className="mt-1 text-lg font-bold text-slate-950">90 <span className="text-sm font-medium text-slate-400">posiciones administradas</span></p><p className="mt-2 text-[11px] text-slate-400">Disponibles: <strong>{cargandoPosiciones ? "..." : disponibles.length}</strong> · La disponibilidad se consulta directamente en la base de datos.</p></div>
+            <div className="mt-5 rounded-xl bg-[#f5f7fa] p-4"><p className="text-xs font-semibold text-slate-700">Capacidad</p><p className="mt-1 text-lg font-bold text-slate-950">90 <span className="text-sm font-medium text-slate-400">posiciones administradas</span></p><p className="mt-2 text-[11px] text-slate-400">Disponibles: <strong>{cargandoPosiciones ? "..." : disponibles.length}</strong> · La disponibilidad se consulta directamente en la base de datos.</p></div>
           </aside>
         </div>
       </div>

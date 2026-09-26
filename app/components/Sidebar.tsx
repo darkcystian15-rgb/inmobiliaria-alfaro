@@ -56,12 +56,12 @@ function MenuLink({ item, onNavigate }: { item: { href: string; label: string; i
     <Link
       href={item.href}
       onClick={onNavigate}
-      className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition ${active ? "bg-slate-900 text-white shadow-sm" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}
+      className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition ${active ? "bg-slate-900 text-white shadow-[0_8px_20px_rgba(15,23,42,0.12)]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}
     >
       <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${active ? "bg-white/10 text-white" : `${tone.bg} ${tone.text}`}`}>
         <Icon name={item.icon}/>
       </span>
-      <span className="leading-5">{item.label}</span>
+      <span className="min-w-0 flex-1 leading-5">{item.label}</span>{active && <span className="h-1.5 w-1.5 rounded-full bg-white/80" />}
     </Link>
   );
 }
@@ -71,7 +71,7 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
     <>
       <MenuLink item={{ href: "/", label: "Dashboard", icon: "dashboard", tone: "indigo" }} onNavigate={onNavigate}/>
 
-      <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Operación</div>
+      <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Operación</div>
       <div className="space-y-1">{fase1.slice(0, 3).map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate}/>)}</div>
 
       <div className="mb-2 mt-6 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Seguimiento</div>

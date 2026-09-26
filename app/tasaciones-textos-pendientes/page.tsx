@@ -97,7 +97,7 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 p-5 lg:p-8">
+    <main className="min-h-screen bg-[#f5f7fa] p-5 lg:p-8">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -113,7 +113,7 @@ export default function Page() {
 
         {cargando ? <div className="mt-7 rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">Cargando...</div> : (
           <>
-            <section className="mt-7 rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section className="mt-7 rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
               <div className="border-b border-slate-200 px-5 py-4">
                 <h2 className="font-bold text-slate-900">Tasaciones pendientes</h2>
                 <p className="mt-1 text-xs text-slate-500">Inmuebles con visita realizada que todavía no tienen tasación registrada.</p>
@@ -128,7 +128,7 @@ export default function Page() {
               </div>
             </section>
 
-            <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
               <div className="border-b border-slate-200 px-5 py-4">
                 <h2 className="font-bold text-slate-900">Textos de publicación pendientes</h2>
                 <p className="mt-1 text-xs text-slate-500">Solo aparecen inmuebles con tasación aprobada y sin publicación registrada.</p>
@@ -147,7 +147,7 @@ export default function Page() {
               </div>
             </section>
 
-            <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
               <div className="border-b border-slate-200 px-5 py-4">
                 <h2 className="font-bold text-slate-900">Listos para publicar</h2>
                 <p className="mt-1 text-xs text-slate-500">Aquí aparecen los inmuebles cuyo texto ya fue registrado. Cuando la publicación se haya realizado, confírmala aquí.</p>

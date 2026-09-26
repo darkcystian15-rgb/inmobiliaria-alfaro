@@ -50,3 +50,14 @@ a {
     padding-left: 4.5rem;
   }
 }
+
+
+/* AA visual system */
+.aa-focus-ring:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid rgb(99 102 241 / .45);outline-offset:2px}
+html{scroll-behavior:smooth}
+::selection{background:rgb(99 102 241 / .16);color:rgb(15 23 42)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgb(148 163 184 / .45);border-radius:999px}
+.aa-card{border:1px solid rgb(226 232 240);background:white;border-radius:1rem;box-shadow:0 8px 30px rgb(15 23 42 / .045)}
+.aa-eyebrow{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:rgb(100 116 139)}

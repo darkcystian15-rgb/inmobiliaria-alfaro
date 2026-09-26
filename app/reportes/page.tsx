@@ -112,7 +112,7 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6 lg:p-8">
+    <main className="min-h-screen bg-[#f5f7fa] p-6 lg:p-8">
       <div className="mx-auto max-w-7xl print:max-w-none">
         <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between print:mb-4">
           <div className="flex gap-3">
@@ -124,17 +124,17 @@ export default function Page() {
             </div>
           </div>
           <div className="flex gap-2 print:hidden">
-            <button onClick={() => window.print()} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Imprimir / PDF</button>
+            <button onClick={() => window.print()} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300">Imprimir / PDF</button>
             <button onClick={() => exportarCSV(rows, seleccionado)} disabled={!rows.length} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40">Exportar Excel/CSV</button>
           </div>
         </header>
 
-        <section className="mt-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm print:hidden">
+        <section className="mt-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.045)] print:hidden">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div><h2 className="text-base font-bold text-slate-900">Filtros</h2><p className="mt-1 text-sm text-slate-500">Los filtros se aplican directamente sobre los datos de la base de datos.</p></div>
             <div className="flex gap-2">
               <button onClick={cargar} className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">Aplicar filtros</button>
-              <button onClick={() => { limpiar(); setTimeout(cargar, 0); }} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Limpiar</button>
+              <button onClick={() => { limpiar(); setTimeout(cargar, 0); }} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300">Limpiar</button>
             </div>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -153,13 +153,13 @@ export default function Page() {
           {[
             ["Resultado", resumen.total], ["Activos", resumen.activos], ["Históricos", resumen.historicos], ["Disponibles", resumen.disponibles],
             ["Visitas", resumen.visitasPendientes], ["Tasaciones", resumen.tasacionesPendientes], ["Listos", resumen.listosParaPublicar], ["Publicados", resumen.publicados],
-          ].map(([t,v]) => <div key={String(t)} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{t}</p><p className="mt-2 text-2xl font-bold text-slate-950">{v}</p></div>)}
+          ].map(([t,v]) => <div key={String(t)} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.045)]"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{t}</p><p className="mt-2 text-2xl font-bold text-slate-950">{v}</p></div>)}
         </section>}
 
         <section className="mt-7 print:hidden">
           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div><h2 className="text-base font-bold text-slate-900">Reportes disponibles</h2><p className="mt-1 text-sm text-slate-500">Selecciona el informe que quieres consultar.</p></div>
-            <div className="flex flex-wrap gap-2">{grupos.map(g => <button key={g} onClick={() => setCategoria(g)} className={`rounded-full px-3.5 py-2 text-xs font-bold ${categoria === g ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>{g}</button>)}</div>
+            <div className="flex flex-wrap gap-2">{grupos.map(g => <button key={g} onClick={() => setCategoria(g)} className={`rounded-full px-3.5 py-2 text-xs font-bold ${categoria === g ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300"}`}>{g}</button>)}</div>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {visibles.map(r => <button key={r.nombre} onClick={() => setSeleccionado(r.nombre)} className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${seleccionado === r.nombre ? "border-indigo-300 ring-2 ring-indigo-50" : "border-slate-200"}`}>
@@ -168,13 +168,13 @@ export default function Page() {
           </div>
         </section>
 
-        <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm print:mt-0 print:border-0 print:shadow-none">
+        <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)] print:mt-0 print:border-0 print:shadow-none">
           <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div><p className="text-xs font-bold uppercase tracking-wide text-indigo-500">{reporteInfo.categoria}</p><h2 className="mt-1 text-lg font-bold text-slate-950">{seleccionado}</h2><p className="mt-1 text-xs text-slate-500">{reporteInfo.descripcion}</p></div>
             {cargando && <span className="text-xs font-semibold text-slate-400">Consultando…</span>}
           </div>
           <div className="overflow-x-auto">
-            {rows.length ? <table className="w-full min-w-[900px] text-left"><thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-400"><tr>{columnas.map(k => <th key={k} className="px-4 py-3">{etiqueta[k] || k}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{rows.map((row,i) => <tr key={`${row.codigo || row.posicion || i}-${i}`} className="hover:bg-slate-50">{columnas.map(k => <td key={k} className="px-4 py-3 text-xs text-slate-600">{k.toLowerCase().includes("fecha") || k === "fechaVisita" || k === "fechaInicioFlujo" || k === "fechaFinFlujo" || k === "fechaInicioPosicion" || k === "fechaFinPosicion" ? fecha(row[k]) : row[k] === null || row[k] === undefined || row[k] === "" ? "—" : String(row[k])}</td>)}</tr>)}</tbody></table> :
+            {rows.length ? <table className="w-full min-w-[900px] text-left"><thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-400"><tr>{columnas.map(k => <th key={k} className="px-4 py-3">{etiqueta[k] || k}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{rows.map((row,i) => <tr key={`${row.codigo || row.posicion || i}-${i}`} className="hover:bg-slate-50 hover:border-slate-300">{columnas.map(k => <td key={k} className="px-4 py-3 text-xs text-slate-600">{k.toLowerCase().includes("fecha") || k === "fechaVisita" || k === "fechaInicioFlujo" || k === "fechaFinFlujo" || k === "fechaInicioPosicion" || k === "fechaFinPosicion" ? fecha(row[k]) : row[k] === null || row[k] === undefined || row[k] === "" ? "—" : String(row[k])}</td>)}</tr>)}</tbody></table> :
             <div className="p-12 text-center"><p className="font-semibold text-slate-700">{cargando ? "Generando reporte…" : "No hay registros para esta consulta"}</p><p className="mt-1 text-sm text-slate-400">Prueba con otros filtros o selecciona otro reporte.</p></div>}
           </div>
         </section>
