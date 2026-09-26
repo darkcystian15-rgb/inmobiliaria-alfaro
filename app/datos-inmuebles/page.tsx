@@ -1,206 +1,34 @@
 "use client";
-
-import { useState, type ReactNode } from "react";
+import {useEffect,useState} from "react";
 import Link from "next/link";
 
-type Seccion = { nombre: string; descripcion: string; color: string; icono: ReactNode };
-const secciones: Seccion[] = [
-  { nombre: "Propietario", descripcion: "DNI, nombres, teléfonos y datos de contacto.", color: "blue", icono: "◉" },
-  { nombre: "Inmueble", descripcion: "Ubicación, metraje, características y referencias.", color: "emerald", icono: "⌂" },
-  { nombre: "Tasación", descripcion: "Valoración, precio de referencia y situación.", color: "orange", icono: "▥" },
-  { nombre: "Documentación", descripcion: "Documentos y referencias administrativas mediante Google Drive.", color: "violet", icono: "▤" },
-];
-const colores: Record<string, { box: string; text: string; badge: string }> = {
-  blue: { box: "bg-blue-100", text: "text-blue-600", badge: "bg-blue-50 text-blue-700" },
-  emerald: { box: "bg-emerald-100", text: "text-emerald-600", badge: "bg-emerald-50 text-emerald-700" },
-  orange: { box: "bg-orange-100", text: "text-orange-600", badge: "bg-orange-50 text-orange-700" },
-  violet: { box: "bg-violet-100", text: "text-violet-600", badge: "bg-violet-50 text-violet-700" },
-};
+type Item={id:string;posicion?:number;nombre:string;tipo:string;ubicacion:string;etapa?:string};
+type Archivo={id:number;tipoDocumento:string;nombre:string;enlace:string;observacion?:string|null};
+const tipos=[["DNI_PROPIETARIO","DNI del propietario"],["DOCUMENTO_PROPIEDAD","Documento de propiedad"],["COPIA_LITERAL","Copia literal"],["CONTRATO","Contrato"],["TASACION","Tasación"],["TEXTO_PUBLICACION","Texto de publicación"],["FOTO_INMUEBLE","Fotos"],["VIDEO_INMUEBLE","Video / recorrido"],["PLANO","Plano"],["RECIBO_SERVICIO","Recibo de servicio"],["OTRO","Otro"]];
 
-export default function Page() {
-  const [seleccionada, setSeleccionada] = useState("Propietario");
-  const [mensaje, setMensaje] = useState("");
-  const [inmueble, setInmueble] = useState("INM-0027");
-  const [driveLinks, setDriveLinks] = useState([""]);
-  const [documentoNombre, setDocumentoNombre] = useState("");
-
-  const seleccionar = (nombre: string) => {
-    setSeleccionada(nombre);
-    setMensaje("");
-  };
-
-  const agregarEnlace = () => setDriveLinks((actuales) => [...actuales, ""]);
-  const actualizarEnlace = (index: number, value: string) =>
-    setDriveLinks((actuales) => actuales.map((link, i) => (i === index ? value : link)));
-  const quitarEnlace = (index: number) =>
-    setDriveLinks((actuales) => actuales.filter((_, i) => i !== index));
-
-  const guardarDocumento = () => {
-    if (!documentoNombre.trim() || !driveLinks.some((link) => link.trim())) {
-      setMensaje("Para registrar un documento se requiere nombre y enlace de Google Drive.");
-      return;
-    }
-    setMensaje(`Documento “${documentoNombre}” preparado para ${inmueble}. En esta fase el enlace se guarda como referencia; el archivo permanece en Google Drive.`);
-    setDocumentoNombre("");
-  };
-
-  return (
-    <main className="min-h-screen bg-slate-50 p-6 lg:p-8">
-      <div className="mx-auto max-w-6xl">
-        <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-600 text-xl">▤</div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-500">Fase 2 · Completar información</p>
-              <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Datos de inmuebles</h1>
-              <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-                Completa la ficha del inmueble progresivamente. Esta información complementa la Fase 1 y no bloquea el flujo comercial.
-              </p>
-            </div>
-          </div>
-          <Link href="/cartera" className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm">Ver cartera</Link>
-        </header>
-
-        <section className="mt-7 rounded-2xl border border-cyan-100 bg-white p-5 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-            <label className="text-xs font-semibold text-slate-500">
-              Inmueble a completar
-              <select value={inmueble} onChange={(e) => setInmueble(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none focus:border-cyan-400">
-                <option>INM-0027</option><option>INM-0018</option><option>INM-0042</option>
-              </select>
-            </label>
-            <div className="rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
-              <span className="font-bold text-slate-800">Fase 1:</span> registro, propietario, posición y seguimiento comercial.
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-7 grid gap-4 sm:grid-cols-3">
-          {[
-            ["Ficha progresiva", "Puedes completar datos cuando estén disponibles.", "cyan"],
-            ["No bloqueante", "La Fase 1 continúa independientemente.", "emerald"],
-            ["Google Drive", "Los archivos permanecen en Drive; aquí guardamos sus enlaces.", "violet"],
-          ].map(([titulo, texto, color]) => (
-            <div key={titulo} className={`rounded-2xl border p-5 ${color === "cyan" ? "border-cyan-100 bg-cyan-50" : color === "emerald" ? "border-emerald-100 bg-emerald-50" : "border-violet-100 bg-violet-50"}`}>
-              <p className={`text-xs font-semibold uppercase tracking-wide ${color === "cyan" ? "text-cyan-600" : color === "emerald" ? "text-emerald-600" : "text-violet-600"}`}>{titulo}</p>
-              <p className="mt-2 text-sm font-bold text-slate-900">{texto}</p>
-            </div>
-          ))}
-        </section>
-
-        <section className="mt-7">
-          <div className="mb-4">
-            <h2 className="text-base font-bold text-slate-900">Información complementaria</h2>
-            <p className="mt-1 text-sm text-slate-500">Selecciona una sección. Los formularios completos se conectarán a la base de datos en la siguiente etapa.</p>
-          </div>
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {secciones.map((seccion) => {
-              const c = colores[seccion.color];
-              return (
-                <button key={seccion.nombre} onClick={() => seleccionar(seccion.nombre)} className={`rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${seleccionada === seccion.nombre ? "border-cyan-300 ring-2 ring-cyan-50" : "border-slate-200"}`}>
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold ${c.box} ${c.text}`}>{seccion.icono}</div>
-                  <h3 className="mt-4 font-bold text-slate-900">{seccion.nombre}</h3>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">{seccion.descripcion}</p>
-                  <span className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${c.badge}`}>Completable en cualquier momento</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="mt-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Sección seleccionada</p>
-          <h2 className="mt-1 text-lg font-bold text-slate-900">{seleccionada}</h2>
-
-          {seleccionada === "Propietario" && (
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <Field label="DNI" placeholder="Ej. 12345678" />
-              <Field label="Teléfono / WhatsApp" placeholder="Ej. 999 999 999" />
-              <Field label="Nombres" placeholder="Nombres del propietario" />
-              <Field label="Apellidos" placeholder="Apellidos del propietario" />
-              <Field label="Correo electrónico" placeholder="Opcional" />
-              <Field label="Referencia de contacto" placeholder="Opcional" />
-            </div>
-          )}
-
-          {seleccionada === "Inmueble" && (
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Field label="Dirección" placeholder="Dirección del inmueble" />
-              <Field label="Distrito / provincia" placeholder="Ubicación" />
-              <Field label="Área de terreno (m²)" placeholder="Ej. 120" />
-              <Field label="Área construida (m²)" placeholder="Ej. 95" />
-              <Field label="Habitaciones" placeholder="Ej. 3" />
-              <Field label="Baños" placeholder="Ej. 2" />
-              <Field label="Referencia" placeholder="Referencia de ubicación" />
-              <Field label="Características" placeholder="Descripción breve" />
-              <Field label="Observaciones" placeholder="Información adicional" />
-            </div>
-          )}
-
-          {seleccionada === "Tasación" && (
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Field label="Fecha de tasación" type="date" />
-              <Field label="Valor de referencia" placeholder="Ej. S/ 350,000" />
-              <Field label="Precio acordado / objetivo" placeholder="Ej. S/ 380,000" />
-              <div>
-                <label className="text-xs font-semibold text-slate-500">Situación</label>
-                <select className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700"><option>Pendiente de aprobación</option><option>En negociación</option><option>Aprobado</option><option>Rechazado</option></select>
-              </div>
-              <Field label="Observación" placeholder="Comentario de la tasación" />
-            </div>
-          )}
-
-          {seleccionada === "Documentación" && (
-            <div className="mt-5 space-y-5">
-              <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4">
-                <p className="text-sm font-bold text-slate-900">Documentos mediante Google Drive</p>
-                <p className="mt-1 text-xs leading-5 text-slate-600">
-                  El sistema no almacena el archivo por ahora. Registra aquí el nombre y el enlace al documento que ya se encuentra en Google Drive.
-                </p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Nombre del documento" value={documentoNombre} onChange={setDocumentoNombre} placeholder="Ej. Copia de DNI / Minuta / Partida" />
-                <Field label="Tipo de documento" placeholder="Ej. Legal, propiedad, identidad..." />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-500">Enlaces de Google Drive</label>
-                <div className="mt-2 space-y-2">
-                  {driveLinks.map((link, index) => (
-                    <div key={index} className="flex gap-2">
-                      <input value={link} onChange={(e) => actualizarEnlace(index, e.target.value)} placeholder="https://drive.google.com/..." className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-violet-400" />
-                      {driveLinks.length > 1 && <button type="button" onClick={() => quitarEnlace(index)} className="rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-500 hover:bg-slate-50">Quitar</button>}
-                    </div>
-                  ))}
-                </div>
-                <button type="button" onClick={agregarEnlace} className="mt-3 rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-2 text-xs font-bold text-violet-700 hover:bg-violet-100">+ Agregar otro enlace</button>
-              </div>
-              <button type="button" onClick={guardarDocumento} className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">Registrar documento</button>
-            </div>
-          )}
-
-          {seleccionada !== "Documentación" && (
-            <button onClick={() => setMensaje(`Sección “${seleccionada}” preparada. La persistencia real se conectará a la base de datos posteriormente.`)} className="mt-5 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">Guardar cambios</button>
-          )}
-        </section>
-
-        {mensaje && <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">{mensaje}</div>}
-
-        <section className="mt-7 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-5">
-          <p className="text-sm font-bold text-slate-900">Criterio de almacenamiento</p>
-          <p className="mt-1 text-sm leading-6 text-slate-600">
-            Por ahora, los documentos y evidencias se mantienen en Google Drive y el sistema registra sus enlaces. Más adelante podremos migrar el almacenamiento sin cambiar el concepto de la ficha documental.
-          </p>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-function Field({ label, placeholder, type = "text", value, onChange }: { label: string; placeholder?: string; type?: string; value?: string; onChange?: (value: string) => void }) {
-  return (
-    <label className="text-xs font-semibold text-slate-500">
-      {label}
-      <input type={type} value={value} onChange={onChange ? (e) => onChange(e.target.value) : undefined} placeholder={placeholder} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:border-cyan-400" />
-    </label>
-  );
+export default function Page(){
+ const [lista,setLista]=useState<Item[]>([]),[codigo,setCodigo]=useState(""),[d,setD]=useState<any>(null),[files,setFiles]=useState<Archivo[]>([]),[tab,setTab]=useState("Resumen"),[msg,setMsg]=useState(""),[err,setErr]=useState(""),[loading,setLoading]=useState(false),[form,setForm]=useState<any>({}),[doc,setDoc]=useState({tipoDocumento:"DNI_PROPIETARIO",nombre:"",enlace:"",observacion:""});
+ const load=async(k:string)=>{if(!k)return;setLoading(true);try{const [a,b]=await Promise.all([fetch("/api/inmuebles/"+encodeURIComponent(k)),fetch("/api/inmuebles/"+encodeURIComponent(k)+"/archivos")]);const x=await a.json(),y=await b.json();if(!a.ok)throw new Error(x.error);if(!b.ok)throw new Error(y.error);setD(x);setFiles(y.archivos||[]);setForm(x.inmueble||{});}catch(e){setErr(e instanceof Error?e.message:"No se pudo cargar la ficha.");}finally{setLoading(false)}};
+ useEffect(()=>{fetch("/api/cartera").then(r=>r.json()).then(x=>setLista(x.inmuebles||[]));const q=new URLSearchParams(location.search).get("codigo");if(q)setCodigo(q)},[]);
+ useEffect(()=>{if(codigo)load(codigo)},[codigo]);
+ const save=async()=>{setErr("");setMsg("");const r=await fetch("/api/inmuebles/"+encodeURIComponent(codigo),{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({...form,propietario:{dni:d.inmueble.propietarioDni,nombres:d.inmueble.propietarioNombres,apellidos:d.inmueble.propietarioApellidos,telefono:d.inmueble.propietarioTelefono,email:d.inmueble.propietarioEmail,referenciaContacto:d.inmueble.propietarioReferencia}})});const x=await r.json();if(!r.ok)setErr(x.error);else{setMsg("Cambios guardados.");load(codigo)}};
+ const addFile=async()=>{const r=await fetch("/api/inmuebles/"+encodeURIComponent(codigo)+"/archivos",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(doc)});const x=await r.json();if(!r.ok)setErr(x.error);else{setMsg("Documento registrado. El archivo permanece en Google Drive.");setDoc({tipoDocumento:"DNI_PROPIETARIO",nombre:"",enlace:"",observacion:""});load(codigo)}};
+ const removeFile=async(id:number)=>{if(!confirm("¿Quitar este enlace? El archivo de Drive no se eliminará."))return;await fetch("/api/inmuebles/"+encodeURIComponent(codigo)+"/archivos?archivoId="+id,{method:"DELETE"});load(codigo)};
+ const set=(k:string,v:string)=>setForm({...form,[k]:v});
+ const field=(label:string,k:string)=><label className="text-xs font-semibold text-slate-500">{label}<input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700 outline-none focus:border-emerald-400" value={form[k]??""} onChange={e=>set(k,e.target.value)}/></label>;
+ const tabs=["Resumen","Propietario","Inmueble","Documentación","Tasación","Publicación"];
+ return <main className="min-h-screen bg-[#f5f7fa] p-6 lg:p-8"><div className="mx-auto max-w-7xl">
+ <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-emerald-600">Fase 2 · Ficha progresiva</p><h1 className="mt-1 text-3xl font-bold text-slate-950">Datos del inmueble</h1><p className="mt-2 text-sm text-slate-500">Completa la información cuando esté disponible. La ficha no bloquea el flujo comercial.</p></div><Link href="/cartera" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700">← Cartera</Link></header>
+ <section className="mt-6 rounded-2xl bg-slate-900 p-5 text-white"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-slate-400">Inmueble</p><select value={codigo} onChange={e=>setCodigo(e.target.value)} className="mt-2 w-full max-w-xl rounded-xl bg-white/10 px-3 py-3 text-sm outline-none"><option value="" className="text-slate-900">Seleccionar inmueble…</option>{lista.map(x=><option key={x.id} value={x.id} className="text-slate-900">{x.posicion?"Pos. "+String(x.posicion).padStart(2,"0")+" · ":""}{x.nombre} · {x.id}</option>)}</select></section>
+ {loading&&<div className="mt-5 rounded-2xl bg-white p-5 text-sm text-slate-500">Cargando ficha…</div>}{err&&<div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{err}</div>}{msg&&<div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{msg}</div>}
+ {d&&!loading&&<><div className="mt-5 flex gap-2 overflow-x-auto rounded-2xl bg-white p-2 shadow-sm">{tabs.map(t=><button key={t} onClick={()=>setTab(t)} className={tab===t?"rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white":"rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500"}>{t}</button>)}</div>
+ <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-6">
+ {tab==="Resumen"&&<><h2 className="text-2xl font-bold text-slate-950">{d.inmueble.referencia}</h2><p className="mt-1 text-sm text-slate-500">{d.inmueble.tipo} · {d.inmueble.codigo} · Posición {d.inmueble.posicion||"—"}</p><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[["Propietario",(d.inmueble.propietarioNombres||"")+" "+(d.inmueble.propietarioApellidos||"")],["Ubicación",d.inmueble.distrito||"Pendiente"],["Documentos",String(files.length)],["Tasación",d.tasacion?"Registrada":"Pendiente"]].map(x=><div key={x[0]} className="rounded-xl bg-[#f5f7fa] p-4"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{x[0]}</p><p className="mt-1 text-sm font-semibold text-slate-800">{x[1]}</p></div>)}</div></>}
+ {tab==="Propietario"&&<><div className="grid gap-4 sm:grid-cols-2">{[["DNI","propietarioDni"],["Nombres","propietarioNombres"],["Apellidos","propietarioApellidos"],["Teléfono","propietarioTelefono"],["Correo","propietarioEmail"],["Referencia de contacto","propietarioReferencia"]].map(x=><label key={x[1]} className="text-xs font-semibold text-slate-500">{x[0]}<input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700" value={d.inmueble[x[1]]||""} onChange={e=>setD({...d,inmueble:{...d.inmueble,[x[1]]:e.target.value}})}/></label>)}</div><button onClick={save} className="mt-5 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white">Guardar propietario</button></>}
+ {tab==="Inmueble"&&<><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[["Referencia","referencia"],["Dirección","direccion"],["Distrito","distrito"],["Provincia","provincia"],["Departamento","departamento"],["Área terreno","areaTerreno"],["Área construida","areaConstruida"],["Habitaciones","habitaciones"],["Baños","banos"]].map(x=>field(x[0],x[1]))}</div><label className="mt-4 block text-xs font-semibold text-slate-500">Características<textarea className="mt-1 min-h-28 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700" value={form.caracteristicas||""} onChange={e=>set("caracteristicas",e.target.value)}/></label><label className="mt-4 block text-xs font-semibold text-slate-500">Observaciones<textarea className="mt-1 min-h-24 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-700" value={form.observaciones||""} onChange={e=>set("observaciones",e.target.value)}/></label><button onClick={save} className="mt-5 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">Guardar datos</button></>}
+ {tab==="Documentación"&&<><div className="rounded-2xl bg-violet-50 p-4 text-sm text-slate-600"><b>Repositorio documental.</b> Los archivos permanecen en Drive; el sistema guarda el enlace y sus metadatos.</div><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{tipos.map(x=><div key={x[0]} className="rounded-xl border border-slate-200 p-4"><span className="text-xs font-bold text-slate-700">{x[1]}</span><span className={files.some(f=>f.tipoDocumento===x[0])?"ml-2 rounded-full bg-emerald-50 px-2 py-1 text-[9px] font-bold text-emerald-700":"ml-2 rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-400"}>{files.some(f=>f.tipoDocumento===x[0])?"Registrado":"Pendiente"}</span></div>)}</div><div className="mt-6 rounded-2xl border border-slate-200 p-5"><h3 className="font-bold text-slate-900">Agregar archivo</h3><div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="text-xs font-semibold text-slate-500">Tipo<select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" value={doc.tipoDocumento} onChange={e=>setDoc({...doc,tipoDocumento:e.target.value})}>{tipos.map(x=><option key={x[0]} value={x[0]}>{x[1]}</option>)}</select></label><label className="text-xs font-semibold text-slate-500">Nombre<input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" value={doc.nombre} onChange={e=>setDoc({...doc,nombre:e.target.value})}/></label><label className="text-xs font-semibold text-slate-500 sm:col-span-2">Enlace Google Drive<input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" placeholder="https://drive.google.com/..." value={doc.enlace} onChange={e=>setDoc({...doc,enlace:e.target.value})}/></label><label className="text-xs font-semibold text-slate-500 sm:col-span-2">Observación<input className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm" value={doc.observacion} onChange={e=>setDoc({...doc,observacion:e.target.value})}/></label></div><button onClick={addFile} className="mt-4 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white">Registrar enlace</button></div><div className="mt-5 space-y-2">{files.map(f=><div key={f.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><b className="text-sm text-slate-800">{f.nombre}</b><p className="mt-1 text-[10px] font-bold uppercase text-slate-400">{tipos.find(x=>x[0]===f.tipoDocumento)?.[1]||f.tipoDocumento}</p></div><div className="flex gap-2"><a href={f.enlace} target="_blank" rel="noreferrer" className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Abrir Drive ↗</a><button onClick={()=>removeFile(f.id)} className="rounded-lg border px-3 py-2 text-xs font-semibold text-slate-500">Quitar</button></div></div>)}</div></>}
+ {tab==="Tasación"&&<>{d.tasacion?<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[["Fecha",d.tasacion.fechaTasacion],["Valor referencial",d.tasacion.valorReferencia?"S/ "+d.tasacion.valorReferencia:"—"],["Precio objetivo",d.tasacion.precioObjetivo?"S/ "+d.tasacion.precioObjetivo:"—"],["Situación",d.tasacion.situacion]].map(x=><div key={x[0]} className="rounded-xl bg-[#f5f7fa] p-4"><p className="text-[10px] font-bold uppercase text-slate-400">{x[0]}</p><p className="mt-1 text-sm font-bold">{x[1]}</p></div>)}</div>:<p className="text-sm text-slate-500">No hay tasación registrada todavía. <Link href="/registrar-tasaciones" className="font-semibold text-slate-900">Ir a tasaciones.</Link></p>}</>}
+ {tab==="Publicación"&&<>{d.publicacion?<div className="space-y-4"><div className="whitespace-pre-wrap rounded-xl bg-[#f5f7fa] p-4 text-sm leading-6 text-slate-700">{d.publicacion.texto}</div>{d.publicacion.enlace&&<a href={d.publicacion.enlace} target="_blank" rel="noreferrer" className="inline-flex rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Abrir referencia ↗</a>}</div>:<p className="text-sm text-slate-500">No hay publicación registrada todavía.</p>}</>}
+ </section></>}
+ </div></main>;
 }

@@ -81,11 +81,11 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="mb-2 mt-7 flex items-center justify-between px-3">
         <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Próxima fase</span>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400">PRÓXIMAMENTE</span>
+        <span className="rounded-full bg-cyan-50 px-2 py-0.5 text-[9px] font-semibold text-cyan-600">FASE 2</span>
       </div>
-      <div className="space-y-1 opacity-60">
+      <div className="space-y-1">
         {fase2.map(item => (
-          <div key={item.href} className="flex cursor-default items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium text-slate-500">
+          <MenuLink key={item.href} item={item} onNavigate={onNavigate}/>
             <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${toneClasses[item.tone].bg} ${toneClasses[item.tone].text}`}>
               <Icon name={item.icon}/>
             </span>
