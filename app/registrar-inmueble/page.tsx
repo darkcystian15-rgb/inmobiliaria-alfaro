@@ -133,9 +133,43 @@ export default function RegistrarInmueblePage() {
           <Link href="/cartera" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300">← Volver a cartera</Link>
         </div>
 
-        <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_320px]">
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-900 p-4 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Inicio del flujo</p>
+              <p className="mt-1 text-sm font-semibold">Registrar → Visita pendiente → Tasación → Aprobación → Publicación</p>
+            </div>
+            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[10px] font-bold text-emerald-300">Estás en: Registro</span>
+          </div>
+        </div>
+
+        <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Antes de guardar</p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">Completa lo esencial. El resto puede hacerse después.</p>
+            </div>
+            <span className={`rounded-full px-3 py-1.5 text-[10px] font-bold ${puedeRegistrar ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+              {puedeRegistrar ? "Listo para registrar" : "Registro en preparación"}
+            </span>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {[
+              ["01", "Posición", Boolean(posicion)],
+              ["02", "Propietario", Boolean(dniValido && nombres.trim() && apellidos.trim())],
+              ["03", "Inmueble", Boolean(tipo && nombre.trim())],
+            ].map(([num, label, done]) => (
+              <div key={String(num)} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${done ? "border-emerald-200 bg-emerald-50/70" : "border-slate-200 bg-slate-50/60"}`}>
+                <span className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold ${done ? "bg-emerald-600 text-white" : "bg-white text-slate-400"}`}>{done ? "✓" : num}</span>
+                <div><p className={`text-xs font-semibold ${done ? "text-emerald-800" : "text-slate-600"}`}>{label}</p><p className="text-[10px] text-slate-400">{done ? "Completo" : "Pendiente"}</p></div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_320px]">
           <section className="rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
-            <div className="border-b border-slate-100 px-6 py-5">
+            <div className="border-b border-slate-100 bg-slate-50/70 px-6 py-5">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-xl font-bold text-emerald-600">+</span>
                 <div><h2 className="font-bold text-slate-900">Datos de registro</h2><p className="mt-0.5 text-xs text-slate-500">Estos datos permiten iniciar el flujo comercial.</p></div>

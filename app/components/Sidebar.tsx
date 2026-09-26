@@ -69,7 +69,9 @@ function MenuLink({ item, onNavigate }: { item: { href: string; label: string; i
 function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
-      <MenuLink item={{ href: "/", label: "Dashboard", icon: "dashboard", tone: "indigo" }} onNavigate={onNavigate}/>
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-2">
+        <MenuLink item={{ href: "/", label: "Dashboard", icon: "dashboard", tone: "indigo" }} onNavigate={onNavigate}/>
+      </div>
 
       <div className="mb-2 mt-7 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Operación</div>
       <div className="space-y-1">{fase1.slice(0, 3).map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate}/>)}</div>
@@ -129,12 +131,19 @@ export default function Sidebar() {
         </nav>
 
         <div className="shrink-0 border-t border-slate-100 p-4">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-xs font-semibold text-slate-700">Panel de gestión</div>
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              <div>
+                <div className="text-xs font-bold text-slate-800">Sistema operativo</div>
+                <div className="text-[10px] text-slate-400">Gestión de cartera activa</div>
+              </div>
             </div>
-            <div className="mt-1 text-[11px] leading-4 text-slate-500">Cartera, seguimiento y pendientes en un solo lugar.</div>
+            <div className="mt-3 border-t border-slate-200 pt-3 text-[10px] leading-4 text-slate-500">
+              Cartera, seguimiento y pendientes en un solo lugar.
+            </div>
           </div>
         </div>
       </aside>

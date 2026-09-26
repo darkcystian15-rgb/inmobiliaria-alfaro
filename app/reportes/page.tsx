@@ -149,14 +149,43 @@ export default function Page() {
 
         {error && <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{error}</div>}
 
-        {resumen && <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+        {resumen && <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 shadow-[0_14px_40px_rgba(15,23,42,0.10)]">
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Lectura rápida</p><h2 className="mt-1 text-base font-bold text-white">Resumen del reporte seleccionado</h2></div>
+            <span className="text-xs text-slate-400">{resumen.total} resultado{resumen.total === 1 ? "" : "s"}</span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
           {[
             ["Resultado", resumen.total], ["Activos", resumen.activos], ["Históricos", resumen.historicos], ["Disponibles", resumen.disponibles],
             ["Visitas", resumen.visitasPendientes], ["Tasaciones", resumen.tasacionesPendientes], ["Listos", resumen.listosParaPublicar], ["Publicados", resumen.publicados],
-          ].map(([t,v]) => <div key={String(t)} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.045)]"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">{t}</p><p className="mt-2 text-2xl font-bold text-slate-950">{v}</p></div>)}
+          ].map(([t,v]) => <div key={String(t)} className="rounded-xl border border-white/10 bg-white/[0.06] p-3"><p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{t}</p><p className="mt-1.5 text-xl font-bold text-white">{v}</p></div>)}
+          </div>
         </section>}
 
-        <section className="mt-7 print:hidden">
+        <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.045)] print:hidden">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">¿Qué necesitas revisar?</p>
+              <h2 className="mt-1 text-lg font-bold text-slate-900">Elige una vista y te mostramos el detalle.</h2>
+              <p className="mt-1 text-xs text-slate-500">Empieza por la situación actual y luego entra al detalle que necesites.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {[
+                ["Cartera", "¿Qué tenemos?", "Cartera"],
+                ["Gestión", "¿Qué falta?", "Gestión"],
+                ["Salidas", "¿Qué salió?", "Salidas"],
+                ["Flujo", "¿Cuánto demora?", "Flujo"],
+              ].map(([label, question, value]) => (
+                <button key={String(label)} onClick={() => setCategoria(String(value))} className={`rounded-xl border px-3 py-2.5 text-left transition ${categoria === value ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white"}`}>
+                  <p className="text-[10px] font-bold uppercase tracking-wide opacity-60">{label}</p>
+                  <p className="mt-1 text-xs font-semibold">{question}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-8 print:hidden">
           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div><h2 className="text-base font-bold text-slate-900">Reportes disponibles</h2><p className="mt-1 text-sm text-slate-500">Selecciona el informe que quieres consultar.</p></div>
             <div className="flex flex-wrap gap-2">{grupos.map(g => <button key={g} onClick={() => setCategoria(g)} className={`rounded-full px-3.5 py-2 text-xs font-bold ${categoria === g ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300"}`}>{g}</button>)}</div>

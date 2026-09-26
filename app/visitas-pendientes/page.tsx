@@ -43,6 +43,8 @@ export default function Page() {
           <Link href="/registrar-visitas" className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">Registrar visita realizada →</Link>
         </header>
 
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Primero atiende las visitas con mayor antigüedad.</p></div><span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1.5 text-xs font-bold text-amber-200">{items.filter(x => x.dias > 2).length} requieren atención</span></div></section>
+
         {error && <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">{error}</div>}
         <section className="mt-7 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Pendientes</p><p className="mt-2 text-3xl font-bold text-amber-950">{items.length}</p><p className="mt-1 text-xs text-amber-800/70">procesos reales</p></div>

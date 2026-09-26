@@ -68,7 +68,7 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 p-5 lg:p-8">
+    <main className="min-h-screen bg-[#f5f7fa] p-5 lg:p-8">
       <div className="mx-auto max-w-6xl">
         <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -83,6 +83,16 @@ export default function Page() {
           </div>
           <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm"><span className="font-semibold text-slate-900">{items.length}</span><span className="ml-1 text-slate-500">inmuebles activos</span></div>
         </header>
+
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Acción principal</p>
+              <p className="mt-1 text-sm font-semibold">Selecciona el motivo de salida y confirma. La posición quedará disponible y el histórico se conservará.</p>
+            </div>
+            <span className="rounded-full border border-rose-300/20 bg-rose-300/10 px-3 py-1.5 text-xs font-bold text-rose-200">Salida → posición libre</span>
+          </div>
+        </section>
 
         {mensaje && <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{mensaje}</div>}
         {error && <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">{error}</div>}

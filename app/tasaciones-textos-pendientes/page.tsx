@@ -108,6 +108,20 @@ export default function Page() {
           <Link href="/registrar-tasaciones" className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">Registrar tasaciones</Link>
         </div>
 
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]"><div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Bandeja de seguimiento</p><p className="mt-1 text-sm font-semibold">Aquí se encadena tasación aprobada → texto → publicación.</p></div><span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1.5 text-xs font-bold text-emerald-200">{listos.length} listos para publicar</span></div></section>
+
+        <section className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
+            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-sm font-bold text-amber-700">1</span><div><p className="text-xs font-bold uppercase tracking-wide text-amber-700">Tasación</p><p className="text-sm font-semibold text-slate-900">{pendientes.filter(x => x.situacion === "pendiente_tasacion").length} pendientes</p></div></div>
+          </div>
+          <div className="rounded-2xl border border-pink-200 bg-pink-50/80 p-4">
+            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-pink-100 text-sm font-bold text-pink-700">2</span><div><p className="text-xs font-bold uppercase tracking-wide text-pink-700">Texto</p><p className="text-sm font-semibold text-slate-900">{pendientes.filter(x => x.situacion === "aprobado").length} por preparar</p></div></div>
+          </div>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">3</span><div><p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Publicación</p><p className="text-sm font-semibold text-slate-900">{listos.length} listos para confirmar</p></div></div>
+          </div>
+        </section>
+
         {mensaje && <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">{mensaje}</div>}
         {error && <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">{error}</div>}
 
@@ -115,7 +129,7 @@ export default function Page() {
           <>
             <section className="mt-7 rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
               <div className="border-b border-slate-200 px-5 py-4">
-                <h2 className="font-bold text-slate-900">Tasaciones pendientes</h2>
+                <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">1</span><h2 className="font-bold text-slate-900">Tasaciones pendientes</h2></div>
                 <p className="mt-1 text-xs text-slate-500">Inmuebles con visita realizada que todavía no tienen tasación registrada.</p>
               </div>
               <div className="divide-y divide-slate-100">
@@ -130,7 +144,7 @@ export default function Page() {
 
             <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
               <div className="border-b border-slate-200 px-5 py-4">
-                <h2 className="font-bold text-slate-900">Textos de publicación pendientes</h2>
+                <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-xs font-bold text-pink-700">2</span><h2 className="font-bold text-slate-900">Textos de publicación pendientes</h2></div>
                 <p className="mt-1 text-xs text-slate-500">Solo aparecen inmuebles con tasación aprobada y sin publicación registrada.</p>
               </div>
               <div className="divide-y divide-slate-100">
@@ -149,7 +163,7 @@ export default function Page() {
 
             <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
               <div className="border-b border-slate-200 px-5 py-4">
-                <h2 className="font-bold text-slate-900">Listos para publicar</h2>
+                <div className="flex items-center gap-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">3</span><h2 className="font-bold text-slate-900">Listos para publicar</h2></div>
                 <p className="mt-1 text-xs text-slate-500">Aquí aparecen los inmuebles cuyo texto ya fue registrado. Cuando la publicación se haya realizado, confírmala aquí.</p>
               </div>
               <div className="divide-y divide-slate-100">
