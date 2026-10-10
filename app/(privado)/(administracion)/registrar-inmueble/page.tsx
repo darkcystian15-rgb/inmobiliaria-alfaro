@@ -1,5 +1,7 @@
 
 "use client";
+import FolderIcon from "@/app/components/FolderIcon";
+import type { ReactNode } from "react";
 import GeographySelect from "@/app/components/GeographySelect";
 
 import { propertyDisplayId } from "@/lib/property-display-id";
@@ -21,6 +23,14 @@ type Posicion = {
   numero: number;
   disponible: boolean;
 };
+
+function RegistrationFolder({ id, title, description, children }: { id: string; title: string; description: string; children: ReactNode }) {
+  return <section id={id} aria-labelledby={`${id}-title`} className="relative mt-6 scroll-mt-24 rounded-b-2xl rounded-tr-2xl border border-amber-200 bg-amber-50/30 p-4 sm:p-5">
+    <h2 id={`${id}-title`} className="cartera-folder-navigation absolute -top-5 -left-px flex h-5 items-center gap-2 rounded-t-lg border border-b-0 border-amber-200 bg-amber-100 px-3 text-xs font-bold text-amber-900"><FolderIcon className="h-4 w-4 shrink-0 text-amber-600" />{title}</h2>
+    <p className="mb-4 text-xs leading-5 text-slate-500">{description}</p>
+    <div className="space-y-4">{children}</div>
+  </section>;
+}
 
 export default function RegistrarInmueblePage() {
   const [seleccionPosicion, setPosicion] = useState("");
@@ -203,21 +213,22 @@ export default function RegistrarInmueblePage() {
 
             <Link
               href="/cartera"
-              className="inline-flex w-fit items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+              className="cartera-folder-navigation inline-flex w-fit items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-amber-100"
             >
-              <span>←</span>
+              <FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /><span>←</span>
               Volver a cartera
             </Link>
           </div>
         </header>
+        <nav aria-label="Secciones del registro" className="mb-6 flex flex-wrap gap-2">{[["registro-posicion", "Posición"], ["registro-operacion", "Operación y datos básicos"], ["registro-ubicacion", "Ubicación"], ["registro-propietario", "Propietario"]].map(([id, title]) => <a key={id} href={`#${id}`} className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />{title}</a>)}</nav>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           {/* FORMULARIO PRINCIPAL */}
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff1f1] text-lg font-bold text-[#c80000]">
-                  +
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50">
+                  <FolderIcon />
                 </span>
 
                 <div>
@@ -233,9 +244,9 @@ export default function RegistrarInmueblePage() {
 
             <div className="space-y-7 p-5 sm:p-6">
               {/* POSICIÓN */}
-              <div>
+              <RegistrationFolder id="registro-posicion" title="Posición en cartera" description="Elige el espacio disponible que ocupará el inmueble.">
                 <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <label className="text-sm font-bold text-slate-700">
+                  <label htmlFor="registro-posicion-select" className="text-sm font-bold text-slate-700">
                     Posición en cartera{" "}
                     <span className="text-[#c80000]">*</span>
                   </label>
@@ -248,6 +259,7 @@ export default function RegistrarInmueblePage() {
                 </div>
 
                 <select
+                  id="registro-posicion-select"
                   value={posicion}
                   onChange={(e) => setPosicion(e.target.value)}
                   disabled={
@@ -274,26 +286,10 @@ export default function RegistrarInmueblePage() {
                   La primera posición disponible se selecciona
                   automáticamente. Puedes cambiarla antes de guardar.
                 </p>
-              </div>
+              </RegistrationFolder>
 
               {/* DATOS DEL INMUEBLE */}
-              <div className="border-t border-slate-100 pt-7">
-                <div className="mb-4">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-slate-900">
-                      Datos básicos del inmueble
-                    </h2>
-
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-                      Requeridos
-                    </span>
-                  </div>
-
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    El nombre identifica al inmueble; el propietario se registra por separado. Puedes completar los demás datos después.
-                  </p>
-                </div>
-
+              <RegistrationFolder id="registro-operacion" title="Operación y datos básicos" description="Indica el tipo de operación, el tipo de inmueble y su nombre o referencia.">
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
                     <label className="mb-4 block text-sm font-semibold text-slate-700">Tipo de operación *<OperationSelect value={operacion} onChange={setOperacion} disabled={guardando} className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal" /></label>
@@ -306,7 +302,7 @@ export default function RegistrarInmueblePage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    <label htmlFor="registro-nombre" className="mb-2 block text-sm font-semibold text-slate-700">
                       Nombre del inmueble{" "}
                       <span className="text-[#c80000]">*</span>
                     </label>
@@ -314,16 +310,19 @@ export default function RegistrarInmueblePage() {
                     <input
                       required
                       maxLength={120}
+                      id="registro-nombre"
                       value={nombre}
                       onChange={(e) => setNombre(e.target.value)}
                       placeholder="Nombre o referencia del inmueble"
-                      className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none placeholder:text-slate-500 transition focus:border-[#c80000] focus:ring-2 focus:ring-[#f5dede]"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm outline-none placeholder:text-slate-500 transition focus:border-[#c80000] focus:ring-2 focus:ring-[#f5dede]"
                     />
                   </div>
                 </div>
 
-                <div className="mt-5">
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+              </RegistrationFolder>
+              <RegistrationFolder id="registro-ubicacion" title="Ubicación" description="Registra la dirección y selecciona la zona del inmueble.">
+                <div>
+                  <label htmlFor="registro-direccion" className="mb-2 block text-sm font-semibold text-slate-700">
                     Calle / avenida{" "}
                     <span className="text-[#c80000]">*</span>
                   </label>
@@ -331,20 +330,20 @@ export default function RegistrarInmueblePage() {
                   <input
                     required
                     maxLength={255}
+                    id="registro-direccion"
                     value={ubicacion}
                     onChange={(e) => setUbicacion(e.target.value)}
                     placeholder="Calle o avenida"
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none placeholder:text-slate-500 transition focus:border-[#c80000] focus:ring-2 focus:ring-[#f5dede]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm outline-none placeholder:text-slate-500 transition focus:border-[#c80000] focus:ring-2 focus:ring-[#f5dede]"
                   />
                 </div>
-              </div>
 
-              <label className="block text-sm font-semibold">Número / lote<input value={numeroDireccion} maxLength={30} onChange={e=>setNumeroDireccion(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm"/></label>
+              <label className="block text-sm font-semibold">Número / lote<input value={numeroDireccion} maxLength={30} onChange={e=>setNumeroDireccion(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm"/></label>
               <GeographySelect disabled={guardando} value={{departamento,provincia,distrito}} onChange={next=>{setDepartamento(next.departamento||'');setProvincia(next.provincia||'');setDistrito(next.distrito||'');}}/>
 
-              <details className="border-t border-slate-100 pt-5">
-                <summary className="cursor-pointer text-sm font-semibold text-slate-700">Datos del propietario (opcionales)</summary>
-                <div className="mt-4"><label className="mb-4 block text-sm font-semibold">Nombres del propietario<input value={nombresPropietario} maxLength={120} onChange={e=>setNombresPropietario(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 p-3" /></label>
+              </RegistrationFolder>
+              <RegistrationFolder id="registro-propietario" title="Propietario" description="Datos opcionales. Puedes buscar un propietario existente por DNI o completar sus datos.">
+                <div className="mt-4"><label className="mb-4 block text-sm font-semibold">Nombres del propietario<input value={nombresPropietario} maxLength={120} onChange={e=>setNombresPropietario(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-3" /></label>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-xs font-semibold text-slate-600">
@@ -459,7 +458,7 @@ export default function RegistrarInmueblePage() {
                     </div>
                   )}
                 </div>
-              </details>
+              </RegistrationFolder>
 
               {/* MENSAJES */}
               {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
