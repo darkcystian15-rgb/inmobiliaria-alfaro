@@ -481,7 +481,7 @@ export default function CarteraPage() {
       <div className="mx-auto max-w-[1550px]">
         {/* CABECERA */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <PageHeading href="/cartera" />
+          <div className="min-w-0"><PageHeading href="/cartera" /><p className="mt-2 break-words text-xs leading-5 text-slate-500">Distritos de la cartera: {cargando ? "Cargando…" : distritosCartera.length ? distritosCartera.join(", ") : error ? "No se pudieron consultar." : "Sin distritos registrados."}</p></div>
 
           <Link
             href="/registrar-inmueble"
@@ -561,7 +561,7 @@ export default function CarteraPage() {
           <div className="mt-3"><ResponsiveFilters active={tieneFiltros}>
             <div className="grid gap-3 sm:grid-cols-3">
               <label className="text-xs font-semibold text-slate-600">Estado<select value={estado} onChange={event => { setEstado(event.target.value as "Todos" | Estado); setSoloDisponibles(false); }} className="aa-input mt-2 w-full"><option>Activo</option><option>Todos</option><option>Histórico</option></select></label>
-              <div><label className="text-xs font-semibold text-slate-600">Operación<OperationSelect filter value={operacion} onChange={setOperacion} className="aa-input mt-2 w-full" /></label><p className="mt-2 break-words text-xs leading-5 text-slate-500">Distritos de la cartera: {cargando ? "Cargando…" : distritosCartera.length ? distritosCartera.join(", ") : error ? "No se pudieron consultar." : "Sin distritos registrados."}</p></div><label className="text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect filter value={tipo} onChange={setTipo} className="aa-input mt-2 w-full" /></label>
+              <label className="text-xs font-semibold text-slate-600">Operación<OperationSelect filter value={operacion} onChange={setOperacion} className="aa-input mt-2 w-full" /></label><label className="text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect filter value={tipo} onChange={setTipo} className="aa-input mt-2 w-full" /></label>
               <label className="text-xs font-semibold text-slate-600">Actividad<select value={actividad} onChange={event => setActividad(event.target.value as FiltroActividad)} className="aa-input mt-2 w-full">{["Todas", "Visita pendiente", "Tasación pendiente", "Material pendiente"].map(value => <option key={value}>{value}</option>)}</select></label>
             </div>
           </ResponsiveFilters></div>
