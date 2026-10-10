@@ -101,6 +101,10 @@ type Resumen = {
   capacidad: number;
 };
 
+function FolderIcon({ className = "h-7 w-7 shrink-0 text-amber-500" }: { className?: string }) {
+  return <svg aria-hidden="true" className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M3 5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5Z" /></svg>;
+}
+
 function Icon({
   name,
 }: {
@@ -525,7 +529,7 @@ export default function CarteraPage() {
         <p className="mt-4 text-sm text-slate-600">{zonaSeleccionada === null ? "Selecciona una zona para consultar sus inmuebles." : "Selecciona un inmueble de la lista para ver su información y abrir la ficha completa."}</p>
         {zonaSeleccionada !== null && <nav aria-label="Ruta de la cartera" className="mt-4 flex flex-wrap items-center gap-3 text-sm"><button type="button" onClick={() => abrirZona(null)} className="min-h-11 font-semibold text-[#c80000]">← Volver a zonas</button><span aria-hidden="true" className="text-slate-300">/</span><span className="font-semibold text-slate-700">{zonaSeleccionada === ALL_ZONES ? "Listado general" : zonaSeleccionada}</span></nav>}
         {zonaSeleccionada === null && <section aria-label="Cartera por zonas" className="mt-6">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">Cartera de inmuebles por zona</h2><button type="button" onClick={() => abrirZona(ALL_ZONES)} className="min-h-11 text-sm font-semibold text-[#c80000]">Ver listado general →</button></div>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">Cartera de inmuebles por zona</h2><button type="button" onClick={() => abrirZona(ALL_ZONES)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />Ver listado general →</button></div>
           <ul className="aa-card divide-y divide-slate-100 overflow-hidden">{zonas.map(zona => <li key={zona.nombre}><button type="button" onClick={() => abrirZona(zona.nombre)} className="flex min-h-16 w-full items-center gap-4 px-4 py-4 text-left transition hover:bg-red-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000]"><svg aria-hidden="true" className="h-7 w-7 shrink-0 text-amber-500" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5Z"/></svg><span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-900">{zona.nombre}</span><span className="mt-1 block text-xs text-slate-500">{zona.activos} activo{zona.activos === 1 ? "" : "s"}{zona.historicos > 0 ? ` · ${zona.historicos} histórico${zona.historicos === 1 ? "" : "s"}` : ""}</span></span><span aria-hidden="true" className="text-slate-400">→</span></button></li>)}</ul>
           {!cargando && !error && zonas.length === 0 && <p className="mt-4 text-sm text-slate-500">Todavía no hay inmuebles registrados en la cartera.</p>}
         </section>}
@@ -655,7 +659,8 @@ export default function CarteraPage() {
 
                 const theme = x ? cardTheme(x) : null;
                 return (
-                  <article key={pos.numero} className={`flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border transition duration-200 ${x ? `border-slate-200 bg-white shadow-[0_3px_14px_rgba(15,23,42,0.04)] hover:shadow-lg ${theme?.border}` : "border-dashed border-slate-200 bg-slate-50/60"}`}>
+                  <article data-folder-card="true" key={pos.numero} className={`relative mt-4 flex h-full min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border transition duration-200 ${x ? "border-amber-200 bg-amber-50/40 shadow-[0_3px_14px_rgba(15,23,42,0.04)] hover:border-amber-300 hover:shadow-lg" : "border-dashed border-slate-200 bg-slate-50/60"}`}>
+                  <span aria-hidden="true" className={`absolute -top-4 left-[-1px] h-4 w-24 rounded-t-xl border border-b-0 ${x ? "border-amber-200 bg-amber-100" : "border-slate-200 bg-slate-100"}`} />
                   <button
                     type="button"
                     onClick={() => x && setSeleccionado(x)}
@@ -663,11 +668,11 @@ export default function CarteraPage() {
                     aria-label={x ? `Ver detalle de ${x.nombre}, posición ${pos.numero}` : `Posición ${pos.numero} disponible`}
                     className="group flex min-h-[345px] w-full flex-1 flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000]"
                   >
-                    <div aria-hidden="true" className={`h-1.5 w-full ${theme?.stripe ?? "bg-slate-100"}`} />
+                    <div aria-hidden="true" className="h-1.5 w-full rounded-tr-2xl bg-amber-100/70" />
                     <div className="flex w-full flex-1 flex-col p-3.5 sm:p-4">
                       <div className="flex items-center justify-between gap-2">
                         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-mono text-xl font-bold tracking-tight ${theme?.position ?? "bg-slate-100 text-slate-500"}`}>{String(pos.numero).padStart(2, "0")}</span>
-                        <span className={x ? "text-slate-300" : "text-slate-300 text-2xl font-light"}>{x ? <Icon name="home" /> : "+"}</span>
+                        <span className={x ? "text-slate-300" : "text-slate-300 text-2xl font-light"}>{x ? <FolderIcon /> : <FolderIcon className="h-7 w-7 shrink-0 text-slate-300" />}</span>
                       </div>
                       {x && theme ? <>
                         <span className={`mt-3 inline-flex self-start rounded-lg px-2 py-1 text-xs font-semibold ring-1 ring-inset ${theme.badge}`}>{theme.label}</span>
@@ -710,7 +715,7 @@ export default function CarteraPage() {
               {filtrados.map(x => <li key={x.id}>
                 <button type="button" onClick={() => setSeleccionado(x)} aria-label={`Ver detalle de ${x.nombre}, ${x.posicion ? `posición ${x.posicion}` : "sin posición"}`} className="group grid w-full grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 text-left transition hover:bg-red-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000] lg:grid-cols-[3rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.3fr)_6rem_7rem_minmax(0,1.5fr)] lg:py-3.5">
                   <span className="row-span-2 font-mono text-sm font-semibold text-slate-500 lg:row-span-1">{x.posicion ? String(x.posicion).padStart(2, "0") : "—"}</span>
-                  <span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[#c80000]" title={x.nombre}>{x.nombre}</span><span className="mt-0.5 block truncate text-xs text-slate-500" title={x.direccion || "Dirección por completar"}>{x.direccion || "Dirección por completar"}</span><span className="mt-0.5 block truncate text-xs text-slate-500 lg:hidden">{x.tipo} · {x.distrito || "Distrito por completar"} · {operationLabel(x.operacion)}</span></span>
+                  <span className="min-w-0"><span className="flex items-center gap-2"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /><span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[#c80000]" title={x.nombre}>{x.nombre}</span></span><span className="mt-0.5 block truncate text-xs text-slate-500" title={x.direccion || "Dirección por completar"}>{x.direccion || "Dirección por completar"}</span><span className="mt-0.5 block truncate text-xs text-slate-500 lg:hidden">{x.tipo} · {x.distrito || "Distrito por completar"} · {operationLabel(x.operacion)}</span></span>
                   <span className="hidden truncate text-sm text-slate-600 lg:block" title={x.tipo}>{x.tipo}</span>
                   <span className="hidden truncate text-sm text-slate-600 lg:block" title={x.distrito || "Distrito por completar"}>{x.distrito || "Por completar"}</span>
                   <span className="hidden text-sm text-slate-600 lg:block">{operationLabel(x.operacion)}</span>
