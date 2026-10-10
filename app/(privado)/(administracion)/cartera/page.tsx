@@ -491,7 +491,7 @@ export default function CarteraPage() {
           </Link>
         </div>
 
-        <p className="mt-4 text-sm text-slate-600">Consulta los inmuebles en la lista compacta y abre su ficha para ver todos los datos. La vista de tarjetas permite revisar las posiciones ocupadas y disponibles.</p>
+        <p className="mt-4 text-sm text-slate-600">Selecciona un inmueble de la lista para ver su información y abrir la ficha completa. También puedes consultar las posiciones en la vista de tarjetas.</p>
         {/* INDICADORES */}
         <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[
@@ -659,15 +659,23 @@ export default function CarteraPage() {
             )}
           </div>
         ) : (
-          <section aria-label="Lista compacta de inmuebles" className="mt-3">
-            <div className="grid gap-3 sm:grid-cols-2 xl:hidden">
-              {filtrados.map(x => <article key={x.id} className="aa-card min-w-0 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-mono text-xs font-bold text-slate-600">{propertyDisplayId(x)}{x.posicion ? ` · Pos. ${String(x.posicion).padStart(2, "0")}` : ""}</span><StatusBadge tone={x.estado === "Activo" ? "progress" : "neutral"}>{x.estado}</StatusBadge></div>
-                <h3 className="mt-3 break-words text-base font-bold text-slate-900">{x.nombre}</h3><p className="mt-1 break-words text-sm text-slate-600">{x.ubicacion}</p><p className="mt-3 text-lg font-bold text-slate-900">{salePrice(x.precioVenta)}{x.operacion === "alquiler" ? " / mes" : ""}</p><div className="mt-3"><StatusBadge tone={primaryTone(x)}>{cardTheme(x).label}</StatusBadge></div>
-                <div className="mt-4 grid grid-cols-2 gap-2"><button type="button" onClick={() => setSeleccionado(x)} className="aa-button aa-button-secondary">Ver detalle</button><Link href={`/datos-inmuebles?codigo=${encodeURIComponent(x.id)}`} className="aa-button aa-button-primary">Abrir ficha</Link></div>
-              </article>)}
+          <section aria-label="Lista compacta de inmuebles" className="aa-card mt-3 overflow-hidden">
+            <div aria-hidden="true" className="hidden grid-cols-[3rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.3fr)_6rem_7rem_minmax(0,1.5fr)] items-center gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500 lg:grid">
+              <span>Pos.</span><span>Propietario / Inmueble</span><span>Tipo</span><span>Distrito</span><span>Operación</span><span className="text-right">Precio</span><span>Pendiente / Estado</span>
             </div>
-            <div className="aa-card hidden overflow-hidden xl:block"><table className="w-full table-fixed text-left text-sm"><caption className="sr-only">Cartera: código, inmueble, precio, estado y actividad principal</caption><thead className="border-b border-slate-200 bg-slate-50 text-xs font-bold text-slate-600"><tr><th scope="col" className="w-[16%] px-4 py-3">ID / Pos.</th><th scope="col" className="w-[27%] px-4 py-3">Inmueble</th><th scope="col" className="w-[17%] px-4 py-3">Precio / renta mensual</th><th scope="col" className="w-[23%] px-4 py-3">Estado / Actividad</th><th scope="col" className="w-[17%] px-4 py-3"><span className="sr-only">Acciones</span></th></tr></thead><tbody className="divide-y divide-slate-100">{filtrados.map(x => <tr key={x.id} className="align-top hover:bg-slate-50"><td className="break-words px-4 py-4"><p className="font-mono text-xs font-bold text-slate-700">{propertyDisplayId(x)}</p><p className="mt-1 text-xs text-slate-600">{x.posicion ? `Posición ${String(x.posicion).padStart(2, "0")}` : "Sin posición"}</p></td><td className="px-4 py-4"><p className="break-words font-semibold text-slate-900">{x.nombre}</p><p className="mt-1 break-words text-xs leading-5 text-slate-600">{operationLabel(x.operacion)} · {x.tipo} · {x.ubicacion}</p></td><td className="break-words px-4 py-4 font-semibold text-slate-900">{salePrice(x.precioVenta)}{x.operacion === "alquiler" ? " / mes" : ""}</td><td className="px-4 py-4"><p className="mb-2 text-xs text-slate-600">{x.estado}</p><StatusBadge tone={primaryTone(x)}>{cardTheme(x).label}</StatusBadge></td><td className="px-4 py-3"><button type="button" onClick={() => setSeleccionado(x)} className="w-full text-left text-xs font-semibold text-slate-700">Ver detalle →</button><Link href={`/datos-inmuebles?codigo=${encodeURIComponent(x.id)}`} className="inline-flex min-h-11 items-center text-xs font-semibold text-[#c80000]">Abrir ficha →</Link></td></tr>)}</tbody></table></div>
+            <ul className="divide-y divide-slate-100">
+              {filtrados.map(x => <li key={x.id}>
+                <button type="button" onClick={() => setSeleccionado(x)} aria-label={`Ver detalle de ${x.nombre}, ${x.posicion ? `posición ${x.posicion}` : "sin posición"}`} className="group grid w-full grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 text-left transition hover:bg-red-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000] lg:grid-cols-[3rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.3fr)_6rem_7rem_minmax(0,1.5fr)] lg:py-3.5">
+                  <span className="row-span-2 font-mono text-sm font-semibold text-slate-500 lg:row-span-1">{x.posicion ? String(x.posicion).padStart(2, "0") : "—"}</span>
+                  <span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[#c80000]" title={x.nombre}>{x.nombre}</span><span className="mt-0.5 block truncate text-xs text-slate-500 lg:hidden">{x.tipo} · {x.distrito || "Distrito por completar"} · {operationLabel(x.operacion)}</span></span>
+                  <span className="hidden truncate text-sm text-slate-600 lg:block" title={x.tipo}>{x.tipo}</span>
+                  <span className="hidden truncate text-sm text-slate-600 lg:block" title={x.distrito || "Distrito por completar"}>{x.distrito || "Por completar"}</span>
+                  <span className="hidden text-sm text-slate-600 lg:block">{operationLabel(x.operacion)}</span>
+                  <span className="col-start-3 row-start-1 text-right text-xs font-semibold text-slate-800 lg:col-start-auto lg:row-start-auto lg:text-sm">{salePrice(x.precioVenta)}{x.operacion === "alquiler" ? <span className="block text-xs font-normal text-slate-500">/ mes</span> : null}</span>
+                  <span className="col-span-2 col-start-2 row-start-2 flex min-w-0 items-center gap-2 lg:col-span-1 lg:col-start-auto lg:row-start-auto"><StatusBadge tone={primaryTone(x)}>{cardTheme(x).label}</StatusBadge><span aria-hidden="true" className="ml-auto text-slate-300 group-hover:text-[#c80000]">→</span></span>
+                </button>
+              </li>)}
+            </ul>
           </section>
         )}
 
