@@ -320,6 +320,7 @@ const materialPendiente =
             .filter(Boolean)
             .join(", ") || "Sin ubicación registrada",
 
+        distrito: row.distrito?.trim() || null,
         zona: [row.distrito, row.provincia, row.departamento].filter(Boolean).join(", "),
         operacion: row.operacion,
         direccion: [row.direccion,row.numeroDireccion].filter(Boolean).join(" ") || null,

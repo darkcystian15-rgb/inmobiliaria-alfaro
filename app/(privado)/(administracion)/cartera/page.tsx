@@ -67,6 +67,7 @@ type Inmueble = {
   ubicacion: string;
   direccion: string | null;
   zona?: string;
+  distrito: string | null;
   latitud: string | null;
   longitud: string | null;
   estado: Estado;
@@ -393,6 +394,15 @@ export default function CarteraPage() {
     [inmuebles]
   );
 
+  const distritosCartera = useMemo(() => {
+    const unicos = new Map<string, string>();
+    for (const inmueble of activos) {
+      const distrito = inmueble.distrito?.trim().replace(/\s+/g, " ");
+      if (distrito) unicos.set(distrito.toLocaleLowerCase("es-PE"), distrito);
+    }
+    return [...unicos.values()].sort((a, b) => a.localeCompare(b, "es-PE"));
+  }, [activos]);
+
   const filtrados = useMemo(() => {
     const texto = busqueda.toLowerCase().trim();
 
@@ -551,7 +561,7 @@ export default function CarteraPage() {
           <div className="mt-3"><ResponsiveFilters active={tieneFiltros}>
             <div className="grid gap-3 sm:grid-cols-3">
               <label className="text-xs font-semibold text-slate-600">Estado<select value={estado} onChange={event => { setEstado(event.target.value as "Todos" | Estado); setSoloDisponibles(false); }} className="aa-input mt-2 w-full"><option>Activo</option><option>Todos</option><option>Histórico</option></select></label>
-              <label className="text-xs font-semibold text-slate-600">Operación<OperationSelect filter value={operacion} onChange={setOperacion} className="aa-input mt-2 w-full" /></label><label className="text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect filter value={tipo} onChange={setTipo} className="aa-input mt-2 w-full" /></label>
+              <div><label className="text-xs font-semibold text-slate-600">Operación<OperationSelect filter value={operacion} onChange={setOperacion} className="aa-input mt-2 w-full" /></label><p className="mt-2 break-words text-xs leading-5 text-slate-500">Distritos de la cartera: {cargando ? "Cargando…" : distritosCartera.length ? distritosCartera.join(", ") : error ? "No se pudieron consultar." : "Sin distritos registrados."}</p></div><label className="text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect filter value={tipo} onChange={setTipo} className="aa-input mt-2 w-full" /></label>
               <label className="text-xs font-semibold text-slate-600">Actividad<select value={actividad} onChange={event => setActividad(event.target.value as FiltroActividad)} className="aa-input mt-2 w-full">{["Todas", "Visita pendiente", "Tasación pendiente", "Material pendiente"].map(value => <option key={value}>{value}</option>)}</select></label>
             </div>
           </ResponsiveFilters></div>
