@@ -75,3 +75,15 @@ button, a { -webkit-tap-highlight-color: transparent; }
 /* Consistent keyboard focus and readable text on dark operational cards. */
 :where(button, a, input, select, textarea, summary):focus-visible { outline: 2px solid #c80000; outline-offset: 3px; }
 .bg-slate-900 .text-slate-500 { color: #cbd5e1; }
+
+/* Folder motion keeps counts and record controls in place. */
+.cartera-folder { transition: transform 180ms ease, box-shadow 180ms ease; }
+.cartera-folder-tab { transform-origin: bottom left; transition: transform 180ms ease; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .cartera-folder:hover, .cartera-folder:focus-within { transform: translateY(-3px); box-shadow: 0 8px 20px rgb(180 120 20 / .12); }
+  .cartera-folder:hover .cartera-folder-tab, .cartera-folder:focus-within .cartera-folder-tab { transform: skewX(-5deg); }
+}
+@media (hover: none) and (prefers-reduced-motion: no-preference) {
+  .cartera-folder:active { transform: translateY(-2px); }
+  .cartera-folder:active .cartera-folder-tab { transform: skewX(-5deg); }
+}

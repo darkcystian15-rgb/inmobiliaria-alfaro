@@ -551,37 +551,23 @@ export default function CarteraPage() {
             {
               label: "Visitas pendientes",
               value: zonaSeleccionada && zonaSeleccionada !== ALL_ZONES ? activosZona.filter(x => x.visitaPendiente).length : resumen.visitasPendientes,
-              detail: "Visitas pendientes",
+              detail: "",
               icon: "clock" as const,
             },
             {
               label: "Tasaciones pendientes",
               value: zonaSeleccionada && zonaSeleccionada !== ALL_ZONES ? activosZona.filter(x => x.tasacionPendiente).length : resumen.tasacionesPendientes,
-              detail: "Tasaciones pendientes",
+              detail: "",
               icon: "chart" as const,
             },
           ].map((item) => (
-            <div
-              key={item.label}
-              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-            >
-              <div className="flex items-start justify-between">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                  <Icon name={item.icon} />
-                </span>
-
-                <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {item.detail}
-                </span>
+            <div key={item.label} data-folder-indicator="true" className="cartera-folder relative mt-5 rounded-b-2xl rounded-tr-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
+              <span className="cartera-folder-tab absolute -top-5 -left-px flex h-5 max-w-[95%] items-center rounded-t-lg border border-b-0 border-amber-200 bg-amber-100 px-3 text-xs font-semibold text-amber-900">{item.label}</span>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-3xl font-bold text-slate-950">{item.value}</p>
+                <FolderIcon className="h-9 w-9 shrink-0 text-amber-500" />
               </div>
-
-              <p className="mt-4 text-2xl font-bold text-slate-950">
-                {item.value}
-              </p>
-
-              {!["Visitas pendientes", "Tasaciones pendientes"].includes(item.label) && <p className="mt-1 text-xs font-semibold text-slate-500">
-                {item.label}
-              </p>}
+              <p className="mt-2 min-h-5 text-xs text-slate-600">{item.detail || "Por atender"}</p>
             </div>
           ))}
         </div>
@@ -659,8 +645,8 @@ export default function CarteraPage() {
 
                 const theme = x ? cardTheme(x) : null;
                 return (
-                  <article data-folder-card="true" key={pos.numero} className={`relative mt-4 flex h-full min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border transition duration-200 ${x ? "border-amber-200 bg-amber-50/40 shadow-[0_3px_14px_rgba(15,23,42,0.04)] hover:border-amber-300 hover:shadow-lg" : "border-dashed border-slate-200 bg-slate-50/60"}`}>
-                  <span aria-hidden="true" className={`absolute -top-4 left-[-1px] h-4 w-24 rounded-t-xl border border-b-0 ${x ? "border-amber-200 bg-amber-100" : "border-slate-200 bg-slate-100"}`} />
+                  <article data-folder-card="true" key={pos.numero} className={`cartera-folder relative mt-4 flex h-full min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border transition duration-200 ${x ? "border-amber-200 bg-amber-50/40 shadow-[0_3px_14px_rgba(15,23,42,0.04)] hover:border-amber-300 hover:shadow-lg" : "border-dashed border-slate-200 bg-slate-50/60"}`}>
+                  <span aria-hidden="true" className={`cartera-folder-tab absolute -top-4 left-[-1px] h-4 w-24 rounded-t-xl border border-b-0 ${x ? "border-amber-200 bg-amber-100" : "border-slate-200 bg-slate-100"}`} />
                   <button
                     type="button"
                     onClick={() => x && setSeleccionado(x)}
