@@ -22,7 +22,7 @@ try{
   const values={referencia:[o.nombres,o.apellidos].filter(Boolean).join(' ').trim(),direccion:x.direccion,numero_direccion:x.numero_direccion,caracteristicas:sentence(x.caracteristicas?.replace(/^\s*SOLO PRUEBA\s*:\s*/i,'').trim()||null),observaciones:cleanNotes(x.observaciones)};
   if(!values.referencia)throw Error('Propietario sin nombre');
   if(!x.numero_direccion&&x.direccion){const match=x.direccion.trim().match(/^(.*?)\s+(\d+[A-Za-z]?)$/);if(match){values.direccion=match[1];values.numero_direccion=match[2];}}
-  const ownerValues={dni:/^(?:BETA|DEMO|PRUEBA)/i.test(o.dni||'')||o.dni==='00000000'?null:o.dni,email:/@(?:example\.invalid|example\.(?:com|org|net))$/i.test(o.email||'')?null:o.email,referencia_contacto:/fictici|SOLO PRUEBA/i.test(o.referencia_contacto||'')?null:o.referencia_contacto};
+  const ownerValues={dni:Number(x.datos_prueba)===1||/^(?:BETA|DEMO|PRUEBA)/i.test(o.dni||'')||o.dni==='00000000'?null:o.dni,email:/@(?:example\.invalid|example\.(?:com|org|net))$/i.test(o.email||'')?null:o.email,referencia_contacto:/fictici|SOLO PRUEBA/i.test(o.referencia_contacto||'')?null:o.referencia_contacto};
   const changed=fields.some(k=>values[k]!==x[k])||ownerFields.some(k=>ownerValues[k]!==o[k]);
   return {x,o,values,ownerValues,changed,posicion:positions.find(p=>Number(p.inmueble_id)===Number(x.id)).numero};
  });
