@@ -413,7 +413,7 @@ export default function CarteraPage() {
     return inmuebles.filter((x) => {
       const coincideTexto =
         !texto ||
-        `${propertyDisplayId(x)} ${x.id} ${x.posicion ?? ""} ${x.nombre} ${x.ubicacion} ${x.propietario}`
+        `${x.nombre} ${x.propietario} ${x.direccion ?? ""} ${x.distrito ?? ""} ${x.ubicacion}`
           .toLowerCase()
           .includes(texto);
 
@@ -564,7 +564,7 @@ export default function CarteraPage() {
 
         <section aria-label="Buscar y filtrar cartera" className="aa-card mt-5 p-4 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <label className="relative min-w-0 flex-1"><span className="sr-only">Buscar inmueble</span><span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><Icon name="search" /></span><input value={busqueda} onChange={event => setBusqueda(event.target.value)} placeholder="Código, inmueble, ubicación o propietario…" className="aa-input w-full pl-10" /></label>
+            <label className="relative min-w-0 flex-1"><span className="sr-only">Buscar inmueble</span><span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><Icon name="search" /></span><input value={busqueda} onChange={event => setBusqueda(event.target.value)} placeholder="Buscar por propietario o ubicación…" className="aa-input w-full pl-10" /></label>
             <div aria-label="Vista de la cartera" className="grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
               <button type="button" aria-pressed={vista === "posiciones"} onClick={() => setVista("posiciones")} className={`rounded-lg px-4 py-2 text-sm font-semibold ${vista === "posiciones" ? "bg-[#c80000] text-white" : "text-slate-600"}`}>Tarjetas</button>
               <button type="button" aria-pressed={vista === "lista"} onClick={() => { setVista("lista"); setSoloDisponibles(false); }} className={`rounded-lg px-4 py-2 text-sm font-semibold ${vista === "lista" ? "bg-[#c80000] text-white" : "text-slate-600"}`}>Lista compacta</button>
@@ -683,7 +683,7 @@ export default function CarteraPage() {
               {filtrados.map(x => <li key={x.id}>
                 <button type="button" onClick={() => setSeleccionado(x)} aria-label={`Ver detalle de ${x.nombre}, ${x.posicion ? `posición ${x.posicion}` : "sin posición"}`} className="group grid w-full grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 text-left transition hover:bg-red-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000] lg:grid-cols-[3rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.3fr)_6rem_7rem_minmax(0,1.5fr)] lg:py-3.5">
                   <span className="row-span-2 font-mono text-sm font-semibold text-slate-500 lg:row-span-1">{x.posicion ? String(x.posicion).padStart(2, "0") : "—"}</span>
-                  <span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[#c80000]" title={x.nombre}>{x.nombre}</span><span className="mt-0.5 block truncate text-xs text-slate-500 lg:hidden">{x.tipo} · {x.distrito || "Distrito por completar"} · {operationLabel(x.operacion)}</span></span>
+                  <span className="min-w-0"><span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[#c80000]" title={x.nombre}>{x.nombre}</span><span className="mt-0.5 block truncate text-xs text-slate-500" title={x.direccion || "Dirección por completar"}>{x.direccion || "Dirección por completar"}</span><span className="mt-0.5 block truncate text-xs text-slate-500 lg:hidden">{x.tipo} · {x.distrito || "Distrito por completar"} · {operationLabel(x.operacion)}</span></span>
                   <span className="hidden truncate text-sm text-slate-600 lg:block" title={x.tipo}>{x.tipo}</span>
                   <span className="hidden truncate text-sm text-slate-600 lg:block" title={x.distrito || "Distrito por completar"}>{x.distrito || "Por completar"}</span>
                   <span className="hidden text-sm text-slate-600 lg:block">{operationLabel(x.operacion)}</span>
