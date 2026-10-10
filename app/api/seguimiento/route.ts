@@ -9,7 +9,7 @@ import { inmInmuebles, inmTasaciones, inmPublicaciones, inmPropietarios } from '
 export async function GET(request: Request){
  const auth=await authorizeApi();if(auth.response)return auth.response;
  try{
- const modo=new URL(request.url).searchParams.get("modo")||"real";
+ const modo=new URL(request.url).searchParams.get("modo")||"todos";
  if(!["real","demo","todos"].includes(modo))return NextResponse.json({error:"Modo no válido."},{status:400});
  const scope=modo==="todos"?sql`1=1`:modo==="demo"?isDemoProperty:sql`NOT ${isDemoProperty}`;
  const activity=sql`CASE WHEN NOT ${visitDone} THEN 'visita' WHEN ${inmTasaciones.id} IS NULL THEN 'tasacion' WHEN NOT COALESCE(${readyFile},0) THEN 'expediente' ELSE 'publicacion' END`;

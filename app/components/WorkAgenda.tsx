@@ -42,10 +42,10 @@ export default function WorkAgenda() {
   return <section aria-labelledby="work-priorities-title" className="aa-card overflow-hidden">
     <header className="border-b border-slate-100 p-5 sm:p-6">
       <h2 id="work-priorities-title" className="text-lg font-bold">Prioridades de trabajo</h2>
-      <p className="mt-2 text-sm text-slate-600">Hasta 20 inmuebles por atender, ordenados por plazo. Fechas en hora de Perú.</p>
-      <p className="mt-2 text-xs text-slate-500">Incluye inmuebles activos de la cartera real. Los registros clasificados como prueba no aparecen aquí. El plazo automático usa la configuración general; puedes asignarlo en la ficha, en «Responsables y plazos».</p>
+      <p className="mt-2 text-sm text-slate-600">El siguiente paso pendiente de cada inmueble, ordenado por plazo.</p>
+      <p className="mt-2 text-xs text-slate-500">Fechas de Perú. Puedes ajustar el responsable y el plazo en la ficha, en «Responsables y plazos».</p>
     </header>
-    {loading ? <p className="p-5 text-sm">Cargando prioridades…</p> : error ? <p role="alert" className="p-5 text-sm text-red-700">{error}<button type="button" onClick={() => { setLoading(true); setReload(current => current + 1); }} className="ml-3 min-h-11 underline">Reintentar</button></p> : !items.length ? <p className="p-5 text-sm text-emerald-800">No hay próximos pasos pendientes en la cartera real consultada.</p> : groups.filter(group => group.items.length).map(group => <div key={group.label}>
+    {loading ? <p className="p-5 text-sm">Cargando prioridades…</p> : error ? <p role="alert" className="p-5 text-sm text-red-700">{error}<button type="button" onClick={() => { setLoading(true); setReload(current => current + 1); }} className="ml-3 min-h-11 underline">Reintentar</button></p> : !items.length ? <p className="p-5 text-sm text-emerald-800">No hay próximos pasos pendientes en la cartera.</p> : groups.filter(group => group.items.length).map(group => <div key={group.label}>
       <h3 className={`flex items-center justify-between bg-slate-50 px-5 py-3 text-sm font-bold ${group.tone}`}><span>{group.label}</span><span>{group.items.length}</span></h3>
       <div aria-hidden="true" className="hidden grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.2fr)_auto] gap-3 border-b border-slate-100 px-5 py-2 text-xs font-semibold text-slate-500 xl:grid"><span>Inmueble</span><span>Zona</span><span>Próxima acción</span><span>Responsable</span><span>Plazo</span><span>Abrir</span></div>
       <ul className="divide-y divide-slate-100">{group.items.map(item => <li key={item.id} className="grid min-w-0 gap-3 p-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.2fr)_auto] xl:items-center">
