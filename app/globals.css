@@ -87,3 +87,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .cartera-folder:active { transform: translateY(-2px); }
   .cartera-folder:active .cartera-folder-tab { transform: skewX(-5deg); }
 }
+
+.cartera-folder-navigation { transition: transform 180ms ease, background-color 180ms ease; }
+.cartera-folder-navigation svg { transform-origin: bottom left; transition: transform 180ms ease; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .cartera-folder-navigation:hover, .cartera-folder-navigation:focus-visible { transform: translateY(-2px); }
+  .cartera-folder-navigation:hover svg, .cartera-folder-navigation:focus-visible svg { transform: rotate(-6deg); }
+}
+@media (hover: none) and (prefers-reduced-motion: no-preference) {
+  .cartera-folder-navigation:active svg { transform: rotate(-6deg); }
+}
