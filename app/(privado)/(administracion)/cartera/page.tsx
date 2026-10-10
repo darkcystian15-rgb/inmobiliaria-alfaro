@@ -283,6 +283,7 @@ export default function CarteraPage() {
   const [estado, setEstado] = useState<"Todos" | Estado>("Activo");
   const [operacion, setOperacion] = useState("Todos");
   const [tipo, setTipo] = useState("Todos");
+  const [distrito, setDistrito] = useState("Todos");
   const [actividad, setActividad] =
     useState<FiltroActividad>("Todas");
   const [soloDisponibles, setSoloDisponibles] = useState(false);
@@ -403,6 +404,8 @@ export default function CarteraPage() {
     return [...unicos.values()].sort((a, b) => a.localeCompare(b, "es-PE"));
   }, [activos]);
 
+  const distritosFiltro = useMemo(() => [...new Set(inmuebles.map(x => x.distrito?.trim()).filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, "es-PE")), [inmuebles]);
+
   const filtrados = useMemo(() => {
     const texto = busqueda.toLowerCase().trim();
 
@@ -425,6 +428,7 @@ export default function CarteraPage() {
       return (
         (estado === "Todos" || x.estado === estado) &&
         (tipo === "Todos" || x.tipo === tipo) &&
+        (distrito === "Todos" || x.distrito?.trim() === distrito) &&
         (operacion === "Todos" || x.operacion === operacion) &&
         coincideActividad &&
         coincideTexto
@@ -435,6 +439,7 @@ export default function CarteraPage() {
     estado,
     tipo,
     operacion,
+    distrito,
     actividad,
     busqueda,
   ]);
@@ -463,6 +468,7 @@ export default function CarteraPage() {
     setSoloDisponibles(false);
     setEstado("Activo");
     setTipo("Todos");
+    setDistrito("Todos");
     setOperacion("Todos");
     setActividad("Todas");
     setBusqueda("");
@@ -473,6 +479,7 @@ export default function CarteraPage() {
     Boolean(busqueda) ||
     estado !== "Activo" ||
     tipo !== "Todos" ||
+    distrito !== "Todos" ||
     operacion !== "Todos" ||
     actividad !== "Todas";
 
@@ -562,10 +569,11 @@ export default function CarteraPage() {
             <div className="grid gap-3 sm:grid-cols-3">
               <label className="text-xs font-semibold text-slate-600">Estado<select value={estado} onChange={event => { setEstado(event.target.value as "Todos" | Estado); setSoloDisponibles(false); }} className="aa-input mt-2 w-full"><option>Activo</option><option>Todos</option><option>Histórico</option></select></label>
               <label className="text-xs font-semibold text-slate-600">Operación<OperationSelect filter value={operacion} onChange={setOperacion} className="aa-input mt-2 w-full" /></label><label className="text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect filter value={tipo} onChange={setTipo} className="aa-input mt-2 w-full" /></label>
+              <label className="text-xs font-semibold text-slate-600">Distrito<select value={distrito} onChange={event => { setDistrito(event.target.value); setSoloDisponibles(false); }} className="aa-input mt-2 w-full"><option value="Todos">Todos los distritos</option>{distritosFiltro.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
               <label className="text-xs font-semibold text-slate-600">Actividad<select value={actividad} onChange={event => setActividad(event.target.value as FiltroActividad)} className="aa-input mt-2 w-full">{["Todas", "Visita pendiente", "Tasación pendiente", "Material pendiente"].map(value => <option key={value}>{value}</option>)}</select></label>
             </div>
           </ResponsiveFilters></div>
-          {tieneFiltros && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3"><p className="text-xs text-slate-600">{soloDisponibles ? "Mostrando solamente posiciones libres" : `${estado} · ${tipo} · ${actividad}`}</p><button type="button" onClick={limpiarFiltros} className="text-sm font-semibold text-[#c80000]">Limpiar filtros</button></div>}
+          {tieneFiltros && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3"><p className="text-xs text-slate-600">{soloDisponibles ? "Mostrando solamente posiciones libres" : `${estado} · ${tipo} · ${distrito} · ${actividad}`}</p><button type="button" onClick={limpiarFiltros} className="text-sm font-semibold text-[#c80000]">Limpiar filtros</button></div>}
         </section>
 
         {/* RESULTADOS */}
