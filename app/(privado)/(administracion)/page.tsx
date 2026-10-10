@@ -1,5 +1,6 @@
 "use client";
 
+import FolderIcon from "@/app/components/FolderIcon";
 import RentalAlerts from "@/app/components/RentalAlerts";
 import WorkAgenda from "@/app/components/WorkAgenda";
 import PageHeading from "@/app/components/PageHeading";
@@ -84,8 +85,8 @@ export default function Home() {
           {work.length ? <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{work.map(item => {
             const target = destinations[item.etapa] ?? { href: "/cartera", action: "Ver cartera" };
             const progress = item.etapa === "En negociación";
-            return <Link key={item.etapa} href={target.href} className={`group flex min-w-0 flex-col rounded-2xl border p-4 transition hover:shadow-md ${progress ? "border-blue-200 bg-blue-50/50" : "border-amber-200 bg-amber-50/40"}`}>
-              <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-3xl font-bold tabular-nums text-slate-950">{item.total}</span><StatusBadge tone={progress ? "progress" : "pending"}>{progress ? "En proceso" : "Pendiente"}</StatusBadge></div><h3 className="mt-3 text-sm font-bold text-slate-900">{item.etapa}</h3><span className="mt-4 text-sm font-semibold text-slate-800 group-hover:underline">{target.action} →</span>
+            return <Link key={item.etapa} href={target.href} className={`cartera-folder group relative mt-5 flex min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border p-4 transition hover:shadow-md ${progress ? "border-blue-200 bg-blue-50/50" : "border-amber-200 bg-amber-50/40"}`}>
+              <span aria-hidden="true" className="cartera-folder-tab absolute -top-5 -left-px h-5 w-24 rounded-t-lg border border-b-0 border-amber-200 bg-amber-100" /><div className="mb-3 flex items-center justify-between gap-2"><FolderIcon /><span className="text-xs font-semibold text-slate-500">Abrir carpeta</span></div><div className="flex flex-wrap items-center justify-between gap-2"><span className="text-3xl font-bold tabular-nums text-slate-950">{item.total}</span><StatusBadge tone={progress ? "progress" : "pending"}>{progress ? "En proceso" : "Pendiente"}</StatusBadge></div><h3 className="mt-3 text-sm font-bold text-slate-900">{item.etapa}</h3><span className="mt-4 text-sm font-semibold text-slate-800 group-hover:underline">{target.action} →</span>
             </Link>;
           })}</div> : <p className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">✓ No hay visitas, tasaciones, expedientes ni publicaciones pendientes en las áreas consultadas.</p>}
         </details>
@@ -94,7 +95,7 @@ export default function Home() {
           <section className="aa-card overflow-hidden"><div className="border-b border-slate-100 p-5"><h2 className="text-lg font-bold text-slate-900">Avances recientes</h2><p className="mt-1 text-sm text-slate-600">Últimos movimientos registrados.</p></div><div className="divide-y divide-slate-100">{data.recientes.length ? data.recientes.map((item, index) => <div key={`${item.numero}-${index}`} className="flex items-start gap-3 p-4 sm:p-5"><span className="flex h-10 min-w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-2 font-mono text-sm font-bold text-slate-700">{item.numero}</span><div className="min-w-0 flex-1"><p className="break-words text-sm font-semibold text-slate-900">{item.nombre}</p><p className="mt-1 text-sm text-slate-600">{item.etapa}</p><p className="mt-2 text-xs text-slate-500">{item.fecha ? new Date(item.fecha).toLocaleDateString("es-PE", { timeZone: "America/Lima", day: "numeric", month: "short" }) : "Sin fecha"}</p></div></div>) : <p className="p-5 text-sm text-slate-600">Todavía no hay movimientos registrados.</p>}</div></section>
         </div>
       </>}
-      <section className="aa-card p-5 sm:p-6"><h2 className="text-lg font-bold text-slate-900">Acciones rápidas</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[["Registrar visita", "/registrar-visitas"], ["Registrar tasación", "/registrar-tasaciones"], ["Completar material", "/tasaciones-textos-pendientes#material"], ["Consultar fichas", "/datos-inmuebles"]].map(([label, href]) => <Link key={href} href={href} className="aa-button aa-button-secondary justify-between">{label}<span aria-hidden="true">→</span></Link>)}</div></section>
+      <section className="aa-card p-5 sm:p-6"><h2 className="text-lg font-bold text-slate-900">Acciones rápidas</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[["Registrar visita", "/registrar-visitas"], ["Registrar tasación", "/registrar-tasaciones"], ["Completar material", "/tasaciones-textos-pendientes#material"], ["Consultar fichas", "/datos-inmuebles"]].map(([label, href]) => <Link key={href} href={href} className="cartera-folder-navigation aa-button aa-button-secondary justify-between border-amber-200 bg-amber-50/40"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />{label}<span aria-hidden="true">→</span></Link>)}</div></section>
     </div>
   </main>;
 }
