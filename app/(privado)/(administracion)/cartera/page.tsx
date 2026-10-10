@@ -284,6 +284,7 @@ export default function CarteraPage() {
   const [operacion, setOperacion] = useState("Todos");
   const [tipo, setTipo] = useState("Todos");
   const [distrito, setDistrito] = useState("Todos");
+  const [posicionFiltro, setPosicionFiltro] = useState("Todas");
   const [actividad, setActividad] =
     useState<FiltroActividad>("Todas");
   const [soloDisponibles, setSoloDisponibles] = useState(false);
@@ -429,6 +430,7 @@ export default function CarteraPage() {
         (estado === "Todos" || x.estado === estado) &&
         (tipo === "Todos" || x.tipo === tipo) &&
         (distrito === "Todos" || x.distrito?.trim() === distrito) &&
+        (posicionFiltro === "Todas" || (posicionFiltro === "sin" ? x.posicion == null : x.posicion === Number(posicionFiltro))) &&
         (operacion === "Todos" || x.operacion === operacion) &&
         coincideActividad &&
         coincideTexto
@@ -440,6 +442,7 @@ export default function CarteraPage() {
     tipo,
     operacion,
     distrito,
+    posicionFiltro,
     actividad,
     busqueda,
   ]);
@@ -469,6 +472,7 @@ export default function CarteraPage() {
     setEstado("Activo");
     setTipo("Todos");
     setDistrito("Todos");
+    setPosicionFiltro("Todas");
     setOperacion("Todos");
     setActividad("Todas");
     setBusqueda("");
@@ -480,6 +484,7 @@ export default function CarteraPage() {
     estado !== "Activo" ||
     tipo !== "Todos" ||
     distrito !== "Todos" ||
+    posicionFiltro !== "Todas" ||
     operacion !== "Todos" ||
     actividad !== "Todas";
 
@@ -569,11 +574,12 @@ export default function CarteraPage() {
             <div className="grid gap-3 sm:grid-cols-3">
               <label className="text-xs font-semibold text-slate-600">Estado<select value={estado} onChange={event => { setEstado(event.target.value as "Todos" | Estado); setSoloDisponibles(false); }} className="aa-input mt-2 w-full"><option>Activo</option><option>Todos</option><option>Histórico</option></select></label>
               <label className="text-xs font-semibold text-slate-600">Operación<OperationSelect filter value={operacion} onChange={setOperacion} className="aa-input mt-2 w-full" /></label><label className="text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect filter value={tipo} onChange={setTipo} className="aa-input mt-2 w-full" /></label>
+              <label className="text-xs font-semibold text-slate-600">Posición<select value={posicionFiltro} onChange={event => setPosicionFiltro(event.target.value)} className="aa-input mt-2 w-full"><option value="Todas">Todas las posiciones</option>{[...new Set([...posiciones.map(p => p.numero), ...inmuebles.flatMap(x => x.posicion == null ? [] : [x.posicion])])].sort((a, b) => a - b).map(numero => <option key={numero} value={String(numero)}>Posición {String(numero).padStart(2, "0")}</option>)}<option value="sin">Sin posición</option></select></label>
               <label className="text-xs font-semibold text-slate-600">Distrito<select value={distrito} onChange={event => { setDistrito(event.target.value); setSoloDisponibles(false); }} className="aa-input mt-2 w-full"><option value="Todos">Todos los distritos</option>{distritosFiltro.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
               <label className="text-xs font-semibold text-slate-600">Actividad<select value={actividad} onChange={event => setActividad(event.target.value as FiltroActividad)} className="aa-input mt-2 w-full">{["Todas", "Visita pendiente", "Tasación pendiente", "Material pendiente"].map(value => <option key={value}>{value}</option>)}</select></label>
             </div>
           </ResponsiveFilters></div>
-          {tieneFiltros && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3"><p className="text-xs text-slate-600">{soloDisponibles ? "Mostrando solamente posiciones libres" : `${estado} · ${tipo} · ${distrito} · ${actividad}`}</p><button type="button" onClick={limpiarFiltros} className="text-sm font-semibold text-[#c80000]">Limpiar filtros</button></div>}
+          {tieneFiltros && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3"><p className="text-xs text-slate-600">{soloDisponibles ? "Mostrando solamente posiciones libres" : `${estado} · ${tipo} · ${distrito} · ${posicionFiltro === "Todas" ? "Todas las posiciones" : posicionFiltro === "sin" ? "Sin posición" : `Posición ${posicionFiltro}`} · ${actividad}`}</p><button type="button" onClick={limpiarFiltros} className="text-sm font-semibold text-[#c80000]">Limpiar filtros</button></div>}
         </section>
 
         {/* RESULTADOS */}
@@ -586,7 +592,7 @@ export default function CarteraPage() {
             </h2>
 
             <p className="mt-1 text-xs text-slate-500">
-              Mostrando {soloDisponibles ? posiciones.filter(pos => pos.disponible).length : filtrados.length} registro
+              Mostrando {soloDisponibles ? posiciones.filter(pos => pos.disponible && (posicionFiltro === "Todas" || posicionFiltro === String(pos.numero))).length : filtrados.length} registro
               {filtrados.length === 1 ? "" : "s"} con los
               filtros actuales.
             </p>
@@ -612,7 +618,9 @@ export default function CarteraPage() {
                   pos.numero
                 );
 
-                const visible = soloDisponibles ? !x : x ? filtrados.some(item => item.inmuebleId === x.inmuebleId) : !tieneFiltros;
+                const coincidePosicion = posicionFiltro === "Todas" || posicionFiltro === String(pos.numero);
+                const soloFiltroPosicion = posicionFiltro !== "Todas" && !busqueda && tipo === "Todos" && distrito === "Todos" && operacion === "Todos" && actividad === "Todas" && estado === "Activo";
+                const visible = coincidePosicion && (soloDisponibles ? !x : x ? filtrados.some(item => item.inmuebleId === x.inmuebleId) : soloFiltroPosicion || !tieneFiltros);
 
                 if (!visible) {
                   return null;
