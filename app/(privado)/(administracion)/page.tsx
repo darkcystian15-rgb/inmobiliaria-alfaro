@@ -15,7 +15,7 @@ import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 type DashboardData = {
   resumen: { activos: number; posicionesDisponibles: number; visitasPendientes: number; tasacionesPendientes: number; aprobaciones: number; negociaciones: number; textosPendientes: number; listosParaPublicar: number };
   pendientes: { etapa: string; total: number; tone: string }[];
-  recientes: { numero: string; nombre: string; etapa: string; fecha: string | null }[];
+  recientes: { inmuebleId: number; numero: string; nombre: string; etapa: string; fecha: string | null }[];
 };
 const destinations: Record<string, { href: string; action: string }> = {
   "Visita pendiente": { href: "/visitas-pendientes", action: "Revisar visitas" },
@@ -91,9 +91,17 @@ export default function Home() {
           })}</div> : <p className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">✓ No hay visitas, tasaciones, expedientes ni publicaciones pendientes en las áreas consultadas.</p>}
         </details>
 
-        <div className="grid items-start gap-5">
-          <section className="aa-card overflow-hidden"><div className="border-b border-slate-100 p-5"><h2 className="text-lg font-bold text-slate-900">Avances recientes</h2><p className="mt-1 text-sm text-slate-600">Últimos movimientos registrados.</p></div><div className="divide-y divide-slate-100">{data.recientes.length ? data.recientes.map((item, index) => <div key={`${item.numero}-${index}`} className="flex items-start gap-3 p-4 sm:p-5"><span className="flex h-10 min-w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-2 font-mono text-sm font-bold text-slate-700">{item.numero}</span><div className="min-w-0 flex-1"><p className="break-words text-sm font-semibold text-slate-900">{item.nombre}</p><p className="mt-1 text-sm text-slate-600">{item.etapa}</p><p className="mt-2 text-xs text-slate-500">{item.fecha ? new Date(item.fecha).toLocaleDateString("es-PE", { timeZone: "America/Lima", day: "numeric", month: "short" }) : "Sin fecha"}</p></div></div>) : <p className="p-5 text-sm text-slate-600">Todavía no hay movimientos registrados.</p>}</div></section>
-        </div>
+        <section aria-labelledby="recent-progress-title" className="aa-card overflow-hidden">
+          <header className="border-b border-slate-100 px-4 py-3 sm:px-5"><h2 id="recent-progress-title" className="text-lg font-bold text-slate-900">Avances recientes</h2><p className="mt-1 text-xs text-slate-500">Últimos cinco movimientos · Hora de Perú</p></header>
+          <div aria-hidden="true" className="hidden grid-cols-[3rem_minmax(0,1.5fr)_minmax(0,1.5fr)_8rem_7rem] gap-3 bg-slate-50 px-5 py-2 text-xs font-semibold text-slate-500 lg:grid"><span>Pos.</span><span>Inmueble</span><span>Cambio realizado</span><span>Fecha</span><span>Historial</span></div>
+          <ul className="divide-y divide-slate-100">{data.recientes.length ? data.recientes.map((item, index) => <li key={`${item.inmuebleId}-${index}`} className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1 px-4 py-3 lg:grid-cols-[3rem_minmax(0,1.5fr)_minmax(0,1.5fr)_8rem_7rem] lg:px-5">
+            <span className="row-span-3 font-mono text-sm font-semibold text-slate-500 lg:row-span-1">{item.numero}</span>
+            <span className="truncate text-sm font-semibold text-slate-900" title={item.nombre}>{item.nombre}</span>
+            <span className="col-start-2 break-words text-xs text-slate-600 lg:col-start-auto lg:text-sm">{item.etapa}</span>
+            <time dateTime={item.fecha ?? undefined} className="col-start-2 text-xs text-slate-500 lg:col-start-auto">{item.fecha ? new Date(item.fecha).toLocaleString("es-PE", { timeZone: "America/Lima", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "Sin fecha"}</time>
+            <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}#historial`} aria-label={`Ver historial de ${item.nombre}`} className="col-start-2 inline-flex min-h-11 items-center text-xs font-semibold text-[#c80000] hover:underline lg:col-start-auto">Ver historial →</Link>
+          </li>) : <li className="px-5 py-4 text-sm text-slate-600">Todavía no hay movimientos registrados.</li>}</ul>
+        </section>
       </>}
       <section className="aa-card p-5 sm:p-6"><h2 className="text-lg font-bold text-slate-900">Acciones rápidas</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[["Registrar visita", "/registrar-visitas"], ["Registrar tasación", "/registrar-tasaciones"], ["Completar material", "/tasaciones-textos-pendientes#material"], ["Consultar fichas", "/datos-inmuebles"]].map(([label, href]) => <Link key={href} href={href} className="cartera-folder-navigation aa-button aa-button-secondary justify-between border-amber-200 bg-amber-50/40"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />{label}<span aria-hidden="true">→</span></Link>)}</div></section>
     </div>

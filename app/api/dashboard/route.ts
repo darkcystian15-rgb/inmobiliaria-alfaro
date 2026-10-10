@@ -17,6 +17,12 @@ import {
 } from "@/db/schema";
 
 const eventoMap: Record<string, string> = {
+  ficha_organizada: "Ficha actualizada",
+  ficha_actualizada: "Ficha actualizada",
+  propietario_actualizado: "Datos del propietario actualizados",
+  propietario_vinculado: "Propietario vinculado",
+  seguimiento_actualizado: "Responsable o plazo actualizado",
+  anuncio_actualizado: "Anuncio actualizado",
   alquiler_renovado: "Alquiler renovado",
   alquiler_reingresado: "Alquiler reingresado a cartera",
   inmueble_registrado: "Inmueble registrado",
@@ -92,6 +98,7 @@ export async function GET(request: Request) {
 
       db
         .select({
+          inmuebleId: inmInmuebles.id,
           numero: inmPosiciones.numero,
           nombre: inmInmuebles.referencia,
           evento: inmTimeline.evento,
@@ -114,7 +121,7 @@ export async function GET(request: Request) {
           )
         )
         .where(scopeFilter)
-        .orderBy(desc(inmTimeline.fechaEvento))
+        .orderBy(desc(inmTimeline.fechaEvento), desc(inmTimeline.id))
         .limit(5),
 
       db
@@ -271,11 +278,12 @@ export async function GET(request: Request) {
         },
       ],
       recientes: recientes.map((item) => ({
+        inmuebleId: item.inmuebleId,
         numero: item.numero
           ? String(item.numero).padStart(2, "0")
           : "—",
         nombre: item.nombre,
-        etapa: eventoMap[item.evento] ?? item.evento,
+        etapa: eventoMap[item.evento] ?? item.evento.replaceAll("_", " ").replace(/^./, character => character.toUpperCase()),
         fecha: item.fecha,
       })),
     });
