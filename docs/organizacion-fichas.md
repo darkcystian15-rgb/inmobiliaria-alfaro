@@ -18,3 +18,11 @@ node scripts/organize-property-records.mjs --apply
 ```
 
 Los respaldos contienen datos privados y deben conservarse fuera del repositorio público.
+
+## Cartera por zonas
+
+La entrada `/cartera` muestra las zonas existentes en las fichas, con sus conteos de activos e históricos. Seleccionar una zona abre su lista compacta; la selección queda en `?zona=...` para conservarla al recargar y navegar con Atrás. «Volver a zonas» regresa a la entrada y «Ver listado general» reúne todas las fichas.
+
+La búsqueda y los filtros se aplican dentro de la zona. Limpiar filtros conserva la zona. Los inmuebles sin ubicación quedan agrupados en «Sin zona registrada». Las posiciones libres son globales y se identifican así, porque no tienen una zona asignada. Se conservan el detalle y la ficha completa.
+
+El catálogo comercial y las fichas de Casma que usaban «Comandante Noel» se actualizaron a «Tortugas» por indicación del administrador. La modificación se registró en la auditoría existente.
