@@ -6,7 +6,8 @@ if (!process.env.DATABASE_URL) throw new Error('Falta DATABASE_URL');
 const db = await mysql.createConnection({uri:process.env.DATABASE_URL,dateStrings:true,...(process.env.DATABASE_SSL_CA||process.env.DATABASE_TLS_REQUIRED==='1'?{ssl:{rejectUnauthorized:true,...(process.env.DATABASE_SSL_CA?{ca:process.env.DATABASE_SSL_CA.replace(/\\n/g,'\n')}: {})}}:{})});
 const sentence=value=>value?value.charAt(0).toLocaleUpperCase('es-PE')+value.slice(1):null;
 const fields=['referencia','direccion','numero_direccion','caracteristicas','observaciones'];
-const ownerFields=['dni','email','referencia_contacto'];
+const ownerFields=['dni','email','referencia_contacto','nombres','apellidos'];
+const cleanName=value=>value.replace(/\s*\((?:fictici[oa]|simulad[oa]|datos de prueba)\)\s*/gi,' ').trim();
 const cleanNotes=value=>value?.split(/\r?\n/).filter(line=>!/^\s*(SOLO PRUEBA\s*:|Dirección ficticia agregada para demostración)/i.test(line)).join('\n').trim()||null;
 const backupRoot=resolve(process.env.PROPERTY_BACKUP_DIR||'restore-points');
 try{
@@ -19,10 +20,10 @@ try{
  if(!reference||target.length!==12)throw Error('No se encontró la ficha 13 y exactamente 12 fichas anteriores');
  const plans=target.map(x=>{
   const o=owners.find(p=>Number(p.id)===Number(x.propietario_id));if(!o)throw Error('Falta propietario en ficha '+x.id);
-  const values={referencia:[o.nombres,o.apellidos].filter(Boolean).join(' ').trim(),direccion:x.direccion,numero_direccion:x.numero_direccion,caracteristicas:sentence(x.caracteristicas?.replace(/^\s*SOLO PRUEBA\s*:\s*/i,'').trim()||null),observaciones:cleanNotes(x.observaciones)};
+  const values={referencia:[cleanName(o.nombres),cleanName(o.apellidos)].filter(Boolean).join(' ').trim(),direccion:x.direccion,numero_direccion:x.numero_direccion,caracteristicas:sentence(x.caracteristicas?.replace(/^\s*SOLO PRUEBA\s*:\s*/i,'').trim()||null),observaciones:cleanNotes(x.observaciones)};
   if(!values.referencia)throw Error('Propietario sin nombre');
   if(!x.numero_direccion&&x.direccion){const match=x.direccion.trim().match(/^(.*?)\s+(\d+[A-Za-z]?)$/);if(match){values.direccion=match[1];values.numero_direccion=match[2];}}
-  const ownerValues={dni:Number(x.datos_prueba)===1||/^(?:BETA|DEMO|PRUEBA)/i.test(o.dni||'')||o.dni==='00000000'?null:o.dni,email:/@(?:example\.invalid|example\.(?:com|org|net))$/i.test(o.email||'')?null:o.email,referencia_contacto:/fictici|SOLO PRUEBA/i.test(o.referencia_contacto||'')?null:o.referencia_contacto};
+  const ownerValues={nombres:cleanName(o.nombres),apellidos:cleanName(o.apellidos),dni:Number(x.datos_prueba)===1||/^(?:BETA|DEMO|PRUEBA)/i.test(o.dni||'')||o.dni==='00000000'?null:o.dni,email:/@(?:example\.invalid|example\.(?:com|org|net))$/i.test(o.email||'')?null:o.email,referencia_contacto:/fictici|SOLO PRUEBA/i.test(o.referencia_contacto||'')?null:o.referencia_contacto};
   const changed=fields.some(k=>values[k]!==x[k])||ownerFields.some(k=>ownerValues[k]!==o[k]);
   return {x,o,values,ownerValues,changed,posicion:positions.find(p=>Number(p.inmueble_id)===Number(x.id)).numero};
  });
