@@ -483,7 +483,7 @@ export default function CarteraPage() {
 
         <p className="mt-4 text-sm text-slate-600">Consulta los inmuebles en la lista compacta y abre su ficha para ver todos los datos. La vista de tarjetas permite revisar las posiciones ocupadas y disponibles.</p>
         {/* INDICADORES */}
-        <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[
             {
               label: "En cartera",
@@ -498,28 +498,16 @@ export default function CarteraPage() {
               icon: "map" as const,
             },
             {
-              label: "Visitas",
+              label: "Visitas pendientes",
               value: resumen.visitasPendientes,
-              detail: "pendientes",
+              detail: "Visitas pendientes",
               icon: "clock" as const,
             },
             {
-              label: "Tasaciones",
+              label: "Tasaciones pendientes",
               value: resumen.tasacionesPendientes,
-              detail: "pendientes",
+              detail: "Tasaciones pendientes",
               icon: "chart" as const,
-            },
-            {
-              label: "Material",
-              value: resumen.materialPendiente,
-              detail: "pendiente",
-              icon: "camera" as const,
-            },
-            {
-              label: "Publicados",
-              value: inmuebles.filter(item => item.actividades.publicacion.publicado).length,
-              detail: "en cartera",
-              icon: "handshake" as const,
             },
           ].map((item) => (
             <div
@@ -540,9 +528,9 @@ export default function CarteraPage() {
                 {item.value}
               </p>
 
-              <p className="mt-1 text-xs font-semibold text-slate-500">
+              {!["Visitas pendientes", "Tasaciones pendientes"].includes(item.label) && <p className="mt-1 text-xs font-semibold text-slate-500">
                 {item.label}
-              </p>
+              </p>}
             </div>
           ))}
         </div>
