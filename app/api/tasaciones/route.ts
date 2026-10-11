@@ -37,6 +37,7 @@ function mapRow(row: TasacionRow) {
     id: row.tasacionId ?? null,
     inmuebleId: row.inmuebleId,
     codigo: row.codigo,
+    distrito: row.distrito,
     posicion: row.posicion
       ? String(row.posicion).padStart(2, "0")
       : "—",
