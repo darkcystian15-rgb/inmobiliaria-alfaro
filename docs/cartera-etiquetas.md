@@ -7,3 +7,5 @@ Los estados usan fondo suave, borde y texto: visita pendiente en ámbar, tasaci�
 Punto de recuperación anterior: etiqueta Git `recuperacion-antes-etiquetas-cartera-20261011`, commit `d6cc2c1edab88af52e4eb00dec091ba7866411eb`. Para deshacer únicamente este cambio se debe revertir el commit del listado con etiquetas y publicar el revert en `main`; así se conservan otros cambios posteriores.
 
 Verificación: TypeScript, ESLint y navegador para orden de los datos, cuatro colores diferentes, apertura de fila y ancho móvil sin desbordamiento. La vista previa usa ejemplos, no modifica inmuebles de la base de datos.
+
+La revisión a filas de dos líneas conserva solo las etiquetas de estado. La compilación completa de producción con Next.js pasó, además de la revisión en escritorio y celular.
