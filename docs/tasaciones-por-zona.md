@@ -7,3 +7,5 @@ Cada carpeta reúne los inmuebles de la bandeja, sin duplicar su total, y muestr
 «Zona actual» destaca la zona abierta. «Volver a zonas» vuelve a las carpetas y «Ver listado general» muestra toda la bandeja. Los accesos por inmueble y los enlaces a secciones siguen disponibles.
 
 El indicador de tasaciones en cartera abre `/tasaciones-textos-pendientes?zona=<zona>`. Las APIs incluyen distrito para filtrar la bandeja, sin cambiar sus reglas de escritura.
+
+El diseño sigue Visitas pendientes: carpetas con pestaña y animación, contexto de zona destacado en violeta y navegación a zonas/listado general. Las cuatro tarjetas tienen iconos, colores por actividad y acceso a su sección, conservando la zona abierta. Desde las carpetas, una tarjeta abre la sección del listado general.

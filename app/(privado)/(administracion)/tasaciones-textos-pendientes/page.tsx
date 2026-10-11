@@ -65,7 +65,8 @@ function TasacionesTextosContent() {
     const sync = () => setFragment(window.location.hash);
     const timer = window.setTimeout(sync, 0);
     window.addEventListener("hashchange", sync);
-    return () => { window.clearTimeout(timer); window.removeEventListener("hashchange", sync); };
+    window.addEventListener("popstate", sync);
+    return () => { window.clearTimeout(timer); window.removeEventListener("hashchange", sync); window.removeEventListener("popstate", sync); };
   }, []);
   const zone = searchParams.get("zona") || (selectedId || fragment ? ALL_ZONES : null);
   function abrirZona(value: string | null) {
@@ -75,6 +76,7 @@ function TasacionesTextosContent() {
     url.hash = "";
     setFragment("");
     window.history.pushState(null, "", url.pathname + url.search);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
   const materialBase=useRef<Record<number,string>>({});
   const [registradas, setRegistradas] = useState<Item[]>([]);
@@ -335,10 +337,31 @@ function TasacionesTextosContent() {
   const visiblesAprobadas = aprobadas.filter(matches);
   const visiblesListos = listos.filter(matches);
   const visiblesPublicadas = publicadas.filter(matches);
+  const scope = zone && zone !== ALL_ZONES ? `en ${zone}` : "en todas las zonas";
+  const cards = [
+    { id: "tasaciones", label: "Tasaciones negociadas", count: visiblesRegistradas.length, note: "Revisar precios acordados", icon: "price", color: "border-violet-200 bg-violet-50/70 text-violet-950", accent: "text-violet-700", badge: "bg-violet-100" },
+    { id: "material", label: "Texto pendiente", count: visiblesAprobadas.length, note: "Preparar texto y material", icon: "text", color: "border-amber-200 bg-amber-50/70 text-amber-950", accent: "text-amber-700", badge: "bg-amber-100" },
+    { id: "listos", label: "Listos para publicar", count: visiblesListos.filter(item => item.expediente?.complete).length, note: "Revisar y confirmar publicación", icon: "ready", color: "border-blue-200 bg-blue-50/70 text-blue-950", accent: "text-blue-700", badge: "bg-blue-100" },
+    { id: "publicados", label: "Publicados", count: visiblesPublicadas.length, note: "Consultar o corregir material", icon: "published", color: "border-emerald-200 bg-emerald-50/70 text-emerald-950", accent: "text-emerald-700", badge: "bg-emerald-100" },
+  ];
+  function irASeccion(id: string) {
+    const url = new URL(window.location.href);
+    if (zone === null) url.searchParams.set("zona", ALL_ZONES);
+    url.hash = id;
+    window.history.pushState(null, "", url.pathname + url.search + url.hash);
+    setFragment(url.hash);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  useEffect(() => {
+    if (!fragment || cargando || zone === null) return;
+    const frame = window.requestAnimationFrame(() => document.getElementById(fragment.slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [fragment, cargando, zone]);
+
 
   return (
     <main className="min-h-screen bg-[#f7f7f5] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-[1500px]">
       <DraftRecovery draftKey="textos:actual" data={{textos,textosListos}} dirty={Object.values(textos).some(Boolean)||[...listos,...publicadas].some(item=>textosListos[item.inmuebleId]!==undefined&&textosListos[item.inmuebleId]!==item.texto)} onRestore={draft=>{if(draft.textos)setTextos(draft.textos as Record<number,string>);if(draft.textosListos)setTextosListos(draft.textosListos as Record<number,string>);}}/>
         {/* ENCABEZADO */}
 
@@ -347,7 +370,7 @@ function TasacionesTextosContent() {
 
           <a
             href="/registrar-tasaciones"
-            className="inline-flex h-10 items-center justify-center rounded-xl bg-[#171717] px-4 text-sm font-semibold text-white transition hover:bg-black"
+            className="inline-flex h-10 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800"
           >
             Registrar tasaciones
           </a>
@@ -359,57 +382,51 @@ function TasacionesTextosContent() {
 
         {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
 
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          {zone !== null ? <><button type="button" onClick={() => abrirZona(null)} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">← Volver a zonas</button><ZoneContext name={zone === ALL_ZONES ? "Listado general" : zone} general={zone === ALL_ZONES} /></> : <button type="button" onClick={() => abrirZona(ALL_ZONES)} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">Ver listado general</button>}
-        </div>
-
-        {/* RESUMEN */}
-
-        <section className="mb-7 rounded-3xl bg-[#171717] p-5 text-white shadow-sm sm:p-6">
-          <div className="mb-5">
-            <div className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
-              Bandeja de seguimiento
-            </div>
-
-            <h2 className="mt-1 text-lg font-bold">
-              Qué necesita atención ahora
-            </h2>
-
-            <p className="mt-1 text-sm text-white/80">
-              El inmueble avanza por actividades reales,
-              no por una etapa artificial.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[["Tasaciones negociadas", visiblesRegistradas.length], ["Texto pendiente", visiblesAprobadas.length], ["Listos para publicar", visiblesListos.filter(item=>item.expediente?.complete).length], ["Publicados", visiblesPublicadas.length]].map(([label, count]) => <div key={label} className="rounded-2xl bg-white/[0.07] p-4"><p className="text-xs text-white/75">{label}</p><p className="mt-2 text-2xl font-bold">{count}</p></div>)}
+        <section className="mb-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-300">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Revisa los precios, prepara el material y confirma la publicación.</p></div>
+            <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1.5 text-xs font-bold text-amber-200">{cargando ? "…" : visiblesAprobadas.length} textos pendientes</span>
           </div>
         </section>
+        <section aria-label="Resumen y accesos de la bandeja" className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {cards.map(card => <button key={card.id} type="button" disabled={cargando} onClick={() => irASeccion(card.id)} className={`rounded-2xl border p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600 disabled:opacity-60 ${card.color}`}>
+            <span className="flex items-center justify-between gap-3"><span className={`text-xs font-semibold uppercase tracking-wide ${card.accent}`}>{card.label}</span><span className={`rounded-xl p-2 ${card.badge} ${card.accent}`}><WorkflowIcon kind={card.icon} /></span></span>
+            <span className="mt-2 block text-3xl font-bold">{cargando ? "…" : card.count}</span>
+            <span className={`mt-1 block text-xs ${card.accent}`}>{scope}</span>
+            <span className={`mt-4 flex items-center justify-between gap-2 border-t border-current/10 pt-3 text-xs font-semibold ${card.accent}`}>{card.note}<span aria-hidden="true">→</span></span>
+          </button>)}
+        </section>
+        {zone !== null && <nav aria-label="Ruta de tasaciones y textos pendientes" className="mb-6 flex flex-wrap items-center gap-3 text-sm">
+          <button type="button" onClick={() => abrirZona(null)} className="cartera-folder-navigation aa-button aa-button-secondary border-violet-200 bg-violet-50"><FolderIcon className="h-5 w-5 shrink-0 text-violet-500" />← Volver a zonas</button>
+          <ZoneContext name={zone === ALL_ZONES ? "Listado general" : zone} general={zone === ALL_ZONES} tone="violet" />
+          {zone !== ALL_ZONES && <button type="button" onClick={() => abrirZona(ALL_ZONES)} className="ml-auto min-h-11 text-sm font-semibold text-violet-700">Ver listado general →</button>}
+        </nav>}
 
         {cargando ? (
             <LoadingCards label="Cargando inmuebles…" />
           ) : zone === null ? (
-            <section>
-              <h2 className="mb-2 text-lg font-bold text-slate-900">Tasaciones y textos pendientes por zona</h2>
-              <p className="mb-5 text-sm text-slate-500">Abre una carpeta para revisar las tasaciones y el material de esa zona.</p>
-              {zones.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">Todavía no hay inmuebles en esta bandeja.</div> : <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{zones.map(group => <button key={group.name} type="button" onClick={() => abrirZona(group.name)} className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-red-200 hover:shadow-md">
-                <FolderIcon className="mb-4 h-12 w-12 text-[#c80000] transition group-hover:scale-110" />
-                <h3 className="text-lg font-bold text-slate-900">{group.name}</h3>
-                <p className="mt-1 text-sm text-slate-500">{group.ids.size} {group.ids.size === 1 ? "inmueble" : "inmuebles"}</p>
-                <div className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-600">
-                  <p>{registradas.filter(item => inZone(item, group.name)).length} tasaciones negociadas · {aprobadas.filter(item => inZone(item, group.name)).length} textos pendientes</p>
-                  <p>{listos.filter(item => inZone(item, group.name) && item.expediente?.complete).length} listos para publicar · {publicadas.filter(item => inZone(item, group.name)).length} publicados</p>
-                </div>
-              </button>)}</div>}
+            <section aria-labelledby="appraisal-zones-title">
+              <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
+                <div><h2 id="appraisal-zones-title" className="text-lg font-bold text-slate-900">Tasaciones y textos pendientes por zona</h2><p className="mt-1 text-sm text-slate-600">Abre una carpeta para revisar las tasaciones y el material de esa zona.</p></div>
+                <button type="button" onClick={() => abrirZona(ALL_ZONES)} className="cartera-folder-navigation aa-button aa-button-secondary border-violet-200 bg-violet-50"><FolderIcon className="h-5 w-5 shrink-0 text-violet-500" />Ver listado general →</button>
+              </div>
+              {zones.length === 0 ? <div className="aa-card p-8 text-center"><p className="font-semibold text-slate-900">No hay inmuebles en esta bandeja</p><p className="mt-2 text-sm text-slate-500">La bandeja está sincronizada con la base de datos.</p></div> : <ul className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">{zones.map(group => <li key={group.name} className="min-w-0"><button type="button" onClick={() => abrirZona(group.name)} className="cartera-folder relative flex min-h-36 w-full items-center gap-4 rounded-b-2xl rounded-tr-2xl border border-violet-200 bg-violet-50/40 p-5 text-left shadow-sm hover:border-violet-300">
+                <span aria-hidden="true" className="cartera-folder-tab absolute -top-4 -left-px h-4 w-20 rounded-t-lg border border-b-0 border-violet-200 bg-violet-100" />
+                <FolderIcon className="h-10 w-10 shrink-0 text-violet-500" />
+                <span className="min-w-0 flex-1"><span className="block break-words text-base font-semibold text-slate-900">{group.name}</span><span className="mt-1 block text-sm text-slate-600">{group.ids.size} {group.ids.size === 1 ? "inmueble" : "inmuebles"}</span>
+                  <span className="mt-2 block text-xs font-semibold text-violet-700">{registradas.filter(item => inZone(item, group.name)).length} tasaciones negociadas · {aprobadas.filter(item => inZone(item, group.name)).length} textos pendientes</span>
+                  <span className="mt-1 block text-xs text-slate-500">{listos.filter(item => inZone(item, group.name) && item.expediente?.complete).length} listos para publicar · {publicadas.filter(item => inZone(item, group.name)).length} publicados</span>
+                </span><span aria-hidden="true" className="text-violet-400">→</span>
+              </button></li>)}</ul>}
             </section>
           ) : (
           <div className="space-y-7">
-            <section id="tasaciones">
+            <section id="tasaciones" tabIndex={-1} className="scroll-mt-6 rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-end justify-between">
                 <div><h2 className="text-lg font-bold text-slate-900">Tasaciones negociadas</h2><p className="mt-1 text-sm text-slate-500">Precios acordados con el propietario. Puedes actualizar el precio o renta mensual y la observación incluso después de publicar.</p></div>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">{visiblesRegistradas.length}</span>
               </div>
-              {visiblesRegistradas.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : <div className="space-y-3">{visiblesRegistradas.map(item => <article key={item.inmuebleId} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              {visiblesRegistradas.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : <div className="space-y-3">{visiblesRegistradas.map(item => <article key={item.inmuebleId} className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:border-violet-200">
                 <div className="flex flex-wrap items-center gap-2"><span className="rounded-lg bg-[#fff1f1] px-2.5 py-1 text-xs font-bold text-[#c80000]">Pos. {item.posicion}</span><span className="text-xs font-semibold text-slate-500">{propertyDisplayId(item)} · Inmueble {item.inmuebleId}</span></div>
                 <h3 className="mt-2 text-base font-bold text-slate-900">{item.nombre}</h3><p className="mt-1 text-sm text-slate-500">{item.tipo} · {item.ubicacion}</p><p className="mt-2 text-xs text-slate-500">Propietario: {item.propietario}</p>
                 <SalePriceEditor item={item} onSaved={cargar} />
@@ -420,7 +437,7 @@ function TasacionesTextosContent() {
                 02 · TEXTO Y MATERIAL
                ===================================================== */}
 
-            <section id="material">
+            <section id="material" tabIndex={-1} className="scroll-mt-6 rounded-2xl border border-amber-200 bg-white p-5 shadow-sm">
               <div className="mb-3">
                 <h2 className="text-lg font-bold text-slate-900">
                   02 · Texto y material
@@ -443,7 +460,7 @@ function TasacionesTextosContent() {
                   {visiblesAprobadas.map((item) => (
                     <div
                       key={item.inmuebleId}
-                      className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm"
+                      className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:border-violet-200"
                     >
                       <div className="mb-4">
                         <div className="flex flex-wrap items-center gap-2">
@@ -527,7 +544,7 @@ function TasacionesTextosContent() {
                 03 · LISTOS PARA PUBLICAR
                ===================================================== */}
 
-            <section id="listos">
+            <section id="listos" tabIndex={-1} className="scroll-mt-6 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm">
               <div className="mb-3">
                 <h2 className="text-lg font-bold text-slate-900">
                   03 · Textos preparados y publicación
@@ -555,7 +572,7 @@ function TasacionesTextosContent() {
                     return (
                       <div
                         key={item.inmuebleId}
-                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                        className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:border-violet-200"
                       >
                         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
@@ -665,7 +682,7 @@ function TasacionesTextosContent() {
     04 · PUBLICADOS
    ===================================================== */}
 
-<section>
+<section id="publicados" tabIndex={-1} className="scroll-mt-6 rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm">
   <div className="mb-3 flex items-end justify-between">
     <div>
       <h2 className="text-lg font-bold text-slate-900">
@@ -702,7 +719,7 @@ function TasacionesTextosContent() {
         return (
           <div
             key={item.inmuebleId}
-            className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm"
+            className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:border-violet-200"
           >
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0 flex-1">
@@ -915,4 +932,9 @@ function TasacionesTextosContent() {
       )}
     </main>
   );
+}
+function WorkflowIcon({ kind }: { kind: string }) {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {kind === "price" ? <><path d="M3 4h8l10 10-7 7L3 10V4Z" /><circle cx="7.5" cy="7.5" r="1" /></> : kind === "text" ? <><path d="M7 3h7l4 4v14H6V3h1Z" /><path d="M14 3v5h4M9 12h6M9 16h6" /></> : kind === "ready" ? <><path d="M7 4H4v16h16V4h-3M9 3h6v4H9z" /><path d="m8 14 3 3 5-6" /></> : <><circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" /></>}
+  </svg>;
 }
