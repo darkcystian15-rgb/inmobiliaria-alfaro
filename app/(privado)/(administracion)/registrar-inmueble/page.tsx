@@ -9,6 +9,7 @@ import { propertyDisplayId } from "@/lib/property-display-id";
 import OperationSelect from "@/app/components/OperationSelect";
 import PropertyTypeSelect from "@/app/components/PropertyTypeSelect";
 import DraftRecovery from "@/app/components/DraftRecovery";
+import RegistrationSuccess, { type NextRegistrationAction } from "@/app/components/RegistrationSuccess";
 import PageHeading from "@/app/components/PageHeading";
 
 
@@ -55,6 +56,7 @@ export default function RegistrarInmueblePage() {
   const [guardando, setGuardando] = useState(false);
   const [propietarioEncontrado, setPropietarioEncontrado] = useState(false);
   const [mensaje, setMensaje] = useState("");
+  const [siguienteAccion, setSiguienteAccion] = useState<NextRegistrationAction | null>(null);
   const [error, setError] = useState("");
 
   const cargarPosiciones = useCallback((signal?: AbortSignal) => {
@@ -78,6 +80,7 @@ export default function RegistrarInmueblePage() {
   async function buscarPropietario() {
     setError("");
     setMensaje("");
+    setSiguienteAccion(null);
     setPropietarioEncontrado(false);
 
     if (!/^\d{8}$/.test(dni)) return;
@@ -114,6 +117,7 @@ export default function RegistrarInmueblePage() {
   async function registrar() {
     setError("");
     setMensaje("");
+    setSiguienteAccion(null);
 
     if (!posicion || !tipo || !nombre.trim() || !ubicacion.trim()) {
       setError(
@@ -157,6 +161,8 @@ export default function RegistrarInmueblePage() {
           data.posicion
         ).padStart(2, "0")} y enviado a Visita pendiente.`
       );
+
+      setSiguienteAccion(Number.isSafeInteger(data.inmuebleId) && data.inmuebleId > 0 ? { href: `/registrar-visitas?inmueble=${data.inmuebleId}`, label: "Registrar visita de este inmueble" } : null);
 
       setPosicion("");
       setTipo("");
@@ -478,7 +484,7 @@ export default function RegistrarInmueblePage() {
               {/* MENSAJES */}
               {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
 
-              {mensaje && <Feedback tone="success" className="my-5">{mensaje}</Feedback>}
+              {mensaje && <RegistrationSuccess message={mensaje} nextAction={siguienteAccion} />}
 
               {/* DESPUÉS DEL REGISTRO */}
               <div className="rounded-2xl border border-[#ead1d1] bg-[#fff7f7] p-4 sm:p-5">

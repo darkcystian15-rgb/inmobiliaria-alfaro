@@ -3,6 +3,7 @@
 import { propertyDisplayId } from "@/lib/property-display-id";
 
 import DraftRecovery from "@/app/components/DraftRecovery";
+import RegistrationSuccess, { type NextRegistrationAction } from "@/app/components/RegistrationSuccess";
 import PageHeading from "@/app/components/PageHeading";
 
 
@@ -36,6 +37,7 @@ export default function Page() {
   const [cargando, setCargando] = useState(true);
   const [procesando, setProcesando] = useState<number | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [siguienteAccion, setSiguienteAccion] = useState<NextRegistrationAction | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const hoy = todayInPeru();
@@ -92,6 +94,7 @@ export default function Page() {
     if (!fotos[item.id]?.length && !pendienteEvidencia[item.id]) { setError('Sube una foto o confirma que regularizarás la evidencia después.'); return; }
     setProcesando(item.id);
     setMensaje(null);
+    setSiguienteAccion(null);
     setError(null);
 
     try {
@@ -115,6 +118,7 @@ export default function Page() {
         ok?: boolean;
         message?: string;
         error?: string;
+        pendienteEvidencia?: boolean;
       } = {};
 
       if (raw.trim()) {
@@ -141,8 +145,11 @@ export default function Page() {
       setFechas(current=>{const next={...current};delete next[item.id];return next;});
       setObservaciones(current=>{const next={...current};delete next[item.id];return next;});
       setMensaje(
-        body.message || `Visita de “${item.nombre}” registrada correctamente.`
+        `“${item.nombre}”: ${body.message || "Visita registrada correctamente."}`
       );
+      setSiguienteAccion(body.pendienteEvidencia
+        ? { href: `/datos-inmuebles?codigo=${item.id}&pestana=visitas`, label: "Agregar fotos de esta visita" }
+        : { href: `/registrar-tasaciones?inmueble=${item.id}`, label: "Registrar tasación de este inmueble" });
     } catch (err) {
       setError(
         err instanceof Error
@@ -219,7 +226,7 @@ export default function Page() {
         </section>
 
         {/* Mensajes */}
-        {mensaje && <Feedback tone="success" className="my-5">{mensaje}</Feedback>}
+        {mensaje && <RegistrationSuccess message={mensaje} nextAction={siguienteAccion} />}
 
         {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
 

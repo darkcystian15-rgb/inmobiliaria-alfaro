@@ -4,6 +4,7 @@ import { priceLabel, referenceLabel, targetLabel, operationLabel } from "@/lib/o
 import { propertyDisplayId } from "@/lib/property-display-id";
 
 import DraftRecovery from "@/app/components/DraftRecovery";
+import RegistrationSuccess, { type NextRegistrationAction } from "@/app/components/RegistrationSuccess";
 import PageHeading from "@/app/components/PageHeading";
 
 
@@ -43,6 +44,7 @@ export default function Page() {
   const [ventas, setVentas] = useState<Record<number, string>>({});
   const [observaciones, setObservaciones] = useState<Record<number, string>>({});
   const [mensaje, setMensaje] = useState("");
+  const [siguienteAccion, setSiguienteAccion] = useState<NextRegistrationAction | null>(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState<number | null>(null);
@@ -71,6 +73,7 @@ export default function Page() {
   const registrar = async (item: Tasacion) => {
     setError("");
     setMensaje("");
+    setSiguienteAccion(null);
     const fecha = fechas[item.inmuebleId];
     if (!fecha) return setError(`Registra la fecha de la tasación de “${item.nombre}”.`);
     if (![valores[item.inmuebleId], precios[item.inmuebleId], ventas[item.inmuebleId]].every(value => Number(value) > 0)) return setError("Ingresa los tres precios acordados, mayores que cero.");
@@ -93,6 +96,7 @@ export default function Page() {
       if (!response.ok || !data.ok) throw new Error(data.error || "No fue posible registrar la tasación.");
       for(const setter of [setFechas,setValores,setPrecios,setVentas,setObservaciones])setter(current=>{const next={...current};delete next[item.inmuebleId];return next;});
       setMensaje(`Tasación de “${item.nombre}” registrada correctamente.`);
+      setSiguienteAccion({ href: `/tasaciones-textos-pendientes?inmueble=${item.inmuebleId}#material`, label: "Preparar documentos y texto de este inmueble" });
       setCargando(true);
       await cargar();
     } catch (err) {
@@ -121,7 +125,7 @@ export default function Page() {
           </div>
         </section>
 
-        {mensaje && <Feedback tone="success" className="my-5">{mensaje}</Feedback>}
+        {mensaje && <RegistrationSuccess message={mensaje} nextAction={siguienteAccion} />}
         {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
 
         <section className="mt-7 grid gap-4 sm:grid-cols-3">
