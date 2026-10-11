@@ -1,13 +1,9 @@
-# Tasaciones por zona
+# Tasaciones y textos pendientes por zona
 
-La entrada de «Registrar tasaciones» presenta carpetas por distrito, siguiendo el criterio de zonas de cartera y visitas. Cada carpeta muestra cuántas tasaciones están pendientes de registro y cuántas están vigentes. Las zonas con tasaciones vigentes siguen accesibles aunque no tengan pendientes.
+Las carpetas por distrito están en «Tasaciones y textos pendientes». «Registrar tasaciones» conserva su vista de registro anterior.
 
-Al abrir una carpeta, los indicadores, los formularios pendientes y la lista de tasaciones negociadas corresponden a esa zona. Se conservan ubicación, propietario, DNI, fecha, los tres precios, observación, guardado y acceso al seguimiento. «Zona actual» identifica la carpeta abierta.
+Cada carpeta reúne los inmuebles de la bandeja, sin duplicar su total, y muestra tasaciones negociadas, textos pendientes, listos para publicar y publicados. Al abrirla, los cuatro indicadores y sus listas muestran solo esa zona. Se conservan precios, propietarios, checklist, textos, edición y confirmación de publicación. Los borradores se conservan al cambiar de carpeta.
 
-«Ver listado general» reúne todas las zonas; «Volver a zonas» regresa a las carpetas. Cambiar de vista conserva los valores escritos en los formularios y su recuperación como borrador.
+«Zona actual» destaca la zona abierta. «Volver a zonas» vuelve a las carpetas y «Ver listado general» muestra toda la bandeja. Los accesos por inmueble y los enlaces a secciones siguen disponibles.
 
-El indicador de tasaciones de cartera abre `/registrar-tasaciones?zona=<zona>`. `*` representa el listado general. El acceso existente `?inmueble=<id>` sigue enfocando ese inmueble. La ruta histórica `/tasaciones-pendientes` redirige conservando zona e inmueble.
-
-La API agrega el distrito a sus resultados; las reglas de registro y autenticación permanecen vigentes.
-
-Verificación: TypeScript, ESLint, compilación de producción y navegador en escritorio y celular. Se comprobó Chimbote con 3 pendientes y 1 vigente, listado general, recarga, historial, conservación del formulario, foco por inmueble y zona vacía. El guardado se simuló en la vista previa, sin modificar tasaciones reales.
+El indicador de tasaciones en cartera abre `/tasaciones-textos-pendientes?zona=<zona>`. Las APIs incluyen distrito para filtrar la bandeja, sin cambiar sus reglas de escritura.

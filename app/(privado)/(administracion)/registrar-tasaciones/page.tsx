@@ -3,11 +3,6 @@
 import { priceLabel, referenceLabel, targetLabel, operationLabel } from "@/lib/operation.mjs";
 import { propertyDisplayId } from "@/lib/property-display-id";
 
-import FolderIcon from "@/app/components/FolderIcon";
-import ZoneContext from "@/app/components/ZoneContext";
-import { ALL_ZONES, inZone, propertyZone } from "@/lib/property-zones";
-import { useSearchParams } from "next/navigation";
-
 import DraftRecovery from "@/app/components/DraftRecovery";
 import PageHeading from "@/app/components/PageHeading";
 
@@ -18,7 +13,7 @@ import { requestJson } from "@/lib/client-request";
 
 import Link from "next/link";
 import { todayInPeru } from "@/lib/calendar.mjs";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Tasacion = {
   id: number;
@@ -27,7 +22,6 @@ type Tasacion = {
   posicion: string;
   nombre: string;
   ubicacion: string;
-  distrito: string | null;
   tipo: string;
   operacion: string;
   propietario: string;
@@ -41,13 +35,6 @@ type Tasacion = {
 };
 
 export default function Page() {
-  return <Suspense fallback={<LoadingCards label="Cargando tasaciones…" />}><AppraisalInbox /></Suspense>;
-}
-
-function AppraisalInbox() {
-  const params = useSearchParams();
-  const inmuebleSeleccionado = params.get("inmueble");
-  const zona = params.get("zona")?.trim() || (inmuebleSeleccionado ? ALL_ZONES : null);
   const [items, setItems] = useState<Tasacion[]>([]);
   const [aprobadas, setAprobadas] = useState<Tasacion[]>([]);
   const [fechas, setFechas] = useState<Record<number, string>>({});
@@ -65,7 +52,8 @@ function AppraisalInbox() {
   const cargar = useCallback((signal?: AbortSignal) => {
     return requestJson<{ pendientes: Tasacion[]; aprobadas: Tasacion[] }>("/api/tasaciones", { signal }).then(data => {
       if (signal?.aborted) return;
-      setItems(data.pendientes ?? []);
+      const selected = new URLSearchParams(window.location.search).get("inmueble");
+      setItems((data.pendientes ?? []).filter(item=>!selected||String(item.inmuebleId)===selected));
       setAprobadas(data.aprobadas ?? []);
     }).catch(error => {
       if (!signal?.aborted) setError(error instanceof Error ? error.message : "No se pudieron cargar las tasaciones.");
@@ -79,29 +67,6 @@ function AppraisalInbox() {
     void cargar(controller.signal);
     return () => controller.abort();
   }, [cargar]);
-
-  const itemsZona = useMemo(() => items.filter(item => inZone(item, zona) && (!inmuebleSeleccionado || String(item.inmuebleId) === inmuebleSeleccionado)), [items, zona, inmuebleSeleccionado]);
-  const aprobadasZona = useMemo(() => aprobadas.filter(item => inZone(item, zona) && (!inmuebleSeleccionado || String(item.inmuebleId) === inmuebleSeleccionado)), [aprobadas, zona, inmuebleSeleccionado]);
-  const zonas = useMemo(() => {
-    const groups = new Map<string, { nombre: string; pendientes: number; vigentes: number }>();
-    for (const [entries, field] of [[items, "pendientes"], [aprobadas, "vigentes"]] as const) {
-      for (const item of entries) {
-        const nombre = propertyZone(item), key = nombre.toLocaleLowerCase("es-PE");
-        const group = groups.get(key) ?? { nombre, pendientes: 0, vigentes: 0 };
-        group[field]++;
-        groups.set(key, group);
-      }
-    }
-    return [...groups.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, "es-PE"));
-  }, [items, aprobadas]);
-
-  function abrirZona(value: string | null) {
-    const next = new URLSearchParams(params.toString());
-    next.delete("inmueble");
-    if (value === null) next.delete("zona"); else next.set("zona", value);
-    window.history.pushState(null, "", `/registrar-tasaciones${next.size ? `?${next}` : ""}`);
-    window.scrollTo({ top: 0, behavior: "instant" });
-  }
 
   const registrar = async (item: Tasacion) => {
     setError("");
@@ -160,32 +125,24 @@ function AppraisalInbox() {
         {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
 
         <section className="mt-7 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.045)]"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Por registrar</p><p className="mt-2 text-3xl font-bold text-slate-950">{cargando ? "…" : itemsZona.length}</p><p className="mt-1 text-xs text-slate-500">{zona && zona !== ALL_ZONES ? `en ${zona} · visita realizada` : "inmuebles con visita realizada"}</p></div>
-          <div className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-orange-700">Tasación vigente</p><p className="mt-2 text-3xl font-bold text-slate-950">{cargando ? "…" : aprobadasZona.length}</p><p className="mt-1 text-xs text-orange-700/80">{zona && zona !== ALL_ZONES ? `negociadas en ${zona}` : "negociadas actualmente"}</p></div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.045)]"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Por registrar</p><p className="mt-2 text-3xl font-bold text-slate-950">{items.length}</p><p className="mt-1 text-xs text-slate-500">inmuebles con visita realizada</p></div>
+          <div className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-orange-700">Tasación vigente</p><p className="mt-2 text-3xl font-bold text-slate-950">{aprobadas.length}</p><p className="mt-1 text-xs text-orange-700/80">negociadas actualmente</p></div>
           <div className="rounded-2xl border border-cyan-200 bg-cyan-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-cyan-700">Fuente</p><p className="mt-2 text-lg font-bold text-cyan-950">Base de datos</p><p className="mt-1 text-xs text-cyan-700/80">precios y observaciones guardados</p></div>
         </section>
 
-        {zona === null ? <section aria-labelledby="appraisal-zones-title" className="mt-8">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 id="appraisal-zones-title" className="text-lg font-bold text-slate-900">Tasaciones pendientes por zona</h2><p className="mt-1 text-sm text-slate-600">Abre una carpeta para registrar sus tasaciones y consultar las vigentes.</p></div><button type="button" onClick={() => abrirZona(ALL_ZONES)} className="cartera-folder-navigation aa-button aa-button-secondary border-amber-200 bg-amber-50"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />Ver listado general →</button></div>
-          {cargando ? <LoadingCards label="Cargando zonas de tasación…" /> : !error && <>
-            <ul className="mt-7 grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">{zonas.map(group => <li key={group.nombre} className="min-w-0"><button type="button" onClick={() => abrirZona(group.nombre)} className="cartera-folder relative flex min-h-32 w-full items-center gap-4 rounded-b-2xl rounded-tr-2xl border border-amber-200 bg-amber-50/40 p-5 text-left shadow-sm hover:border-amber-300"><span aria-hidden="true" className="cartera-folder-tab absolute -top-4 -left-px h-4 w-20 rounded-t-lg border border-b-0 border-amber-200 bg-amber-100" /><FolderIcon className="h-10 w-10 shrink-0 text-amber-500" /><span className="min-w-0 flex-1"><span className="block break-words text-base font-semibold text-slate-900">{group.nombre}</span><span className="mt-1 block text-sm font-semibold text-violet-900">{group.pendientes} {group.pendientes === 1 ? "tasación" : "tasaciones"} pendiente{group.pendientes === 1 ? "" : "s"}</span><span className="mt-2 block text-xs text-slate-600">{group.vigentes} {group.vigentes === 1 ? "tasación" : "tasaciones"} vigente{group.vigentes === 1 ? "" : "s"}</span></span><span aria-hidden="true" className="text-slate-400">→</span></button></li>)}</ul>
-            {zonas.length === 0 && <div className="aa-card mt-5 p-8 text-center"><p className="font-semibold text-slate-900">No hay tasaciones pendientes ni vigentes</p><p className="mt-2 text-sm text-slate-500">La bandeja está sincronizada con la base de datos.</p></div>}
-          </>}
-        </section> : <>
-        <nav aria-label="Ruta de tasaciones" className="mt-6 flex flex-wrap items-center gap-3 text-sm"><button type="button" onClick={() => abrirZona(null)} className="cartera-folder-navigation aa-button aa-button-secondary border-amber-200 bg-amber-50"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />← Volver a zonas</button><ZoneContext name={zona === ALL_ZONES ? "Listado general" : zona} general={zona === ALL_ZONES} />{zona !== ALL_ZONES && <button type="button" onClick={() => abrirZona(ALL_ZONES)} className="ml-auto min-h-11 text-sm font-semibold text-[#c80000]">Ver listado general →</button>}</nav>
         <section className="mt-7">
           <div className="mb-3"><h2 className="font-bold text-slate-900">Tasaciones por registrar</h2><p className="mt-1 text-sm text-slate-500">Estos inmuebles están activos, tienen posición asignada y todavía no tienen tasación registrada.</p></div>
-          {cargando ? <LoadingCards label="Cargando inmuebles…" /> : error && items.length === 0 ? <p className="text-sm text-slate-600">No se pudo consultar la bandeja. Vuelve a cargar la pantalla.</p> : itemsZona.length === 0 ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-12 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">✓</div><h3 className="mt-4 font-bold text-emerald-950">{zona !== ALL_ZONES ? `No hay tasaciones pendientes en ${zona}` : "No hay tasaciones pendientes"}</h3><p className="mt-1 text-sm text-emerald-800/80">Las visitas realizadas ya tienen tasación registrada o no existen inmuebles pendientes.</p></div>
+          {cargando ? <LoadingCards label="Cargando inmuebles…" /> : items.length === 0 ? (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-12 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">✓</div><h3 className="mt-4 font-bold text-emerald-950">No hay tasaciones pendientes</h3><p className="mt-1 text-sm text-emerald-800/80">Las visitas realizadas ya tienen tasación registrada o no existen inmuebles pendientes.</p></div>
           ) : (
             <div className="space-y-4">
-              {itemsZona.map((item) => (
+              {items.map((item) => (
                 <article key={item.inmuebleId} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
                   <div className="p-5 lg:p-6">
                     <div className="flex flex-col gap-5">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="flex items-center gap-4"><div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-base font-bold text-orange-700">{item.posicion}</div><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-slate-900">{item.nombre}</h3><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{item.tipo} · {operationLabel(item.operacion)}</span></div><p className="mt-1 text-xs text-slate-500">{item.ubicacion} · {item.codigo}</p><p className="mt-1 text-xs text-slate-500">Propietario: {item.propietario} · DNI {item.dni}</p></div></div>
-                        <span className="self-start rounded-full bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-800">Tasación pendiente</span>
+                        <span className="self-start rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">Tasación pendiente</span>
                       </div>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <label className="text-xs font-semibold text-slate-600">Fecha de tasación *<input type="date" max={hoy} value={fechas[item.inmuebleId] ?? ""} onChange={(e) => setFechas(a => ({...a,[item.inmuebleId]:e.target.value}))} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
@@ -206,7 +163,7 @@ function AppraisalInbox() {
         <section className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
           <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-900">Tasaciones negociadas registradas</h2><p className="mt-1 text-xs text-slate-500">El precio o renta mensual y la observación se pueden modificar desde la bandeja de seguimiento.</p></div>
           <div className="divide-y divide-slate-100">
-            {aprobadasZona.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadasZona.map(item => (
+            {aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadas.map(item => (
               <div key={item.inmuebleId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
                 <div><p className="font-semibold text-slate-900">{item.nombre}</p><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)} · {operationLabel(item.operacion)} · posición {item.posicion} · {item.ubicacion}</p><p className="mt-1 text-xs text-slate-500">{referenceLabel(item.operacion)}: {item.valorReferencia ? `S/ ${item.valorReferencia}` : "sin valor"}{item.precioObjetivo ? ` · objetivo S/ ${item.precioObjetivo}` : ""}{item.precioVenta ? ` · ${priceLabel(item.operacion).toLowerCase()} S/ ${item.precioVenta}` : ""}</p></div>
                 <Link href={`/tasaciones-textos-pendientes?inmueble=${item.inmuebleId}#material`} className="rounded-xl bg-[#c80000] px-4 py-2.5 text-sm font-semibold text-white">Ver precios y preparar texto →</Link>
@@ -214,7 +171,6 @@ function AppraisalInbox() {
             ))}
           </div>
         </section>
-        </>}
       </div>
     </main>
   );

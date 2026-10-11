@@ -565,7 +565,7 @@ export default function CarteraPage() {
           ].map((item) => {
             const inboxLink = item.label === "Visitas pendientes"
               ? `/visitas-pendientes?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}`
-              : item.label === "Tasaciones pendientes" ? `/registrar-tasaciones?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}` : null;
+              : item.label === "Tasaciones pendientes" ? `/tasaciones-textos-pendientes?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}` : null;
             const content = <>
               <span className="cartera-folder-tab absolute -top-5 -left-px flex h-5 max-w-[95%] items-center rounded-t-lg border border-b-0 border-amber-200 bg-amber-100 px-3 text-xs font-semibold text-amber-900">{item.label}</span>
               <div className="flex items-center justify-between gap-3"><p className="text-3xl font-bold text-slate-950">{item.value}</p><FolderIcon className="h-9 w-9 shrink-0 text-amber-500" /></div>

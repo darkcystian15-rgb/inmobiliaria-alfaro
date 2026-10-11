@@ -20,6 +20,7 @@ const clean = (value: unknown) =>
 const mapPending = (row: Awaited<ReturnType<typeof approved>>[number]) => ({
   inmuebleId: row.inmuebleId,
   codigo: row.codigo,
+  distrito: row.distrito,
   posicion: row.posicion
     ? String(row.posicion).padStart(2, "0")
     : "—",
@@ -50,11 +51,11 @@ async function approved() {
     .select({
       inmuebleId: inmInmuebles.id,
       codigo: inmInmuebles.codigo,
+      distrito: inmInmuebles.distrito,
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
       direccion: inmInmuebles.direccion,
-      distrito: inmInmuebles.distrito,
       provincia: inmInmuebles.provincia,
       departamento: inmInmuebles.departamento,
       propietarioNombres: inmPropietarios.nombres,
@@ -119,6 +120,7 @@ async function published() {
     .select({
       inmuebleId: inmInmuebles.id,
       codigo: inmInmuebles.codigo,
+      distrito: inmInmuebles.distrito,
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
@@ -166,6 +168,7 @@ async function ready() {
     .select({
       inmuebleId: inmInmuebles.id,
       codigo: inmInmuebles.codigo,
+      distrito: inmInmuebles.distrito,
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
