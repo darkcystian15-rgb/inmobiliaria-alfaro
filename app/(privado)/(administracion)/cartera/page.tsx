@@ -567,19 +567,20 @@ export default function CarteraPage() {
               detail: "",
               icon: "chart" as const,
             },
-          ].map((item) => (
-            <div key={item.label} data-folder-indicator="true" className="cartera-folder relative mt-5 rounded-b-2xl rounded-tr-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
+          ].map((item) => {
+            const visitLink = item.label === "Visitas pendientes"
+              ? `/visitas-pendientes?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}` : null;
+            const content = <>
               <span className="cartera-folder-tab absolute -top-5 -left-px flex h-5 max-w-[95%] items-center rounded-t-lg border border-b-0 border-amber-200 bg-amber-100 px-3 text-xs font-semibold text-amber-900">{item.label}</span>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-3xl font-bold text-slate-950">{item.value}</p>
-                <FolderIcon className="h-9 w-9 shrink-0 text-amber-500" />
-              </div>
+              <div className="flex items-center justify-between gap-3"><p className="text-3xl font-bold text-slate-950">{item.value}</p><FolderIcon className="h-9 w-9 shrink-0 text-amber-500" /></div>
               <p className="mt-2 min-h-5 text-xs text-slate-600">{item.detail || "Por atender"}</p>
-            </div>
-          ))}
+              {visitLink && <p className="mt-2 text-xs font-semibold text-[#c80000]">Ver visitas →</p>}
+            </>;
+            const classes = "cartera-folder relative mt-5 rounded-b-2xl rounded-tr-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm";
+            return visitLink ? <Link key={item.label} href={visitLink} data-folder-indicator="true" className={classes}>{content}</Link>
+              : <div key={item.label} data-folder-indicator="true" className={classes}>{content}</div>;
+          })}
         </div>
-
-
 
         {error && <Feedback tone="error" className="mt-5">{error}<button type="button" onClick={() => void cargarDatos()} className="ml-3 font-semibold underline">Reintentar</button></Feedback>}
         {cargando && <LoadingCards label="Cargando cartera y posiciones…" count={6} />}

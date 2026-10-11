@@ -109,6 +109,7 @@ export async function GET() {
       return {
         id: row.id,
         codigo: row.codigo,
+        distrito: row.distrito,
         tipo: row.tipo,
     operacion: row.operacion,
         nombre: row.referencia,
