@@ -13,22 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://inmobiliaria-alfarov2-umber.vercel.app"),
-  title: "Inmobiliaria Alberto Alfaro",
-  description: "Gestiona tu cartera inmobiliaria, visitas y publicaciones en un solo lugar. Sistema de Inmobiliaria Alberto Alfaro.",
+  metadataBase: new URL("https://intranet.inmobiliariaalbertoalfaro.com.pe"),
+  title: "Intranet | Alberto Alfaro",
+  description: "Acceso interno para gestionar inmuebles, visitas, tasaciones y publicaciones.",
   openGraph: {
     type: "website",
     locale: "es_PE",
     siteName: "Inmobiliaria Alberto Alfaro",
-    title: "Alberto Alfaro | Gestión inmobiliaria",
-    description: "Tu cartera, visitas y publicaciones en un solo lugar.",
-    images: [{ url: "/branding/compartir-v1.png", width: 1200, height: 630, alt: "Inmobiliaria Alberto Alfaro — Sistema de gestión inmobiliaria" }],
+    title: "Intranet | Alberto Alfaro",
+    description: "Acceso interno para gestionar inmuebles, visitas, tasaciones y publicaciones.",
+    images: [{ url: "/branding/compartir-intranet-v2.png", width: 1200, height: 630, alt: "Intranet de Inmobiliaria Alberto Alfaro" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Alberto Alfaro | Gestión inmobiliaria",
-    description: "Tu cartera, visitas y publicaciones en un solo lugar.",
-    images: [{ url: "/branding/compartir-v1.png", alt: "Inmobiliaria Alberto Alfaro — Sistema de gestión inmobiliaria" }],
+    title: "Intranet | Alberto Alfaro",
+    description: "Acceso interno para gestionar inmuebles, visitas, tasaciones y publicaciones.",
+    images: [{ url: "/branding/compartir-intranet-v2.png", alt: "Intranet de Inmobiliaria Alberto Alfaro" }],
   },
 };
 
