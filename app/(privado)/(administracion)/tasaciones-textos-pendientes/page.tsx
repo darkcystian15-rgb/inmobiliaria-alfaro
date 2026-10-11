@@ -79,6 +79,7 @@ function TasacionesTextosContent() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }
   const materialBase=useRef<Record<number,string>>({});
+  const [pendientesTasacion, setPendientesTasacion] = useState<Item[]>([]);
   const [registradas, setRegistradas] = useState<Item[]>([]);
   const [aprobadas, setAprobadas] = useState<Item[]>([]);
 
@@ -118,11 +119,12 @@ function TasacionesTextosContent() {
 
   const cargar = useCallback((signal?: AbortSignal) => {
     return Promise.all([
-      requestJson<{ registradas: Item[] }>("/api/tasaciones", { signal }),
+      requestJson<{ pendientes: Item[]; registradas: Item[] }>("/api/tasaciones", { signal }),
       requestJson<{ pendientes: Item[]; listos: Publicada[]; incompletos?: Publicada[]; publicadas: Publicada[] }>("/api/publicaciones", { signal }),
     ]).then(data => {
       if (signal?.aborted) return;
       const [tasaciones, publicaciones] = data;
+      setPendientesTasacion(tasaciones.pendientes ?? []);
       setRegistradas((tasaciones.registradas ?? []).filter(item => item.situacion === "aprobado"));
       setAprobadas((publicaciones.pendientes ?? []));
       setListos([...(publicaciones.listos ?? []), ...(publicaciones.incompletos ?? [])]);
@@ -323,23 +325,24 @@ function TasacionesTextosContent() {
 
   const zones = useMemo(() => {
     const groups = new Map<string, { name: string; ids: Set<number> }>();
-    for (const item of [...registradas, ...aprobadas, ...listos, ...publicadas]) {
+    for (const item of [...pendientesTasacion, ...registradas, ...aprobadas, ...listos, ...publicadas]) {
       const name = propertyZone(item), key = name.toLocaleLowerCase("es-PE");
       const group = groups.get(key) || { name, ids: new Set<number>() };
       group.ids.add(item.inmuebleId);
       groups.set(key, group);
     }
     return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name, "es-PE"));
-  }, [registradas, aprobadas, listos, publicadas]);
+  }, [pendientesTasacion, registradas, aprobadas, listos, publicadas]);
   const matches = (item: { inmuebleId: number; distrito?: string | null }) =>
     inZone(item, zone) && (!selectedId || String(item.inmuebleId) === selectedId);
+  const visiblesPendientes = pendientesTasacion.filter(matches);
   const visiblesRegistradas = registradas.filter(matches);
   const visiblesAprobadas = aprobadas.filter(matches);
   const visiblesListos = listos.filter(matches);
   const visiblesPublicadas = publicadas.filter(matches);
   const scope = zone && zone !== ALL_ZONES ? `en ${zone}` : "en todas las zonas";
   const cards = [
-    { id: "tasaciones", label: "Tasaciones negociadas", count: visiblesRegistradas.length, note: "Revisar precios acordados", icon: "price", color: "border-violet-200 bg-violet-50/70 text-violet-950", accent: "text-violet-700", badge: "bg-violet-100" },
+    { id: "tasaciones", label: "Tasaciones pendientes", count: visiblesPendientes.length, note: "Registrar tasación", icon: "price", color: "border-violet-200 bg-violet-50/70 text-violet-950", accent: "text-violet-700", badge: "bg-violet-100" },
     { id: "material", label: "Texto pendiente", count: visiblesAprobadas.length, note: "Preparar texto y material", icon: "text", color: "border-amber-200 bg-amber-50/70 text-amber-950", accent: "text-amber-700", badge: "bg-amber-100" },
     { id: "listos", label: "Listos para publicar", count: visiblesListos.filter(item => item.expediente?.complete).length, note: "Revisar y confirmar publicación", icon: "ready", color: "border-blue-200 bg-blue-50/70 text-blue-950", accent: "text-blue-700", badge: "bg-blue-100" },
     { id: "publicados", label: "Publicados", count: visiblesPublicadas.length, note: "Consultar o corregir material", icon: "published", color: "border-emerald-200 bg-emerald-50/70 text-emerald-950", accent: "text-emerald-700", badge: "bg-emerald-100" },
@@ -385,7 +388,7 @@ function TasacionesTextosContent() {
         <section className="mb-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-300">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Revisa los precios, prepara el material y confirma la publicación.</p></div>
-            <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1.5 text-xs font-bold text-amber-200">{cargando ? "…" : visiblesAprobadas.length} textos pendientes</span>
+            <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1.5 text-xs font-bold text-amber-200">{cargando ? "…" : visiblesPendientes.length} por tasar · {cargando ? "…" : visiblesAprobadas.length} por preparar texto</span>
           </div>
         </section>
         <section aria-label="Resumen y accesos de la bandeja" className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -414,14 +417,26 @@ function TasacionesTextosContent() {
                 <span aria-hidden="true" className="cartera-folder-tab absolute -top-4 -left-px h-4 w-20 rounded-t-lg border border-b-0 border-violet-200 bg-violet-100" />
                 <FolderIcon className="h-10 w-10 shrink-0 text-violet-500" />
                 <span className="min-w-0 flex-1"><span className="block break-words text-base font-semibold text-slate-900">{group.name}</span><span className="mt-1 block text-sm text-slate-600">{group.ids.size} {group.ids.size === 1 ? "inmueble" : "inmuebles"}</span>
-                  <span className="mt-2 block text-xs font-semibold text-violet-700">{registradas.filter(item => inZone(item, group.name)).length} tasaciones negociadas · {aprobadas.filter(item => inZone(item, group.name)).length} textos pendientes</span>
+                  <span className="mt-2 block text-xs font-semibold text-violet-700">{pendientesTasacion.filter(item => inZone(item, group.name)).length} tasaciones pendientes</span>
+                  <span className="mt-1 block text-xs text-slate-600">{registradas.filter(item => inZone(item, group.name)).length} tasaciones negociadas · {aprobadas.filter(item => inZone(item, group.name)).length} textos pendientes</span>
                   <span className="mt-1 block text-xs text-slate-500">{listos.filter(item => inZone(item, group.name) && item.expediente?.complete).length} listos para publicar · {publicadas.filter(item => inZone(item, group.name)).length} publicados</span>
                 </span><span aria-hidden="true" className="text-violet-400">→</span>
               </button></li>)}</ul>}
             </section>
           ) : (
           <div className="space-y-7">
-            <section id="tasaciones" tabIndex={-1} className="scroll-mt-6 rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
+            <section id="tasaciones" tabIndex={-1} className="scroll-mt-6 overflow-hidden rounded-2xl border border-violet-200 bg-white shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100 p-5">
+                <div><h2 className="text-lg font-bold text-slate-900">Tasaciones pendientes de registro</h2><p className="mt-1 text-sm text-slate-500">Inmuebles con visita realizada que todavía no tienen tasación registrada.</p></div>
+                <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-800">{visiblesPendientes.length}</span>
+              </div>
+              {visiblesPendientes.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones por registrar{zone !== ALL_ZONES ? ` en ${zone}` : ""}.</div> : <div className="divide-y divide-slate-100">{visiblesPendientes.map(item => <article key={item.inmuebleId} className="flex flex-col gap-4 p-5 transition hover:bg-violet-50/40 sm:flex-row sm:items-center">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-700">{item.posicion}</div>
+                <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-slate-900">{item.nombre}</h3><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{item.tipo} · {item.operacion}</span></div><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)} · {item.ubicacion}</p><p className="mt-1 text-xs text-slate-500">Propietario: {item.propietario}</p><p className="mt-2 text-xs font-semibold text-violet-700">Visita realizada · Tasación por registrar</p></div>
+                <Link href={`/registrar-tasaciones?inmueble=${item.inmuebleId}`} className="self-start rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-100 sm:self-auto">Registrar tasación →</Link>
+              </article>)}</div>}
+            </section>
+            <section id="negociadas" tabIndex={-1} className="scroll-mt-6 rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-end justify-between">
                 <div><h2 className="text-lg font-bold text-slate-900">Tasaciones negociadas</h2><p className="mt-1 text-sm text-slate-500">Precios acordados con el propietario. Puedes actualizar el precio o renta mensual y la observación incluso después de publicar.</p></div>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">{visiblesRegistradas.length}</span>
