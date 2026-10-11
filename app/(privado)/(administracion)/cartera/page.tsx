@@ -697,7 +697,7 @@ export default function CarteraPage() {
           </div>
         ) : (
           <section aria-label="Lista compacta de inmuebles" className="aa-card mt-3 overflow-hidden">
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500">Operación · Tipo · Dirección · Propietario · Zona · Pendiente / Estado</div>
+            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500"><span>Inmueble</span><span className="hidden sm:block">Precio</span></div>
             <ul className="divide-y divide-slate-100">
               {filtrados.map(x => <li key={x.id}><PortfolioLabelRow property={x} onOpen={() => setSeleccionado(x)} /></li>)}
             </ul>
