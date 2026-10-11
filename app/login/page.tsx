@@ -15,7 +15,7 @@ export default async function LoginPage() {
         <div className="h-1.5 bg-[#c80000]" />
         <div className="px-7 py-9 sm:px-10">
           <Image src="/branding/logo.png" alt="Inmobiliaria Alberto Alfaro" width={240} height={100} priority className="mx-auto h-auto max-h-24 w-60 object-contain" />
-          <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-[#c80000]">Secretaría virtual</p>
+          <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-[#c80000]">Intranet</p>
           <h1 className="mt-3 text-center text-2xl font-bold tracking-tight text-[#171717]">Bienvenido</h1>
           <p className="mt-2 text-center text-sm leading-6 text-slate-500">Ingresa a tu cuenta para gestionar la cartera inmobiliaria.</p>
           <LoginForm />

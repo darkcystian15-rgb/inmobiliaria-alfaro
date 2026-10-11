@@ -103,7 +103,7 @@ export default function Sidebar() {
             />
           </div>
           <div className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Secretaría virtual
+            Intranet
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-5">
