@@ -1,6 +1,7 @@
 "use client";
 
 import { priceLabel, referenceLabel, targetLabel } from "@/lib/operation.mjs";
+import FieldGuidance from "./FieldGuidance";
 import { Feedback } from "./InterfaceFeedback";
 import { useState } from "react";
 
@@ -49,7 +50,7 @@ export default function SalePriceEditor({ item, onSaved }: { item: PropertyPrice
         <div key={label} className="rounded-xl bg-slate-50 p-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 text-sm font-bold text-slate-800">{money(value)}</p></div>)}
     </div>
     {editing ? <form onSubmit={save} className="mt-4 space-y-3 rounded-xl border border-slate-200 p-4">
-      <label className="block text-xs font-semibold text-slate-600">{label} (S/)<input required type="number" min="0.01" max="9999999999999.99" step="0.01" value={price} disabled={pending} onChange={event => setPrice(event.target.value)} className={inputClass} /></label>
+      <label className="block text-xs font-semibold text-slate-600">{label} (S/)<FieldGuidance error={!(Number(price) > 0) && "Ingresa un importe mayor que cero."} help="Importe en soles; puedes usar hasta dos decimales."><input required type="number" min="0.01" max="9999999999999.99" step="0.01" value={price} disabled={pending} onChange={event => setPrice(event.target.value)} className={inputClass} /></FieldGuidance></label>
       <label className="block text-xs font-semibold text-slate-600">Observación<textarea rows={3} value={observation} disabled={pending} onChange={event => setObservation(event.target.value)} className={inputClass} /></label>
       <p className="text-xs text-slate-500">El precio puede cambiar incluso después de publicar. El inmueble conserva su etapa actual.</p>
       <div className="flex gap-3"><button disabled={pending} className="rounded-xl bg-[#c80000] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">{pending ? "Guardando…" : "Guardar cambios"}</button><button type="button" disabled={pending} onClick={() => { setEditing(false); setError(""); }} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold">Cancelar</button></div>

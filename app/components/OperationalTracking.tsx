@@ -4,7 +4,7 @@ import { requestJson } from '@/lib/client-request';
 import { todayInPeru } from '@/lib/calendar.mjs';
 import type { PropertyProgressData } from '@/lib/property-progress';
 type Task={actividad:string;responsableId:number|null;responsable:string|null;fechaLimite:string|null;observacion:string|null};
-const labels:Record<string,string>={visita:'Visita',tasacion:'Precios acordados',expediente:'Expediente',publicacion:'Publicación'};
+const labels:Record<string,string>={visita:'Visita',tasacion:'Tasación',expediente:'Documentos y material',publicacion:'Publicación'};
 export default function OperationalTracking({propertyId,administrator,progress}:{propertyId:number;administrator:boolean;progress:PropertyProgressData}){
  const [tasks,setTasks]=useState<Task[]>([]);const [users,setUsers]=useState<{id:number;nombre:string}[]>([]);const [limits,setLimits]=useState<{actividad:string;dias:number}[]>([]);const [error,setError]=useState('');const [message,setMessage]=useState('');const [busy,setBusy]=useState(false);const [loading,setLoading]=useState(true);
  const url=`/api/inmuebles/${propertyId}/seguimiento`;

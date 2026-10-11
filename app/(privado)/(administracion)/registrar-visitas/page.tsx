@@ -2,6 +2,7 @@
 
 import { propertyDisplayId } from "@/lib/property-display-id";
 
+import FieldGuidance from "@/app/components/FieldGuidance";
 import DraftRecovery from "@/app/components/DraftRecovery";
 import RegistrationSuccess, { type NextRegistrationAction } from "@/app/components/RegistrationSuccess";
 import PageHeading from "@/app/components/PageHeading";
@@ -364,7 +365,7 @@ export default function Page() {
                           visita.
                         </p>
 
-                        <input
+                        <FieldGuidance error={!fechas[item.id] && "Indica la fecha de la visita."}><input
                           id={`fecha-${item.id}`}
                           type="date"
                           max={hoy}
@@ -376,7 +377,7 @@ export default function Page() {
                             }))
                           }
                           className="mt-2 w-full rounded-xl border border-slate-200 bg-[#fafafa] px-3 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-500 focus:border-[#c80000] focus:bg-white focus:ring-2 focus:ring-red-100"
-                        />
+                        /></FieldGuidance>
                       </div>
 
                       <div>
@@ -467,17 +468,15 @@ export default function Page() {
           ) : (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-14 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-xl font-bold text-emerald-700">
-                ✓
+                {error ? "!" : "✓"}
               </div>
 
               <h3 className="mt-4 text-lg font-bold text-emerald-950">
-                No hay visitas pendientes
+                {error ? "No se pudo consultar las visitas" : "No hay visitas pendientes"}
               </h3>
 
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-emerald-800/80">
-                Todas las visitas que corresponden actualmente están
-                registradas. Puedes continuar con las demás actividades de la
-                cartera.
+                {error ? "Vuelve a cargar la pantalla para consultar las visitas pendientes." : "Todas las visitas de esta consulta están registradas. Puedes continuar con las demás actividades de la cartera."}
               </p>
 
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">

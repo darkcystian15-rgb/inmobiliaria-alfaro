@@ -407,6 +407,8 @@ function TasacionesTextosContent() {
 
         {cargando ? (
             <LoadingCards label="Cargando inmuebles…" />
+          ) : error && !registradas.length && !pendientesTasacion.length && !aprobadas.length && !listos.length && !publicadas.length ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">No se pudo consultar la bandeja. Vuelve a cargar la pantalla para obtener los inmuebles.</div>
           ) : zone === null ? (
             <section aria-labelledby="appraisal-zones-title">
               <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
@@ -438,7 +440,7 @@ function TasacionesTextosContent() {
             </section>
             <section id="negociadas" tabIndex={-1} className="scroll-mt-6 rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-end justify-between">
-                <div><h2 className="text-lg font-bold text-slate-900">Tasaciones negociadas</h2><p className="mt-1 text-sm text-slate-500">Precios acordados con el propietario. Puedes actualizar el precio o renta mensual y la observación incluso después de publicar.</p></div>
+                <div><h2 className="text-lg font-bold text-slate-900">Tasaciones negociadas</h2><p className="mt-1 text-sm text-slate-500">Tasaciones registradas con los precios acordados con el propietario. Puedes actualizar el precio o renta mensual y la observación incluso después de publicar.</p></div>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">{visiblesRegistradas.length}</span>
               </div>
               {visiblesRegistradas.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : <div className="space-y-3">{visiblesRegistradas.map(item => <article key={item.inmuebleId} className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:border-violet-200">

@@ -13,6 +13,7 @@ import { requestJson } from "@/lib/client-request";
 import { rentalResult } from "@/lib/rental-result.mjs";
 import { operationLabel } from "@/lib/operation.mjs";
 import { saleResult } from "@/lib/sale-result.mjs";
+import ActiveFilters from "@/app/components/ActiveFilters";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -206,7 +207,7 @@ export default function Page() {
 
                 <p className="mt-1 text-sm font-semibold text-slate-800">
                   Selecciona el inmueble, registra el motivo y confirma la
-                  salida.
+                  salida. Vendido o alquilado registra un cierre; los otros motivos se eligen según lo ocurrido.
                 </p>
               </div>
 
@@ -304,6 +305,8 @@ export default function Page() {
           </div>
         </section>
 
+        <ActiveFilters labels={[busqueda.trim() && `Búsqueda: ${busqueda}`]} onClear={() => setBusqueda("")} />
+
         {/* LISTADO */}
         <section>
           {cargando ? (
@@ -311,18 +314,18 @@ export default function Page() {
           ) : filtrados.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-500">
-                {items.length === 0 ? "✓" : "⌕"}
+                {error ? "!" : items.length === 0 ? "✓" : "⌕"}
               </div>
 
               <h2 className="mt-4 font-bold text-slate-900">
                 {items.length === 0
-                  ? "No hay inmuebles activos"
+                  ? error ? "No se pudieron consultar los inmuebles" : "No hay inmuebles activos"
                   : "No hay coincidencias"}
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
                 {items.length === 0
-                  ? "Cuando existan inmuebles activos aparecerán aquí para registrar su salida."
+                  ? error ? "Vuelve a cargar la pantalla para consultar los inmuebles." : "Cuando existan inmuebles activos aparecerán aquí para registrar su salida."
                   : "Prueba con otro término de búsqueda."}
               </p>
             </div>

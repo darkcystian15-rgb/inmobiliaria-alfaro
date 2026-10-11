@@ -1,5 +1,6 @@
 
 "use client";
+import FieldGuidance from "@/app/components/FieldGuidance";
 import FolderIcon from "@/app/components/FolderIcon";
 import type { ReactNode } from "react";
 import GeographySelect from "@/app/components/GeographySelect";
@@ -328,7 +329,7 @@ export default function RegistrarInmueblePage() {
                       <span className="text-[#c80000]">*</span>
                     </label>
 
-                    <input
+                    <FieldGuidance error={!nombre.trim() && "Indica el nombre o referencia del inmueble."} help="Ejemplo: Casa en calle Los Cedros 383."><input
                       required
                       maxLength={120}
                       id="registro-nombre"
@@ -336,7 +337,7 @@ export default function RegistrarInmueblePage() {
                       onChange={(e) => setNombre(e.target.value)}
                       placeholder="Nombre o referencia del inmueble"
                       className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm outline-none placeholder:text-slate-500 transition focus:border-[#c80000] focus:ring-2 focus:ring-[#f5dede]"
-                    />
+                    /></FieldGuidance>
                   </div>
                 </div>
 
@@ -348,7 +349,7 @@ export default function RegistrarInmueblePage() {
                     <span className="text-[#c80000]">*</span>
                   </label>
 
-                  <input
+                  <FieldGuidance error={!ubicacion.trim() && "Indica la calle o avenida del inmueble."} help="Escribe la calle o avenida; el número va en su campo propio."><input
                     required
                     maxLength={255}
                     id="registro-direccion"
@@ -356,7 +357,7 @@ export default function RegistrarInmueblePage() {
                     onChange={(e) => setUbicacion(e.target.value)}
                     placeholder="Calle o avenida"
                     className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm outline-none placeholder:text-slate-500 transition focus:border-[#c80000] focus:ring-2 focus:ring-[#f5dede]"
-                  />
+                  /></FieldGuidance>
                 </div>
 
               <label className="block text-sm font-semibold">Número / lote<input value={numeroDireccion} maxLength={30} onChange={e=>setNumeroDireccion(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm"/></label>

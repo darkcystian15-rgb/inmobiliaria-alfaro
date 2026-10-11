@@ -3,6 +3,7 @@
 import { priceLabel, referenceLabel, targetLabel, operationLabel } from "@/lib/operation.mjs";
 import { propertyDisplayId } from "@/lib/property-display-id";
 
+import FieldGuidance from "@/app/components/FieldGuidance";
 import DraftRecovery from "@/app/components/DraftRecovery";
 import RegistrationSuccess, { type NextRegistrationAction } from "@/app/components/RegistrationSuccess";
 import PageHeading from "@/app/components/PageHeading";
@@ -47,6 +48,7 @@ export default function Page() {
   const [siguienteAccion, setSiguienteAccion] = useState<NextRegistrationAction | null>(null);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
+  const [registroIntentado, setRegistroIntentado] = useState<number | null>(null);
   const [guardando, setGuardando] = useState<number | null>(null);
 
   const hoy = useMemo(() => todayInPeru(), []);
@@ -71,6 +73,7 @@ export default function Page() {
   }, [cargar]);
 
   const registrar = async (item: Tasacion) => {
+    setRegistroIntentado(item.inmuebleId);
     setError("");
     setMensaje("");
     setSiguienteAccion(null);
@@ -137,7 +140,7 @@ export default function Page() {
         <section className="mt-7">
           <div className="mb-3"><h2 className="font-bold text-slate-900">Tasaciones por registrar</h2><p className="mt-1 text-sm text-slate-500">Estos inmuebles están activos, tienen posición asignada y todavía no tienen tasación registrada.</p></div>
           {cargando ? <LoadingCards label="Cargando inmuebles…" /> : items.length === 0 ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-12 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">✓</div><h3 className="mt-4 font-bold text-emerald-950">No hay tasaciones pendientes</h3><p className="mt-1 text-sm text-emerald-800/80">Las visitas realizadas ya tienen tasación registrada o no existen inmuebles pendientes.</p></div>
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-12 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">{error ? "!" : "✓"}</div><h3 className="mt-4 font-bold text-emerald-950">{error ? "No se pudo consultar las tasaciones" : "No hay tasaciones pendientes"}</h3><p className="mt-1 text-sm text-emerald-800/80">{error ? "Vuelve a cargar la pantalla para consultar los inmuebles." : "Las visitas realizadas ya tienen tasación registrada o no existen inmuebles pendientes."}</p></div>
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
@@ -149,10 +152,10 @@ export default function Page() {
                         <span className="self-start rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">Tasación pendiente</span>
                       </div>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <label className="text-xs font-semibold text-slate-600">Fecha de tasación *<input type="date" max={hoy} value={fechas[item.inmuebleId] ?? ""} onChange={(e) => setFechas(a => ({...a,[item.inmuebleId]:e.target.value}))} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
-                        <label className="text-xs font-semibold text-slate-600">{referenceLabel(item.operacion)} *<input type="number" min="0" step="0.01" value={valores[item.inmuebleId] ?? ""} onChange={(e) => setValores(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder={item.operacion === "alquiler" ? "1500" : "320000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
-                        <label className="text-xs font-semibold text-slate-600">{targetLabel(item.operacion)} *<input type="number" min="0" step="0.01" value={precios[item.inmuebleId] ?? ""} onChange={(e) => setPrecios(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder={item.operacion === "alquiler" ? "1500" : "315000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
-                        <label className="text-xs font-semibold text-slate-600">{priceLabel(item.operacion)} acordada/o *<input type="number" min="0.01" step="0.01" value={ventas[item.inmuebleId] ?? ""} onChange={e => setVentas(a => ({ ...a, [item.inmuebleId]: e.target.value }))} placeholder={item.operacion === "alquiler" ? "1500" : "450000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
+                        <label className="text-xs font-semibold text-slate-600">Fecha de tasación *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!fechas[item.inmuebleId] && "Indica la fecha de la tasación."} help="Usa la fecha real de la tasación."><input type="date" max={hoy} value={fechas[item.inmuebleId] ?? ""} onChange={(e) => setFechas(a => ({...a,[item.inmuebleId]:e.target.value}))} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label>
+                        <label className="text-xs font-semibold text-slate-600">{referenceLabel(item.operacion)} *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(valores[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Valor de referencia de la tasación; importe en soles."><input type="number" min="0" step="0.01" value={valores[item.inmuebleId] ?? ""} onChange={(e) => setValores(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder={item.operacion === "alquiler" ? "1500" : "320000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label>
+                        <label className="text-xs font-semibold text-slate-600">{targetLabel(item.operacion)} *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(precios[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Importe objetivo acordado con el propietario, en soles."><input type="number" min="0" step="0.01" value={precios[item.inmuebleId] ?? ""} onChange={(e) => setPrecios(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder={item.operacion === "alquiler" ? "1500" : "315000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label>
+                        <label className="text-xs font-semibold text-slate-600">{priceLabel(item.operacion)} acordada/o *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(ventas[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Precio final acordado o renta mensual, según la operación."><input type="number" min="0.01" step="0.01" value={ventas[item.inmuebleId] ?? ""} onChange={e => setVentas(a => ({ ...a, [item.inmuebleId]: e.target.value }))} placeholder={item.operacion === "alquiler" ? "1500" : "450000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label>
                       </div>
                       <label className="text-xs font-semibold text-slate-600">Observación<textarea rows={3} value={observaciones[item.inmuebleId] ?? ""} onChange={(e) => setObservaciones(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder="Precio conversado, ajustes, comentarios del propietario..." className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
                       <div className="flex flex-col gap-3 rounded-xl bg-[#f7f7f5] p-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-slate-500">Al guardar confirmas que el precio o renta mensual ya fue acordado con el propietario.</p><button disabled={guardando === item.inmuebleId} onClick={() => registrar(item)} className="rounded-xl bg-violet-700 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{guardando === item.inmuebleId ? "Guardando..." : "Registrar tasación"}</button></div>

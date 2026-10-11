@@ -599,7 +599,7 @@ export default function CarteraPage() {
               <label className="text-xs font-semibold text-slate-600">Actividad<select value={actividad} onChange={event => setActividad(event.target.value as FiltroActividad)} className="aa-input mt-2 w-full">{["Todas", "Visita pendiente", "Tasación pendiente", "Material pendiente"].map(value => <option key={value}>{value}</option>)}</select></label>
             </div>
           </ResponsiveFilters></div>
-          {tieneFiltros && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3"><p className="text-xs text-slate-600">{soloDisponibles ? "Mostrando solamente posiciones libres" : `${estado} · ${tipo} · ${distrito} · ${posicionFiltro === "Todas" ? "Todas las posiciones" : posicionFiltro === "sin" ? "Sin posición" : `Posición ${posicionFiltro}`} · ${actividad}`}</p><button type="button" onClick={limpiarFiltros} className="text-sm font-semibold text-[#c80000]">Limpiar filtros</button></div>}
+          {tieneFiltros && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3"><p className="text-xs text-slate-600">{soloDisponibles ? "Mostrando solamente posiciones libres" : `${estado} · ${tipo} · ${distrito} · ${posicionFiltro === "Todas" ? "Todas las posiciones" : posicionFiltro === "sin" ? "Sin posición" : `Posición ${posicionFiltro}`} · ${actividad}${operacion !== "Todos" ? ` · ${operacion === "alquiler" ? "Alquiler" : "Venta"}` : ""}${busqueda ? ` · Búsqueda: ${busqueda}` : ""}`}</p><button type="button" onClick={limpiarFiltros} className="text-sm font-semibold text-[#c80000]">Limpiar filtros</button></div>}
         </section>
 
         {/* RESULTADOS */}
@@ -708,10 +708,10 @@ export default function CarteraPage() {
         {filtrados.length === 0 && !cargando && !soloDisponibles && (
           <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
             <p className="font-semibold text-slate-700">
-              No encontramos inmuebles
+              {error ? "No se pudo consultar la cartera" : tieneFiltros ? "No hay resultados con estos filtros" : "No hay inmuebles en esta vista"}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Prueba cambiando los filtros o la búsqueda.
+              {error ? "Vuelve a cargar la pantalla para consultar la cartera." : tieneFiltros ? "Prueba cambiando los filtros o limpia la búsqueda." : "Abre otra zona o revisa el listado general."}
             </p>
           </div>
         )}
