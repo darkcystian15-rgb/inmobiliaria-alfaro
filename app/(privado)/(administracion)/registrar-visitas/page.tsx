@@ -164,7 +164,7 @@ export default function Page() {
 
           <Link
             href="/visitas-pendientes"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+            className="cartera-folder-navigation inline-flex items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 shadow-sm transition hover:bg-amber-100"
           >
             <span className="text-base">←</span>
             Ver visitas pendientes
@@ -172,7 +172,7 @@ export default function Page() {
         </header>
 
         {/* Flujo */}
-        <section className="mt-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] sm:p-6">
+        <section className="mt-7 rounded-2xl border border-amber-200 bg-amber-50/40 p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
@@ -275,7 +275,7 @@ export default function Page() {
               </p>
             </div>
 
-            <span className="w-fit rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
+            <span className="w-fit rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
               {items.length} pendientes
             </span>
           </div>
@@ -287,13 +287,13 @@ export default function Page() {
               {items.map((item) => (
                 <article
                   key={item.id}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]"
+                  className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm"
                 >
                   <div className="p-5 sm:p-6">
                     {/* Cabecera inmueble */}
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="flex items-start gap-4">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-sm font-bold text-[#c80000]">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-sm font-bold text-amber-700">
                           {item.posicion}
                         </div>
 

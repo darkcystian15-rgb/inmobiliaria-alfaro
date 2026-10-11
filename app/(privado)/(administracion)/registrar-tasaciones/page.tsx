@@ -108,7 +108,7 @@ export default function Page() {
       <DraftRecovery draftKey="tasaciones:actual" data={{fechas,valores,precios,ventas,observaciones}} dirty={[fechas,valores,precios,ventas,observaciones].some(record=>Object.values(record).some(Boolean))} onRestore={draft=>{if(draft.fechas)setFechas(draft.fechas as Record<number,string>);if(draft.valores)setValores(draft.valores as Record<number,string>);if(draft.precios)setPrecios(draft.precios as Record<number,string>);if(draft.ventas)setVentas(draft.ventas as Record<number,string>);if(draft.observaciones)setObservaciones(draft.observaciones as Record<number,string>);}}/>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <PageHeading href="/registrar-tasaciones" />
-          <Link href="/tasaciones-textos-pendientes" className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300">Ver seguimiento →</Link>
+          <Link href="/tasaciones-textos-pendientes" className="cartera-folder-navigation inline-flex items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 shadow-sm hover:bg-violet-100">Ver seguimiento →</Link>
         </div>
 
         <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]">
@@ -117,7 +117,7 @@ export default function Page() {
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Acción principal</p>
               <p className="mt-1 text-sm font-semibold">Registra los tres precios una vez concluida la negociación con el propietario.</p>
             </div>
-            <span className="rounded-full border border-orange-300/20 bg-orange-300/10 px-3 py-1.5 text-xs font-bold text-orange-200">Siguiente: seguimiento</span>
+            <span className="rounded-full border border-violet-300/20 bg-violet-300/10 px-3 py-1.5 text-xs font-bold text-violet-200">Siguiente: seguimiento</span>
           </div>
         </section>
 
@@ -125,9 +125,9 @@ export default function Page() {
         {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
 
         <section className="mt-7 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.045)]"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Por registrar</p><p className="mt-2 text-3xl font-bold text-slate-950">{items.length}</p><p className="mt-1 text-xs text-slate-500">inmuebles con visita realizada</p></div>
-          <div className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-orange-700">Tasación vigente</p><p className="mt-2 text-3xl font-bold text-slate-950">{aprobadas.length}</p><p className="mt-1 text-xs text-orange-700/80">negociadas actualmente</p></div>
-          <div className="rounded-2xl border border-cyan-200 bg-cyan-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-cyan-700">Fuente</p><p className="mt-2 text-lg font-bold text-cyan-950">Base de datos</p><p className="mt-1 text-xs text-cyan-700/80">precios y observaciones guardados</p></div>
+          <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Por registrar</p><p className="mt-2 text-3xl font-bold text-slate-950">{items.length}</p><p className="mt-1 text-xs text-slate-500">inmuebles con visita realizada</p></div>
+          <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Tasación vigente</p><p className="mt-2 text-3xl font-bold text-slate-950">{aprobadas.length}</p><p className="mt-1 text-xs text-violet-700/80">negociadas actualmente</p></div>
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Fuente</p><p className="mt-2 text-lg font-bold text-blue-950">Base de datos</p><p className="mt-1 text-xs text-blue-700/80">precios y observaciones guardados</p></div>
         </section>
 
         <section className="mt-7">
@@ -137,11 +137,11 @@ export default function Page() {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <article key={item.inmuebleId} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
+                <article key={item.inmuebleId} className="overflow-hidden rounded-2xl border border-violet-200 bg-white shadow-sm">
                   <div className="p-5 lg:p-6">
                     <div className="flex flex-col gap-5">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="flex items-center gap-4"><div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-base font-bold text-orange-700">{item.posicion}</div><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-slate-900">{item.nombre}</h3><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{item.tipo} · {operationLabel(item.operacion)}</span></div><p className="mt-1 text-xs text-slate-500">{item.ubicacion} · {propertyDisplayId(item)}</p><p className="mt-1 text-xs text-slate-500">Propietario: {item.propietario} · DNI {item.dni}</p></div></div>
+                        <div className="flex items-center gap-4"><div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-base font-bold text-violet-700">{item.posicion}</div><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-slate-900">{item.nombre}</h3><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{item.tipo} · {operationLabel(item.operacion)}</span></div><p className="mt-1 text-xs text-slate-500">{item.ubicacion} · {propertyDisplayId(item)}</p><p className="mt-1 text-xs text-slate-500">Propietario: {item.propietario} · DNI {item.dni}</p></div></div>
                         <span className="self-start rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">Tasación pendiente</span>
                       </div>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -151,7 +151,7 @@ export default function Page() {
                         <label className="text-xs font-semibold text-slate-600">{priceLabel(item.operacion)} acordada/o *<input type="number" min="0.01" step="0.01" value={ventas[item.inmuebleId] ?? ""} onChange={e => setVentas(a => ({ ...a, [item.inmuebleId]: e.target.value }))} placeholder={item.operacion === "alquiler" ? "1500" : "450000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
                       </div>
                       <label className="text-xs font-semibold text-slate-600">Observación<textarea rows={3} value={observaciones[item.inmuebleId] ?? ""} onChange={(e) => setObservaciones(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder="Precio conversado, ajustes, comentarios del propietario..." className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
-                      <div className="flex flex-col gap-3 rounded-xl bg-[#f7f7f5] p-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-slate-500">Al guardar confirmas que el precio o renta mensual ya fue acordado con el propietario.</p><button disabled={guardando === item.inmuebleId} onClick={() => registrar(item)} className="rounded-xl bg-[#c80000] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{guardando === item.inmuebleId ? "Guardando..." : "Registrar tasación"}</button></div>
+                      <div className="flex flex-col gap-3 rounded-xl bg-[#f7f7f5] p-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-slate-500">Al guardar confirmas que el precio o renta mensual ya fue acordado con el propietario.</p><button disabled={guardando === item.inmuebleId} onClick={() => registrar(item)} className="rounded-xl bg-violet-700 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{guardando === item.inmuebleId ? "Guardando..." : "Registrar tasación"}</button></div>
                     </div>
                   </div>
                 </article>
@@ -160,7 +160,7 @@ export default function Page() {
           )}
         </section>
 
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
+        <section className="mt-8 rounded-2xl border border-violet-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-900">Tasaciones negociadas registradas</h2><p className="mt-1 text-xs text-slate-500">El precio o renta mensual y la observación se pueden modificar desde la bandeja de seguimiento.</p></div>
           <div className="divide-y divide-slate-100">
             {aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadas.map(item => (

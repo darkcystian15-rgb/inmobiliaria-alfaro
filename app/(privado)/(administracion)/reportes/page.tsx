@@ -1,4 +1,5 @@
 "use client";
+import WorkspaceFileIcon from "@/app/components/WorkspaceFileIcon";
 import OperationSelect from "@/app/components/OperationSelect";
 import { reportPeriodField } from "@/lib/report-period.mjs";
 
@@ -823,23 +824,19 @@ export default function Page() {
                   onClick={() =>
                     solicitarReporte(reporte.nombre)
                   }
-                  className={`rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`group rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                     seleccionado ===
                     reporte.nombre
-                      ? "border-[#c80000]/40 ring-2 ring-red-50"
+                      ? "border-blue-300 bg-blue-50/40 ring-2 ring-blue-50"
                       : "border-slate-200"
                   }`}
                 >
                   <div className="flex gap-3">
-                    <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${tone[reporte.categoria]}`}
-                    >
-                      {
-                        reporte.icono
-                      }
-                    </span>
+                    <WorkspaceFileIcon report />
+
 
                     <div>
+                      <p className={`mb-1 text-[10px] font-bold uppercase tracking-wide ${tone[reporte.categoria]} rounded-md px-2 py-1 w-fit`}>{reporte.categoria}</p>
                       <p className="text-sm font-bold text-slate-900">
                         {
                           reporte.nombre
