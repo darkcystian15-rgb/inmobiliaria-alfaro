@@ -1,4 +1,6 @@
 "use client";
+
+import ZoneContext from "@/app/components/ZoneContext";
 import OperationSelect from "@/app/components/OperationSelect";
 import { operationLabel, priceLabel } from "@/lib/operation.mjs";
 
@@ -527,7 +529,7 @@ export default function CarteraPage() {
         </div>
 
         <p className="mt-4 text-sm text-slate-600">{zonaSeleccionada === null ? "Selecciona una zona para consultar sus inmuebles." : "Selecciona un inmueble de la lista para ver su información y abrir la ficha completa."}</p>
-        {zonaSeleccionada !== null && <nav aria-label="Ruta de la cartera" className="mt-4 flex flex-wrap items-center gap-3 text-sm"><button type="button" onClick={() => abrirZona(null)} className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 font-semibold text-slate-800 hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />← Volver a zonas</button><span aria-hidden="true" className="text-slate-300">/</span><span aria-current="page" className="cartera-folder-navigation inline-flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/50 px-3 py-2 font-semibold text-slate-700"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /><span className="break-words">{zonaSeleccionada === ALL_ZONES ? "Listado general" : zonaSeleccionada}</span></span></nav>}
+        {zonaSeleccionada !== null && <nav aria-label="Ruta de la cartera" className="mt-4 flex flex-wrap items-center gap-3 text-sm"><button type="button" onClick={() => abrirZona(null)} className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 font-semibold text-slate-800 hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />← Volver a zonas</button><ZoneContext name={zonaSeleccionada === ALL_ZONES ? "Listado general" : zonaSeleccionada} general={zonaSeleccionada === ALL_ZONES} /></nav>}
         {zonaSeleccionada === null && <section aria-label="Cartera por zonas" className="mt-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">Cartera de inmuebles por zona</h2><button type="button" onClick={() => abrirZona(ALL_ZONES)} className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />Ver listado general →</button></div>
           <ul className="grid grid-cols-1 gap-x-4 gap-y-7 pt-5 sm:grid-cols-2 xl:grid-cols-3">{zonas.map(zona => <li key={zona.nombre} className="min-w-0">
