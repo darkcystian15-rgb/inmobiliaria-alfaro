@@ -12,7 +12,7 @@ export async function GET(request: Request){
  const params=new URL(request.url).searchParams;
  const modo=params.get("modo")||"todos";
  const oldest=params.get("orden")==="antiguedad";
- const limit=params.get("limite")==="2"?2:20;
+ const limit=params.get("limite")==="3"?3:params.get("limite")==="2"?2:20;
  if(!["real","demo","todos"].includes(modo))return NextResponse.json({error:"Modo no válido."},{status:400});
  const scope=modo==="todos"?sql`1=1`:modo==="demo"?isDemoProperty:sql`NOT ${isDemoProperty}`;
  const activity=sql`CASE WHEN NOT ${visitDone} THEN 'visita' WHEN ${inmTasaciones.id} IS NULL THEN 'tasacion' WHEN NOT COALESCE(${readyFile},0) THEN 'expediente' ELSE 'publicacion' END`;
