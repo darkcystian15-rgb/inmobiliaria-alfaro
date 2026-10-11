@@ -17,7 +17,7 @@ export default function WorkAgenda() {
   const [reload, setReload] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/seguimiento?orden=antiguedad&limite=2', { cache: 'no-store', signal: controller.signal }).then(async response => {
+    fetch('/api/seguimiento?orden=antiguedad&limite=3', { cache: 'no-store', signal: controller.signal }).then(async response => {
       if (!response.ok) throw new Error();
       const data = await response.json();
       if (!controller.signal.aborted) { setItems(data.items); setError(''); }
@@ -28,7 +28,7 @@ export default function WorkAgenda() {
   return <section aria-labelledby="work-priorities-title" className="aa-card overflow-hidden">
     <header className="border-b border-slate-100 p-5 sm:p-6">
       <h2 id="work-priorities-title" className="text-lg font-bold">Prioridades de trabajo</h2>
-      <p className="mt-2 text-sm text-slate-600">Los dos pendientes más antiguos de la cartera.</p>
+      <p className="mt-2 text-sm text-slate-600">Los tres pendientes más antiguos de la cartera.</p>
       <p className="mt-2 text-xs text-slate-500">Ordenados por el inicio de la actividad pendiente. Fechas de Perú.</p>
     </header>
     {loading ? <p className="p-5 text-sm">Cargando prioridades…</p> : error ? <p role="alert" className="p-5 text-sm text-red-700">{error}<button type="button" onClick={() => { setLoading(true); setReload(current => current + 1); }} className="ml-3 min-h-11 underline">Reintentar</button></p> : !items.length ? <p className="p-5 text-sm text-emerald-800">No hay próximos pasos pendientes en la cartera.</p> : <div>
