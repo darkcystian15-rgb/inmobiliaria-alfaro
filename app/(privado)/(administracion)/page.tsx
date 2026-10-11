@@ -91,15 +91,17 @@ export default function Home() {
           })}</div> : <p className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">✓ No hay visitas, tasaciones, expedientes ni publicaciones pendientes en las áreas consultadas.</p>}
         </details>
 
-        <section aria-labelledby="recent-progress-title" className="aa-card overflow-hidden">
-          <header className="border-b border-slate-100 px-4 py-3 sm:px-5"><h2 id="recent-progress-title" className="text-lg font-bold text-slate-900">Avances recientes</h2><p className="mt-1 text-xs text-slate-500">Últimos cinco movimientos · Hora de Perú</p></header>
-          <div aria-hidden="true" className="hidden grid-cols-[3rem_minmax(0,1.5fr)_minmax(0,1.5fr)_8rem_7rem] gap-3 bg-slate-50 px-5 py-2 text-xs font-semibold text-slate-500 lg:grid"><span>Pos.</span><span>Inmueble</span><span>Cambio realizado</span><span>Fecha</span><span>Historial</span></div>
-          <ul className="divide-y divide-slate-100">{data.recientes.length ? data.recientes.map((item, index) => <li key={`${item.inmuebleId}-${index}`} className="grid grid-cols-[2rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1 px-4 py-3 lg:grid-cols-[3rem_minmax(0,1.5fr)_minmax(0,1.5fr)_8rem_7rem] lg:px-5">
-            <span className="row-span-3 font-mono text-sm font-semibold text-slate-500 lg:row-span-1">{item.numero}</span>
-            <span className="truncate text-sm font-semibold text-slate-900" title={item.nombre}>{item.nombre}</span>
-            <span className="col-start-2 break-words text-xs text-slate-600 lg:col-start-auto lg:text-sm">{item.etapa}</span>
-            <time dateTime={item.fecha ?? undefined} className="col-start-2 text-xs text-slate-500 lg:col-start-auto">{item.fecha ? new Date(item.fecha).toLocaleString("es-PE", { timeZone: "America/Lima", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "Sin fecha"}</time>
-            <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}#historial`} aria-label={`Ver historial de ${item.nombre}`} className="col-start-2 inline-flex min-h-11 items-center text-xs font-semibold text-[#c80000] hover:underline lg:col-start-auto">Ver historial →</Link>
+        <section aria-labelledby="recent-progress-title" className="aa-card w-full max-w-5xl overflow-hidden">
+          <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5"><h2 id="recent-progress-title" className="text-lg font-bold text-slate-900">Avances recientes</h2><p className="text-xs text-slate-500">Últimos cinco movimientos · Hora de Perú</p></header>
+          <ul className="divide-y divide-slate-100">{data.recientes.length ? data.recientes.map((item, index) => <li key={`${item.inmuebleId}-${index}`} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3 transition hover:bg-slate-50/70 sm:px-5">
+            <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
+              <span aria-label={`Posición ${item.numero}`} className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 px-1 font-mono text-xs font-semibold text-slate-500">{item.numero}</span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold leading-5 text-slate-900" title={item.nombre}>{item.nombre}</p>
+                <p className="mt-0.5 break-words text-xs leading-5 text-slate-600"><span>{item.etapa}</span><span aria-hidden="true" className="mx-2 text-slate-300">·</span><time dateTime={item.fecha ?? undefined} className="text-slate-500">{item.fecha ? new Date(item.fecha).toLocaleString("es-PE", { timeZone: "America/Lima", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "Sin fecha"}</time></p>
+              </div>
+            </div>
+            <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}#historial`} aria-label={`Ver historial de ${item.nombre}`} className="col-start-2 inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-[#c80000] transition hover:bg-slate-50 sm:col-start-auto">Ver historial →</Link>
           </li>) : <li className="px-5 py-4 text-sm text-slate-600">Todavía no hay movimientos registrados.</li>}</ul>
         </section>
       </>}
