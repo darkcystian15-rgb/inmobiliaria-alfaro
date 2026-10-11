@@ -117,7 +117,7 @@ export default function RegistrarInmueblePage() {
 
     if (!posicion || !tipo || !nombre.trim() || !ubicacion.trim()) {
       setError(
-        "Completa tipo de inmueble, nombre del propietario y ubicación."
+        "Selecciona una posición y completa el tipo de inmueble, su nombre o referencia y la dirección."
       );
       return;
     }
@@ -200,6 +200,21 @@ export default function RegistrarInmueblePage() {
   const puedeRegistrar = Boolean(
     posicion && tipo && nombre.trim() && ubicacion.trim() && !guardando
   );
+  const camposPendientes = [
+    !tipo && "tipo de inmueble",
+    !nombre.trim() && "nombre o referencia del inmueble",
+    !ubicacion.trim() && "calle o avenida",
+  ].filter(Boolean);
+  const ayudaRegistro = guardando
+    ? "Registrando el inmueble. Espera a que termine."
+    : cargandoPosiciones && !posicion
+      ? "Consultando las posiciones disponibles…"
+      : !posicion
+        ? "Necesitas una posición disponible para registrar el inmueble. Revisa la disponibilidad de posiciones."
+        : camposPendientes.length
+          ? `Para registrar, completa: ${camposPendientes.join(", ")}.`
+          : "";
+
 
   return (
     <main className="min-h-screen bg-[#f7f7f5] p-4 sm:p-6 lg:p-8">
@@ -489,6 +504,7 @@ export default function RegistrarInmueblePage() {
               </div>
 
               {/* ACCIONES */}
+              {!puedeRegistrar && <p id="ayuda-registro" role="status" className="text-xs leading-5 text-slate-600">{ayudaRegistro}</p>}
               <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
                 <Link
                   href="/cartera"
@@ -500,6 +516,7 @@ export default function RegistrarInmueblePage() {
                 <button
                   onClick={registrar}
                   disabled={!puedeRegistrar}
+                  aria-describedby={!puedeRegistrar ? "ayuda-registro" : undefined}
                   className="rounded-xl bg-[#c80000] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#ad0000] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
                 >
                   {guardando ? "Registrando..." : "Registrar inmueble"}
