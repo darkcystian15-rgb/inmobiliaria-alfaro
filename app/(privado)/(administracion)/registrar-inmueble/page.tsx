@@ -1,5 +1,6 @@
 
 "use client";
+import MobileFormActions, { MobileFormFeedback } from "@/app/components/MobileFormActions";
 import FieldGuidance from "@/app/components/FieldGuidance";
 import FolderIcon from "@/app/components/FolderIcon";
 import type { ReactNode } from "react";
@@ -11,6 +12,7 @@ import OperationSelect from "@/app/components/OperationSelect";
 import PropertyTypeSelect from "@/app/components/PropertyTypeSelect";
 import DraftRecovery from "@/app/components/DraftRecovery";
 import RegistrationSuccess, { type NextRegistrationAction } from "@/app/components/RegistrationSuccess";
+import { useReturnHref } from "@/app/components/NavigationReturn";
 import PageHeading from "@/app/components/PageHeading";
 
 
@@ -35,6 +37,7 @@ function RegistrationFolder({ id, title, description, children }: { id: string; 
 }
 
 export default function RegistrarInmueblePage() {
+  const returnHref = useReturnHref();
   const [seleccionPosicion, setPosicion] = useState("");
   const [posicionSolicitada, setPosicionSolicitada] = useState<string | null>(
     null
@@ -59,14 +62,16 @@ export default function RegistrarInmueblePage() {
   const [mensaje, setMensaje] = useState("");
   const [siguienteAccion, setSiguienteAccion] = useState<NextRegistrationAction | null>(null);
   const [error, setError] = useState("");
+  const [errorCarga, setErrorCarga] = useState(false);
 
   const cargarPosiciones = useCallback((signal?: AbortSignal) => {
+    if (!signal?.aborted) { setCargandoPosiciones(true); setErrorCarga(false); }
     return requestJson<{ posiciones: Posicion[] }>("/api/posiciones", { signal }).then(data => {
       if (signal?.aborted) return;
       setPosicionSolicitada(new URLSearchParams(window.location.search).get("posicion"));
-      setPosiciones(data.posiciones ?? []);
+      setErrorCarga(false); setPosiciones(data.posiciones ?? []);
     }).catch(error => {
-      if (!signal?.aborted) setError(error instanceof Error ? error.message : "No fue posible consultar las posiciones.");
+      if (!signal?.aborted) { setErrorCarga(true); setError(error instanceof Error ? error.message : "No fue posible consultar las posiciones."); }
     }).finally(() => {
       if (!signal?.aborted) setCargandoPosiciones(false);
     });
@@ -74,8 +79,8 @@ export default function RegistrarInmueblePage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void cargarPosiciones(controller.signal);
-    return () => controller.abort();
+    const timer = window.setTimeout(() => { if (!controller.signal.aborted) void cargarPosiciones(controller.signal); }, 0);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [cargarPosiciones]);
 
   async function buscarPropietario() {
@@ -224,7 +229,7 @@ export default function RegistrarInmueblePage() {
 
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] p-4 sm:p-6 lg:p-8">
+    <main className="min-h-screen bg-[#f7f7f5] p-4 pb-40 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-[1380px]">
       <DraftRecovery draftKey="registro:actual" data={{seleccionPosicion,tipo,operacion,nombre,ubicacion,dni,apellidos,telefono,nombresPropietario,numeroDireccion,distrito,provincia,departamento}} dirty={!!(tipo||nombre||ubicacion||dni||apellidos||telefono)} onRestore={draft=>{setNombresPropietario(String(draft.nombresPropietario??""));setNumeroDireccion(String(draft.numeroDireccion??""));setDistrito(String(draft.distrito??""));setProvincia(String(draft.provincia??""));setDepartamento(String(draft.departamento??""));setOperacion(draft.operacion === 'alquiler' ? 'alquiler' : 'venta');setPosicion(String(draft.seleccionPosicion??''));setTipo(draft.tipo as string||'');setNombre(String(draft.nombres||draft.nombre||''));setUbicacion(String(draft.ubicacion??''));setDni(String(draft.dni??''));setApellidos(String(draft.apellidos??''));setTelefono(String(draft.telefono??''));}}/>
 
@@ -234,7 +239,7 @@ export default function RegistrarInmueblePage() {
             <PageHeading href="/registrar-inmueble" />
 
             <Link
-              href="/cartera"
+              href={returnHref}
               className="cartera-folder-navigation inline-flex w-fit items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-amber-100"
             >
               <FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /><span>←</span>
@@ -483,9 +488,9 @@ export default function RegistrarInmueblePage() {
               </RegistrationFolder>
 
               {/* MENSAJES */}
-              {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
+              {error && <MobileFormFeedback value={error}><Feedback tone="error" className="my-5">{error}{errorCarga && <button type="button" disabled={cargandoPosiciones} onClick={() => { setError(""); void cargarPosiciones(); }} className="aa-button aa-button-secondary mt-3">{cargandoPosiciones ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
 
-              {mensaje && <RegistrationSuccess message={mensaje} nextAction={siguienteAccion} />}
+              {mensaje && <MobileFormFeedback value={mensaje}><RegistrationSuccess message={mensaje} nextAction={siguienteAccion} /></MobileFormFeedback>}
 
               {/* DESPUÉS DEL REGISTRO */}
               <div className="rounded-2xl border border-[#ead1d1] bg-[#fff7f7] p-4 sm:p-5">
@@ -512,9 +517,9 @@ export default function RegistrarInmueblePage() {
 
               {/* ACCIONES */}
               {!puedeRegistrar && <p id="ayuda-registro" role="status" className="text-xs leading-5 text-slate-600">{ayudaRegistro}</p>}
-              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+              <div className="hidden gap-3 border-t border-slate-100 pt-5 sm:flex sm:justify-end">
                 <Link
-                  href="/cartera"
+                  href={returnHref}
                   className="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
                 >
                   Cancelar
@@ -654,6 +659,6 @@ export default function RegistrarInmueblePage() {
           </aside>
         </div>
       </div>
-    </main>
+    <MobileFormActions hint={!puedeRegistrar && !guardando ? ayudaRegistro : undefined}><Link href={returnHref} className="aa-button aa-button-secondary">Cancelar</Link><button type="button" onClick={registrar} disabled={!puedeRegistrar} aria-describedby={!puedeRegistrar ? "ayuda-registro" : undefined} className="aa-button aa-button-primary disabled:opacity-50">{guardando ? "Registrando…" : "Registrar inmueble"}</button></MobileFormActions></main>
   );
 }

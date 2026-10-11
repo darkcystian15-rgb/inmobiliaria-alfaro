@@ -56,13 +56,15 @@ export default function Page() {
   const [guardando, setGuardando] = useState<number | null>(null);
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+  const [errorCarga, setErrorCarga] = useState(false);
 
   const cargar = useCallback((signal?: AbortSignal) => {
+    if (!signal?.aborted) { setCargando(true); setError(""); setErrorCarga(false); }
     return requestJson<{ items: Item[] }>("/api/liberaciones", { signal }).then(data => {
       if (signal?.aborted) return;
       setItems(data.items ?? []);
     }).catch(error => {
-      if (!signal?.aborted) setError(error instanceof Error ? error.message : "No se pudieron cargar los inmuebles.");
+      if (!signal?.aborted) { setErrorCarga(true); setError(error instanceof Error ? error.message : "No se pudieron cargar los inmuebles."); }
     }).finally(() => {
       if (!signal?.aborted) setCargando(false);
     });
@@ -70,8 +72,8 @@ export default function Page() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void cargar(controller.signal);
-    return () => controller.abort();
+    const timer = window.setTimeout(() => { if (!controller.signal.aborted) void cargar(controller.signal); }, 0);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [cargar]);
 
   const filtrados = useMemo(() => {
@@ -270,7 +272,7 @@ export default function Page() {
         {/* AVISOS */}
         {mensaje && <Feedback tone="success" className="my-5">{mensaje}</Feedback>}
 
-        {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
+        {error && <Feedback tone="error" className="my-5">{error}{errorCarga && <button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button>}</Feedback>}
 
         {/* BUSCADOR */}
         <section className="mb-6 rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm">
@@ -325,7 +327,7 @@ export default function Page() {
 
               <p className="mt-1 text-sm text-slate-500">
                 {items.length === 0
-                  ? error ? "Vuelve a cargar la pantalla para consultar los inmuebles." : "Cuando existan inmuebles activos aparecerán aquí para registrar su salida."
+                  ? error ? "Pulsa Reintentar para consultar los inmuebles." : "Cuando existan inmuebles activos aparecerán aquí para registrar su salida."
                   : "Prueba con otro término de búsqueda."}
               </p>
             </div>

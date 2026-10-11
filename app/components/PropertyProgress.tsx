@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ContextLink as Link } from "@/app/components/NavigationReturn";
 import { propertyProgress, type PropertyProgressData } from "@/lib/property-progress";
 
 export default function PropertyProgress({ data, administrator, propertyId }: { data: PropertyProgressData; administrator: boolean; propertyId?: number }) {

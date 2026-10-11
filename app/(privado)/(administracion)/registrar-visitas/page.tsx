@@ -2,9 +2,11 @@
 
 import { propertyDisplayId } from "@/lib/property-display-id";
 
+import { MobileFormFeedback } from "@/app/components/MobileFormActions";
 import FieldGuidance from "@/app/components/FieldGuidance";
 import DraftRecovery from "@/app/components/DraftRecovery";
 import RegistrationSuccess, { type NextRegistrationAction } from "@/app/components/RegistrationSuccess";
+import { ReturnLink } from "@/app/components/NavigationReturn";
 import PageHeading from "@/app/components/PageHeading";
 
 
@@ -40,12 +42,13 @@ export default function Page() {
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [siguienteAccion, setSiguienteAccion] = useState<NextRegistrationAction | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorCarga, setErrorCarga] = useState(false);
 
   const hoy = todayInPeru();
 
   async function cargar() {
     setCargando(true);
-    setError(null);
+    setError(null); setErrorCarga(false);
 
     try {
       const response = await fetch("/api/visitas", {
@@ -73,6 +76,7 @@ export default function Page() {
           : todos
       );
     } catch (err) {
+      setErrorCarga(true);
       setError(
         err instanceof Error
           ? err.message
@@ -168,7 +172,7 @@ export default function Page() {
       <DraftRecovery draftKey="visitas:actual" data={{fechas,observaciones}} dirty={Object.values(fechas).some(Boolean)||Object.values(observaciones).some(Boolean)} onRestore={draft=>{if(draft.fechas)setFechas(draft.fechas as Record<number,string>);if(draft.observaciones)setObservaciones(draft.observaciones as Record<number,string>);}}/>
         {/* Encabezado */}
         <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <PageHeading href="/registrar-visitas" />
+          <PageHeading href="/registrar-visitas" /><ReturnLink />
 
           <Link
             href="/visitas-pendientes"
@@ -227,9 +231,9 @@ export default function Page() {
         </section>
 
         {/* Mensajes */}
-        {mensaje && <RegistrationSuccess message={mensaje} nextAction={siguienteAccion} />}
+        {mensaje && <MobileFormFeedback value={mensaje}><RegistrationSuccess message={mensaje} nextAction={siguienteAccion} /></MobileFormFeedback>}
 
-        {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
+        {error && <MobileFormFeedback value={error}><Feedback tone="error" className="my-5">{error}{errorCarga && <button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
 
         {/* Resumen */}
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -431,7 +435,7 @@ export default function Page() {
 
                     {!fotos[item.id]?.length && <label className="mt-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900"><input type="checkbox" checked={pendienteEvidencia[item.id] || false} disabled={procesando !== null || subiendoFotos[item.id]} onChange={event => setPendienteEvidencia(current => ({ ...current, [item.id]: event.target.checked }))} /><span>La visita se realizó. Registrar como «Pendiente de evidencia» y agregar al menos una foto después en Información de inmuebles → Visitas.</span></label>}
                     {/* Acción */}
-                    <div className="mt-6 flex flex-col gap-4 rounded-2xl bg-[#f7f7f5] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                    <div className="sticky bottom-3 z-10 mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-[#f7f7f5] p-4 shadow-sm sm:static sm:flex-row sm:items-center sm:justify-between sm:p-5">
                       <div>
                         <p className="text-sm font-bold text-slate-800">
                           ¿La visita ya se realizó?
@@ -446,7 +450,7 @@ export default function Page() {
                         type="button"
                         disabled={procesando !== null || subiendoFotos[item.id] || (!fotos[item.id]?.length && !pendienteEvidencia[item.id]) || !fechas[item.id]}
                         onClick={() => marcarRealizada(item)}
-                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#c80000] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#a90000] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#c80000] px-5 py-3 sm:w-auto text-sm font-bold text-white shadow-sm transition hover:bg-[#a90000] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {procesando === item.id ? (
                           <>
@@ -476,7 +480,7 @@ export default function Page() {
               </h3>
 
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-emerald-800/80">
-                {error ? "Vuelve a cargar la pantalla para consultar las visitas pendientes." : "Todas las visitas de esta consulta están registradas. Puedes continuar con las demás actividades de la cartera."}
+                {error ? "Pulsa Reintentar para consultar las visitas pendientes." : "Todas las visitas de esta consulta están registradas. Puedes continuar con las demás actividades de la cartera."}
               </p>
 
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">

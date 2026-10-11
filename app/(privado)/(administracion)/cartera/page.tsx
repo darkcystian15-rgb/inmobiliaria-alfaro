@@ -13,7 +13,7 @@ import { ALL_ZONES, inZone, propertyZones } from "@/lib/property-zones";
 
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { ContextLink as Link, NavigationReturnProvider } from "@/app/components/NavigationReturn";
 import { useRef } from "react";
 import PublicationChecklist, { type Checklist } from "@/app/components/PublicationChecklist";
 import StatusBadge from "@/app/components/StatusBadge";
@@ -372,17 +372,25 @@ export default function CarteraPage() {
     }
   }
 
+  function restaurarVista(params: URLSearchParams) {
+    setZonaSeleccionada(params.get("zona") || (["actividad", "vista", "disponibles"].some(key => params.has(key)) ? ALL_ZONES : null));
+    const state = params.get("estado");
+    setEstado(state === "Todos" || state === "Histórico" ? state : "Activo");
+    const activity = params.get("actividad");
+    setActividad(["Visita pendiente", "Tasación pendiente", "Material pendiente"].includes(activity ?? "") ? activity as FiltroActividad : "Todas");
+    setVista(params.get("vista") === "posiciones" || params.get("disponibles") === "1" ? "posiciones" : "lista");
+    setSoloDisponibles(params.get("disponibles") === "1");
+    setOperacion(params.get("operacion") || "Todos");
+    setTipo(params.get("tipo") || "Todos");
+    setDistrito(params.get("distrito") || "Todos");
+    setPosicionFiltro(params.get("posicion") || "Todas");
+    setBusqueda(params.get("buscar") || "");
+  }
+
   useEffect(() => {
     const inicial = window.setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
-      const zona = params.get("zona");
-      if (zona) setZonaSeleccionada(zona);
-      else if (["actividad", "vista", "disponibles"].some(key => params.has(key))) setZonaSeleccionada(ALL_ZONES);
-      const activity = params.get("actividad");
-      if (["Visita pendiente", "Tasación pendiente", "Material pendiente"].includes(activity ?? "")) setActividad(activity as FiltroActividad);
-      if (params.get("vista") === "lista") setVista("lista");
-      if (params.get("vista") === "posiciones" || params.get("disponibles") === "1") setVista("posiciones");
-      if (params.get("disponibles") === "1") setSoloDisponibles(true);
+      restaurarVista(params);
       void cargarDatos();
     }, 0);
 
@@ -391,7 +399,7 @@ export default function CarteraPage() {
       30000
     );
 
-    const volver = () => { const params = new URLSearchParams(window.location.search); setZonaSeleccionada(params.get("zona") || (["actividad", "vista", "disponibles"].some(key => params.has(key)) ? ALL_ZONES : null)); };
+    const volver = () => restaurarVista(new URLSearchParams(window.location.search));
     window.addEventListener("popstate", volver);
     return () => { window.clearTimeout(inicial); window.clearInterval(intervalo); window.removeEventListener("popstate", volver); };
   }, []);
@@ -496,6 +504,14 @@ export default function CarteraPage() {
     window.history.pushState(null, "", zona === null ? "/cartera" : `/cartera?zona=${encodeURIComponent(zona)}`);
   }
 
+  const returnParams = new URLSearchParams();
+  if (zonaSeleccionada !== null) returnParams.set("zona", zonaSeleccionada);
+  for (const [key, value, defaultValue] of [["estado", estado, "Activo"], ["operacion", operacion, "Todos"], ["tipo", tipo, "Todos"], ["distrito", distrito, "Todos"], ["posicion", posicionFiltro, "Todas"], ["actividad", actividad, "Todas"], ["vista", vista, "lista"], ["buscar", busqueda, ""]]) {
+    if (value !== defaultValue) returnParams.set(key, value);
+  }
+  if (soloDisponibles) returnParams.set("disponibles", "1");
+  const returnHref = `/cartera${returnParams.size ? `?${returnParams}` : ""}`;
+
   const tieneFiltros =
     soloDisponibles ||
     Boolean(busqueda) ||
@@ -507,7 +523,7 @@ export default function CarteraPage() {
     actividad !== "Todas";
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] p-6 lg:p-8">
+    <NavigationReturnProvider href={returnHref}><main className="min-h-screen bg-[#f7f7f5] p-6 lg:p-8">
       <div className="mx-auto max-w-[1550px]">
         {/* CABECERA */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -578,7 +594,7 @@ export default function CarteraPage() {
           })}
         </div>
 
-        {error && <Feedback tone="error" className="mt-5">{error}<button type="button" onClick={() => void cargarDatos()} className="ml-3 font-semibold underline">Reintentar</button></Feedback>}
+        {error && <Feedback tone="error" className="mt-5">{error}<button type="button" onClick={() => { setCargando(true); setCargandoPosiciones(true); void cargarDatos(); }} disabled={cargando} className="aa-button aa-button-secondary mt-3">Reintentar</button></Feedback>}
         {cargando && <LoadingCards label="Cargando cartera y posiciones…" count={6} />}
 
         {zonaSeleccionada !== null && <>
@@ -979,6 +995,6 @@ export default function CarteraPage() {
           </div>
         )}
       </div>
-    </main>
+    </main></NavigationReturnProvider>
   );
 }

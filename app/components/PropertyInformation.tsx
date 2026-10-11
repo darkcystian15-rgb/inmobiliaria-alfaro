@@ -1,4 +1,5 @@
 "use client";
+import MobileFormActions, { MobileFormFeedback } from "./MobileFormActions";
 import ActiveFilters from "./ActiveFilters";
 import DocumentLibrary from "./DocumentLibrary";
 import WorkspaceFileIcon from "./WorkspaceFileIcon";
@@ -17,7 +18,7 @@ import PageHeading from "@/app/components/PageHeading";
 
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import Link from "next/link";
+import { ContextLink as Link, NavigationReturnProvider, useReturnHref, ReturnLink } from "@/app/components/NavigationReturn";
 import PublicationChecklist, { type Checklist } from "./PublicationChecklist";
 import PropertyProgress from "./PropertyProgress";
 import { Feedback } from "./InterfaceFeedback";
@@ -95,7 +96,7 @@ function Stat({ label, value, icon }: { label: string; value: string; icon: Icon
   return <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"><div className="flex items-center gap-2 text-slate-500"><Icon name={icon} /><p className="text-xs font-bold uppercase tracking-wide">{label}</p></div><p className="mt-3 break-words text-sm font-semibold text-slate-800">{value}</p></div>;
 }
 function SaveBar({ dirty, busy }: { dirty: boolean; busy: boolean }) {
-  return <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm"><p className={`flex items-center gap-2 text-xs ${dirty ? "text-amber-700" : "text-slate-500"}`}><Icon name={dirty ? "document" : "check"} />{dirty ? "Tienes cambios por guardar" : "Sin cambios pendientes"}</p><button type="submit" disabled={!dirty || busy} className={primaryClass}><Icon name="save" />{busy ? "Guardando…" : "Guardar cambios"}</button></div>;
+  return <div className="sticky bottom-3 z-10 flex flex-col items-stretch justify-between sm:flex-row sm:items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm"><p className={`flex items-center gap-2 text-xs ${dirty ? "text-amber-700" : "text-slate-500"}`}><Icon name={dirty ? "document" : "check"} />{dirty ? "Tienes cambios por guardar" : "Sin cambios pendientes"}</p><button type="submit" disabled={!dirty || busy} className={primaryClass}><Icon name="save" />{busy ? "Guardando…" : "Guardar cambios"}</button></div>;
 }
 
 function DeleteDocumentDialog({ document, busy, onCancel, onConfirm }: {
@@ -142,6 +143,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [uploadReady, setUploadReady] = useState(false);
+  const originHref = useReturnHref(`/datos-inmuebles?codigo=${encodeURIComponent(code)}&pestana=${encodeURIComponent(tab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}`);
   const fileInput = useRef<HTMLInputElement>(null);
   const [documentForm, setDocumentForm] = useState<DocumentForm>(emptyDocument);
   const [listLoading, setListLoading] = useState(true);
@@ -150,6 +152,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const [loading, setLoading] = useState(Boolean(initialCode));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [errorCarga, setErrorCarga] = useState(false);
   const [message, setMessage] = useState("");
   const loadRequest = useRef(0);
   const sheet = useRef<HTMLDivElement>(null);
@@ -159,6 +162,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const load = useCallback((key: string, signal?: AbortSignal, preserveForm = false) => {
     const id = ++loadRequest.current;
     if (!key) return Promise.resolve();
+    setErrorCarga(false);
     return Promise.all([
       requestJson<Details>(`/api/inmuebles/${encodeURIComponent(key)}`, { signal }),
       requestJson<{ archivos: Document[]; subidaHabilitada: boolean }>(`/api/inmuebles/${encodeURIComponent(key)}/archivos`, { signal }),
@@ -167,7 +171,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
       setError(""); setDetails(data); if(!preserveForm){setForm(data.inmueble); setOwner(ownerFrom(data.inmueble));} setDocuments(files.archivos); setUploadReady(files.subidaHabilitada);
       setItems(previous => previous.map(item => item.id !== data.inmueble.codigo ? item : { ...item, nombre: data.inmueble.referencia, ubicacion: [data.inmueble.direccion, data.inmueble.distrito, data.inmueble.provincia, data.inmueble.departamento].filter(Boolean).join(", ") || "Ubicación por completar", propietario: [data.inmueble.propietarioNombres, data.inmueble.propietarioApellidos].filter(Boolean).join(" ") || "Sin propietario" }));
     }).catch(error => {
-      if (!signal?.aborted && id === loadRequest.current) setError(error instanceof Error ? error.message : "No se pudo cargar la ficha.");
+      if (!signal?.aborted && id === loadRequest.current) { setErrorCarga(true); setError(error instanceof Error ? error.message : "No se pudo cargar la ficha."); }
     }).finally(() => {
       if (!signal?.aborted && id === loadRequest.current) setLoading(false);
     });
@@ -183,8 +187,8 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   }, [listReload]);
   useEffect(() => {
     const controller = new AbortController();
-    void load(code, controller.signal);
-    return () => controller.abort();
+    const timer = window.setTimeout(() => { if (!controller.signal.aborted) void load(code, controller.signal); }, 0);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [code, load]);
 
   function selectProperty(key: string, discard = false) {
@@ -248,12 +252,12 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     return <label className="block text-xs font-semibold text-slate-600">{label}<input type={type} maxLength={key === "dni" ? 8 : undefined} inputMode={key === "dni" ? "numeric" : undefined} value={owner[key]} disabled={busy} onChange={event => setOwner(previous => ({ ...previous, [key]: event.target.value }))} className={inputClass} /></label>;
   }
 
-  return <main className="min-h-screen bg-[#f7f7f5] p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
+  return <NavigationReturnProvider href={originHref}><main className="min-h-screen bg-[#f7f7f5] p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
     {pendingProperty !== null && <ConfirmDialog title="Cambios sin guardar" confirmLabel="Descartar cambios" onCancel={() => setPendingProperty(null)} onConfirm={() => selectProperty(pendingProperty, true)}><p>Tienes cambios pendientes en esta ficha. Si cambias de inmueble, se descartarán.</p></ConfirmDialog>}
     <div className="mx-auto max-w-[1500px]">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <PageHeading href="/datos-inmuebles" />
-        {admin && <Link href="/cartera" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300">← Volver a cartera</Link>}
+        {admin && <ReturnLink />}
       </header>
 
       <div className="mt-7 grid items-start gap-5 2xl:grid-cols-[310px_minmax(0,1fr)]">
@@ -279,8 +283,8 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
 
         <div ref={sheet} className="min-w-0 scroll-mt-5">
           {code && <button type="button" disabled={busy} onClick={() => selectProperty("")} className="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-500 2xl:hidden">← Volver a elegir inmueble</button>}
-          {error && <Feedback tone="error" className="mb-4">{error}</Feedback>}
-          {message && <Feedback className="mb-4">{message}</Feedback>}
+          {error && <MobileFormFeedback value={error}><Feedback tone="error" className="mb-4">{error}{errorCarga && <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); void load(code, undefined, !!details); }} className="aa-button aa-button-secondary mt-3">{loading ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
+          {message && <MobileFormFeedback value={message}><Feedback className="mb-4">{message}</Feedback></MobileFormFeedback>}
           {loading && !details ? <div role="status" className="space-y-5 rounded-3xl border border-slate-200 bg-white p-8"><p className="text-sm text-slate-500">Cargando ficha del inmueble…</p><div className="h-28 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" /><div className="h-64 animate-pulse rounded-2xl bg-slate-50 motion-reduce:animate-none" /></div> : !details ? <div className="flex min-h-[480px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center"><div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-red-100 bg-[#fff5f4] text-[#c80000]"><Icon name="home" className="h-9 w-9" /></div><p className="mt-6 text-lg font-bold text-slate-900">La ficha de tu inmueble, en un solo lugar</p><p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">Selecciona un inmueble de la lista para consultar sus datos, completar la información y organizar sus documentos.</p><div className="mt-7 flex flex-wrap justify-center gap-2">{["Datos del propietario", "Características", "Documentación"].map(label => <span key={label} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500">{label}</span>)}</div></div> : <>
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.03)]">
               <div className="h-1.5 bg-[#c80000]" />
@@ -336,7 +340,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
               {tab === "Documentación" && <div className="space-y-7">
                 <DocumentLibrary key={code} documents={documentFiles} categories={documentTypes} renderDocument={document => (<article key={document.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4"><div className="flex min-w-0 basis-full items-start gap-3 sm:flex-1 sm:basis-auto"><WorkspaceFileIcon name={document.nombreOriginal || document.nombre} /><div className="min-w-0"><p className="break-words text-xs font-bold text-slate-800">{document.nombre}</p><p className="mt-1 text-xs text-slate-500">{documentTypes.find(([value]) => value === document.tipoDocumento)?.[1] || document.tipoDocumento}</p>{document.almacenamiento === "hosting" && <p className="mt-1 break-words text-xs text-emerald-700">Guardado en hosting · {document.nombreOriginal} · {((document.tamanoBytes || 0) / 1024).toLocaleString("es-PE", { maximumFractionDigits: 0 })} KB</p>}{document.observacion && <p className="mt-2 whitespace-pre-wrap text-xs text-slate-500">{document.observacion}</p>}</div></div><div className="flex flex-wrap gap-2"><a href={document.enlace} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Icon name="link" />Abrir</a>{document.almacenamiento === "hosting" && <a href={`${document.enlace}?download=1`} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Descargar</a>}{admin && <button type="button" disabled={busy} onClick={() => setDocumentToDelete(document)} aria-label={`${document.almacenamiento === "hosting" ? "Eliminar documento" : "Quitar enlace"} de ${document.nombre}`} className="rounded-lg px-2.5 py-2 text-slate-500 transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50"><Icon name="close" /></button>}</div></article>)} />
                 {!uploadReady && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-800">{admin ? "Para activar la subida, configura el almacenamiento de documentos y vuelve a desplegar el proyecto." : "La subida de documentos está pendiente de activación por el administrador."}</p>}
-                <form onSubmit={addDocument} className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5"><Block title="Agregar un documento" description="PDF, Word, Excel o documentos escaneados en JPG, PNG y WebP. Hasta 4 MB por archivo; las imágenes se comprimen automáticamente. Se guarda de forma privada, organizado por inmueble y tipo de documento."><div className="grid gap-4 sm:grid-cols-2"><label className="text-xs font-semibold text-slate-600">Tipo de documento<select value={documentForm.tipoDocumento} disabled={busy} onChange={event => setDocumentForm(previous => ({ ...previous, tipoDocumento: event.target.value }))} className={inputClass}>{documentTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="text-xs font-semibold text-slate-600">Nombre<input required maxLength={255} value={documentForm.nombre} disabled={busy} onChange={event => setDocumentForm(previous => ({ ...previous, nombre: event.target.value }))} placeholder="Ej. Copia literal actualizada" className={inputClass} /></label><label className="text-xs font-semibold text-slate-600 sm:col-span-2">Archivo<input ref={fileInput} required type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" disabled={busy || !uploadReady} onChange={event => { const selected = event.target.files?.[0] || null; setDocumentFile(selected); if (selected && !documentForm.nombre) setDocumentForm(previous => ({ ...previous, nombre: selected.name.replace(/\.[^.]+$/, "") })); }} className={`${inputClass} file:mr-3 file:rounded-lg file:border-0 file:bg-red-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-red-700`} />{documentFile && <span className="mt-2 block break-words text-xs font-normal text-slate-500">{documentFile.name} · {(documentFile.size / 1024 / 1024).toFixed(2)} MB</span>}</label><label className="text-xs font-semibold text-slate-600 sm:col-span-2">Observación<textarea rows={2} maxLength={500} value={documentForm.observacion} disabled={busy} onChange={event => setDocumentForm(previous => ({ ...previous, observacion: event.target.value }))} placeholder="Fecha, versión o comentario sobre el documento" className={inputClass} /></label></div><button type="submit" disabled={busy || !uploadReady || !documentFile} className={`${primaryClass} mt-5`}><Icon name="document" />{busy ? "Guardando…" : "Subir documento"}</button></Block></form>
+                <form id="agregar-documento" onSubmit={addDocument} className="scroll-mt-24 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 pb-28 sm:p-5"><Block title="Agregar un documento" description="PDF, Word, Excel o documentos escaneados en JPG, PNG y WebP. Hasta 4 MB por archivo; las imágenes se comprimen automáticamente. Se guarda de forma privada, organizado por inmueble y tipo de documento."><div className="grid gap-4 sm:grid-cols-2"><label className="text-xs font-semibold text-slate-600">Tipo de documento<select value={documentForm.tipoDocumento} disabled={busy} onChange={event => setDocumentForm(previous => ({ ...previous, tipoDocumento: event.target.value }))} className={inputClass}>{documentTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="text-xs font-semibold text-slate-600">Nombre<input required maxLength={255} value={documentForm.nombre} disabled={busy} onChange={event => setDocumentForm(previous => ({ ...previous, nombre: event.target.value }))} placeholder="Ej. Copia literal actualizada" className={inputClass} /></label><label className="text-xs font-semibold text-slate-600 sm:col-span-2">Archivo<input ref={fileInput} required type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" disabled={busy || !uploadReady} onChange={event => { const selected = event.target.files?.[0] || null; setDocumentFile(selected); if (selected && !documentForm.nombre) setDocumentForm(previous => ({ ...previous, nombre: selected.name.replace(/\.[^.]+$/, "") })); }} className={`${inputClass} file:mr-3 file:rounded-lg file:border-0 file:bg-red-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-red-700`} />{documentFile && <span className="mt-2 block break-words text-xs font-normal text-slate-500">{documentFile.name} · {(documentFile.size / 1024 / 1024).toFixed(2)} MB</span>}</label><label className="text-xs font-semibold text-slate-600 sm:col-span-2">Observación<textarea rows={2} maxLength={500} value={documentForm.observacion} disabled={busy} onChange={event => setDocumentForm(previous => ({ ...previous, observacion: event.target.value }))} placeholder="Fecha, versión o comentario sobre el documento" className={inputClass} /></label></div><button type="submit" disabled={busy || !uploadReady || !documentFile} className={`${primaryClass} mt-5 hidden sm:inline-flex`}><Icon name="document" />{busy ? "Guardando…" : "Subir documento"}</button></Block></form>
               </div>}
 
               {tab === "Visitas" && <PropertyVisits key={code} propertyId={details.inmueble.id} onBusyChange={setBusy} onChanged={() => { void load(code, undefined, true); }} />}
@@ -351,5 +355,5 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     </div>
     {confirmOwner && <ConfirmDialog title="Corregir propietario compartido" confirmLabel="Aplicar a sus inmuebles" onCancel={()=>setConfirmOwner(false)} onConfirm={()=>void save(undefined,true)}><p>Los datos de este propietario se actualizarán en todas sus fichas vinculadas. Confirma que se trata de la misma persona.</p></ConfirmDialog>}
     {documentToDelete && <DeleteDocumentDialog document={documentToDelete} busy={busy} onCancel={() => setDocumentToDelete(null)} onConfirm={() => { void removeDocument(documentToDelete); }} />}
-  </main>;
+  {tab === "Documentación" && details && <MobileFormActions><a href="#agregar-documento" className="aa-button aa-button-secondary">Ver formulario</a><button type="submit" form="agregar-documento" disabled={busy || !uploadReady || !documentFile} className={primaryClass}><Icon name="document" />{busy ? "Guardando…" : "Subir documento"}</button></MobileFormActions>}</main></NavigationReturnProvider>;
 }

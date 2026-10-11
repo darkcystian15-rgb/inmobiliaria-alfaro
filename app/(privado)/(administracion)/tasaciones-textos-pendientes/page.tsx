@@ -10,7 +10,7 @@ import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 
 import { requestJson } from "@/lib/client-request";
 
-import Link from "next/link";
+import { ContextLink as Link, NavigationReturnProvider } from "@/app/components/NavigationReturn";
 import { useSearchParams } from "next/navigation";
 import FolderIcon from "@/app/components/FolderIcon";
 import ZoneContext from "@/app/components/ZoneContext";
@@ -116,8 +116,10 @@ function TasacionesTextosContent() {
 
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+  const [errorCarga, setErrorCarga] = useState(false);
 
   const cargar = useCallback((signal?: AbortSignal) => {
+    if (!signal?.aborted) { setCargando(true); setError(""); setErrorCarga(false); }
     return Promise.all([
       requestJson<{ pendientes: Item[]; registradas: Item[] }>("/api/tasaciones", { signal }),
       requestJson<{ pendientes: Item[]; listos: Publicada[]; incompletos?: Publicada[]; publicadas: Publicada[] }>("/api/publicaciones", { signal }),
@@ -134,7 +136,7 @@ function TasacionesTextosContent() {
       setTextosListos(previous=>Object.fromEntries(Object.entries(newBase).map(([id,value])=>[id,previous[Number(id)]!==undefined&&previous[Number(id)]!==oldBase[Number(id)]?previous[Number(id)]:value])));
       materialBase.current=newBase;
     }).catch(error => {
-      if (!signal?.aborted) setError(error instanceof Error ? error.message : "No se pudo cargar la bandeja.");
+      if (!signal?.aborted) { setErrorCarga(true); setError(error instanceof Error ? error.message : "No se pudo cargar la bandeja."); }
     }).finally(() => {
       if (!signal?.aborted) setCargando(false);
     });
@@ -142,8 +144,8 @@ function TasacionesTextosContent() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void cargar(controller.signal);
-    return () => controller.abort();
+    const timer = window.setTimeout(() => { if (!controller.signal.aborted) void cargar(controller.signal); }, 0);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [cargar]);
 
   async function guardarTexto(item: Item) {
@@ -363,7 +365,7 @@ function TasacionesTextosContent() {
 
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] px-4 py-6 sm:px-6 lg:px-8">
+    <NavigationReturnProvider href={`/tasaciones-textos-pendientes${searchParams.size ? `?${searchParams}` : ""}${fragment}`}><main className="min-h-screen bg-[#f7f7f5] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1500px]">
       <DraftRecovery draftKey="textos:actual" data={{textos,textosListos}} dirty={Object.values(textos).some(Boolean)||[...listos,...publicadas].some(item=>textosListos[item.inmuebleId]!==undefined&&textosListos[item.inmuebleId]!==item.texto)} onRestore={draft=>{if(draft.textos)setTextos(draft.textos as Record<number,string>);if(draft.textosListos)setTextosListos(draft.textosListos as Record<number,string>);}}/>
         {/* ENCABEZADO */}
@@ -383,7 +385,7 @@ function TasacionesTextosContent() {
 
         {mensaje && <Feedback tone="success" className="my-5">{mensaje}</Feedback>}
 
-        {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
+        {error && <Feedback tone="error" className="my-5">{error}{errorCarga && <button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button>}</Feedback>}
 
         <section className="mb-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -408,7 +410,7 @@ function TasacionesTextosContent() {
         {cargando ? (
             <LoadingCards label="Cargando inmuebles…" />
           ) : error && !registradas.length && !pendientesTasacion.length && !aprobadas.length && !listos.length && !publicadas.length ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">No se pudo consultar la bandeja. Vuelve a cargar la pantalla para obtener los inmuebles.</div>
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">No se pudo consultar la bandeja. Pulsa Reintentar para obtener los inmuebles.</div>
           ) : zone === null ? (
             <section aria-labelledby="appraisal-zones-title">
               <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
@@ -947,7 +949,7 @@ function TasacionesTextosContent() {
           </div>
         </div>
       )}
-    </main>
+    </main></NavigationReturnProvider>
   );
 }
 function WorkflowIcon({ kind }: { kind: string }) {

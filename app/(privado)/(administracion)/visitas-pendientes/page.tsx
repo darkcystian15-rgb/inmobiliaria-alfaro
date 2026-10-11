@@ -13,8 +13,8 @@ import PageHeading from "@/app/components/PageHeading";
 
 import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 
-import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { ContextLink as Link, NavigationReturnProvider } from "@/app/components/NavigationReturn";
+import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
 
 type VisitaPendiente = {
   distrito: string | null; vencida?:boolean;responsable?:string|null;fechaLimite?:string|null;dni:string;id: number; codigo: string; posicion: string; nombre: string; ubicacion: string; dias: number; tipo: string; propietario: string;
@@ -28,22 +28,27 @@ function VisitInbox() {
   const params = useSearchParams();
   const zona = params.get("zona")?.trim() || null;
   const [items, setItems] = useState<VisitaPendiente[]>([]);
-  const [busqueda, setBusqueda] = useState("");
-  const [filtro, setFiltro] = useState("Todas");
+  const [busqueda, setBusqueda] = useState(params.get("buscar") || "");
+  const [filtro, setFiltro] = useState(["Hoy", "1-2 días", "Más de 2 días"].includes(params.get("antiguedad") || "") ? params.get("antiguedad")! : "Todas");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetch("/api/visitas", { cache: "no-store" })
-      .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error || "No se pudieron cargar las visitas.");
-        return body;
-      })
-      .then((body) => setItems(body.items ?? []))
-      .catch((err) => setError(err instanceof Error ? err.message : "No se pudieron cargar las visitas."))
-      .finally(() => setCargando(false));
+  const cargar = useCallback(async () => {
+    setCargando(true); setError("");
+    try {
+      const response = await fetch("/api/visitas", { cache: "no-store" });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "No se pudieron cargar las visitas.");
+      setItems(body.items ?? []);
+    } catch (err) { setError(err instanceof Error ? err.message : "No se pudieron cargar las visitas."); }
+    finally { setCargando(false); }
   }, []);
+  useEffect(() => { const timer = window.setTimeout(() => { void cargar(); }, 0); return () => window.clearTimeout(timer); }, [cargar]);
+  const returnParams = new URLSearchParams(params.toString());
+  returnParams.delete("volver");
+  if (busqueda) returnParams.set("buscar", busqueda); else returnParams.delete("buscar");
+  if (filtro !== "Todas") returnParams.set("antiguedad", filtro); else returnParams.delete("antiguedad");
+  const returnHref = `/visitas-pendientes${returnParams.size ? `?${returnParams}` : ""}`;
 
   const itemsZona = useMemo(() => items.filter(item => inZone(item, zona)), [items, zona]);
   const vencidasZona = itemsZona.filter(item => item.vencida).length;
@@ -64,6 +69,7 @@ function VisitInbox() {
     setBusqueda("");
     setFiltro("Todas");
     const next = new URLSearchParams(params.toString());
+    next.delete("buscar"); next.delete("antiguedad");
     if (value === null) next.delete("zona"); else next.set("zona", value);
     window.history.pushState(null, "", `/visitas-pendientes${next.size ? `?${next}` : ""}`);
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -79,7 +85,7 @@ function VisitInbox() {
   }, [busqueda, filtro, itemsZona]);
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] p-6 lg:p-8">
+    <NavigationReturnProvider href={returnHref}><main className="min-h-screen bg-[#f7f7f5] p-6 lg:p-8">
       <div className="mx-auto max-w-[1500px]">
         <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <PageHeading href="/visitas-pendientes" />
@@ -88,7 +94,7 @@ function VisitInbox() {
 
         <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Primero atiende las visitas con mayor antigüedad.</p></div><span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1.5 text-xs font-bold text-amber-200">{cargando ? "…" : vencidasZona} {vencidasZona === 1 ? "requiere" : "requieren"} atención</span></div></section>
 
-        {error && <Feedback tone="error" className="mt-6">{error}</Feedback>}
+        {error && <Feedback tone="error" className="mt-6">{error}<button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button></Feedback>}
         <section className="mt-7 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Pendientes</p><p className="mt-2 text-3xl font-bold text-amber-950">{cargando ? "…" : itemsZona.length}</p><p className="mt-1 text-xs text-amber-800/70">{zona && zona !== ALL_ZONES ? `en ${zona}` : "en todas las zonas"}</p></div>
           <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Requieren atención</p><p className="mt-2 text-3xl font-bold text-amber-950">{cargando ? "…" : vencidasZona}</p><p className="mt-1 text-xs text-amber-800/70">plazo de seguimiento vencido</p></div>
@@ -126,6 +132,6 @@ function VisitInbox() {
         </section>
         </>}
       </div>
-    </main>
+    </main></NavigationReturnProvider>
   );
 }

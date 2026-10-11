@@ -3,9 +3,11 @@
 import { priceLabel, referenceLabel, targetLabel, operationLabel } from "@/lib/operation.mjs";
 import { propertyDisplayId } from "@/lib/property-display-id";
 
+import { MobileFormFeedback } from "@/app/components/MobileFormActions";
 import FieldGuidance from "@/app/components/FieldGuidance";
 import DraftRecovery from "@/app/components/DraftRecovery";
 import RegistrationSuccess, { type NextRegistrationAction } from "@/app/components/RegistrationSuccess";
+import { ReturnLink } from "@/app/components/NavigationReturn";
 import PageHeading from "@/app/components/PageHeading";
 
 
@@ -47,6 +49,7 @@ export default function Page() {
   const [mensaje, setMensaje] = useState("");
   const [siguienteAccion, setSiguienteAccion] = useState<NextRegistrationAction | null>(null);
   const [error, setError] = useState("");
+  const [errorCarga, setErrorCarga] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [registroIntentado, setRegistroIntentado] = useState<number | null>(null);
   const [guardando, setGuardando] = useState<number | null>(null);
@@ -54,13 +57,14 @@ export default function Page() {
   const hoy = useMemo(() => todayInPeru(), []);
 
   const cargar = useCallback((signal?: AbortSignal) => {
+    if (!signal?.aborted) { setCargando(true); setError(""); setErrorCarga(false); }
     return requestJson<{ pendientes: Tasacion[]; aprobadas: Tasacion[] }>("/api/tasaciones", { signal }).then(data => {
       if (signal?.aborted) return;
       const selected = new URLSearchParams(window.location.search).get("inmueble");
       setItems((data.pendientes ?? []).filter(item=>!selected||String(item.inmuebleId)===selected));
       setAprobadas(data.aprobadas ?? []);
     }).catch(error => {
-      if (!signal?.aborted) setError(error instanceof Error ? error.message : "No se pudieron cargar las tasaciones.");
+      if (!signal?.aborted) { setErrorCarga(true); setError(error instanceof Error ? error.message : "No se pudieron cargar las tasaciones."); }
     }).finally(() => {
       if (!signal?.aborted) setCargando(false);
     });
@@ -68,8 +72,8 @@ export default function Page() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void cargar(controller.signal);
-    return () => controller.abort();
+    const timer = window.setTimeout(() => { if (!controller.signal.aborted) void cargar(controller.signal); }, 0);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [cargar]);
 
   const registrar = async (item: Tasacion) => {
@@ -114,7 +118,7 @@ export default function Page() {
       <div className="mx-auto max-w-6xl">
       <DraftRecovery draftKey="tasaciones:actual" data={{fechas,valores,precios,ventas,observaciones}} dirty={[fechas,valores,precios,ventas,observaciones].some(record=>Object.values(record).some(Boolean))} onRestore={draft=>{if(draft.fechas)setFechas(draft.fechas as Record<number,string>);if(draft.valores)setValores(draft.valores as Record<number,string>);if(draft.precios)setPrecios(draft.precios as Record<number,string>);if(draft.ventas)setVentas(draft.ventas as Record<number,string>);if(draft.observaciones)setObservaciones(draft.observaciones as Record<number,string>);}}/>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <PageHeading href="/registrar-tasaciones" />
+          <PageHeading href="/registrar-tasaciones" /><ReturnLink />
           <Link href="/tasaciones-textos-pendientes" className="cartera-folder-navigation inline-flex items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 shadow-sm hover:bg-violet-100">Ver seguimiento →</Link>
         </div>
 
@@ -128,8 +132,8 @@ export default function Page() {
           </div>
         </section>
 
-        {mensaje && <RegistrationSuccess message={mensaje} nextAction={siguienteAccion} />}
-        {error && <Feedback tone="error" className="my-5">{error}</Feedback>}
+        {mensaje && <MobileFormFeedback value={mensaje}><RegistrationSuccess message={mensaje} nextAction={siguienteAccion} /></MobileFormFeedback>}
+        {error && <MobileFormFeedback value={error}><Feedback tone="error" className="my-5">{error}{errorCarga && <button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
 
         <section className="mt-7 grid gap-4 sm:grid-cols-3">
           <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Por registrar</p><p className="mt-2 text-3xl font-bold text-slate-950">{items.length}</p><p className="mt-1 text-xs text-slate-500">inmuebles con visita realizada</p></div>
@@ -140,7 +144,7 @@ export default function Page() {
         <section className="mt-7">
           <div className="mb-3"><h2 className="font-bold text-slate-900">Tasaciones por registrar</h2><p className="mt-1 text-sm text-slate-500">Estos inmuebles están activos, tienen posición asignada y todavía no tienen tasación registrada.</p></div>
           {cargando ? <LoadingCards label="Cargando inmuebles…" /> : items.length === 0 ? (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-12 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">{error ? "!" : "✓"}</div><h3 className="mt-4 font-bold text-emerald-950">{error ? "No se pudo consultar las tasaciones" : "No hay tasaciones pendientes"}</h3><p className="mt-1 text-sm text-emerald-800/80">{error ? "Vuelve a cargar la pantalla para consultar los inmuebles." : "Las visitas realizadas ya tienen tasación registrada o no existen inmuebles pendientes."}</p></div>
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-12 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">{error ? "!" : "✓"}</div><h3 className="mt-4 font-bold text-emerald-950">{error ? "No se pudo consultar las tasaciones" : "No hay tasaciones pendientes"}</h3><p className="mt-1 text-sm text-emerald-800/80">{error ? "Pulsa Reintentar para consultar los inmuebles." : "Las visitas realizadas ya tienen tasación registrada o no existen inmuebles pendientes."}</p></div>
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
@@ -158,7 +162,7 @@ export default function Page() {
                         <label className="text-xs font-semibold text-slate-600">{priceLabel(item.operacion)} acordada/o *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(ventas[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Precio final acordado o renta mensual, según la operación."><input type="number" min="0.01" step="0.01" value={ventas[item.inmuebleId] ?? ""} onChange={e => setVentas(a => ({ ...a, [item.inmuebleId]: e.target.value }))} placeholder={item.operacion === "alquiler" ? "1500" : "450000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label>
                       </div>
                       <label className="text-xs font-semibold text-slate-600">Observación<textarea rows={3} value={observaciones[item.inmuebleId] ?? ""} onChange={(e) => setObservaciones(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder="Precio conversado, ajustes, comentarios del propietario..." className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
-                      <div className="flex flex-col gap-3 rounded-xl bg-[#f7f7f5] p-4 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-slate-500">Al guardar confirmas que el precio o renta mensual ya fue acordado con el propietario.</p><button disabled={guardando === item.inmuebleId} onClick={() => registrar(item)} className="rounded-xl bg-violet-700 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{guardando === item.inmuebleId ? "Guardando..." : "Registrar tasación"}</button></div>
+                      <div className="sticky bottom-3 z-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-[#f7f7f5] p-4 shadow-sm sm:static sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-slate-500">Al guardar confirmas que el precio o renta mensual ya fue acordado con el propietario.</p><button disabled={guardando === item.inmuebleId} onClick={() => registrar(item)} className="rounded-xl bg-violet-700 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{guardando === item.inmuebleId ? "Guardando..." : "Registrar tasación"}</button></div>
                     </div>
                   </div>
                 </article>
