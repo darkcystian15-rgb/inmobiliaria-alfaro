@@ -1,5 +1,6 @@
 "use client";
 
+import PortfolioLabelRow from "@/app/components/PortfolioLabelRow";
 import ZoneContext from "@/app/components/ZoneContext";
 import OperationSelect from "@/app/components/OperationSelect";
 import { operationLabel, priceLabel } from "@/lib/operation.mjs";
@@ -272,14 +273,6 @@ function cardTheme(item: Inmueble) {
   if (item.tasacionPendiente) return cardThemes.tasacion;
   if (item.materialPendiente || item.actividades.tasacion.situacion === "aprobado") return cardThemes.material;
   return cardThemes.seguimiento;
-}
-
-function primaryTone(item: Inmueble) {
-  if (item.estado === "Histórico") return "neutral" as const;
-  if (item.actividades.publicacion.publicado) return "complete" as const;
-  if (item.negociacionEnCurso) return "progress" as const;
-  if (item.visitaPendiente || item.tasacionPendiente || item.materialPendiente || item.actividades.tasacion.situacion === "pendiente_aprobacion") return "pending" as const;
-  return "progress" as const;
 }
 
 function salePrice(value: string | null) {
@@ -704,21 +697,9 @@ export default function CarteraPage() {
           </div>
         ) : (
           <section aria-label="Lista compacta de inmuebles" className="aa-card mt-3 overflow-hidden">
-            <div aria-hidden="true" className="hidden grid-cols-[3rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.3fr)_6rem_7rem_minmax(0,1.5fr)] items-center gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500 lg:grid">
-              <span>Pos.</span><span>Propietario / Inmueble</span><span>Tipo</span><span>Distrito</span><span>Operación</span><span className="text-right">Precio</span><span>Pendiente / Estado</span>
-            </div>
+            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500">Operación · Tipo · Dirección · Propietario · Zona · Pendiente / Estado</div>
             <ul className="divide-y divide-slate-100">
-              {filtrados.map(x => <li key={x.id}>
-                <button type="button" onClick={() => setSeleccionado(x)} aria-label={`Ver detalle de ${x.nombre}, ${x.posicion ? `posición ${x.posicion}` : "sin posición"}`} className="group grid w-full grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-3 text-left transition hover:bg-red-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000] lg:grid-cols-[3rem_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.3fr)_6rem_7rem_minmax(0,1.5fr)] lg:py-3.5">
-                  <span className="row-span-2 font-mono text-sm font-semibold text-slate-500 lg:row-span-1">{x.posicion ? String(x.posicion).padStart(2, "0") : "—"}</span>
-                  <span className="min-w-0"><span className="flex items-center gap-2"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /><span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[#c80000]" title={x.nombre}>{x.nombre}</span></span><span className="mt-0.5 block truncate text-xs text-slate-500" title={x.direccion || "Dirección por completar"}>{x.direccion || "Dirección por completar"}</span><span className="mt-0.5 block truncate text-xs text-slate-500 lg:hidden">{x.tipo} · {x.distrito || "Distrito por completar"} · {operationLabel(x.operacion)}</span></span>
-                  <span className="hidden truncate text-sm text-slate-600 lg:block" title={x.tipo}>{x.tipo}</span>
-                  <span className="hidden truncate text-sm text-slate-600 lg:block" title={x.distrito || "Distrito por completar"}>{x.distrito || "Por completar"}</span>
-                  <span className="hidden text-sm text-slate-600 lg:block">{operationLabel(x.operacion)}</span>
-                  <span className="col-start-3 row-start-1 text-right text-xs font-semibold text-slate-800 lg:col-start-auto lg:row-start-auto lg:text-sm">{salePrice(x.precioVenta)}{x.operacion === "alquiler" ? <span className="block text-xs font-normal text-slate-500">/ mes</span> : null}</span>
-                  <span className="col-span-2 col-start-2 row-start-2 flex min-w-0 items-center gap-2 lg:col-span-1 lg:col-start-auto lg:row-start-auto"><StatusBadge tone={primaryTone(x)}>{cardTheme(x).label}</StatusBadge><span aria-hidden="true" className="ml-auto text-slate-300 group-hover:text-[#c80000]">→</span></span>
-                </button>
-              </li>)}
+              {filtrados.map(x => <li key={x.id}><PortfolioLabelRow property={x} onOpen={() => setSeleccionado(x)} /></li>)}
             </ul>
           </section>
         )}
