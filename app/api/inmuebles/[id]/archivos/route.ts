@@ -1,3 +1,4 @@
+import { propertyIdentifierCondition } from "@/lib/property-identity";
 import { audit, auditValues } from "@/lib/security-audit";
 import { authorizeApi } from '@/lib/auth';
 import { NextResponse } from 'next/server';
@@ -14,7 +15,7 @@ export const maxDuration = 60;
 
 async function findInmueble(key: string) {
   const [row] = await db.select({ id: inmInmuebles.id, codigo: inmInmuebles.codigo }).from(inmInmuebles)
-    .where(/^\d+$/.test(key) ? eq(inmInmuebles.id, Number(key)) : eq(inmInmuebles.codigo, key)).limit(1);
+    .where(propertyIdentifierCondition(key)).limit(1);
   return row;
 }
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {

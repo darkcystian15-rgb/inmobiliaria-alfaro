@@ -20,7 +20,7 @@ try{
   const result=await response.json();assert.ok(result.rows.every(row=>row.operacion===(op==='venta'?'Venta':'Alquiler')));
  }
  const rentals=await request('/api/reportes?reporte=Alquilados&operacion=alquiler&pruebas=1',cookies[0]);assert.equal(rentals.status,200);assert.equal((await rentals.json()).fechaFiltro,'fechaAlquiler');
- const demoPanelResponse=await request('/api/dashboard?modo=demo',cookies[0]);assert.equal(demoPanelResponse.status,200);const demoPanel=await demoPanelResponse.json();assert.equal(demoPanel.modo,'demo');assert.ok(demoPanel.resumen.activos>=12);
+ const demoPanelResponse=await request('/api/dashboard?modo=demo',cookies[0]);assert.equal(demoPanelResponse.status,200);const demoPanel=await demoPanelResponse.json();assert.equal(demoPanel.modo,'todos');assert.ok(demoPanel.resumen.activos>=12);
  assert.equal((await request('/api/seguimiento?modo=demo',cookies[0])).status,200);assert.equal((await request('/api/alquileres?modo=demo',cookies[0])).status,200);assert.equal((await request('/api/alquileres',cookies[1])).status,403);
  console.log('PASS producción: páginas y APIs disponibles; panel/reportes coherentes; expedientes completos; permisos de operador conservados.');
 }finally{

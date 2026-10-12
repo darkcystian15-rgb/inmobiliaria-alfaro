@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import { stat } from 'node:fs/promises';
 import mysql from 'mysql2/promise';
 import { hashPassword, hashSessionToken } from '../lib/password.mjs';
+import { propertyCode } from '../lib/property-code.mjs';
 
 loadEnvFile('.env.local');
 const origin = process.env.TEST_ORIGIN || 'http://127.0.0.1:3142';
@@ -15,12 +16,9 @@ let userId, server, browser;
 const request = (params = {}) => fetch(`${origin}/api/reportes?${new URLSearchParams(params)}`, {
   headers: { Cookie: `aa_session=${token}` }, signal: AbortSignal.timeout(30000),
 });
-const demo = `(i.datos_prueba=1 OR (i.datos_validados=0 AND (
-  EXISTS(SELECT 1 FROM inm_propietarios p WHERE p.id=i.propietario_id AND p.dni='00000000') OR
-  EXISTS(SELECT 1 FROM inm_archivos a WHERE a.inmueble_id=i.id AND (a.nombre LIKE '%SOLO PRUEBA%' OR a.observacion LIKE '%SOLO PRUEBA%')) OR
-  EXISTS(SELECT 1 FROM inm_timeline t WHERE t.inmueble_id=i.id AND t.evento IN ('precios_iniciales_simulados','foto_ejemplo_agregada','propietario_ficticio_vinculado')))))`;
 async function check(label, params, predicate = "i.estado='activo'", values = []) {
-  const [expected] = await db.execute(`SELECT i.id,i.estado FROM inm_inmuebles i WHERE ${predicate} ORDER BY i.fecha_registro,i.id`, values);
+  const [expected] = await db.execute(`SELECT i.id,i.estado,i.codigo,i.numero_orden,i.tipo,i.referencia FROM inm_inmuebles i WHERE ${predicate} ORDER BY i.fecha_registro,i.id`, values);
+  for (const row of expected) assert.equal(row.codigo, propertyCode(Number(row.numero_orden), row.tipo, row.referencia), `${label}: código uniforme`);
   const response = await request(params);
   assert.equal(response.status, 200, label);
   const result = await response.json();
@@ -28,6 +26,7 @@ async function check(label, params, predicate = "i.estado='activo'", values = []
   assert.equal(result.resumen.total, expected.length, `${label}: resumen`);
   assert.equal(result.resumen.activos, expected.filter(row => row.estado === 'activo').length, `${label}: activos`);
   assert.equal(result.resumen.historicos, expected.filter(row => row.estado !== 'activo').length, `${label}: históricos`);
+  assert.ok(result.rows.every(row => !('datosPrueba' in row) && !('datosSimulados' in row)), `${label}: sin clasificación de prueba`);
   const page = Number(params.pagina || 1);
   const selected = params.todos === '1' ? expected : expected.slice((page - 1) * 50, page * 50);
   assert.deepEqual(result.rows.map(row => row.inmuebleId), selected.map(row => row.id), `${label}: inmuebles`);
@@ -51,8 +50,8 @@ try {
     assert.ok(ready, 'Servidor disponible');
   }
   await check('Consulta inicial incluye todos los registros', {});
-  await check('Solo datos reales', { pruebas: '0' }, `i.estado='activo' AND NOT ${demo}`);
-  await check('Incluir datos de prueba', { pruebas: '1' });
+  await check('Parámetro antiguo no excluye inmuebles', { pruebas: '0' });
+  await check('Parámetro antiguo no cambia el total', { pruebas: '1' });
   for (const operacion of ['venta', 'alquiler']) await check(operacion, { operacion }, "i.estado='activo' AND i.operacion=?", [operacion]);
   const [types] = await db.query('SELECT DISTINCT tipo FROM inm_inmuebles');
   for (const { tipo } of types) await check(`Tipo ${tipo}`, { tipo }, "i.estado='activo' AND i.tipo=?", [tipo]);
@@ -100,7 +99,8 @@ try {
     await page.getByRole('searchbox', { name: 'Buscar en esta página' }).waitFor();
     await page.waitForFunction(() => document.querySelectorAll('tbody tr').length > 0);
     assert.equal(await page.locator('tbody tr').count(), initial.rows.length);
-    assert.equal(await page.getByRole('checkbox', { name: 'Incluir datos de prueba' }).isChecked(), true);
+    assert.equal(await page.getByRole('checkbox', { name: /datos de prueba/i }).count(), 0);
+    assert.equal(await page.getByRole('columnheader', { name: /datos de prueba|datos ficticios/i }).count(), 0);
     const search = page.getByRole('searchbox', { name: 'Buscar en esta página' });
     await search.fill(initial.rows[0].codigo);
     await page.waitForFunction(() => document.querySelectorAll('tbody tr').length === 1);
@@ -112,12 +112,7 @@ try {
     assert.equal(await page.getByRole('columnheader', { name: /Código/ }).getAttribute('aria-sort'), 'ascending');
     await page.getByRole('columnheader', { name: /Código/ }).getByRole('button').click();
     assert.equal(await page.getByRole('columnheader', { name: /Código/ }).getAttribute('aria-sort'), 'descending');
-    const filteredResponse = page.waitForResponse(r => r.url().includes('pruebas=0') && r.status() === 200);
-    await page.getByRole('checkbox', { name: 'Incluir datos de prueba' }).uncheck();
-    await page.getByRole('button', { name: 'Generar reporte', exact: true }).click();
-    const real = await (await filteredResponse).json();
-    await page.waitForFunction(count => document.querySelectorAll('tbody tr').length === count, real.rows.length);
-    const resetResponse = page.waitForResponse(r => r.url().includes('pruebas=1') && r.status() === 200);
+    const resetResponse = page.waitForResponse(r => r.url().includes('/api/reportes?') && r.status() === 200);
     await page.getByRole('button', { name: 'Limpiar', exact: true }).click();
     await resetResponse;
     await page.waitForFunction(count => document.querySelectorAll('tbody tr').length === count, initial.rows.length);
@@ -138,7 +133,7 @@ try {
       await page.screenshot({ path: `/tmp/alfaro-reportes-${width}.png`, fullPage: true });
     }
     assert.deepEqual(errors, [], 'Sin errores JavaScript');
-    console.log('PASS navegador: resultados, búsqueda, orden, exclusión de pruebas, limpiar y diseño a 390/768/1440px');
+    console.log('PASS navegador: resultados, búsqueda, orden, códigos uniformes, limpiar y diseño a 390/768/1440px');
   }
 } finally {
   if (browser) await browser.close();

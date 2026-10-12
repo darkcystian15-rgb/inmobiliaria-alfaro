@@ -194,10 +194,9 @@ export default function Page() {
     useState("Todos");
 
   const [consulta, setConsulta] = useState({
-    reporte: "Cartera activa", desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos", pruebas: "1", pagina: "1",
+    reporte: "Cartera activa", desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos", pagina: "1",
   });
   const [operacion,setOperacion]=useState("Todos");
-  const [incluirPruebas,setIncluirPruebas]=useState(true);
   const [paginacion,setPaginacion]=useState({pagina:1,paginas:1,total:0});
   const seleccionado = consulta.reporte;
   const [exportando, setExportando] = useState<"pdf" | "excel" | null>(null);
@@ -262,7 +261,7 @@ export default function Page() {
     setGenerado(null);
     setError("");
     setErrorExportacion("");
-    setConsulta({ reporte, desde: fechaDesde, hasta: fechaHasta, situacion, estado, posicion, tipo,operacion,pruebas:incluirPruebas?"1":"0",pagina:"1" });
+    setConsulta({ reporte, desde: fechaDesde, hasta: fechaHasta, situacion, estado, posicion, tipo,operacion,pagina:"1" });
   }
 
   function cargar() { solicitarReporte(seleccionado); }
@@ -309,8 +308,7 @@ export default function Page() {
     setGenerado(null);
     setError("");
     setErrorExportacion("");
-    setIncluirPruebas(true);
-    setConsulta({ reporte: seleccionado, desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos",pruebas:"1",pagina:"1" });
+    setConsulta({ reporte: seleccionado, desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos",pagina:"1" });
   };
 
   const columnas =
@@ -321,7 +319,6 @@ export default function Page() {
         "codigo",
         "posicion",
         "nombre",
-        "datosPrueba",
         "propietario",
         "ubicacion",
         "tipo",
@@ -344,7 +341,6 @@ export default function Page() {
         "fechaVenta",
         "precioFinal",
         "comision",
-        "datosSimulados",
         "expedientePendiente",
         "dias",
         "fechaInicioPosicion",
@@ -363,7 +359,7 @@ export default function Page() {
       );
     }, [rows]);
 
-  const recomendadas = seleccionado === "Alquilados" ? ["codigo", "nombre", "fechaAlquiler", "rentaMensual", "comision", "fechaFinAlquiler"] : seleccionado === "Vendidos" ? ["codigo", "nombre", "fechaVenta", "precioFinal", "comision", "datosSimulados"] : columnas.length <= 6 ? columnas : columnas.filter(key =>
+  const recomendadas = seleccionado === "Alquilados" ? ["codigo", "nombre", "fechaAlquiler", "rentaMensual", "comision", "fechaFinAlquiler"] : seleccionado === "Vendidos" ? ["codigo", "nombre", "fechaVenta", "precioFinal", "comision"] : columnas.length <= 6 ? columnas : columnas.filter(key =>
     !["propietario", "ubicacion", "tipo", "fechaRegistro"].includes(key)).slice(0, 6);
   const elegidas = seleccionColumnas[seleccionado] ?? recomendadas;
   const columnasElegidas = columnas.filter(key => elegidas.includes(key));
@@ -379,8 +375,6 @@ export default function Page() {
     fechaVenta: "Fecha de venta",
     precioFinal: "Precio final (S/)",
     comision: "Comisión (S/)",
-    datosSimulados: "Datos ficticios",
-    datosPrueba: "Datos de prueba",
     expedientePendiente: "Expediente pendiente",
     codigo: "Código",
     posicion: "Pos.",
@@ -431,9 +425,8 @@ export default function Page() {
     consulta.operacion !== "Todos" && `Operación: ${consulta.operacion === "alquiler" ? "Alquiler" : "Venta"}`,
     consulta.tipo !== "Todos" && `Tipo: ${consulta.tipo}`,
     `Fecha utilizada: ${{fechaRegistro:"Registro",fechaVenta:"Venta",fechaSalida:"Salida",fechaVisita:"Visita",fechaTasacion:"Tasación",fechaPublicacion:"Publicación",fechaInicioPosicion:"Inicio de posición",fechaInicioFlujo:"Inicio del recorrido"}[reportPeriodField(seleccionado) as "fechaRegistro"]}`,
-    consulta.pruebas === "1" ? "Incluye datos de prueba" : "Solo datos reales",
   ].filter(Boolean).join(" · ") || "Todos los registros · Sin restricciones";
-  const filtrosPendientes = operacion !== consulta.operacion || fechaDesde !== consulta.desde || fechaHasta !== consulta.hasta || situacion !== consulta.situacion || estado !== consulta.estado || posicion !== consulta.posicion || tipo !== consulta.tipo || incluirPruebas !== (consulta.pruebas==="1");
+  const filtrosPendientes = operacion !== consulta.operacion || fechaDesde !== consulta.desde || fechaHasta !== consulta.hasta || situacion !== consulta.situacion || estado !== consulta.estado || posicion !== consulta.posicion || tipo !== consulta.tipo;
 
   async function descargar(formato: "pdf" | "excel") {
     if (cargando || exportando || !rows.length || !generado || !columnasElegidas.length) return;
@@ -636,7 +629,7 @@ export default function Page() {
           </ResponsiveFilters></div>
         </section>
 
-        <div className="mt-3 flex flex-wrap items-center gap-4"><label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={incluirPruebas} onChange={event=>setIncluirPruebas(event.target.checked)}/>Incluir datos de prueba</label><p className="text-xs text-slate-600">El período utiliza la fecha de la actividad del reporte seleccionado. Las descargas incluyen todos los resultados aplicados.</p></div>
+        <p className="mt-3 text-xs text-slate-600">El período utiliza la fecha de la actividad del reporte seleccionado. Las descargas incluyen todos los resultados aplicados.</p>
         {filtrosPendientes && <p className="mt-3 text-sm font-medium text-amber-700" role="status">Hay filtros pendientes de aplicar. Genera el reporte para actualizar el resultado y las descargas.</p>}
         {errorExportacion && <Feedback tone="error" className="mt-4">{errorExportacion}</Feedback>}
         {error && <Feedback tone="error" className="mt-5">{error}</Feedback>}

@@ -60,7 +60,6 @@ type Actividades = {
 };
 
 type Inmueble = {
-  datosPrueba?: boolean;
   expediente?: Checklist;
   id: string;
   inmuebleId: number;

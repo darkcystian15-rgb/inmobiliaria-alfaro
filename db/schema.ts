@@ -81,7 +81,8 @@ export const inmPropietarios = mysqlTable("inm_propietarios", {
 
 export const inmInmuebles = mysqlTable("inm_inmuebles", {
   id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
-  codigo: varchar("codigo", { length: 30 }).notNull(),
+  codigo: varchar("codigo", { length: 350 }).notNull(),
+  numeroOrden: bigint("numero_orden", { mode: "number", unsigned: true }),
   datosPrueba: boolean("datos_prueba").notNull().default(false),
   datosValidados: boolean("datos_validados").notNull().default(false),
   propietarioId: bigint("propietario_id", { mode: "number", unsigned: true }).references(() => inmPropietarios.id),
@@ -109,7 +110,18 @@ export const inmInmuebles = mysqlTable("inm_inmuebles", {
   fechaSalida: timestamp("fecha_salida", { mode: "date" }),
 }, (table) => ({
   codigoIdx: uniqueIndex("uq_inm_inmuebles_codigo").on(table.codigo),
+  ordenIdx: uniqueIndex("uq_inm_inmuebles_numero_orden").on(table.numeroOrden),
 }));
+
+export const inmSecuencias = mysqlTable("inm_secuencias", {
+  nombre: varchar("nombre", { length: 50 }).primaryKey(),
+  valor: bigint("valor", { mode: "number", unsigned: true }).notNull().default(0),
+});
+
+export const inmCodigosAnteriores = mysqlTable("inm_codigos_anteriores", {
+  codigo: varchar("codigo", { length: 350 }).primaryKey(),
+  inmuebleId: bigint("inmueble_id", { mode: "number", unsigned: true }).notNull().references(() => inmInmuebles.id),
+});
 
 export const inmPosiciones = mysqlTable("inm_posiciones", {
   id: tinyint("id", { unsigned: true }).primaryKey(),

@@ -29,7 +29,8 @@ CREATE TABLE inm_propietarios (
 
 CREATE TABLE inm_inmuebles (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  codigo VARCHAR(30) NOT NULL,
+  codigo VARCHAR(350) NOT NULL,
+  numero_orden BIGINT UNSIGNED NULL,
   datos_prueba BOOLEAN NOT NULL DEFAULT FALSE,
   datos_validados BOOLEAN NOT NULL DEFAULT FALSE,
   propietario_id BIGINT UNSIGNED NOT NULL,
@@ -56,6 +57,7 @@ CREATE TABLE inm_inmuebles (
   fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   fecha_salida DATETIME NULL,
   PRIMARY KEY (id),
+  UNIQUE KEY uq_inm_inmuebles_numero_orden (numero_orden),
   UNIQUE KEY uq_inm_inmuebles_codigo (codigo),
   CONSTRAINT fk_inm_inmuebles_propietario
     FOREIGN KEY (propietario_id) REFERENCES inm_propietarios(id)
@@ -314,3 +316,6 @@ CREATE TABLE IF NOT EXISTS `inm_ubicaciones` (
 
 
 CREATE INDEX `idx_ubicaciones_padre` ON `inm_ubicaciones` (`padre_id`);
+CREATE TABLE inm_secuencias (nombre VARCHAR(50) PRIMARY KEY, valor BIGINT UNSIGNED NOT NULL DEFAULT 0);
+INSERT INTO inm_secuencias (nombre, valor) VALUES ('inmueble', 0);
+CREATE TABLE inm_codigos_anteriores (codigo VARCHAR(350) PRIMARY KEY, inmueble_id BIGINT UNSIGNED NOT NULL, FOREIGN KEY (inmueble_id) REFERENCES inm_inmuebles(id));

@@ -1,3 +1,4 @@
+import { propertyIdentifierCondition } from "@/lib/property-identity";
 import { NextResponse } from 'next/server';
 import { and, asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
@@ -6,7 +7,7 @@ import { inmConfigAlertas, inmInmuebles, inmSeguimiento, inmTimeline, inmUsuario
 import { trackingInput, activities } from '@/lib/operational-input.mjs';
 
 async function property(key: string) {
-  const [row] = await db.select({id:inmInmuebles.id,estado:inmInmuebles.estado}).from(inmInmuebles).where(/^\d+$/.test(key) ? eq(inmInmuebles.id,Number(key)) : eq(inmInmuebles.codigo,key)).limit(1);
+  const [row] = await db.select({id:inmInmuebles.id,estado:inmInmuebles.estado}).from(inmInmuebles).where(propertyIdentifierCondition(key)).limit(1);
   return row;
 }
 export async function GET(_request:Request, context:{params:Promise<{id:string}>}) {

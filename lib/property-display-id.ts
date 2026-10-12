@@ -1,4 +1,9 @@
+import { propertyCode } from './property-code.mjs';
+
 type PropertyIdentity = {
+  id?: number | string | null;
+  codigo?: string | null;
+  numeroOrden?: number | null;
   posicion?: number | string | null;
   tipo?: string | null;
   nombre?: string | null;
@@ -9,9 +14,9 @@ type PropertyIdentity = {
 };
 
 export function propertyDisplayId(property: PropertyIdentity): string {
-  const owner = [property.propietarioNombres, property.propietarioApellidos].filter(Boolean).join(" ")
-    || (property.propietario && !["Sin propietario", "Por completar"].includes(property.propietario) ? property.propietario : "")
-    || property.nombre || property.referencia || "Por completar";
-  return [property.posicion == null || property.posicion === "" ? "SIN POSICIÓN" : String(property.posicion).padStart(2, "0"), property.tipo || "Otros", owner]
-    .map(value => value.trim().replace(/\s+/g, " ").toLocaleUpperCase("es-PE")).join("-");
+  if (property.codigo) return property.codigo;
+  if (typeof property.id === 'string' && !/^\d+$/.test(property.id)) return property.id;
+  const name = property.nombre || property.referencia || 'Inmueble';
+  if (property.numeroOrden) return propertyCode(property.numeroOrden, property.tipo || 'Otros', name);
+  return [property.tipo, name].filter(Boolean).join(' · ');
 }

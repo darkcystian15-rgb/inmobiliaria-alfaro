@@ -1,3 +1,4 @@
+import { propertyIdentifierCondition } from "@/lib/property-identity";
 import { NextResponse } from 'next/server';
 import { and, eq, desc, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
@@ -5,7 +6,7 @@ import { authorizeApi } from '@/lib/auth';
 import { inmAnuncios, inmInmuebles, inmTasaciones, inmTimeline } from '@/db/schema';
 import { announcementInput } from '@/lib/operational-input.mjs';
 
-async function property(key:string){const [row]=await db.select({id:inmInmuebles.id}).from(inmInmuebles).where(/^\d+$/.test(key)?eq(inmInmuebles.id,Number(key)):eq(inmInmuebles.codigo,key)).limit(1);return row;}
+async function property(key:string){const [row]=await db.select({id:inmInmuebles.id}).from(inmInmuebles).where(propertyIdentifierCondition(key)).limit(1);return row;}
 export async function GET(_request:Request,context:{params:Promise<{id:string}>}){
  const auth=await authorizeApi(undefined,'informacion');if(auth.response)return auth.response;
  try{const row=await property((await context.params).id);if(!row)return NextResponse.json({error:'Inmueble no encontrado.'},{status:404});

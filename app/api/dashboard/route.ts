@@ -1,5 +1,4 @@
 import { databaseInstant } from '@/lib/business-time';
-import { isDemoProperty } from '@/lib/demo-data';
 import { publicationReadiness } from "@/lib/publication-readiness";
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
@@ -17,6 +16,7 @@ import {
 } from "@/db/schema";
 
 const eventoMap: Record<string, string> = {
+  identificacion_actualizada: "Código del inmueble actualizado",
   ficha_organizada: "Ficha actualizada",
   ficha_actualizada: "Ficha actualizada",
   propietario_actualizado: "Datos del propietario actualizados",
@@ -39,13 +39,10 @@ const eventoMap: Record<string, string> = {
   inmueble_liberado: "Inmueble liberado",
 };
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const auth = await authorizeApi();
     if (auth.response) return auth.response;
-    const scope = new URL(request.url).searchParams.get("modo") || "todos";
-    if (!["real", "demo", "todos"].includes(scope)) return NextResponse.json({error:"Modo no válido."},{status:400});
-    const scopeFilter = scope === "todos" ? sql`1=1` : scope === "demo" ? isDemoProperty : sql`NOT ${isDemoProperty}`;
     const [
       inmueblesActivos,
       visitas,
@@ -61,7 +58,7 @@ export async function GET(request: Request) {
           hasPosition: sql<number>`EXISTS (SELECT 1 FROM inm_asignaciones_posicion ap WHERE ap.inmueble_id = ${inmInmuebles.id} AND ap.activa = 1)`,
         })
         .from(inmInmuebles)
-        .where(and(eq(inmInmuebles.estado,"activo"),scopeFilter)),
+        .where(eq(inmInmuebles.estado,"activo")),
 
       db
         .select({
@@ -120,7 +117,6 @@ export async function GET(request: Request) {
             inmAsignacionesPosicion.posicionId
           )
         )
-        .where(scopeFilter)
         .orderBy(desc(inmTimeline.fechaEvento), desc(inmTimeline.id))
         .limit(5),
 
@@ -244,7 +240,7 @@ export async function GET(request: Request) {
     const totalActivos = activos.size;
 
     return NextResponse.json({
-      modo: scope,
+      modo: "todos",
       resumen: {
         activos: totalActivos,
         posicionesDisponibles,

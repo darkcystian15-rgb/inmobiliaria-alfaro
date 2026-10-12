@@ -1,3 +1,4 @@
+import { propertyIdentifierCondition } from "@/lib/property-identity";
 import { NextResponse } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { hostingRequest } from '@/lib/document-hosting';
@@ -12,7 +13,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { id, archivoId } = await context.params;
     const fileId = Number(archivoId);
     if (!Number.isSafeInteger(fileId) || fileId < 1) return NextResponse.json({ error: 'Documento no válido.' }, { status: 400 });
-    const [row] = await db.select({ file: inmArchivos }).from(inmArchivos).innerJoin(inmInmuebles, eq(inmInmuebles.id, inmArchivos.inmuebleId)).where(and(eq(inmArchivos.id, fileId), /^\d+$/.test(id) ? eq(inmInmuebles.id, Number(id)) : eq(inmInmuebles.codigo, id))).limit(1);
+    const [row] = await db.select({ file: inmArchivos }).from(inmArchivos).innerJoin(inmInmuebles, eq(inmInmuebles.id, inmArchivos.inmuebleId)).where(and(eq(inmArchivos.id, fileId), propertyIdentifierCondition(id))).limit(1);
     if (!row || row.file.almacenamiento !== 'hosting' || !row.file.rutaAlmacenamiento) return NextResponse.json({ error: 'Documento no encontrado.' }, { status: 404 });
     const result = await hostingRequest('GET', row.file.rutaAlmacenamiento);
     const original = (row.file.nombreOriginal || row.file.nombre).replace(/[\r\n]/g, '');

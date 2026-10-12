@@ -1,3 +1,5 @@
+import { nextPropertyOrder } from "@/lib/property-identity";
+import { propertyCode } from "@/lib/property-code.mjs";
 import {NextResponse} from 'next/server';
 import {and,eq,sql} from 'drizzle-orm';
 import {db} from '@/lib/db';
@@ -6,12 +8,10 @@ import {inmInmuebles,inmLiberaciones,inmPosiciones,inmAsignacionesPosicion,inmTi
 import {validCalendarDate} from '@/lib/report-period.mjs';
 import {todayInPeru} from '@/lib/calendar.mjs';
 import {assignedPropertyType} from '@/lib/property-types';
-import {isDemoProperty} from '@/lib/demo-data';
-import {randomUUID} from 'node:crypto';
-export async function GET(request:Request){
+export async function GET(){
  const auth=await authorizeApi();if(auth.response)return auth.response;
- try{const mode=new URL(request.url).searchParams.get('modo')||'todos';if(!['real','demo','todos'].includes(mode))return NextResponse.json({error:'Modo no válido.'},{status:400});
- const items=await db.select({id:inmLiberaciones.id,inmuebleId:inmInmuebles.id,codigo:inmInmuebles.codigo,nombre:inmInmuebles.referencia,inicio:inmLiberaciones.fechaInicioAlquiler,fin:inmLiberaciones.fechaFinAlquiler,renta:inmLiberaciones.rentaMensual,datosPrueba:inmInmuebles.datosPrueba,reingresoId:sql<number|null>`(SELECT i.id FROM inm_inmuebles i WHERE i.inmueble_origen_id=${inmInmuebles.id} ORDER BY i.id DESC LIMIT 1)`}).from(inmLiberaciones).innerJoin(inmInmuebles,eq(inmInmuebles.id,inmLiberaciones.inmuebleId)).where(and(eq(inmLiberaciones.motivo,'alquilado'),eq(inmLiberaciones.confirmado,true),eq(inmLiberaciones.anulada,false),mode==='todos'?sql`1=1`:mode==='demo'?isDemoProperty:sql`NOT ${isDemoProperty}`)).orderBy(inmLiberaciones.fechaFinAlquiler,inmLiberaciones.id);
+ try{
+ const items=await db.select({id:inmLiberaciones.id,inmuebleId:inmInmuebles.id,codigo:inmInmuebles.codigo,nombre:inmInmuebles.referencia,inicio:inmLiberaciones.fechaInicioAlquiler,fin:inmLiberaciones.fechaFinAlquiler,renta:inmLiberaciones.rentaMensual,reingresoId:sql<number|null>`(SELECT i.id FROM inm_inmuebles i WHERE i.inmueble_origen_id=${inmInmuebles.id} ORDER BY i.id DESC LIMIT 1)`}).from(inmLiberaciones).innerJoin(inmInmuebles,eq(inmInmuebles.id,inmLiberaciones.inmuebleId)).where(and(eq(inmLiberaciones.motivo,'alquilado'),eq(inmLiberaciones.confirmado,true),eq(inmLiberaciones.anulada,false))).orderBy(inmLiberaciones.fechaFinAlquiler,inmLiberaciones.id);
  return NextResponse.json({items:items.map(item=>({...item,estado:!item.fin?'Sin fecha de fin':item.fin<todayInPeru()?'Vencido':item.fin<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)?'Vence en 30 días':'Vigente'}))});
  }catch{return NextResponse.json({error:'No se pudieron consultar los contratos.'},{status:500});}
 }
@@ -35,7 +35,8 @@ export async function POST(request:Request){
  const [prior]=await tx.select({id:inmInmuebles.id}).from(inmInmuebles).where(eq(inmInmuebles.inmuebleOrigenId,original.id)).limit(1);if(prior)throw new Error('Este contrato ya tiene un reingreso registrado.');
  const type=await assignedPropertyType(tx,original.tipo);
  const [position]=await tx.select().from(inmPosiciones).where(eq(inmPosiciones.numero,body.posicion)).limit(1).for('update');if(!position?.activo)throw new Error('Posición no disponible.');const [used]=await tx.select({id:inmAsignacionesPosicion.id}).from(inmAsignacionesPosicion).where(and(eq(inmAsignacionesPosicion.posicionId,position.id),eq(inmAsignacionesPosicion.activa,true))).limit(1).for('update');if(used)throw new Error('La posición está ocupada.');
- const [created]=await tx.insert(inmInmuebles).values({codigo:'RE-'+randomUUID().slice(0,22),inmuebleOrigenId:original.id,tipo:type,operacion:'alquiler',referencia:original.referencia,propietarioId:original.propietarioId,direccion:original.direccion,numeroDireccion:original.numeroDireccion,distrito:original.distrito,provincia:original.provincia,departamento:original.departamento,latitud:original.latitud,longitud:original.longitud,areaTerreno:original.areaTerreno,areaConstruida:original.areaConstruida,habitaciones:original.habitaciones,banos:original.banos,caracteristicas:original.caracteristicas,observaciones:original.observaciones,datosPrueba:original.datosPrueba,datosValidados:original.datosValidados,estado:'activo',etapa:'visita_pendiente'}).$returningId();
+ const numeroOrden=await nextPropertyOrder(tx);
+ const [created]=await tx.insert(inmInmuebles).values({codigo:propertyCode(numeroOrden,type,original.referencia),numeroOrden,inmuebleOrigenId:original.id,tipo:type,operacion:'alquiler',referencia:original.referencia,propietarioId:original.propietarioId,direccion:original.direccion,numeroDireccion:original.numeroDireccion,distrito:original.distrito,provincia:original.provincia,departamento:original.departamento,latitud:original.latitud,longitud:original.longitud,areaTerreno:original.areaTerreno,areaConstruida:original.areaConstruida,habitaciones:original.habitaciones,banos:original.banos,caracteristicas:original.caracteristicas,observaciones:original.observaciones,estado:'activo',etapa:'visita_pendiente'}).$returningId();
  await tx.insert(inmAsignacionesPosicion).values({inmuebleId:created.id,posicionId:position.id,activa:true});await tx.insert(inmTimeline).values([{inmuebleId:created.id,usuarioId:auth.user.id,evento:'inmueble_registrado',observacion:`Nueva captación desde ficha histórica ${original.codigo}. Visita y precios deben registrarse nuevamente.`},{inmuebleId:original.id,usuarioId:auth.user.id,evento:'alquiler_reingresado',observacion:`Nueva captación ${created.id}, posición ${body.posicion}. El contrato y los documentos anteriores se conservan.`}]);return created.id;
  });return NextResponse.json({ok:true,id},{status:201});
  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:'No se pudo reingresar.'},{status:409});}

@@ -163,7 +163,7 @@ export default function RegistrarInmueblePage() {
       }
 
       setMensaje(
-        `Inmueble ${propertyDisplayId({ posicion: data.posicion, tipo, propietarioNombres: nombresPropietario, propietarioApellidos: apellidos })} registrado correctamente en la posición ${String(
+        `Inmueble ${propertyDisplayId({ codigo: data.codigo })} registrado correctamente en la posición ${String(
           data.posicion
         ).padStart(2, "0")} y enviado a Visita pendiente.`
       );

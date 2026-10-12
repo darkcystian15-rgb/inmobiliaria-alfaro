@@ -1,4 +1,3 @@
-import { isDemoProperty } from '@/lib/demo-data';
 import { publicationReadiness } from "@/lib/publication-readiness";
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
@@ -39,7 +38,6 @@ export async function GET() {
     const inmuebles = await db
       .select({
         id: inmInmuebles.id,
-        datosPrueba: isDemoProperty,
         codigo: inmInmuebles.codigo,
         propietarioId: inmInmuebles.propietarioId,
         tipo: inmInmuebles.tipo,
@@ -305,7 +303,6 @@ const materialPendiente =
       return {
         id: row.codigo,
         inmuebleId: row.id,
-        datosPrueba: Boolean(row.datosPrueba),
 
         posicion: row.posicion ?? undefined,
 
@@ -412,7 +409,6 @@ const materialPendiente =
 
       resumen: {
         enCartera: ocupados.length,
-        pruebas: ocupados.filter(x=>x.datosPrueba).length,
         disponibles,
         visitasPendientes: activos.filter(
           (x) => x.visitaPendiente

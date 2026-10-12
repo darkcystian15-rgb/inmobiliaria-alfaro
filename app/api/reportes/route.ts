@@ -1,7 +1,6 @@
 import { databaseBusinessDay, databaseInstant } from '@/lib/business-time';
 import { reportPeriodField, validCalendarDate } from '@/lib/report-period.mjs';
 import { factsFrom, reportPredicates, reportSummaryQuery } from '@/lib/report-facts';
-import { isDemoProperty } from '@/lib/demo-data';
 import { publicationReadiness } from "@/lib/publication-readiness";
 import type { ReportRow } from "@/lib/report-types";
 import { authorizeApi } from "@/lib/auth";
@@ -116,7 +115,6 @@ export async function GET(request: NextRequest) {
     const tipo = sp.get("tipo") || "Todos";
 
     if ((desde && !validCalendarDate(desde)) || (hasta && !validCalendarDate(hasta)) || (desde && hasta && desde > hasta)) return NextResponse.json({error:'Indica un período válido, con Desde anterior o igual a Hasta.'},{status:400});
-    const includeDemo=sp.get('pruebas')!=='0';
     const all=sp.get('todos')==='1';
     const page=Number(sp.get('pagina')||1),pageSize=50;
     if(!Number.isSafeInteger(page)||page<1)return NextResponse.json({error:'Página no válida.'},{status:400});
@@ -134,7 +132,6 @@ export async function GET(request: NextRequest) {
       fechaInicioPosicion:sql`(SELECT DATE(DATE_SUB(p.fecha_inicio, INTERVAL (TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(),NOW()) + 18000) SECOND)) FROM inm_asignaciones_posicion p WHERE p.inmueble_id=${inmInmuebles.id} ORDER BY p.fecha_inicio DESC LIMIT 1)`,
     };
     const conditions=[];
-    if(!includeDemo)conditions.push(sql`NOT ${isDemoProperty}`);
     if(desde)conditions.push(sql`${periods[periodField]} >= ${desde}`);
     if(hasta)conditions.push(sql`${periods[periodField]} <= ${hasta}`);
     if(estado==='Activo')conditions.push(eq(inmInmuebles.estado,'activo'));
@@ -154,7 +151,6 @@ export async function GET(request: NextRequest) {
     const filteredSummary=Object.fromEntries(Object.entries((summaryResult as unknown as Record<string,unknown>[])[0]??{}).map(([key,value])=>[key,Number(value)]));
     if(reporte==='Posición ocupada'){
       const positionConditions=[];
-      if(!includeDemo)positionConditions.push(sql`NOT ${isDemoProperty}`);
       if(desde)positionConditions.push(sql`${databaseBusinessDay(inmAsignacionesPosicion.fechaInicio)} >= ${desde}`);
       if(hasta)positionConditions.push(sql`${databaseBusinessDay(inmAsignacionesPosicion.fechaInicio)} <= ${hasta}`);
       if(estado==='Activo')positionConditions.push(eq(inmInmuebles.estado,'activo'));
@@ -170,14 +166,13 @@ export async function GET(request: NextRequest) {
       const [positionCountResult]=await db.execute(sql`SELECT COUNT(*) total ${positionFrom} WHERE ${positionWhere}`);
       const total=Number((positionCountResult as unknown as {total:number}[])[0]?.total??0);
       if(all&&total>10000)return NextResponse.json({error:'Reduce el período o los filtros para descargar como máximo 10 000 asignaciones.'},{status:400});
-      const [positionData]=await db.execute(sql`SELECT ${inmInmuebles.codigo} codigo,${inmInmuebles.referencia} nombre,${inmInmuebles.tipo} tipo,${inmInmuebles.operacion} operacion,TRIM(CONCAT(COALESCE(${inmPropietarios.nombres},''),' ',COALESCE(${inmPropietarios.apellidos},''))) propietario,${inmPosiciones.numero} posicion,IF(${inmInmuebles.estado}='activo','Activo','Histórico') estado,${databaseInstant(inmAsignacionesPosicion.fechaInicio)} fechaInicioPosicion,${inmAsignacionesPosicion.fechaFin} fechaFinPosicion,${inmAsignacionesPosicion.activa} activaPosicion,${isDemoProperty} datosPrueba ${positionFrom} WHERE ${positionWhere} ORDER BY ${inmAsignacionesPosicion.fechaInicio},${inmAsignacionesPosicion.id} LIMIT ${all?10000:pageSize} OFFSET ${all?0:(page-1)*pageSize}`);
+      const [positionData]=await db.execute(sql`SELECT ${inmInmuebles.codigo} codigo,${inmInmuebles.referencia} nombre,${inmInmuebles.tipo} tipo,${inmInmuebles.operacion} operacion,TRIM(CONCAT(COALESCE(${inmPropietarios.nombres},''),' ',COALESCE(${inmPropietarios.apellidos},''))) propietario,${inmPosiciones.numero} posicion,IF(${inmInmuebles.estado}='activo','Activo','Histórico') estado,${databaseInstant(inmAsignacionesPosicion.fechaInicio)} fechaInicioPosicion,${inmAsignacionesPosicion.fechaFin} fechaFinPosicion,${inmAsignacionesPosicion.activa} activaPosicion ${positionFrom} WHERE ${positionWhere} ORDER BY ${inmAsignacionesPosicion.fechaInicio},${inmAsignacionesPosicion.id} LIMIT ${all?10000:pageSize} OFFSET ${all?0:(page-1)*pageSize}`);
       const [available]=await db.execute(sql`SELECT COUNT(*) total FROM inm_posiciones p WHERE p.activo=1 AND NOT EXISTS(SELECT 1 FROM inm_asignaciones_posicion a WHERE a.posicion_id=p.id AND a.activa=1)`);
-      return NextResponse.json({ok:true,reporte,rows:(positionData as unknown as Record<string,unknown>[]).map(row=>({...row,datosPrueba:Boolean(row.datosPrueba),activaPosicion:Boolean(row.activaPosicion)})),resumen:{...positionSummary,total,disponibles:Number((available as unknown as {total:number}[])[0]?.total??0),aprobaciones:0,negociaciones:0},paginacion:{pagina:page,tamano:pageSize,total,paginas:Math.ceil(total/pageSize)},fechaFiltro:periodField});
+      return NextResponse.json({ok:true,reporte,rows:(positionData as unknown as Record<string,unknown>[]).map(row=>({...row,activaPosicion:Boolean(row.activaPosicion)})),resumen:{...positionSummary,total,disponibles:Number((available as unknown as {total:number}[])[0]?.total??0),aprobaciones:0,negociaciones:0},paginacion:{pagina:page,tamano:pageSize,total,paginas:Math.ceil(total/pageSize)},fechaFiltro:periodField});
     }
     const inmuebleRows = await db
       .select({
         id: inmInmuebles.id,
-        datosPrueba: isDemoProperty,
         codigo: inmInmuebles.codigo,
         referencia: inmInmuebles.referencia,
         tipo: inmInmuebles.tipo,
@@ -428,7 +423,6 @@ export async function GET(request: NextRequest) {
         null;
 
       return {
-        datosPrueba: Boolean(x.datosPrueba),
         inmuebleId: x.id,
         codigo: x.codigo,
         nombre: x.referencia,
@@ -517,7 +511,6 @@ export async function GET(request: NextRequest) {
         fechaInicioAlquiler: liberacion?.fechaInicioAlquiler ?? null,
         fechaFinAlquiler: liberacion?.fechaFinAlquiler ?? null,
         comision: liberacion?.comision ?? null,
-        datosSimulados: liberacion?.datosSimulados ?? false,
         expedientePendiente: expedientes.get(x.id)?.missing ?? [],
         detalleLiberacion:
           liberacion?.detalleOtro ?? null,

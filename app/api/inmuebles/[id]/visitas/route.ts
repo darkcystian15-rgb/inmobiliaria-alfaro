@@ -1,3 +1,4 @@
+import { propertyIdentifierCondition } from "@/lib/property-identity";
 import { NextResponse } from 'next/server';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { authorizeApi } from '@/lib/auth';
@@ -10,7 +11,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     if (auth.response) return auth.response;
     const key = (await context.params).id;
     const [property] = await db.select({ id: inmInmuebles.id }).from(inmInmuebles)
-      .where(/^\d+$/.test(key) ? eq(inmInmuebles.id, Number(key)) : eq(inmInmuebles.codigo, key)).limit(1);
+      .where(propertyIdentifierCondition(key)).limit(1);
     if (!property) return NextResponse.json({ error: 'Inmueble no encontrado.' }, { status: 404 });
     const visitas = await db.select({
       id: inmVisitas.id, fecha: inmVisitas.fechaVisita, observaciones: inmVisitas.observaciones,

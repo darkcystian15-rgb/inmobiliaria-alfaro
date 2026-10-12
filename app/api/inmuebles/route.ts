@@ -1,7 +1,8 @@
+import { nextPropertyOrder } from "@/lib/property-identity";
+import { propertyCode } from "@/lib/property-code.mjs";
 import {lockGeography,validateGeography} from "@/lib/geography";
 import { operation } from "@/lib/operation.mjs";
 import { assignedPropertyType } from "@/lib/property-types";
-import { isDemoProperty } from '@/lib/demo-data';
 import { propertyInput, ownerInput, PropertyInputError } from "@/lib/property-input.mjs";
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
@@ -26,7 +27,6 @@ export async function GET() {
     if (auth.response) return auth.response;
     const rows = await db.select({
       id: inmInmuebles.codigo,
-      datosPrueba: isDemoProperty,
       nombre: inmInmuebles.referencia,
       tipo: inmInmuebles.tipo,
       operacion: inmInmuebles.operacion,
@@ -158,12 +158,8 @@ export async function POST(request: Request) {
         }
       }
 
-      // Generar código del inmueble
-      const codigo = `INM-${Date.now()}-${Math.floor(
-        Math.random() * 1000
-      )
-        .toString()
-        .padStart(3, "0")}`;
+      const numeroOrden = await nextPropertyOrder(tx);
+      const codigo = propertyCode(numeroOrden, tipo, referencia);
 
       // Crear inmueble
       const [createdProperty] = await tx
@@ -172,6 +168,7 @@ export async function POST(request: Request) {
           ...address,
           ...location,
           codigo,
+          numeroOrden,
           propietarioId,
           tipo,
           operacion,
