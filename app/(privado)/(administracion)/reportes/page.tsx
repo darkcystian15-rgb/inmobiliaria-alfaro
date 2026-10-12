@@ -186,28 +186,18 @@ const grupos = [
   "Flujo",
 ];
 
-const tone: Record<string, string> = {
-  Cartera:
-    "bg-blue-100 text-blue-700",
-  Gestión:
-    "bg-violet-100 text-violet-700",
-  Salidas:
-    "bg-rose-100 text-rose-700",
-  Histórico:
-    "bg-slate-100 text-slate-700",
-  Flujo:
-    "bg-cyan-100 text-cyan-700",
-};
 
 export default function Page() {
+  const [busquedaResultado, setBusquedaResultado] = useState("");
+  const [orden, setOrden] = useState<{ key: string; asc: boolean } | null>(null);
   const [categoria, setCategoria] =
     useState("Todos");
 
   const [consulta, setConsulta] = useState({
-    reporte: "Cartera activa", desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos", pruebas: "0", pagina: "1",
+    reporte: "Cartera activa", desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos", pruebas: "1", pagina: "1",
   });
   const [operacion,setOperacion]=useState("Todos");
-  const [incluirPruebas,setIncluirPruebas]=useState(false);
+  const [incluirPruebas,setIncluirPruebas]=useState(true);
   const [paginacion,setPaginacion]=useState({pagina:1,paginas:1,total:0});
   const seleccionado = consulta.reporte;
   const [exportando, setExportando] = useState<"pdf" | "excel" | null>(null);
@@ -264,6 +254,8 @@ export default function Page() {
     )!;
 
   function solicitarReporte(reporte: string) {
+    setBusquedaResultado("");
+    setOrden(null);
     setCargando(true);
     setRows([]);
     setResumen(null);
@@ -309,14 +301,16 @@ export default function Page() {
     setPosicion("");
     setTipo("Todos");
     setOperacion("Todos");
+    setBusquedaResultado("");
+    setOrden(null);
     setCargando(true);
     setRows([]);
     setResumen(null);
     setGenerado(null);
     setError("");
     setErrorExportacion("");
-    setIncluirPruebas(false);
-    setConsulta({ reporte: seleccionado, desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos",pruebas:"0",pagina:"1" });
+    setIncluirPruebas(true);
+    setConsulta({ reporte: seleccionado, desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos",pruebas:"1",pagina:"1" });
   };
 
   const columnas =
@@ -327,6 +321,7 @@ export default function Page() {
         "codigo",
         "posicion",
         "nombre",
+        "datosPrueba",
         "propietario",
         "ubicacion",
         "tipo",
@@ -448,7 +443,7 @@ export default function Page() {
       const exports = await import("@/lib/report-export");
       const response=await fetch(`/api/reportes?${new URLSearchParams({...consulta,todos:'1'})}`,{cache:'no-store'});
       const full=await response.json();if(!response.ok)throw new Error(full.error||'No se pudo preparar el reporte completo.');
-      const report = { title: seleccionado, description: reporteInfo.descripcion, columns: columnasElegidas, labels: etiqueta, rows:full.rows, summary: resumen, filters: filtrosAplicados, generatedAt: generado };
+      const report = { title: seleccionado, description: reporteInfo.descripcion, columns: columnasElegidas, labels: etiqueta, rows:full.rows, summary: full.resumen ?? null, filters: filtrosAplicados, generatedAt: generado };
       await (formato === "pdf" ? exports.exportReportPDF(report) : exports.exportReportExcel(report));
     } catch (err) {
       setErrorExportacion(err instanceof Error ? err.message : "No se pudo descargar el archivo. Inténtalo nuevamente.");
@@ -457,8 +452,23 @@ export default function Page() {
     }
   }
 
+  const filasVisibles = useMemo(() => {
+    const texto = busquedaResultado.trim().toLocaleLowerCase("es");
+    const visibles = rows.filter(row => !texto || Object.entries(row).some(([key, value]) =>
+      reportText(key, value).toLocaleLowerCase("es").includes(texto)));
+    if (!orden) return visibles;
+    return [...visibles].sort((a, b) => {
+      const av = a[orden.key], bv = b[orden.key];
+      const result = orden.key.toLowerCase().includes("fecha") && av && bv ?
+        new Date(String(av)).getTime() - new Date(String(bv)).getTime() :
+        typeof av === "number" && typeof bv === "number" ? av - bv :
+        reportText(orden.key, av).localeCompare(reportText(orden.key, bv), "es", { numeric: true });
+      return orden.asc ? result : -result;
+    });
+  }, [rows, busquedaResultado, orden]);
+
   return (
-    <main className="min-h-screen bg-[#f7f7f5] p-6 lg:p-8">
+    <main className="min-h-screen bg-[#f7f7f5] p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl print:max-w-none">
         <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between print:mb-4">
           <div className="flex gap-3">
@@ -615,8 +625,11 @@ export default function Page() {
             </label>
 
             <label className="text-xs font-semibold text-slate-500">
-              Tipo
-              <OperationSelect filter value={operacion} onChange={setOperacion} className="mb-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" />
+              Operación
+              <OperationSelect filter value={operacion} onChange={setOperacion} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" />
+            </label>
+            <label className="text-xs font-semibold text-slate-500">
+              Tipo de inmueble
               <PropertyTypeSelect filter value={tipo} onChange={setTipo} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" />
             </label>
           </div>
@@ -633,16 +646,16 @@ export default function Page() {
             <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                  Indicadores generales · Sin filtros
+                  Indicadores del reporte · Filtros aplicados
                 </p>
 
                 <h2 className="mt-1 text-base font-bold text-white">
-                  Contexto general de la cartera
+                  Resumen del resultado
                 </h2>
               </div>
 
               <span className="text-xs text-slate-500">
-                {rows.length} registros en el reporte seleccionado
+                {paginacion.total} registros en el reporte seleccionado
               </span>
             </div>
 
@@ -661,7 +674,7 @@ export default function Page() {
                   resumen.historicos,
                 ],
                 [
-                  "Disponibles",
+                  "Posiciones libres (total)",
                   resumen.disponibles,
                 ],
                 [
@@ -702,161 +715,26 @@ export default function Page() {
           </section>
         )}
 
-        <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.045)] print:hidden">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                ¿Qué necesitas revisar?
-              </p>
+        <div className="mt-6 grid items-start gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
+          <aside className="aa-card p-4 print:hidden" aria-label="Reportes disponibles">
+            <h2 className="text-base font-bold text-slate-900">Reportes disponibles</h2>
+            <label className="mt-3 block text-xs font-semibold text-slate-500">Categoría
+              <select value={categoria} onChange={event => setCategoria(event.target.value)} className="aa-input mt-1 w-full">
+                {grupos.map(grupo => <option key={grupo}>{grupo}</option>)}
+              </select>
+            </label>
+            <nav className="mt-3 grid max-h-80 gap-1 overflow-y-auto sm:grid-cols-2 xl:max-h-[640px] xl:grid-cols-1">
+              {visibles.map(reporte => <button key={reporte.nombre} type="button"
+                aria-current={seleccionado === reporte.nombre ? "page" : undefined}
+                title={reporte.descripcion} onClick={() => solicitarReporte(reporte.nombre)}
+                className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${seleccionado === reporte.nombre ? "bg-red-50 font-semibold text-[#c80000]" : "text-slate-600 hover:bg-slate-50"}`}>
+                <WorkspaceFileIcon report />
+                {reporte.nombre}
+              </button>)}
+            </nav>
+          </aside>
 
-              <h2 className="mt-1 text-lg font-bold text-slate-900">
-                Elige una vista y te mostramos el detalle.
-              </h2>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Empieza por la situación actual y luego entra al detalle que necesites.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {[
-                [
-                  "Cartera",
-                  "¿Qué tenemos?",
-                  "Cartera",
-                ],
-                [
-                  "Gestión",
-                  "¿Qué falta?",
-                  "Gestión",
-                ],
-                [
-                  "Salidas",
-                  "¿Qué salió?",
-                  "Salidas",
-                ],
-                [
-                  "Flujo",
-                  "¿Cuánto demora?",
-                  "Flujo",
-                ],
-              ].map(
-                ([
-                  label,
-                  question,
-                  value,
-                ]) => (
-                  <button
-                    key={String(
-                      label,
-                    )}
-                    onClick={() =>
-                      setCategoria(
-                        String(
-                          value,
-                        ),
-                      )
-                    }
-                    className={`rounded-xl border px-3 py-2.5 text-left transition ${
-                      categoria ===
-                      value
-                        ? "border-slate-900 bg-[#c80000] text-white"
-                        : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white"
-                    }`}
-                  >
-                    <p className="text-xs font-bold uppercase tracking-wide opacity-60">
-                      {label}
-                    </p>
-
-                    <p className="mt-1 text-xs font-semibold">
-                      {question}
-                    </p>
-                  </button>
-                ),
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-8 print:hidden">
-          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">
-                Reportes disponibles
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Selecciona el informe que quieres consultar.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {grupos.map(
-                (grupo) => (
-                  <button
-                    key={grupo}
-                    onClick={() =>
-                      setCategoria(
-                        grupo,
-                      )
-                    }
-                    className={`rounded-full px-3.5 py-2 text-xs font-bold ${
-                      categoria ===
-                      grupo
-                        ? "bg-[#c80000] text-white"
-                        : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    {grupo}
-                  </button>
-                ),
-              )}
-            </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {visibles.map(
-              (reporte) => (
-                <button
-                  key={
-                    reporte.nombre
-                  }
-                  onClick={() =>
-                    solicitarReporte(reporte.nombre)
-                  }
-                  className={`group rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                    seleccionado ===
-                    reporte.nombre
-                      ? "border-blue-300 bg-blue-50/40 ring-2 ring-blue-50"
-                      : "border-slate-200"
-                  }`}
-                >
-                  <div className="flex gap-3">
-                    <WorkspaceFileIcon report />
-
-
-                    <div>
-                      <p className={`mb-1 text-[10px] font-bold uppercase tracking-wide ${tone[reporte.categoria]} rounded-md px-2 py-1 w-fit`}>{reporte.categoria}</p>
-                      <p className="text-sm font-bold text-slate-900">
-                        {
-                          reporte.nombre
-                        }
-                      </p>
-
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
-                        {
-                          reporte.descripcion
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ),
-            )}
-          </div>
-        </section>
-
-        <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)] print:mt-0 print:border-0 print:shadow-none">
+        <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)] print:mt-0 print:border-0 print:shadow-none">
           <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#c80000]">
@@ -885,9 +763,22 @@ export default function Page() {
 
           <div className="border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs leading-5 text-slate-600">
             <p><span className="font-semibold">Filtros aplicados:</span> {filtrosAplicados}</p>
-            {generado && <p>Consulta actualizada: {generado.toLocaleString("es-PE", { timeZone: "America/Lima" })} · Hora de Perú · {rows.length} registros</p>}
+            {generado && <p>Consulta actualizada: {generado.toLocaleString("es-PE", { timeZone: "America/Lima" })} · Hora de Perú · {paginacion.total} resultados</p>}
+          </div>
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 px-5 py-3 print:hidden">
+            <label className="w-full text-xs font-semibold text-slate-500 sm:max-w-xs">Buscar en esta página
+              <input type="search" value={busquedaResultado} onChange={event => setBusquedaResultado(event.target.value)}
+                placeholder="Código, inmueble, propietario…" className="aa-input mt-1 w-full" />
+            </label>
+            <div className="flex flex-wrap gap-2" aria-busy={!!exportando}>
+              <button type="button" onClick={() => void descargar("pdf")} disabled={cargando || !!exportando || !rows.length || !columnasElegidas.length} className="aa-button aa-button-secondary disabled:opacity-40">{exportando === "pdf" ? "Preparando PDF…" : "Descargar PDF"}</button>
+              <button type="button" onClick={() => void descargar("excel")} disabled={cargando || !!exportando || !rows.length || !columnasElegidas.length} className="aa-button aa-button-primary disabled:opacity-40">{exportando === "excel" ? "Preparando Excel…" : "Descargar Excel"}</button>
+            </div>
+            {busquedaResultado && <p role="status" className="w-full text-xs text-slate-500">{filasVisibles.length} coincidencias de {rows.length} filas de esta página. Las descargas conservan todos los resultados de los filtros aplicados.</p>}
           </div>
           {!!rows.length && !cargando && (
+            <details className="border-b border-slate-200 print:hidden">
+            <summary className="cursor-pointer px-5 py-3 text-sm font-semibold text-slate-700">Columnas del reporte · {columnasElegidas.length} seleccionadas</summary>
             <fieldset disabled={!!exportando} className="border-b border-slate-200 px-5 py-4 print:hidden">
               <legend className="float-left mb-2 w-full text-sm font-bold text-slate-900">Columnas del reporte</legend>
               <p className="clear-both text-xs leading-5 text-slate-500">Marca las columnas que quieres ver y descargar en PDF o Excel.</p>
@@ -908,30 +799,26 @@ export default function Page() {
                 {columnasElegidas.length ? `${columnasElegidas.length} de ${columnas.length} columnas · PDF ${orientacionPDF}. Todas las columnas elegidas van en el ancho de la página; las filas continúan en otras hojas si hace falta.` : "Selecciona al menos una columna para ver y descargar el reporte."}
               </p>
               {columnasElegidas.length > 10 && <p className="mt-1 text-xs text-amber-700">Con muchas columnas, el texto puede quedar estrecho. Selecciona las necesarias para facilitar la lectura.</p>}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" onClick={() => void descargar("pdf")} disabled={!!exportando || !columnasElegidas.length} className="rounded-lg bg-[#c80000] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">{exportando === "pdf" ? "Preparando PDF…" : "Descargar PDF"}</button>
-                <button type="button" onClick={() => void descargar("excel")} disabled={!!exportando || !columnasElegidas.length} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold disabled:opacity-40">{exportando === "excel" ? "Preparando Excel…" : "Descargar Excel"}</button>
-              </div>
+
             </fieldset>
+            </details>
           )}
           <nav aria-label="Páginas del reporte" className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4"><p className="text-sm text-slate-600">{paginacion.total} resultados · Página {paginacion.pagina} de {Math.max(1,paginacion.paginas)}</p><div className="flex gap-3">{[-1,1].map(direction=><button key={direction} type="button" disabled={cargando||direction===-1&&paginacion.pagina<=1||direction===1&&paginacion.pagina>=paginacion.paginas} className="aa-button aa-button-secondary disabled:opacity-40" onClick={()=>{setCargando(true);setConsulta(current=>({...current,pagina:String(paginacion.pagina+direction)}));}}>{direction===-1?'Anterior':'Siguiente'}</button>)}</div></nav>
-          <div className="overflow-x-auto" aria-busy={cargando}>
-            {rows.length && columnasElegidas.length ? (
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div className="max-h-[65vh] overflow-auto print:max-h-none" aria-busy={cargando}>
+            {filasVisibles.length && columnasElegidas.length ? (
+              <table className="w-full text-left text-sm">
+                <thead className="sticky top-0 z-10 bg-slate-50 text-xs font-semibold text-slate-500">
                   <tr>
                     {columnasElegidas.map(
                       (key) => (
                         <th
                           key={key}
-                          className="px-4 py-3"
+                          className="px-4 py-3 whitespace-nowrap"
+                          aria-sort={orden?.key === key ? (orden.asc ? "ascending" : "descending") : "none"}
                         >
-                          {
-                            etiqueta[
-                              key
-                            ] ||
-                              key
-                          }
+                          <button type="button" className="flex min-h-8 items-center gap-2 text-left hover:text-[#c80000]" onClick={() => setOrden(current => ({ key, asc: current?.key === key ? !current.asc : true }))}>
+                            {etiqueta[key] || key}<span aria-hidden="true">{orden?.key === key ? (orden.asc ? "↑" : "↓") : "↕"}</span>
+                          </button>
                         </th>
                       ),
                     )}
@@ -939,14 +826,14 @@ export default function Page() {
                 </thead>
 
                 <tbody className="divide-y divide-slate-100">
-                  {rows.map(
+                  {filasVisibles.map(
                     (
                       row,
                       index,
                     ) => (
                       <tr
                         key={`${row.codigo || row.posicion || index}-${index}`}
-                        className="odd:bg-white even:bg-slate-50/70 hover:bg-red-50/40"
+                        className="bg-white transition hover:bg-red-50/40"
                       >
                         {columnasElegidas.map(
                           (key) => (
@@ -973,16 +860,17 @@ export default function Page() {
                 <p className="font-semibold text-slate-700">
                   {cargando
                     ? "Generando reporte…"
-                    : rows.length ? "Selecciona las columnas del reporte" : "No hay registros para esta consulta"}
+                    : rows.length && !filasVisibles.length ? "No hay coincidencias en esta página" : rows.length ? "Selecciona las columnas del reporte" : "No hay registros para esta consulta"}
                 </p>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  {rows.length ? "Marca al menos una columna en las opciones de arriba." : "Prueba con otros filtros o selecciona otro reporte."}
+                  {rows.length && !filasVisibles.length ? "Cambia o borra el texto de búsqueda para ver las filas." : rows.length ? "Marca al menos una columna en las opciones de arriba." : "Prueba con otros filtros o selecciona otro reporte."}
                 </p>
               </div>
             )}
           </div>
         </section>
+        </div>
       </div>
     </main>
   );

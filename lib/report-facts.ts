@@ -1,5 +1,4 @@
 import { sql } from 'drizzle-orm';
-import { isDemoProperty } from './demo-data';
 import { inmInmuebles, inmTasaciones, inmPublicaciones, inmPropietarios } from '@/db/schema';
 export const visitDone=sql`EXISTS(SELECT 1 FROM inm_visitas v WHERE v.inmueble_id=${inmInmuebles.id} AND v.completada=1)`;
 export const positioned=sql`EXISTS(SELECT 1 FROM inm_asignaciones_posicion p WHERE p.inmueble_id=${inmInmuebles.id} AND p.activa=1)`;
@@ -20,7 +19,8 @@ export const reportPredicates:Record<string,ReturnType<typeof sql>>={
  'Retirados / cancelados':sql`EXISTS(SELECT 1 FROM inm_liberaciones l WHERE l.inmueble_id=${inmInmuebles.id} AND l.motivo NOT IN ('vendido','alquilado') AND l.confirmado=1 AND l.anulada=0)`,
  'Motivos de liberación':sql`EXISTS(SELECT 1 FROM inm_liberaciones l WHERE l.inmueble_id=${inmInmuebles.id} AND l.confirmado=1 AND l.anulada=0)`,
 };
-export const globalSummaryQuery=sql`SELECT COUNT(*) total,
+export function reportSummaryQuery(where: ReturnType<typeof sql>, from = factsFrom) {
+ return sql`SELECT COUNT(*) total,
  COALESCE(SUM(${inmInmuebles.estado}='activo'),0) activos,
  COALESCE(SUM(${inmInmuebles.estado}<>'activo'),0) historicos,
  COALESCE(SUM(${inmInmuebles.estado}='activo' AND ${positioned} AND NOT ${visitDone}),0) visitasPendientes,
@@ -30,4 +30,5 @@ export const globalSummaryQuery=sql`SELECT COUNT(*) total,
  COALESCE(SUM(${inmInmuebles.estado}='activo' AND ${inmTasaciones.situacion}='aprobado' AND NOT COALESCE(${readyFile},0)),0) materialPendiente,
  COALESCE(SUM(${inmInmuebles.estado}='activo' AND ${inmPublicaciones.id} IS NOT NULL AND ${inmPublicaciones.publicado}=0 AND ${readyFile}),0) listosParaPublicar,
  COALESCE(SUM(${inmInmuebles.estado}='activo' AND ${inmPublicaciones.publicado}=1),0) publicados
- ${factsFrom} WHERE NOT ${isDemoProperty}`;
+ ${from} WHERE ${where}`;
+}

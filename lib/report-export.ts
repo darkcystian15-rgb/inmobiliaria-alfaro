@@ -61,7 +61,7 @@ async function logo() {
 }
 function metrics(report: ReportExport): [string, number][] {
   if (!report.summary) return [];
-  return [["Activos", report.summary.activos], ["Históricos", report.summary.historicos], ["Posiciones disponibles", report.summary.disponibles], ["Visitas pendientes", report.summary.visitasPendientes], ["Tasaciones pendientes", report.summary.tasacionesPendientes], ["Material pendiente", report.summary.materialPendiente], ["Publicados", report.summary.publicados]];
+  return [["Activos", report.summary.activos], ["Históricos", report.summary.historicos], ["Posiciones libres (total)", report.summary.disponibles], ["Visitas pendientes", report.summary.visitasPendientes], ["Tasaciones pendientes", report.summary.tasacionesPendientes], ["Material pendiente", report.summary.materialPendiente], ["Publicados", report.summary.publicados]];
 }
 
 export async function exportReportPDF(report: ReportExport) {
@@ -95,7 +95,7 @@ export async function exportReportPDF(report: ReportExport) {
   doc.text(`${report.rows.length} registros en este reporte`, 14, y); y += 6;
   if (report.summary) {
     doc.setFont("helvetica", "normal"); doc.setTextColor(90); doc.setFontSize(8);
-    const summary = doc.splitTextToSize(`Contexto general de cartera (sin filtros): ${metrics(report).map(([label, value]) => `${label}: ${value}`).join(" · ")}`, width - 28);
+    const summary = doc.splitTextToSize(`Resumen del reporte (filtros aplicados): ${metrics(report).map(([label, value]) => `${label}: ${value}`).join(" · ")}`, width - 28);
     doc.text(summary, 14, y); y += summary.length * 4 + 5;
   }
   autoTable(doc, {
@@ -142,7 +142,7 @@ export async function exportReportExcel(report: ReportExport) {
   merged(8, `Filtros aplicados: ${report.filters}`); summary.getRow(8).height = 50;
   summary.addRow([]);
   summary.addRow(["Registros del reporte", report.rows.length]);
-  merged(12, "Contexto general de cartera (sin filtros)"); summary.getCell("A12").font = { bold: true, color: { argb: red } };
+  merged(12, "Resumen del reporte (filtros aplicados)"); summary.getCell("A12").font = { bold: true, color: { argb: red } };
   metrics(report).forEach(([label, value]) => summary.addRow([label, value]));
   summary.eachRow(row => row.eachCell(cell => { cell.font = { name: "Calibri", size: 11, ...cell.font }; }));
   const detail = workbook.addWorksheet("Detalle", { views: [{ state: "frozen", ySplit: 1, showGridLines: false }] });

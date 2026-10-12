@@ -1,6 +1,6 @@
 import { databaseBusinessDay, databaseInstant } from '@/lib/business-time';
 import { reportPeriodField, validCalendarDate } from '@/lib/report-period.mjs';
-import { factsFrom, reportPredicates, globalSummaryQuery } from '@/lib/report-facts';
+import { factsFrom, reportPredicates, reportSummaryQuery } from '@/lib/report-facts';
 import { isDemoProperty } from '@/lib/demo-data';
 import { publicationReadiness } from "@/lib/publication-readiness";
 import type { ReportRow } from "@/lib/report-types";
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     const tipo = sp.get("tipo") || "Todos";
 
     if ((desde && !validCalendarDate(desde)) || (hasta && !validCalendarDate(hasta)) || (desde && hasta && desde > hasta)) return NextResponse.json({error:'Indica un período válido, con Desde anterior o igual a Hasta.'},{status:400});
-    const includeDemo=sp.get('pruebas')==='1';
+    const includeDemo=sp.get('pruebas')!=='0';
     const all=sp.get('todos')==='1';
     const page=Number(sp.get('pagina')||1),pageSize=50;
     if(!Number.isSafeInteger(page)||page<1)return NextResponse.json({error:'Página no válida.'},{status:400});
@@ -150,8 +150,8 @@ export async function GET(request: NextRequest) {
     const [countResult]=await db.execute(sql`SELECT COUNT(*) total ${factsFrom} WHERE ${where}`);
     const count=Number((countResult as unknown as {total:number}[])[0]?.total??0);
     if(all&&count>10000)return NextResponse.json({error:'La descarga supera 10 000 inmuebles. Reduce el período o los filtros.'},{status:400});
-    const [summaryResult]=await db.execute(globalSummaryQuery);
-    const globalSummary=Object.fromEntries(Object.entries((summaryResult as unknown as Record<string,unknown>[])[0]??{}).map(([key,value])=>[key,Number(value)]));
+    const [summaryResult]=await db.execute(reportSummaryQuery(where));
+    const filteredSummary=Object.fromEntries(Object.entries((summaryResult as unknown as Record<string,unknown>[])[0]??{}).map(([key,value])=>[key,Number(value)]));
     if(reporte==='Posición ocupada'){
       const positionConditions=[];
       if(!includeDemo)positionConditions.push(sql`NOT ${isDemoProperty}`);
@@ -165,12 +165,14 @@ export async function GET(request: NextRequest) {
       if(situacion!=='Todas'&&situationReports[situacion])positionConditions.push(reportPredicates[situationReports[situacion]]);
       const positionWhere=and(...positionConditions)??sql`1=1`;
       const positionFrom=sql`${factsFrom} INNER JOIN ${inmAsignacionesPosicion} ON ${inmAsignacionesPosicion.inmuebleId}=${inmInmuebles.id} INNER JOIN ${inmPosiciones} ON ${inmPosiciones.id}=${inmAsignacionesPosicion.posicionId}`;
+      const [positionSummaryResult]=await db.execute(reportSummaryQuery(positionWhere, positionFrom));
+      const positionSummary=Object.fromEntries(Object.entries((positionSummaryResult as unknown as Record<string,unknown>[])[0]??{}).map(([key,value])=>[key,Number(value)]));
       const [positionCountResult]=await db.execute(sql`SELECT COUNT(*) total ${positionFrom} WHERE ${positionWhere}`);
       const total=Number((positionCountResult as unknown as {total:number}[])[0]?.total??0);
       if(all&&total>10000)return NextResponse.json({error:'Reduce el período o los filtros para descargar como máximo 10 000 asignaciones.'},{status:400});
       const [positionData]=await db.execute(sql`SELECT ${inmInmuebles.codigo} codigo,${inmInmuebles.referencia} nombre,${inmInmuebles.tipo} tipo,${inmInmuebles.operacion} operacion,TRIM(CONCAT(COALESCE(${inmPropietarios.nombres},''),' ',COALESCE(${inmPropietarios.apellidos},''))) propietario,${inmPosiciones.numero} posicion,IF(${inmInmuebles.estado}='activo','Activo','Histórico') estado,${databaseInstant(inmAsignacionesPosicion.fechaInicio)} fechaInicioPosicion,${inmAsignacionesPosicion.fechaFin} fechaFinPosicion,${inmAsignacionesPosicion.activa} activaPosicion,${isDemoProperty} datosPrueba ${positionFrom} WHERE ${positionWhere} ORDER BY ${inmAsignacionesPosicion.fechaInicio},${inmAsignacionesPosicion.id} LIMIT ${all?10000:pageSize} OFFSET ${all?0:(page-1)*pageSize}`);
       const [available]=await db.execute(sql`SELECT COUNT(*) total FROM inm_posiciones p WHERE p.activo=1 AND NOT EXISTS(SELECT 1 FROM inm_asignaciones_posicion a WHERE a.posicion_id=p.id AND a.activa=1)`);
-      return NextResponse.json({ok:true,reporte,rows:(positionData as unknown as Record<string,unknown>[]).map(row=>({...row,datosPrueba:Boolean(row.datosPrueba),activaPosicion:Boolean(row.activaPosicion)})),resumen:{...globalSummary,total,disponibles:Number((available as unknown as {total:number}[])[0]?.total??0),aprobaciones:0,negociaciones:0},paginacion:{pagina:page,tamano:pageSize,total,paginas:Math.ceil(total/pageSize)},fechaFiltro:periodField});
+      return NextResponse.json({ok:true,reporte,rows:(positionData as unknown as Record<string,unknown>[]).map(row=>({...row,datosPrueba:Boolean(row.datosPrueba),activaPosicion:Boolean(row.activaPosicion)})),resumen:{...positionSummary,total,disponibles:Number((available as unknown as {total:number}[])[0]?.total??0),aprobaciones:0,negociaciones:0},paginacion:{pagina:page,tamano:pageSize,total,paginas:Math.ceil(total/pageSize)},fechaFiltro:periodField});
     }
     const inmuebleRows = await db
       .select({
@@ -547,7 +549,7 @@ export async function GET(request: NextRequest) {
 
       if (
         tipo !== "Todos" &&
-        x.tipo !== tipo
+        x.tipo !== normalizarTipo(tipo)
       ) {
         return false;
       }
@@ -805,13 +807,17 @@ export async function GET(request: NextRequest) {
       rows = active;
     }
 
-    const resumen={...globalSummary,total:reporte==='Posiciones disponibles'?rows.length:count,disponibles:availablePositions.length,aprobaciones:0,negociaciones:0};
+    const total = reporte === 'Posiciones disponibles' ? rows.length : count;
+    if (reporte === 'Posiciones disponibles' && !all) {
+      rows = rows.slice((page - 1) * pageSize, page * pageSize);
+    }
+    const resumen={...filteredSummary,total,disponibles:availablePositions.length,aprobaciones:0,negociaciones:0};
     return NextResponse.json({
       ok: true,
       reporte,
       resumen,
       rows,
-      paginacion:{pagina:page,tamano:pageSize,total:reporte==='Posiciones disponibles'?rows.length:count,paginas:reporte==='Posiciones disponibles'?1:Math.ceil(count/pageSize)},
+      paginacion:{pagina:page,tamano:pageSize,total,paginas:Math.ceil(total/pageSize)},
       fechaFiltro:periodField,
     });
   } catch (error) {
