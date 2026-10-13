@@ -1,3 +1,4 @@
+import { propertyAddress } from "@/lib/property-address.mjs";
 import { publicationReadiness, requirePublicationReadiness } from "@/lib/publication-readiness";
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
@@ -25,15 +26,7 @@ const mapPending = (row: Awaited<ReturnType<typeof approved>>[number]) => ({
     ? String(row.posicion).padStart(2, "0")
     : "—",
   nombre: row.referencia,
-  ubicacion:
-    [
-      row.distrito,
-      row.provincia,
-      row.departamento,
-      row.direccion,
-    ]
-      .filter(Boolean)
-      .join(", ") || "Sin ubicación registrada",
+  ubicacion: propertyAddress(row),
   tipo: row.tipo,
     operacion: row.operacion,
   propietario:
@@ -56,6 +49,7 @@ async function approved() {
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
       direccion: inmInmuebles.direccion,
+      numeroDireccion: inmInmuebles.numeroDireccion,
       provincia: inmInmuebles.provincia,
       departamento: inmInmuebles.departamento,
       propietarioNombres: inmPropietarios.nombres,
@@ -124,6 +118,10 @@ async function published() {
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
+      direccion: inmInmuebles.direccion,
+      numeroDireccion: inmInmuebles.numeroDireccion,
+      provincia: inmInmuebles.provincia,
+      departamento: inmInmuebles.departamento,
       posicion: inmPosiciones.numero,
       publicado: inmPublicaciones.publicado,
       fechaPublicacion:
@@ -172,6 +170,10 @@ async function ready() {
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
+      direccion: inmInmuebles.direccion,
+      numeroDireccion: inmInmuebles.numeroDireccion,
+      provincia: inmInmuebles.provincia,
+      departamento: inmInmuebles.departamento,
       posicion: inmPosiciones.numero,
       publicado: inmPublicaciones.publicado,
       fechaRegistro: inmPublicaciones.fechaRegistro,
@@ -218,7 +220,7 @@ export async function GET() {
     const listos = await ready();
     const publicadas = await published();
     const expedientes = await publicationReadiness();
-    const withChecklist = <T extends { inmuebleId: number }>(item: T) => ({ ...item, expediente: expedientes.get(item.inmuebleId) });
+    const withChecklist = <T extends { inmuebleId: number; ubicacion?: string }>(item: T) => ({ ...item, ubicacion: item.ubicacion ?? propertyAddress(item), expediente: expedientes.get(item.inmuebleId) });
 
     return NextResponse.json({
       ok: true,

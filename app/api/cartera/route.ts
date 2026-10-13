@@ -1,3 +1,4 @@
+import { propertyAddress } from "@/lib/property-address.mjs";
 import { publicationReadiness } from "@/lib/publication-readiness";
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
@@ -312,10 +313,7 @@ const materialPendiente =
 
         nombre: row.referencia,
 
-        ubicacion:
-          [[row.direccion,row.numeroDireccion].filter(Boolean).join(" "), row.distrito, row.provincia, row.departamento]
-            .filter(Boolean)
-            .join(", ") || "Sin ubicación registrada",
+        ubicacion: propertyAddress(row),
 
         distrito: row.distrito?.trim() || null,
         zona: [row.distrito, row.provincia, row.departamento].filter(Boolean).join(", "),

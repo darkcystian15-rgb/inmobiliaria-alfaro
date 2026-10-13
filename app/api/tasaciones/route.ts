@@ -1,3 +1,4 @@
+import { propertyAddress } from "@/lib/property-address.mjs";
 import { appraisalAfterVisit } from "@/lib/workflow-dates.mjs";
 import { priceLabel } from "@/lib/operation.mjs";
 import { authorizeApi } from "@/lib/auth";
@@ -26,7 +27,7 @@ function toMoney(value: unknown) {
 
 type TasacionRow = {
   inmuebleId: number; codigo: string; posicion: number | null; referencia: string; tipo: string; operacion: string;
-  distrito: string | null; provincia: string | null; departamento: string | null; direccion: string | null;
+  distrito: string | null; provincia: string | null; departamento: string | null; direccion: string | null; numeroDireccion: string | null;
   propietarioNombres: string | null; propietarioApellidos: string | null; dni: string | null;
   tasacionId?: number; fechaTasacion?: Date | string | null; valorReferencia?: string | null;
   precioObjetivo?: string | null; precioVenta?: string | null; situacion?: string | null; observacion?: string | null;
@@ -42,15 +43,7 @@ function mapRow(row: TasacionRow) {
       ? String(row.posicion).padStart(2, "0")
       : "—",
     nombre: row.referencia,
-    ubicacion:
-      [
-        row.distrito,
-        row.provincia,
-        row.departamento,
-        row.direccion,
-      ]
-        .filter(Boolean)
-        .join(", ") || "Sin ubicación registrada",
+    ubicacion: propertyAddress(row),
     tipo: row.tipo,
     operacion: row.operacion,
     propietario:
@@ -79,6 +72,7 @@ export async function GET() {
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
         direccion: inmInmuebles.direccion,
+        numeroDireccion: inmInmuebles.numeroDireccion,
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
@@ -137,6 +131,7 @@ export async function GET() {
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
         direccion: inmInmuebles.direccion,
+        numeroDireccion: inmInmuebles.numeroDireccion,
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,

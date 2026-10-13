@@ -1,3 +1,4 @@
+import { propertyAddress } from "@/lib/property-address.mjs";
 import { nextPropertyOrder } from "@/lib/property-identity";
 import { propertyCode } from "@/lib/property-code.mjs";
 import {lockGeography,validateGeography} from "@/lib/geography";
@@ -50,7 +51,7 @@ export async function GET() {
     return NextResponse.json({ inmuebles: rows.map(({ direccion, distrito, provincia, departamento, propietarioNombres, propietarioApellidos, ...row }) => ({
       ...row,
       estado: row.estado === "activo" ? "activo" : "historico",
-      ubicacion: [direccion, row.numeroDireccion, distrito, provincia, departamento].filter(Boolean).join(", ") || "Ubicación por completar",
+      ubicacion: propertyAddress({direccion, numeroDireccion: row.numeroDireccion, distrito, provincia, departamento}),
       propietario: [propietarioNombres, propietarioApellidos].filter(Boolean).join(" ") || "Sin propietario",
     })) });
   } catch {

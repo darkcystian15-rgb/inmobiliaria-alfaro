@@ -1,3 +1,4 @@
+import { propertyAddress } from "@/lib/property-address.mjs";
 import { rentalResult } from "@/lib/rental-result.mjs";
 import { saleResult } from "@/lib/sale-result.mjs";
 import { authorizeApi } from "@/lib/auth";
@@ -38,6 +39,7 @@ export async function GET() {
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
         direccion: inmInmuebles.direccion,
+        numeroDireccion: inmInmuebles.numeroDireccion,
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
@@ -84,15 +86,7 @@ export async function GET() {
           ? String(row.posicion).padStart(2, "0")
           : "—",
         nombre: row.referencia,
-        ubicacion:
-          [
-            row.distrito,
-            row.provincia,
-            row.departamento,
-            row.direccion,
-          ]
-            .filter(Boolean)
-            .join(", ") || "Sin ubicación registrada",
+        ubicacion: propertyAddress(row),
         tipo: row.tipo,
     operacion: row.operacion,
         propietario:

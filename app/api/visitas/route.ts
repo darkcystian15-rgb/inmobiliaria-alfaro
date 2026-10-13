@@ -1,3 +1,4 @@
+import { propertyAddress } from "@/lib/property-address.mjs";
 import { databaseInstant } from '@/lib/business-time';
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
@@ -38,6 +39,7 @@ export async function GET() {
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
         direccion: inmInmuebles.direccion,
+        numeroDireccion: inmInmuebles.numeroDireccion,
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
@@ -113,10 +115,7 @@ export async function GET() {
         tipo: row.tipo,
     operacion: row.operacion,
         nombre: row.referencia,
-        ubicacion:
-          [row.direccion, row.distrito, row.provincia, row.departamento]
-            .filter(Boolean)
-            .join(", ") || "Ubicación no registrada",
+        ubicacion: propertyAddress(row),
         propietario: row.propietario || "",
         dni: row.dni || "",
         posicion: String(row.posicion),

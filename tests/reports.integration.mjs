@@ -4,6 +4,7 @@ import { loadEnvFile } from 'node:process';
 import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { stat } from 'node:fs/promises';
+import ExcelJS from 'exceljs';
 import mysql from 'mysql2/promise';
 import { hashPassword, hashSessionToken } from '../lib/password.mjs';
 import { propertyCode } from '../lib/property-code.mjs';
@@ -16,8 +17,11 @@ let userId, server, browser;
 const request = (params = {}) => fetch(`${origin}/api/reportes?${new URLSearchParams(params)}`, {
   headers: { Cookie: `aa_session=${token}` }, signal: AbortSignal.timeout(30000),
 });
+const addressSql = `COALESCE(NULLIF(CONCAT_WS(', ',
+  NULLIF(TRIM(CONCAT_WS(' ',NULLIF(TRIM(i.direccion),''),NULLIF(TRIM(i.numero_direccion),''))),''),
+  NULLIF(TRIM(i.distrito),''),NULLIF(TRIM(i.provincia),''),NULLIF(TRIM(i.departamento),'')),''),'Ubicación por completar')`;
 async function check(label, params, predicate = "i.estado='activo'", values = []) {
-  const [expected] = await db.execute(`SELECT i.id,i.estado,i.codigo,i.numero_orden,i.tipo,i.referencia FROM inm_inmuebles i WHERE ${predicate} ORDER BY i.fecha_registro,i.id`, values);
+  const [expected] = await db.execute(`SELECT i.id,i.estado,i.codigo,i.numero_orden,i.tipo,i.referencia,${addressSql} ubicacion FROM inm_inmuebles i WHERE ${predicate} ORDER BY i.fecha_registro,i.id`, values);
   for (const row of expected) assert.equal(row.codigo, propertyCode(Number(row.numero_orden), row.tipo, row.referencia), `${label}: código uniforme`);
   const response = await request(params);
   assert.equal(response.status, 200, label);
@@ -30,6 +34,7 @@ async function check(label, params, predicate = "i.estado='activo'", values = []
   const page = Number(params.pagina || 1);
   const selected = params.todos === '1' ? expected : expected.slice((page - 1) * 50, page * 50);
   assert.deepEqual(result.rows.map(row => row.inmuebleId), selected.map(row => row.id), `${label}: inmuebles`);
+  for (const row of result.rows) assert.equal(row.ubicacion, expected.find(item => item.id === row.inmuebleId)?.ubicacion, `${label}: ubicación completa`);
   console.log(`PASS ${label}: ${result.rows.length} filas / ${expected.length} resultados`);
   return result;
 }
@@ -85,6 +90,21 @@ try {
   }
   for (const params of [{ desde: '2026-02-30' }, { desde: '2026-10-12', hasta: '2026-10-01' }, { pagina: '0' }]) assert.equal((await request(params)).status, 400);
   console.log('PASS validación de fechas y páginas inválidas');
+  const [addresses] = await db.query(`SELECT i.codigo,${addressSql} ubicacion FROM inm_inmuebles i`);
+  const byCode = new Map(addresses.map(row => [row.codigo, row.ubicacion]));
+  function locationRows(value) {
+    if (Array.isArray(value)) return value.flatMap(locationRows);
+    if (!value || typeof value !== 'object') return [];
+    return typeof value.ubicacion === 'string' ? [value] : Object.values(value).flatMap(locationRows);
+  }
+  for (const path of ['/api/inmuebles','/api/cartera','/api/visitas','/api/tasaciones','/api/publicaciones','/api/liberaciones','/api/reportes?reporte=Posici%C3%B3n%20ocupada&todos=1']) {
+    const response = await fetch(origin+path, {headers:{Cookie:`aa_session=${token}`},signal:AbortSignal.timeout(30000)});
+    assert.equal(response.status, 200, path);
+    const locations = locationRows(await response.json());
+    for (const row of locations) assert.equal(row.ubicacion, byCode.get(row.codigo ?? row.id), `${path}: ubicación del mismo inmueble`);
+    assert.ok(locations.length > 0, `${path}: casos comprobados`);
+    console.log(`PASS ubicación uniforme ${path}: ${locations.length} filas`);
+  }
   if (process.env.PLAYWRIGHT_MODULE_PATH) {
     const { chromium } = await import(process.env.PLAYWRIGHT_MODULE_PATH);
     browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
@@ -116,12 +136,24 @@ try {
     await page.getByRole('button', { name: 'Limpiar', exact: true }).click();
     await resetResponse;
     await page.waitForFunction(count => document.querySelectorAll('tbody tr').length === count, initial.rows.length);
+    await page.locator('summary').filter({hasText:'Columnas del reporte'}).click();
+    await page.getByRole('checkbox', {name:'Ubicación',exact:true}).check();
+    await page.getByRole('cell', {name:byCode.get(initial.rows[0].codigo),exact:true}).waitFor();
     for (const extension of ['PDF', 'Excel']) {
       const download = page.waitForEvent('download');
       await page.getByRole('button', { name: `Descargar ${extension}`, exact: true }).last().click();
       const file = await download;
       assert.ok(file.suggestedFilename().endsWith(extension === 'PDF' ? '.pdf' : '.xlsx'));
       assert.ok((await stat(await file.path())).size > 1000);
+      if (extension === 'Excel') {
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(await file.path());
+        const sheet = workbook.getWorksheet('Detalle');
+        const headers = sheet.getRow(1).values;
+        const locationColumn = headers.indexOf('Ubicación'), codeColumn = headers.indexOf('Código');
+        assert.ok(locationColumn > 0 && codeColumn > 0);
+        for (let row = 2; row <= sheet.rowCount; row++) assert.equal(sheet.getCell(row,locationColumn).value, byCode.get(sheet.getCell(row,codeColumn).value));
+      }
     }
     console.log('PASS descargas PDF y Excel');
     for (const width of [390, 768, 1440]) {
