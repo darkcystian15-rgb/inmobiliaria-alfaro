@@ -102,7 +102,8 @@ export default function Sidebar() {
               className="h-auto w-full object-contain"
             />
           </div>
-          <div className="mt-3 w-[176px] border-l-[3px] border-[var(--aa-red)] pl-3">
+          <div className="mt-3 w-[176px] text-center">
+            <div aria-hidden="true" className="mx-auto mb-3 h-0.5 w-10 rounded-full bg-[var(--aa-red)]" />
             <div className="text-sm font-bold tracking-[0.12em] text-slate-900">INTRANET</div>
             <div className="mt-1 text-xs leading-4 text-slate-500">Gestión inmobiliaria</div>
           </div>
