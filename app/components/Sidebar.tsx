@@ -93,17 +93,17 @@ export default function Sidebar() {
 
       <aside id="navigation-panel" className={`fixed inset-y-0 left-0 z-50 flex w-[min(86vw,18rem)] flex-col border-r border-slate-200 bg-[var(--aa-workspace)] shadow-xl transition-transform duration-200 xl:top-0 xl:w-72 xl:translate-x-0 xl:shadow-none ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-[104px] shrink-0 flex-col items-center justify-center border-b border-slate-100 px-5">
-          <div className="flex h-[54px] w-[170px] items-center justify-center overflow-hidden">
+          <div className="flex w-[176px] items-center justify-center rounded-xl border border-slate-200 bg-white p-3">
             <Image
               width={170}
               height={54}
               src="/branding/logo.png"
               alt="Inmobiliaria Alberto Alfaro"
-              className="h-auto max-h-full w-full object-contain"
+              className="h-auto w-full object-contain"
             />
           </div>
           <div className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Secretaría virtual
+            INTRANET
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-5">
