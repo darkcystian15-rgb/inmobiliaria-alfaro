@@ -167,7 +167,7 @@ export default function Page() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] px-4 py-6 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
       <DraftRecovery draftKey="visitas:actual" data={{fechas,observaciones}} dirty={Object.values(fechas).some(Boolean)||Object.values(observaciones).some(Boolean)} onRestore={draft=>{if(draft.fechas)setFechas(draft.fechas as Record<number,string>);if(draft.observaciones)setObservaciones(draft.observaciones as Record<number,string>);}}/>
         {/* Encabezado */}
@@ -435,7 +435,7 @@ export default function Page() {
 
                     {!fotos[item.id]?.length && <label className="mt-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900"><input type="checkbox" checked={pendienteEvidencia[item.id] || false} disabled={procesando !== null || subiendoFotos[item.id]} onChange={event => setPendienteEvidencia(current => ({ ...current, [item.id]: event.target.checked }))} /><span>La visita se realizó. Registrar como «Pendiente de evidencia» y agregar al menos una foto después en Información de inmuebles → Visitas.</span></label>}
                     {/* Acción */}
-                    <div className="sticky bottom-3 z-10 mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-[#f7f7f5] p-4 shadow-sm sm:static sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                    <div className="sticky bottom-3 z-10 mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-background p-4 shadow-sm sm:static sm:flex-row sm:items-center sm:justify-between sm:p-5">
                       <div>
                         <p className="text-sm font-bold text-slate-800">
                           ¿La visita ya se realizó?

@@ -253,7 +253,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     return <label className="block text-xs font-semibold text-slate-600">{label}<input type={type} maxLength={key === "dni" ? 8 : undefined} inputMode={key === "dni" ? "numeric" : undefined} value={owner[key]} disabled={busy} onChange={event => setOwner(previous => ({ ...previous, [key]: event.target.value }))} className={inputClass} /></label>;
   }
 
-  return <NavigationReturnProvider href={originHref}><main className="min-h-screen bg-[#f7f7f5] p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
+  return <NavigationReturnProvider href={originHref}><main className="min-h-screen bg-background p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
     {pendingProperty !== null && <ConfirmDialog title="Cambios sin guardar" confirmLabel="Descartar cambios" onCancel={() => setPendingProperty(null)} onConfirm={() => selectProperty(pendingProperty, true)}><p>Tienes cambios pendientes en esta ficha. Si cambias de inmueble, se descartarán.</p></ConfirmDialog>}
     <div className="mx-auto max-w-[1500px]">
       <header className="flex flex-wrap items-end justify-between gap-4">

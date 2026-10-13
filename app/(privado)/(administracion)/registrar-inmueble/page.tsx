@@ -229,7 +229,7 @@ export default function RegistrarInmueblePage() {
 
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] p-4 pb-40 sm:p-6 lg:p-8">
+    <main className="min-h-screen bg-background p-4 pb-40 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-[1380px]">
       <DraftRecovery draftKey="registro:actual" data={{seleccionPosicion,tipo,operacion,nombre,ubicacion,dni,apellidos,telefono,nombresPropietario,numeroDireccion,distrito,provincia,departamento}} dirty={!!(tipo||nombre||ubicacion||dni||apellidos||telefono)} onRestore={draft=>{setNombresPropietario(String(draft.nombresPropietario??""));setNumeroDireccion(String(draft.numeroDireccion??""));setDistrito(String(draft.distrito??""));setProvincia(String(draft.provincia??""));setDepartamento(String(draft.departamento??""));setOperacion(draft.operacion === 'alquiler' ? 'alquiler' : 'venta');setPosicion(String(draft.seleccionPosicion??''));setTipo(draft.tipo as string||'');setNombre(String(draft.nombres||draft.nombre||''));setUbicacion(String(draft.ubicacion??''));setDni(String(draft.dni??''));setApellidos(String(draft.apellidos??''));setTelefono(String(draft.telefono??''));}}/>
 

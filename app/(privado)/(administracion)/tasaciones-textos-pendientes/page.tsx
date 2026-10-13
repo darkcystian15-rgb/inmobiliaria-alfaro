@@ -365,7 +365,7 @@ function TasacionesTextosContent() {
 
 
   return (
-    <NavigationReturnProvider href={`/tasaciones-textos-pendientes${searchParams.size ? `?${searchParams}` : ""}${fragment}`}><main className="min-h-screen bg-[#f7f7f5] px-4 py-6 sm:px-6 lg:px-8">
+    <NavigationReturnProvider href={`/tasaciones-textos-pendientes${searchParams.size ? `?${searchParams}` : ""}${fragment}`}><main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1500px]">
       <DraftRecovery draftKey="textos:actual" data={{textos,textosListos}} dirty={Object.values(textos).some(Boolean)||[...listos,...publicadas].some(item=>textosListos[item.inmuebleId]!==undefined&&textosListos[item.inmuebleId]!==item.texto)} onRestore={draft=>{if(draft.textos)setTextos(draft.textos as Record<number,string>);if(draft.textosListos)setTextosListos(draft.textosListos as Record<number,string>);}}/>
         {/* ENCABEZADO */}
@@ -387,10 +387,10 @@ function TasacionesTextosContent() {
 
         {error && <Feedback tone="error" className="my-5">{error}{errorCarga && <button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button>}</Feedback>}
 
-        <section className="mb-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]">
+        <section className="mb-6 aa-summary p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-300">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Revisa los precios, prepara el material y confirma la publicación.</p></div>
-            <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1.5 text-xs font-bold text-amber-200">{cargando ? "…" : visiblesPendientes.length} por tasar · {cargando ? "…" : visiblesAprobadas.length} por preparar texto</span>
+            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Revisa los precios, prepara el material y confirma la publicación.</p></div>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900">{cargando ? "…" : visiblesPendientes.length} por tasar · {cargando ? "…" : visiblesAprobadas.length} por preparar texto</span>
           </div>
         </section>
         <section aria-label="Resumen y accesos de la bandeja" className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

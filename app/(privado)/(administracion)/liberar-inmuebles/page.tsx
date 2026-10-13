@@ -169,7 +169,7 @@ export default function Page() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] p-4 sm:p-6 lg:p-8">
+    <main className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       {confirmation && <ConfirmDialog title="Confirmar liberación" confirmLabel="Liberar inmueble" busy={guardando !== null} onCancel={() => setConfirmation(null)} onConfirm={() => { void liberar(confirmation, true); }}>
         <p className="break-words font-semibold">{confirmation.nombre} · Posición {confirmation.posicion}</p>
         <p>El inmueble saldrá de la cartera activa y su posición quedará disponible. Su ficha, archivos e historial se conservarán.</p>

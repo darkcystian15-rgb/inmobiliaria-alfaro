@@ -461,7 +461,7 @@ export default function Page() {
   }, [rows, busquedaResultado, orden]);
 
   return (
-    <main className="min-h-screen bg-[#f7f7f5] p-4 sm:p-6 lg:p-8">
+    <main className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl print:max-w-none">
         <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between print:mb-4">
           <div className="flex gap-3">
@@ -635,14 +635,14 @@ export default function Page() {
         {error && <Feedback tone="error" className="mt-5">{error}</Feedback>}
 
         {resumen && (
-          <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 shadow-[0_14px_40px_rgba(15,23,42,0.10)]">
+          <section className="mt-6 aa-summary p-5">
             <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
                   Indicadores del reporte · Filtros aplicados
                 </p>
 
-                <h2 className="mt-1 text-base font-bold text-white">
+                <h2 className="mt-1 text-base font-bold text-slate-900">
                   Resumen del resultado
                 </h2>
               </div>
@@ -692,13 +692,13 @@ export default function Page() {
                     key={String(
                       titulo,
                     )}
-                    className="rounded-xl border border-white/10 bg-white/[0.06] p-3"
+                    className="rounded-xl border border-slate-200 bg-white p-3"
                   >
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                       {titulo}
                     </p>
 
-                    <p className="mt-1.5 text-xl font-bold text-white">
+                    <p className="mt-1.5 text-xl font-bold text-slate-900">
                       {valor}
                     </p>
                   </div>

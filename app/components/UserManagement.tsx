@@ -107,7 +107,7 @@ export default function UserManagement() {
     finally { setBusy(false); }
   }
 
-  return <main className="min-h-screen bg-[#f7f7f5] p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-7xl">
+  return <main className="min-h-screen bg-background p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-7xl">
     <header className="flex flex-wrap items-end justify-between gap-4"><PageHeading href="/usuarios" /><button type="button" disabled={busy || loading} onClick={() => { setNotice(""); setEditor({}); }} className={primaryClass}><span aria-hidden="true" className="text-lg">+</span>Crear usuario</button></header>
     <div className="mt-7 grid gap-3 sm:grid-cols-3">{[["Usuarios", users.length], ["Accesos activos", users.filter(user => user.activo).length], ["Administradores activos", users.filter(user => user.activo && user.rol === "administrador").length]].map(([label, value]) => <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5"><p className="text-xs text-slate-500">{label}</p><p className="mt-2 text-2xl font-bold text-slate-900">{loading ? "—" : value}</p></div>)}</div>
     {error && <div role="alert" className="mt-5 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700">{error}<button type="button" disabled={busy} onClick={() => { setError(""); reload(); }} className="ml-3 min-h-11 font-semibold underline">Reintentar</button></div>}

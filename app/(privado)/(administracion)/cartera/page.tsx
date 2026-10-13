@@ -522,7 +522,7 @@ export default function CarteraPage() {
     actividad !== "Todas";
 
   return (
-    <NavigationReturnProvider href={returnHref}><main className="min-h-screen bg-[#f7f7f5] p-6 lg:p-8">
+    <NavigationReturnProvider href={returnHref}><main className="min-h-screen bg-background p-6 lg:p-8">
       <div className="mx-auto max-w-[1550px]">
         {/* CABECERA */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -841,7 +841,7 @@ export default function CarteraPage() {
               </div>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl bg-[#f7f7f5] p-4">
+                <div className="rounded-2xl bg-background p-4">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     ID del inmueble
                   </p>
@@ -850,7 +850,7 @@ export default function CarteraPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-[#f7f7f5] p-4">
+                <div className="rounded-2xl bg-background p-4">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     Propietario
                   </p>
@@ -949,7 +949,7 @@ export default function CarteraPage() {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-2xl bg-[#f7f7f5] p-4">
+              <div className="mt-4 rounded-2xl bg-background p-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                   Publicación
                 </p>

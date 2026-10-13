@@ -6,8 +6,8 @@ export default function PageHeading({ href }: { href: string }) {
   if (!group || !item) {
     return <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{dashboardMenuItem.label}</h1>;
   }
-  return <div>
+  return <div className="aa-page-heading">
     <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{item.label}</h1>
-    <p className="mt-2 text-sm font-semibold text-[#c80000]">{group.label}</p>
+    <p className="mt-2 text-sm font-semibold text-slate-600">{group.label}</p>
   </div>;
 }

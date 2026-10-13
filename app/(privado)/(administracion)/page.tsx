@@ -64,7 +64,7 @@ export default function Home() {
   }, [reload]);
   const clock = now ? businessClock(now) : null;
   const work = data?.pendientes.filter(item => item.total > 0) ?? [];
-  return <main className="min-h-screen bg-[#f7f7f5] p-6 lg:p-8">
+  return <main className="min-h-screen bg-background p-6 lg:p-8">
     <div className="mx-auto max-w-[1500px] space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <PageHeading href="/" />

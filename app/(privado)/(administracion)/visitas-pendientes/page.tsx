@@ -85,14 +85,14 @@ function VisitInbox() {
   }, [busqueda, filtro, itemsZona]);
 
   return (
-    <NavigationReturnProvider href={returnHref}><main className="min-h-screen bg-[#f7f7f5] p-6 lg:p-8">
+    <NavigationReturnProvider href={returnHref}><main className="min-h-screen bg-background p-6 lg:p-8">
       <div className="mx-auto max-w-[1500px]">
         <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <PageHeading href="/visitas-pendientes" />
           <Link href="/registrar-visitas" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c80000] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#a90000]">Registrar visita realizada →</Link>
         </header>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-900 p-5 text-white shadow-[0_14px_40px_rgba(15,23,42,0.10)]"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Primero atiende las visitas con mayor antigüedad.</p></div><span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1.5 text-xs font-bold text-amber-200">{cargando ? "…" : vencidasZona} {vencidasZona === 1 ? "requiere" : "requieren"} atención</span></div></section>
+        <section className="mt-6 aa-summary p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Primero atiende las visitas con mayor antigüedad.</p></div><span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900">{cargando ? "…" : vencidasZona} {vencidasZona === 1 ? "requiere" : "requieren"} atención</span></div></section>
 
         {error && <Feedback tone="error" className="mt-6">{error}<button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button></Feedback>}
         <section className="mt-7 grid gap-4 sm:grid-cols-3">

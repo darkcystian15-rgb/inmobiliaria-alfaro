@@ -2,13 +2,15 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
-  --background: #f7f7f5;
+  --background: #f6f8fa;
   --foreground: #171717;
   --aa-red: #c80000;
   --aa-red-dark: #a90000;
   --aa-ink: #171717;
   --aa-muted: #6b6b6b;
-  --aa-line: #e7e5e2;
+  --aa-line: #e2e7ed;
+  --aa-workspace: #f1f4f8;
+  --aa-brand-soft: #fce8e6;
   --aa-surface: #ffffff;
 }
 
@@ -30,7 +32,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgb(80 80 80 / .22);border-radius:999px}
-.aa-card{border:1px solid var(--aa-line);background:white;border-radius:1rem;box-shadow:0 8px 28px rgb(23 23 23 / .035)}
+.aa-card{border:1px solid var(--aa-line);background:white;border-radius:1rem;box-shadow:0 1px 3px rgb(23 23 23 / .025)}
 .aa-eyebrow{font-size:.75rem;font-weight:800;line-height:1.5;letter-spacing:.12em;text-transform:uppercase;color:#64748b}
 .aa-red{color:var(--aa-red)}
 .aa-red-bg{background:var(--aa-red)}
@@ -53,7 +55,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .aa-button-primary { background: var(--aa-red); color: white; }
 .aa-button-primary:hover { background: var(--aa-red-dark); }
 .aa-button-secondary { border: 1px solid var(--aa-line); background: white; color: #334155; }
-.aa-button-secondary:hover { background: #f8fafc; border-color: #cbd5e1; }
+.aa-button-secondary:hover { background: var(--aa-workspace); border-color: #cbd5e1; }
 .aa-input { min-height: 44px; border: 1px solid #cbd5e1; border-radius: .75rem; background: #fff; padding: .65rem .85rem; font-size: .875rem; color: #1e293b; }
 .aa-input:focus { border-color: var(--aa-red); }
 }
@@ -97,3 +99,12 @@ button, a { -webkit-tap-highlight-color: transparent; }
 @media (hover: none) and (prefers-reduced-motion: no-preference) {
   .cartera-folder-navigation:active svg { transform: rotate(-6deg); }
 }
+
+/* Workspace panels share the folder screens' light surfaces. */
+@layer components {
+  .aa-summary { border: 1px solid var(--aa-line); border-radius: 1rem; background: var(--aa-workspace); color: #1e293b; }
+  .aa-page-heading { border-left: 3px solid var(--aa-red); padding-left: 1rem; }
+}
+.mobile-page-shell button.cartera-folder:focus-visible { outline: 2px solid var(--aa-red); outline-offset: 4px; }
+.mobile-page-shell input[type="search"] { background-color: var(--aa-workspace); }
+.mobile-page-shell input[type="search"]:focus { background-color: var(--aa-surface); }

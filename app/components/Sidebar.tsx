@@ -38,9 +38,9 @@ function MenuLink({ item, onNavigate }: { item: { href: string; label: string; i
       href={item.href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition ${active ? "bg-[#c80000] text-white shadow-[0_8px_22px_rgba(23,23,23,0.12)]" : "text-slate-600 hover:bg-[#f5f4f2] hover:text-[#171717]"}`}
+      className={`group relative flex items-center gap-3 rounded-full px-3 py-2.5 text-[13px] font-medium transition ${active ? "bg-[var(--aa-brand-soft)] text-[var(--aa-red-dark)]" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
     >
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${active ? "bg-white/10 text-white" : "bg-[#f2f1ef] text-[#66615c]"}`}>
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${active ? "bg-white/70 text-[var(--aa-red-dark)]" : "text-slate-500 group-hover:text-slate-700"}`}>
         <Icon name={item.icon}/>
       </span>
       <span className="min-w-0 flex-1 leading-5">{item.label}</span>{active && <span className="h-1.5 w-1.5 rounded-full bg-[#c80000]" />}
@@ -53,7 +53,7 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       {isAdministrator(user) && <>
-        <div className="rounded-2xl border border-[#e7e5e2] bg-[#faf9f7] p-2">
+        <div className="mb-1">
           <MenuLink item={dashboardMenuItem} onNavigate={onNavigate} />
         </div>
       </>}
@@ -91,7 +91,7 @@ export default function Sidebar() {
         <button type="button" aria-label="Cerrar menú" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[1px] xl:hidden" />
       )}
 
-      <aside id="navigation-panel" className={`fixed inset-y-0 left-0 z-50 flex w-[min(86vw,18rem)] flex-col border-r border-slate-200 bg-white shadow-xl transition-transform duration-200 xl:top-0 xl:w-72 xl:translate-x-0 xl:shadow-none ${open ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside id="navigation-panel" className={`fixed inset-y-0 left-0 z-50 flex w-[min(86vw,18rem)] flex-col border-r border-slate-200 bg-[var(--aa-workspace)] shadow-xl transition-transform duration-200 xl:top-0 xl:w-72 xl:translate-x-0 xl:shadow-none ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-[104px] shrink-0 flex-col items-center justify-center border-b border-slate-100 px-5">
           <div className="flex h-[54px] w-[170px] items-center justify-center overflow-hidden">
             <Image
@@ -103,7 +103,7 @@ export default function Sidebar() {
             />
           </div>
           <div className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Intranet
+            Secretaría virtual
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-5">
@@ -111,7 +111,7 @@ export default function Sidebar() {
         </nav>
 
         <div className="shrink-0 border-t border-slate-100 p-4">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-3.5">
             <div className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#fff1f1] text-[#c80000]">
                 <span className="h-2 w-2 rounded-full bg-[#c80000]" />
