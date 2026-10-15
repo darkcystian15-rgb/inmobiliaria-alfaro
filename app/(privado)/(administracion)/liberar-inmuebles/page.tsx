@@ -1,5 +1,7 @@
 "use client";
 
+import PropertySummary from "@/app/components/PropertySummary";
+
 import Link from "next/link";
 import { propertyDisplayId } from "@/lib/property-display-id";
 
@@ -11,7 +13,6 @@ import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 import { requestJson } from "@/lib/client-request";
 
 import { rentalResult } from "@/lib/rental-result.mjs";
-import { operationLabel } from "@/lib/operation.mjs";
 import { saleResult } from "@/lib/sale-result.mjs";
 import ActiveFilters from "@/app/components/ActiveFilters";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
@@ -336,7 +337,7 @@ export default function Page() {
 
                 return (
                   <details key={item.inmuebleId} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm open:border-emerald-300">
-                    <summary className="cursor-pointer p-5 transition hover:bg-emerald-50/40"><div className="grid items-center gap-2 sm:grid-cols-[100px_minmax(0,1fr)_minmax(0,1fr)_110px_150px]"><span className="break-words font-mono text-xs font-bold text-slate-700">{propertyDisplayId(item)}<span className="mt-1 block font-sans font-normal">Pos. {item.posicion}</span></span><div className="min-w-0"><p className="break-words text-sm font-bold text-slate-900">{item.nombre}</p><p className="mt-1 text-xs text-slate-500">{item.tipo} · {item.propietario || "Contacto pendiente"}</p></div><p className="break-words text-xs text-slate-600">{item.ubicacion || "Ubicación pendiente"}</p><span className="text-xs font-semibold">{operationLabel(item.operacion)}</span><span className="w-fit rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">Registrar salida ↓</span></div></summary>
+                    <summary className="cursor-pointer p-5 transition hover:bg-emerald-50/40"><div className="grid items-center gap-2 sm:grid-cols-[100px_minmax(0,1fr)_150px]"><span className="break-words font-mono text-xs font-bold text-slate-700">Pos. {item.posicion}<span className="mt-1 block break-words font-sans font-normal">{propertyDisplayId(item)}</span></span><div className="min-w-0"><p className="break-words text-sm font-bold text-slate-900">{item.propietario || "Sin contacto"}</p><p className="mt-1 text-xs text-slate-500"><PropertySummary operation={item.operacion} type={item.tipo} location={item.ubicacion} /></p></div><span className="w-fit rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">Registrar salida ↓</span></div></summary>
                     <div className="border-t border-slate-100 px-5 pt-4"><Link href={`/datos-inmuebles?codigo=${item.inmuebleId}`} className="text-sm font-semibold text-[#c80000]">Abrir ficha completa →</Link></div>
                     {/* MOTIVO */}
                     <div className="p-5 sm:p-6">

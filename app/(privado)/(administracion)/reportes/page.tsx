@@ -1,4 +1,6 @@
 "use client";
+
+import PropertySummary from "@/app/components/PropertySummary";
 import WorkspaceFileIcon from "@/app/components/WorkspaceFileIcon";
 import OperationSelect from "@/app/components/OperationSelect";
 import { reportPeriodField } from "@/lib/report-period.mjs";
@@ -316,9 +318,9 @@ export default function Page() {
       if (!rows.length) return [];
 
       const preferred = [
-        "codigo",
         "posicion",
         "nombre",
+        "codigo",
         "propietario",
         "ubicacion",
         "tipo",
@@ -834,12 +836,7 @@ export default function Page() {
                               key={key}
                               className="px-4 py-3 text-xs text-slate-600"
                             >
-                              {reportText(
-                                key,
-                                row[
-                                  key
-                                ],
-                              )}
+                              {key === "nombre" && typeof row.propietario === "string" ? <div className="min-w-48 max-w-md"><p className="break-words font-semibold text-slate-900">{row.propietario || "Sin contacto"}</p><p className="mt-1 break-words leading-5 text-slate-500"><PropertySummary operation={String(row.operacion || "venta")} type={String(row.tipo || "Tipo por completar")} location={typeof row.ubicacion === "string" ? row.ubicacion : null} /></p></div> : reportText(key, row[key])}
                             </td>
                           ),
                         )}

@@ -98,6 +98,10 @@ export async function GET() {
           inmuebleId: inmInmuebles.id,
           numero: inmPosiciones.numero,
           nombre: inmInmuebles.referencia,
+          nombreContacto: inmInmuebles.nombreContacto,
+          tipo: inmInmuebles.tipo,
+          operacion: inmInmuebles.operacion,
+          direccion: inmInmuebles.direccion,
           evento: inmTimeline.evento,
           fecha: databaseInstant(inmTimeline.fechaEvento),
         })
@@ -279,6 +283,10 @@ export async function GET() {
           ? String(item.numero).padStart(2, "0")
           : "—",
         nombre: item.nombre,
+        nombreContacto: item.nombreContacto,
+        tipo: item.tipo,
+        operacion: item.operacion,
+        direccion: item.direccion,
         etapa: eventoMap[item.evento] ?? item.evento.replaceAll("_", " ").replace(/^./, character => character.toUpperCase()),
         fecha: item.fecha,
       })),

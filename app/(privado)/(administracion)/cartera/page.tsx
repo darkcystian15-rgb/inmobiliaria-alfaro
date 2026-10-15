@@ -1,5 +1,7 @@
 "use client";
 
+import PropertySummary from "@/app/components/PropertySummary";
+
 import PortfolioLabelRow from "@/app/components/PortfolioLabelRow";
 import ZoneContext from "@/app/components/ZoneContext";
 import OperationSelect from "@/app/components/OperationSelect";
@@ -670,7 +672,7 @@ export default function CarteraPage() {
                     type="button"
                     onClick={() => x && setSeleccionado(x)}
                     disabled={!x}
-                    aria-label={x ? `Ver detalle de ${x.nombre}, posición ${pos.numero}` : `Posición ${pos.numero} disponible`}
+                    aria-label={x ? `Ver detalle de ${x.propietario || "Sin contacto"}, posición ${pos.numero}` : `Posición ${pos.numero} disponible`}
                     className="group flex min-h-[345px] w-full flex-1 flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000]"
                   >
                     <div aria-hidden="true" className="h-1.5 w-full rounded-tr-2xl bg-amber-100/70" />
@@ -681,10 +683,9 @@ export default function CarteraPage() {
                       </div>
                       {x && theme ? <>
                         <span className={`mt-3 inline-flex self-start rounded-lg px-2 py-1 text-xs font-semibold ring-1 ring-inset ${theme.badge}`}>{theme.label}</span>
-                        <h3 className="mt-3 min-h-10 line-clamp-2 break-words text-sm font-bold leading-5 text-slate-900" title={x.nombre}>{x.nombre}</h3>
+                        <h3 className="mt-3 min-h-10 break-words text-sm font-bold leading-5 text-slate-900" title={x.propietario || "Sin contacto"}>{x.propietario || "Sin contacto"}</h3>
+                        <p className="mt-2 text-xs font-semibold text-slate-700"><PropertySummary operation={x.operacion} type={x.tipo} location={x.direccion || x.ubicacion} /></p>
                         <p className="mt-1 break-words font-mono text-xs text-slate-500">{propertyDisplayId(x)}</p>
-                        <p className="mt-2 text-xs font-semibold text-slate-700">{operationLabel(x.operacion)} · {x.tipo}</p>
-                        <p className="mt-2 flex items-start gap-1.5 text-xs leading-4 text-slate-500"><span aria-hidden="true" className="shrink-0"><Icon name="map" /></span><span className="min-h-8 min-w-0 line-clamp-2 break-words" title={x.ubicacion}>{x.ubicacion}</span></p>
                         <div className="mt-3 flex min-h-12 content-start flex-wrap gap-1.5">
                           {x.visitaPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-800">Visita pendiente</span>}
                           {x.tasacionPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Tasación pendiente</span>}
@@ -819,7 +820,7 @@ export default function CarteraPage() {
                   </div>
 
                   <h3 className="mt-3 break-words text-xl font-bold text-slate-950">
-                    {seleccionado.nombre}
+                    {seleccionado.propietario || "Sin contacto"}
                   </h3>
 
                   <p className="mt-1 text-sm text-slate-500">

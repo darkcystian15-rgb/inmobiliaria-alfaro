@@ -47,6 +47,7 @@ async function approved() {
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
+      nombreContacto: inmInmuebles.nombreContacto,
       direccion: inmInmuebles.direccion,
 
       provincia: inmInmuebles.provincia,
@@ -111,6 +112,7 @@ async function published() {
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
+      nombreContacto: inmInmuebles.nombreContacto,
       direccion: inmInmuebles.direccion,
 
       provincia: inmInmuebles.provincia,
@@ -163,6 +165,7 @@ async function ready() {
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
+      nombreContacto: inmInmuebles.nombreContacto,
       direccion: inmInmuebles.direccion,
 
       provincia: inmInmuebles.provincia,

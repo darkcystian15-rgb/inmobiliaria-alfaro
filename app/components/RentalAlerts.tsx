@@ -1,8 +1,11 @@
 "use client";
+
+import PropertySummary from "@/app/components/PropertySummary";
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import FolderIcon from './FolderIcon';
-type Contract = { id: number; inmuebleId: number; nombre: string; inicio: string | null; fin: string | null; estado: string; reingresoId: number | null };
+type Contract = { id: number; inmuebleId: number; nombre: string; nombreContacto: string | null; numeroOrden: number | null; tipo: string; operacion: string; direccion: string | null; inicio: string | null; fin: string | null; estado: string; reingresoId: number | null };
 function date(value: string | null) {
   return value ? new Date(`${value}T12:00:00Z`).toLocaleDateString('es-PE', { timeZone: 'America/Lima', day: 'numeric', month: 'short', year: 'numeric' }) : 'Sin registrar';
 }
@@ -25,7 +28,7 @@ export default function RentalAlerts() {
   return <section aria-labelledby="rental-tracking-title" className="aa-card overflow-hidden">
     <header className="border-b border-slate-100 px-5 py-4"><h2 id="rental-tracking-title" className="font-bold">Seguimiento de alquileres</h2><p className="mt-1 text-xs text-slate-500">Los dos contratos más antiguos por atender, según su fecha de inicio.</p></header>
     {error ? <p role="alert" className="p-5 text-sm text-red-700">No se pudieron consultar los vencimientos.</p> : items === null ? <p className="p-5 text-sm">Consultando contratos…</p> : !items.length ? <p className="px-5 py-4 text-sm text-slate-600">No hay contratos pendientes de seguimiento.</p> : <ul className="divide-y divide-slate-100">{items.map(item => <li key={item.id} className="grid min-w-0 gap-2 px-5 py-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-center">
-      <div className="flex min-w-0 items-center gap-2"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /><p className="truncate text-sm font-semibold" title={item.nombre}>{item.nombre}</p></div>
+      <div className="flex min-w-0 items-center gap-2"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /><span className="font-mono text-xs text-slate-500">{item.numeroOrden ? String(item.numeroOrden).padStart(2,"0") : "—"}</span><div className="min-w-0"><p className="break-words text-sm font-semibold" title={item.nombreContacto || "Sin contacto"}>{item.nombreContacto || "Sin contacto"}</p><p className="mt-1 break-words text-xs text-slate-500"><PropertySummary operation={item.operacion} type={item.tipo} location={item.direccion} /></p></div></div>
       <p className="text-xs text-slate-600">Inicio: {date(item.inicio)}</p><div><p className="text-xs font-semibold text-slate-700">{item.estado}</p><p className="text-xs text-slate-500">Fin: {date(item.fin)}</p></div>
       <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}`} className="aa-button aa-button-secondary justify-self-start text-xs">Ver ficha →</Link>
     </li>)}</ul>}

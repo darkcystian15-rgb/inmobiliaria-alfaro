@@ -1,4 +1,7 @@
 "use client";
+
+import PropertySummary from "@/app/components/PropertySummary";
+
 import { propertyAddress } from "@/lib/property-address.mjs";
 import MobileFormActions, { MobileFormFeedback } from "./MobileFormActions";
 import ActiveFilters from "./ActiveFilters";
@@ -9,7 +12,7 @@ import GeographySelect from "./GeographySelect";
 import { propertyDisplayId } from "@/lib/property-display-id";
 
 import OperationSelect from "./OperationSelect";
-import { priceLabel, referenceLabel, targetLabel, operationLabel } from "@/lib/operation.mjs";
+import { priceLabel, referenceLabel, targetLabel } from "@/lib/operation.mjs";
 import PropertyTypeSelect from "./PropertyTypeSelect";
 import DraftRecovery from './DraftRecovery';
 import OperationalTracking from './OperationalTracking';
@@ -33,7 +36,7 @@ import { useSessionUser } from "./SessionProvider";
 import { isAdministrator } from "@/lib/access.mjs";
 import { filterProperties } from "@/lib/property-list.mjs";
 
-type Item = { id: string; posicion: number | null; nombre: string; tipo: string; ubicacion: string; propietario: string; estado: string };
+type Item = { id: string; posicion: number | null; nombre: string; tipo: string; operacion: string; ubicacion: string; propietario: string; estado: string };
 type Property = {
   id: number; inmuebleOrigenId?:number|null; codigo: string; posicion: number | null; tipo: string; operacion: string; referencia: string; estado: string;
   nombreContacto: string | null; direccion: string | null; distrito: string | null; provincia: string | null; departamento: string | null;
@@ -261,7 +264,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
           <div className="max-h-80 overflow-y-auto px-2 pb-3 2xl:max-h-[calc(100vh-22rem)] 2xl:min-h-64">
             {listLoading ? <div className="space-y-2 px-2" aria-label="Cargando lista">{[1, 2, 3].map(value => <div key={value} className="h-24 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" />)}</div> : listError ? <div role="alert" className="rounded-2xl bg-red-50 p-4 text-xs text-red-700"><p>{listError}</p><button type="button" onClick={() => { setListLoading(true); setListError(""); setListReload(value => value + 1); }} className="mt-3 font-bold underline underline-offset-4">Reintentar</button></div> : filtered.length === 0 ? <div className="px-5 py-10 text-center"><div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500"><Icon name="search" /></div><p className="mt-3 text-sm font-semibold text-slate-700">Sin resultados</p><p className="mt-1 text-xs leading-5 text-slate-500">Prueba otro nombre, código o estado.</p>{(query || status !== "todos") && <button type="button" onClick={() => { setQuery(""); setStatus("todos"); }} className="mt-4 text-xs font-semibold text-[#c80000]">Ver todos los inmuebles</button>}</div> : filtered.map(item => <button key={item.id} type="button" aria-pressed={code === item.id} disabled={busy} onClick={() => selectProperty(item.id)} className={`mb-1.5 flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition disabled:cursor-wait ${code === item.id ? "border-red-100 bg-[#fff5f4] shadow-sm" : "border-transparent hover:border-slate-100 hover:bg-slate-50"}`}>
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-mono text-sm font-bold ${code === item.id ? "bg-[#c80000] text-white" : "bg-slate-100 text-slate-500"}`}>{positionLabel(item.posicion)}</span>
-              <span className="min-w-0 flex-1"><span className="block truncate text-xs font-bold text-slate-800" title={item.nombre}>{item.nombre}</span><span className="mt-1 block truncate text-xs capitalize text-slate-500">{item.tipo} · {item.ubicacion}</span><span className="mt-1.5 block truncate font-mono text-xs text-slate-500" title={item.id}>{propertyDisplayId(item)}</span></span>
+              <span className="min-w-0 flex-1"><span className="block break-words text-xs font-bold text-slate-800" title={item.propietario || "Sin contacto"}>{item.propietario || "Sin contacto"}</span><span className="mt-1 block break-words text-xs text-slate-500"><PropertySummary operation={item.operacion} type={item.tipo} location={item.ubicacion} /></span><span className="mt-1.5 block truncate font-mono text-xs text-slate-500" title={item.id}>{propertyDisplayId(item)}</span></span>
               <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${item.estado === "activo" ? "bg-emerald-500" : "bg-slate-300"}`} title={item.estado === "activo" ? "Activo" : "Histórico"}><span className="sr-only">{item.estado === "activo" ? "Activo" : "Histórico"}</span></span>
             </button>)}
           </div>
@@ -276,7 +279,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.03)]">
               <div className="h-1.5 bg-[#c80000]" />
               <div className="grid grid-cols-1 items-start gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-6">
-                <div className="flex min-w-0 items-start gap-3 sm:gap-4"><span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#fff1f1] text-[#c80000]"><span className="text-xs font-bold uppercase tracking-wider">Posición</span><span className="font-mono text-xl font-bold">{positionLabel(details.inmueble.posicion)}</span></span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-semibold capitalize text-slate-500">{details.inmueble.tipo} · {operationLabel(details.inmueble.operacion)}</span><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${details.inmueble.estado === "activo" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{details.inmueble.estado === "activo" ? "Activo" : "Histórico"}</span></div><h2 className="mt-2 break-words text-xl font-bold tracking-tight text-slate-950">{details.inmueble.referencia}</h2><p className="mt-2 flex items-start gap-1.5 text-xs text-slate-500"><Icon name="map" className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words">{propertyAddress(details.inmueble)}</span></p><p className="mt-2 break-all font-mono text-xs text-slate-500">{propertyDisplayId(details.inmueble)}</p></div></div>
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4"><span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#fff1f1] text-[#c80000]"><span className="text-xs font-bold uppercase tracking-wider">Posición</span><span className="font-mono text-xl font-bold">{positionLabel(details.inmueble.posicion)}</span></span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-semibold capitalize text-slate-500">{details.inmueble.estado === "activo" ? "Inmueble en cartera" : "Ficha histórica"}</span><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${details.inmueble.estado === "activo" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{details.inmueble.estado === "activo" ? "Activo" : "Histórico"}</span></div><h2 className="mt-2 break-words text-xl font-bold tracking-tight text-slate-950">{details.inmueble.nombreContacto || "Sin contacto"}</h2><p className="mt-2 flex items-start gap-1.5 text-xs text-slate-500"><Icon name="map" className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words"><PropertySummary operation={details.inmueble.operacion} type={details.inmueble.tipo} location={details.inmueble.direccion || propertyAddress(details.inmueble)} /></span></p><p className="mt-2 break-all font-mono text-xs text-slate-500">{propertyDisplayId(details.inmueble)}</p></div></div>
                 <div className="min-w-0 rounded-2xl bg-slate-50 px-5 py-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">{priceLabel(details.inmueble.operacion)}</p><p className="mt-1 break-words text-lg font-bold tracking-tight text-slate-900">{money(details.tasacion?.precioVenta)}</p></div>
               </div>
               <nav aria-label="Apartados de la ficha" className="flex gap-1 overflow-x-auto border-t border-slate-100 px-3 py-2">
