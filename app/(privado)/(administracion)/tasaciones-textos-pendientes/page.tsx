@@ -20,7 +20,7 @@ import PublicationChecklist, { type Checklist } from "@/app/components/Publicati
 import SalePriceEditor from "@/app/components/SalePriceEditor";
 
 type Item = {
-  distrito?: string | null;
+  zona?:string; distrito?: string | null;
   expediente?: Checklist;
   texto?: string | null;
   inmuebleId: number;
@@ -44,7 +44,7 @@ type Publicada = {
   nombreContacto: string | null;
   ubicacion: string;
   direccion: string | null;
-  distrito?: string | null;
+  zona?:string; distrito?: string | null;
   expediente?: Checklist;
   inmuebleId: number;
   codigo: string;

@@ -55,7 +55,7 @@ export async function GET() {
       db
         .select({
           id: inmInmuebles.id,
-          hasPosition: sql<number>`EXISTS (SELECT 1 FROM inm_asignaciones_posicion ap WHERE ap.inmueble_id = ${inmInmuebles.id} AND ap.activa = 1)`,
+          hasPosition: sql<number>`EXISTS (SELECT 1 FROM inm_asignaciones_zona ap WHERE ap.inmueble_id = ${inmInmuebles.id} AND ap.activa = 1)`,
         })
         .from(inmInmuebles)
         .where(eq(inmInmuebles.estado,"activo")),

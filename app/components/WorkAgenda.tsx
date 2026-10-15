@@ -1,4 +1,5 @@
 "use client";
+import { zoneUrl } from "@/lib/zone-url";
 
 import PropertyListIdentity from "@/app/components/PropertyListIdentity";
 
@@ -6,7 +7,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import FolderIcon from './FolderIcon';
 
-type Task = { id: number; codigo: string; nombre: string; posicion: number | null; tipo: string | null; operacion: string; direccion: string | null; propietarioNombres: string | null; propietarioApellidos: string | null; distrito: string | null; actividad: string; fechaLimite: string | null; plazoOrigen: 'asignado' | 'automatico'; responsable: string | null };
+type Task = { id: number; zona:string; codigo: string; nombre: string; posicion: number | null; tipo: string | null; operacion: string; direccion: string | null; propietarioNombres: string | null; propietarioApellidos: string | null; distrito: string | null; actividad: string; fechaLimite: string | null; plazoOrigen: 'asignado' | 'automatico'; responsable: string | null };
 const labels: Record<string, string> = { visita: 'Registrar visita', tasacion: 'Registrar tasación', expediente: 'Completar documentos', publicacion: 'Confirmar publicación' };
 const statuses: Record<string, string> = { visita: 'Visita pendiente', tasacion: 'Tasación pendiente', expediente: 'Documentos pendientes', publicacion: 'Publicación pendiente' };
 const destinations: Record<string, string> = { visita: '/registrar-visitas', tasacion: '/registrar-tasaciones', expediente: '/tasaciones-textos-pendientes', publicacion: '/tasaciones-textos-pendientes' };
@@ -20,7 +21,7 @@ export default function WorkAgenda() {
   const [reload, setReload] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/seguimiento?orden=antiguedad&limite=3', { cache: 'no-store', signal: controller.signal }).then(async response => {
+    fetch(zoneUrl('/api/seguimiento?orden=antiguedad&limite=3'), { cache: 'no-store', signal: controller.signal }).then(async response => {
       if (!response.ok) throw new Error();
       const data = await response.json();
       if (!controller.signal.aborted) { setItems(data.items); setError(''); }
@@ -41,7 +42,7 @@ export default function WorkAgenda() {
             <PropertyListIdentity position={item.posicion} contact={item.propietarioNombres} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="font-mono text-xs font-semibold leading-5 text-slate-500" icon={<FolderIcon className="h-7 w-7 shrink-0 text-amber-500" />} />
           </div>
           <div className="min-w-0 sm:max-w-64"><p className={`w-fit rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}>{statuses[item.actividad] || 'Pendiente de revisión'}</p><p className="mt-1 text-[11px] leading-4 text-slate-500">{item.fechaLimite ? <>Límite: {deadline(item.fechaLimite)} · {item.plazoOrigen === 'asignado' ? 'Asignado' : 'Automático'}</> : 'Plazo sin definir'}</p></div>
-          <Link aria-label={`${labels[item.actividad] || 'Revisar ficha'}: ${item.propietarioNombres || 'Sin contacto'}`} href={`${destinations[item.actividad] || '/datos-inmuebles'}?inmueble=${item.id}${item.actividad === 'expediente' ? '#material' : item.actividad === 'publicacion' ? '#listos' : ''}`} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">{labels[item.actividad] || 'Revisar ficha'} →</Link>
+          <Link aria-label={`${labels[item.actividad] || 'Revisar ficha'}: ${item.propietarioNombres || 'Sin contacto'}`} href={`${destinations[item.actividad] || '/datos-inmuebles'}?zona=${encodeURIComponent(item.zona)}&inmueble=${item.id}${item.actividad === 'expediente' ? '#material' : item.actividad === 'publicacion' ? '#listos' : ''}`} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">{labels[item.actividad] || 'Revisar ficha'} →</Link>
         </li>;
       })}</ul>
       <div className="border-t border-slate-100 px-4 py-2 sm:px-5"><Link href="/cartera?zona=*" className="inline-flex min-h-9 items-center text-xs font-semibold text-[#c80000]">Ver toda la cartera →</Link></div>

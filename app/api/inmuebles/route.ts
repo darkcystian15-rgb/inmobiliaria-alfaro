@@ -1,7 +1,7 @@
+import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { nextPropertyOrder } from "@/lib/property-identity";
 import { propertyCode } from "@/lib/property-code.mjs";
-import {lockGeography,validateGeography} from "@/lib/geography";
 import { assignedPropertyType } from "@/lib/property-types";
 import { registrationInput, PropertyInputError } from "@/lib/property-input.mjs";
 import { authorizeApi } from "@/lib/auth";
@@ -11,18 +11,21 @@ import { db } from "@/lib/db";
 import {
   inmAsignacionesPosicion,
   inmInmuebles,
+  inmZonas,
   inmPosiciones,
   inmTimeline,
 } from "@/db/schema";
 
 // Minimal selector for the property information module, independent of cartera.
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const auth = await authorizeApi(undefined, "informacion");
     if (auth.response) return auth.response;
     const rows = await db.select({
       id: inmInmuebles.codigo,
       nombre: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
       tipo: inmInmuebles.tipo,
       operacion: inmInmuebles.operacion,
       direccion: inmInmuebles.direccion,
@@ -38,6 +41,7 @@ export async function GET() {
         eq(inmAsignacionesPosicion.activa, true),
       ))
       .leftJoin(inmPosiciones, eq(inmPosiciones.id, inmAsignacionesPosicion.posicionId))
+      .where(zoneCondition(request))
       .orderBy(sql`CASE WHEN ${inmInmuebles.estado} = 'activo' THEN 0 ELSE 1 END`, sql`${inmPosiciones.numero} IS NULL`, asc(inmPosiciones.numero), asc(inmInmuebles.referencia));
     return NextResponse.json({ inmuebles: rows.map(({ direccion, distrito, provincia, departamento, ...row }) => ({
       ...row,
@@ -59,18 +63,23 @@ export async function POST(request: Request) {
     if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 });
 
     const { posicion, tipo: selectedType, ...values } = registrationInput(body);
+    const zonaId=Number(body.zonaId);
+    if(!Number.isSafeInteger(zonaId)||zonaId<1)throw new PropertyInputError("Selecciona una zona de la cartera.");
     let tipo = selectedType;
 
     const result = await db.transaction(async (tx) => {
       tipo = await assignedPropertyType(tx, tipo);
-      await lockGeography(tx);
-      const location=await validateGeography(tx,{departamento:body.departamento,provincia:body.provincia,distrito:body.distrito});
+      const [zone] = await tx.select().from(inmZonas).where(and(eq(inmZonas.id,zonaId),eq(inmZonas.activo,true))).limit(1).for("update");
+      if(!zone || posicion>zone.capacidad)throw new PropertyInputError("La posición no corresponde al cupo de la zona.");
+      const requested=new URL(request.url).searchParams.get("zona");
+      if(requested && requested!==zone.nombre)throw new PropertyInputError("La zona seleccionada cambió; vuelve a abrir su carpeta.");
+      const location={zonaId:zone.id,departamento:zone.departamento,provincia:zone.provincia,distrito:zone.distrito};
       // Buscar y bloquear la posición seleccionada
       const [positionRows] = (await tx.execute(
         sql`
           SELECT id, activo
-          FROM inm_posiciones
-          WHERE numero = ${posicion}
+          FROM inm_posiciones_zona
+          WHERE numero = ${posicion} AND zona_id=${zonaId}
           LIMIT 1
           FOR UPDATE
         `
@@ -94,7 +103,7 @@ export async function POST(request: Request) {
       const [assignmentRows] = (await tx.execute(
         sql`
           SELECT id
-          FROM inm_asignaciones_posicion
+          FROM inm_asignaciones_zona
           WHERE posicion_id = ${position.id}
             AND activa = 1
           LIMIT 1

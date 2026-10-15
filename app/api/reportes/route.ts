@@ -1,3 +1,4 @@
+import { propertyZoneName, zoneCondition, positionZoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { databaseBusinessDay, databaseInstant } from '@/lib/business-time';
 import { reportPeriodField, validCalendarDate } from '@/lib/report-period.mjs';
@@ -129,16 +130,16 @@ export async function GET(request: NextRequest) {
       fechaVisita:sql`(SELECT v.fecha_visita FROM inm_visitas v WHERE v.inmueble_id=${inmInmuebles.id} AND v.completada=1 ORDER BY v.fecha_registro DESC LIMIT 1)`,
       fechaTasacion:sql`${inmTasaciones.fechaTasacion}`,
       fechaPublicacion:sql`DATE(DATE_SUB(${inmPublicaciones.fechaPublicacion}, INTERVAL 5 HOUR))`,
-      fechaInicioPosicion:sql`(SELECT DATE(DATE_SUB(p.fecha_inicio, INTERVAL (TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(),NOW()) + 18000) SECOND)) FROM inm_asignaciones_posicion p WHERE p.inmueble_id=${inmInmuebles.id} ORDER BY p.fecha_inicio DESC LIMIT 1)`,
+      fechaInicioPosicion:sql`(SELECT DATE(DATE_SUB(p.fecha_inicio, INTERVAL (TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(),NOW()) + 18000) SECOND)) FROM inm_asignaciones_zona p WHERE p.inmueble_id=${inmInmuebles.id} ORDER BY p.fecha_inicio DESC LIMIT 1)`,
     };
-    const conditions=[];
+    const conditions=[zoneCondition(request)];
     if(desde)conditions.push(sql`${periods[periodField]} >= ${desde}`);
     if(hasta)conditions.push(sql`${periods[periodField]} <= ${hasta}`);
     if(estado==='Activo')conditions.push(eq(inmInmuebles.estado,'activo'));
     if(estado==='Histórico')conditions.push(sql`${inmInmuebles.estado}<>'activo'`);
     if(operacion!=='Todos')conditions.push(eq(inmInmuebles.operacion,operacion));
     if(tipo!=='Todos')conditions.push(eq(inmInmuebles.tipo,tipo));
-    if(posicionFiltro){const position=Number(posicionFiltro);if(!Number.isInteger(position)||position<1||position>90)return NextResponse.json({error:'Posición no válida.'},{status:400});conditions.push(sql`EXISTS(SELECT 1 FROM inm_asignaciones_posicion a JOIN inm_posiciones p ON p.id=a.posicion_id WHERE a.inmueble_id=${inmInmuebles.id} AND p.numero=${position} AND (a.activa=1 OR ${inmInmuebles.estado}<>'activo'))`);}
+    if(posicionFiltro){const position=Number(posicionFiltro);if(!Number.isInteger(position)||position<1||position>90)return NextResponse.json({error:'Posición no válida.'},{status:400});conditions.push(sql`EXISTS(SELECT 1 FROM inm_asignaciones_zona a JOIN inm_posiciones_zona p ON p.id=a.posicion_id WHERE a.inmueble_id=${inmInmuebles.id} AND p.numero=${position} AND (a.activa=1 OR ${inmInmuebles.estado}<>'activo'))`);}
     if(flowStarts[reporte])conditions.push(sql`EXISTS(SELECT 1 FROM inm_timeline t WHERE t.inmueble_id=${inmInmuebles.id} AND t.evento=${flowStarts[reporte]})`);
     if(reportPredicates[reporte])conditions.push(reportPredicates[reporte]);
     const situationReports:Record<string,string>={'Visita pendiente':'Visitas pendientes','Tasación pendiente':'Tasaciones pendientes','Material pendiente':'Material pendiente','Listo para publicar':'Listos para publicar','Publicado':'Publicados'};
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
     const [summaryResult]=await db.execute(reportSummaryQuery(where));
     const filteredSummary=Object.fromEntries(Object.entries((summaryResult as unknown as Record<string,unknown>[])[0]??{}).map(([key,value])=>[key,Number(value)]));
     if(reporte==='Posición ocupada'){
-      const positionConditions=[];
+      const positionConditions=[zoneCondition(request)];
       if(desde)positionConditions.push(sql`${databaseBusinessDay(inmAsignacionesPosicion.fechaInicio)} >= ${desde}`);
       if(hasta)positionConditions.push(sql`${databaseBusinessDay(inmAsignacionesPosicion.fechaInicio)} <= ${hasta}`);
       if(estado==='Activo')positionConditions.push(eq(inmInmuebles.estado,'activo'));
@@ -166,8 +167,8 @@ export async function GET(request: NextRequest) {
       const [positionCountResult]=await db.execute(sql`SELECT COUNT(*) total ${positionFrom} WHERE ${positionWhere}`);
       const total=Number((positionCountResult as unknown as {total:number}[])[0]?.total??0);
       if(all&&total>10000)return NextResponse.json({error:'Reduce el período o los filtros para descargar como máximo 10 000 asignaciones.'},{status:400});
-      const [positionData]=await db.execute(sql`SELECT ${inmInmuebles.codigo} codigo,${inmInmuebles.referencia} nombre,${inmInmuebles.direccion} direccion,${inmInmuebles.distrito} distrito,${inmInmuebles.provincia} provincia,${inmInmuebles.departamento} departamento,${inmInmuebles.tipo} tipo,${inmInmuebles.operacion} operacion,${inmInmuebles.nombreContacto} propietario,${inmPosiciones.numero} posicion,IF(${inmInmuebles.estado}='activo','Activo','Histórico') estado,${databaseInstant(inmAsignacionesPosicion.fechaInicio)} fechaInicioPosicion,${inmAsignacionesPosicion.fechaFin} fechaFinPosicion,${inmAsignacionesPosicion.activa} activaPosicion ${positionFrom} WHERE ${positionWhere} ORDER BY ${inmAsignacionesPosicion.fechaInicio},${inmAsignacionesPosicion.id} LIMIT ${all?10000:pageSize} OFFSET ${all?0:(page-1)*pageSize}`);
-      const [available]=await db.execute(sql`SELECT COUNT(*) total FROM inm_posiciones p WHERE p.activo=1 AND NOT EXISTS(SELECT 1 FROM inm_asignaciones_posicion a WHERE a.posicion_id=p.id AND a.activa=1)`);
+      const [positionData]=await db.execute(sql`SELECT ${propertyZoneName} zona,${inmInmuebles.codigo} codigo,${inmInmuebles.referencia} nombre,${inmInmuebles.direccion} direccion,${inmInmuebles.distrito} distrito,${inmInmuebles.provincia} provincia,${inmInmuebles.departamento} departamento,${inmInmuebles.tipo} tipo,${inmInmuebles.operacion} operacion,${inmInmuebles.nombreContacto} propietario,${inmPosiciones.numero} posicion,IF(${inmInmuebles.estado}='activo','Activo','Histórico') estado,${databaseInstant(inmAsignacionesPosicion.fechaInicio)} fechaInicioPosicion,${inmAsignacionesPosicion.fechaFin} fechaFinPosicion,${inmAsignacionesPosicion.activa} activaPosicion ${positionFrom} WHERE ${positionWhere} ORDER BY ${inmAsignacionesPosicion.fechaInicio},${inmAsignacionesPosicion.id} LIMIT ${all?10000:pageSize} OFFSET ${all?0:(page-1)*pageSize}`);
+      const [available]=await db.execute(sql`SELECT COUNT(*) total FROM inm_posiciones_zona p WHERE p.activo=1 AND ${new URL(request.url).searchParams.get("zona") && new URL(request.url).searchParams.get("zona")!=="*" ? sql`p.zona_id=(SELECT id FROM inm_zonas WHERE nombre=${new URL(request.url).searchParams.get("zona")})`:sql`1=1`} AND NOT EXISTS(SELECT 1 FROM inm_asignaciones_zona a WHERE a.posicion_id=p.id AND a.activa=1)`);
       return NextResponse.json({ok:true,reporte,rows:(positionData as unknown as Record<string,unknown>[]).map(row=>({...row,ubicacion:propertyAddress(row),activaPosicion:Boolean(row.activaPosicion)})),resumen:{...positionSummary,total,disponibles:Number((available as unknown as {total:number}[])[0]?.total??0),aprobaciones:0,negociaciones:0},paginacion:{pagina:page,tamano:pageSize,total,paginas:Math.ceil(total/pageSize)},fechaFiltro:periodField});
     }
     const inmuebleRows = await db
@@ -175,6 +176,7 @@ export async function GET(request: NextRequest) {
         id: inmInmuebles.id,
         codigo: inmInmuebles.codigo,
         referencia: inmInmuebles.referencia,
+        zona:propertyZoneName,
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
         estado: inmInmuebles.estado,
@@ -215,11 +217,11 @@ export async function GET(request: NextRequest) {
         asc(inmAsignacionesPosicion.fechaInicio),
       );
 
-    const positionAvailability = await db.select({ numero: inmPosiciones.numero, assigned: inmAsignacionesPosicion.id })
+    const positionAvailability = await db.select({ zona: sql<string>`(SELECT z.nombre FROM inm_zonas z WHERE z.id=${inmPosiciones.zonaId})`, numero: inmPosiciones.numero, assigned: inmAsignacionesPosicion.id })
       .from(inmPosiciones).leftJoin(inmAsignacionesPosicion, and(
         eq(inmAsignacionesPosicion.posicionId, inmPosiciones.id), eq(inmAsignacionesPosicion.activa, true),
-      )).where(eq(inmPosiciones.activo, true));
-    const availablePositions = positionAvailability.filter(position => position.assigned == null).map(position => position.numero);
+      )).where(and(eq(inmPosiciones.activo, true),positionZoneCondition(request)));
+    const availablePositions = positionAvailability.filter(position => position.assigned == null);
 
     const visitas = await db
       .select()
@@ -425,6 +427,7 @@ export async function GET(request: NextRequest) {
         inmuebleId: x.id,
         codigo: x.codigo,
         nombre: x.referencia,
+        zona:x.zona,
         tipo: normalizarTipo(x.tipo),
         operacion: x.operacion === "alquiler" ? "Alquiler" : "Venta",
         rentaMensualSolicitada: x.operacion === "alquiler" ? tasacion?.precioVenta ?? null : null,
@@ -554,9 +557,10 @@ export async function GET(request: NextRequest) {
           ? Number(posicionFiltro)
           : null;
 
-      rows = availablePositions.filter(numero => !posicionSolicitada || numero === posicionSolicitada)
-        .map((numero) => ({
-          posicion: numero,
+      rows = availablePositions.filter(position => !posicionSolicitada || position.numero === posicionSolicitada)
+        .map((position) => ({
+          zona:position.zona,
+          posicion: position.numero,
           estado: "Disponible",
         }));
     } else if (

@@ -79,9 +79,21 @@ export const inmPropietarios = mysqlTable("inm_propietarios", {
   dniIdx: uniqueIndex("uq_inm_propietarios_dni").on(table.dni),
 }));
 
+export const inmZonas = mysqlTable("inm_zonas", {
+  id: int("id", { unsigned: true }).autoincrement().primaryKey(),
+  clave: varchar("clave", { length: 100 }).notNull(),
+  nombre: varchar("nombre", { length: 100 }).notNull(),
+  capacidad: tinyint("capacidad", { unsigned: true }).notNull(),
+  activo: boolean("activo").notNull().default(true),
+  departamento: varchar("departamento", { length: 100 }),
+  provincia: varchar("provincia", { length: 100 }),
+  distrito: varchar("distrito", { length: 100 }),
+}, table => ({ claveIdx: uniqueIndex("uq_zonas_clave").on(table.clave), nombreIdx: uniqueIndex("uq_zonas_nombre").on(table.nombre) }));
+
 export const inmInmuebles = mysqlTable("inm_inmuebles", {
   id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
   codigo: varchar("codigo", { length: 350 }).notNull(),
+  zonaId: int("zona_id", { unsigned: true }).references(() => inmZonas.id),
   numeroOrden: bigint("numero_orden", { mode: "number", unsigned: true }),
   datosPrueba: boolean("datos_prueba").notNull().default(false),
   datosValidados: boolean("datos_validados").notNull().default(false),
@@ -124,18 +136,19 @@ export const inmCodigosAnteriores = mysqlTable("inm_codigos_anteriores", {
   inmuebleId: bigint("inmueble_id", { mode: "number", unsigned: true }).notNull().references(() => inmInmuebles.id),
 });
 
-export const inmPosiciones = mysqlTable("inm_posiciones", {
-  id: tinyint("id", { unsigned: true }).primaryKey(),
+export const inmPosiciones = mysqlTable("inm_posiciones_zona", {
+  id: int("id", { unsigned: true }).autoincrement().primaryKey(),
+  zonaId: int("zona_id", { unsigned: true }).notNull().references(() => inmZonas.id),
   numero: tinyint("numero", { unsigned: true }).notNull(),
   activo: boolean("activo").notNull().default(true),
 }, (table) => ({
-  numeroIdx: uniqueIndex("uq_inm_posiciones_numero").on(table.numero),
+  numeroIdx: uniqueIndex("uq_zona_numero").on(table.zonaId, table.numero),
 }));
 
-export const inmAsignacionesPosicion = mysqlTable("inm_asignaciones_posicion", {
+export const inmAsignacionesPosicion = mysqlTable("inm_asignaciones_zona", {
   id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
   inmuebleId: bigint("inmueble_id", { mode: "number", unsigned: true }).notNull().references(() => inmInmuebles.id),
-  posicionId: tinyint("posicion_id", { unsigned: true }).notNull().references(() => inmPosiciones.id),
+  posicionId: int("posicion_id", { unsigned: true }).notNull().references(() => inmPosiciones.id),
   fechaInicio: timestamp("fecha_inicio", { mode: "date" }).defaultNow().notNull(),
   fechaFin: timestamp("fecha_fin", { mode: "date" }),
   activa: boolean("activa").notNull().default(true),

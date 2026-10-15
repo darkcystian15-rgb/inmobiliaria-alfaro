@@ -1,5 +1,7 @@
 "use client";
+import { zoneUrl } from "@/lib/zone-url";
 
+import ZoneReportFilter from "@/app/components/ZoneReportFilter";
 import PropertySummary from "@/app/components/PropertySummary";
 import WorkspaceFileIcon from "@/app/components/WorkspaceFileIcon";
 import OperationSelect from "@/app/components/OperationSelect";
@@ -273,7 +275,7 @@ export default function Page() {
     async function load() {
       try {
         const params = new URLSearchParams(consulta);
-        const response = await fetch(`/api/reportes?${params.toString()}`, { cache: "no-store", signal: controller.signal });
+        const response = await fetch(zoneUrl(`/api/reportes?${params.toString()}`), { cache: "no-store", signal: controller.signal });
         const data = await response.json();
         if (!response.ok || !data.ok) throw new Error(data.error || "No se pudo generar el reporte.");
         if (controller.signal.aborted) return;
@@ -318,6 +320,7 @@ export default function Page() {
       if (!rows.length) return [];
 
       const preferred = [
+        "zona",
         "posicion",
         "nombre",
         "codigo",
@@ -379,6 +382,7 @@ export default function Page() {
     comision: "Comisión (S/)",
     expedientePendiente: "Expediente pendiente",
     codigo: "Código",
+    zona: "Zona",
     posicion: "Pos.",
     nombre: "Inmueble",
     propietario: "Contacto",
@@ -436,7 +440,7 @@ export default function Page() {
     setErrorExportacion("");
     try {
       const exports = await import("@/lib/report-export");
-      const response=await fetch(`/api/reportes?${new URLSearchParams({...consulta,todos:'1'})}`,{cache:'no-store'});
+      const response=await fetch(zoneUrl(`/api/reportes?${new URLSearchParams({...consulta,todos:'1'})}`),{cache:'no-store'});
       const full=await response.json();if(!response.ok)throw new Error(full.error||'No se pudo preparar el reporte completo.');
       const report = { title: seleccionado, description: reporteInfo.descripcion, columns: columnasElegidas, labels: etiqueta, rows:full.rows, summary: full.resumen ?? null, filters: filtrosAplicados, generatedAt: generado };
       await (formato === "pdf" ? exports.exportReportPDF(report) : exports.exportReportExcel(report));
@@ -471,7 +475,7 @@ export default function Page() {
               <Image src="/branding/logo.png" alt="Inmobiliaria Alberto Alfaro" width={170} height={54} className="h-auto w-[150px]" />
             </div>
 
-            <PageHeading href="/reportes" />
+            <PageHeading href="/reportes" /><ZoneReportFilter />
           </div>
 
           <div className="flex flex-wrap gap-2 print:hidden" aria-busy={!!exportando}>

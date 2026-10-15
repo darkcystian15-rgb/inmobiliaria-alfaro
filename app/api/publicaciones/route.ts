@@ -1,3 +1,4 @@
+import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { publicationReadiness, requirePublicationReadiness } from "@/lib/publication-readiness";
 import { authorizeApi } from "@/lib/auth";
@@ -25,6 +26,8 @@ const mapPending = (row: Awaited<ReturnType<typeof approved>>[number]) => ({
     ? String(row.posicion).padStart(2, "0")
     : "—",
   nombre: row.referencia,
+  zona: row.zona,
+  zonaId: row.zonaId,
   direccion: row.direccion,
   ubicacion: propertyAddress(row),
   tipo: row.tipo,
@@ -39,7 +42,7 @@ const mapPending = (row: Awaited<ReturnType<typeof approved>>[number]) => ({
   observacion: row.observacion,
 });
 
-async function approved() {
+async function approved(scope: ReturnType<typeof zoneCondition>) {
   return db
     .select({
       inmuebleId: inmInmuebles.id,
@@ -48,6 +51,8 @@ async function approved() {
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
       nombreContacto: inmInmuebles.nombreContacto,
       direccion: inmInmuebles.direccion,
 
@@ -93,7 +98,7 @@ async function approved() {
       )
     )
     .where(
-      and(
+      and(scope,
         eq(inmInmuebles.estado, "activo"),
         eq(inmTasaciones.situacion, "aprobado"),
         isNull(inmPublicaciones.id)
@@ -104,7 +109,7 @@ async function approved() {
     );
 }
 
-async function published() {
+async function published(scope: ReturnType<typeof zoneCondition>) {
   return db
     .select({
       inmuebleId: inmInmuebles.id,
@@ -113,6 +118,8 @@ async function published() {
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
       nombreContacto: inmInmuebles.nombreContacto,
       direccion: inmInmuebles.direccion,
 
@@ -147,7 +154,7 @@ async function published() {
       )
     )
     .where(
-      and(
+      and(scope,
         eq(inmInmuebles.estado, "activo"),
         eq(inmPublicaciones.publicado, true)
       )
@@ -157,7 +164,7 @@ async function published() {
     );
 }
 
-async function ready() {
+async function ready(scope: ReturnType<typeof zoneCondition>) {
   return db
     .select({
       inmuebleId: inmInmuebles.id,
@@ -166,6 +173,8 @@ async function ready() {
       tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
       nombreContacto: inmInmuebles.nombreContacto,
       direccion: inmInmuebles.direccion,
 
@@ -199,7 +208,7 @@ async function ready() {
       )
     )
     .where(
-      and(
+      and(scope,
         eq(inmInmuebles.estado, "activo"),
         eq(inmPublicaciones.publicado, false)
       )
@@ -209,13 +218,13 @@ async function ready() {
     );
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const auth = await authorizeApi();
     if (auth.response) return auth.response;
-    const rows = await approved();
-    const listos = await ready();
-    const publicadas = await published();
+    const rows = await approved(zoneCondition(request));
+    const listos = await ready(zoneCondition(request));
+    const publicadas = await published(zoneCondition(request));
     const expedientes = await publicationReadiness();
     const withChecklist = <T extends { inmuebleId: number; ubicacion?: string }>(item: T) => ({ ...item, ubicacion: item.ubicacion ?? propertyAddress(item), expediente: expedientes.get(item.inmuebleId) });
 
@@ -280,7 +289,7 @@ export async function POST(request: Request) {
       const [property] = await tx
         .select()
         .from(inmInmuebles)
-        .where(eq(inmInmuebles.id, inmuebleId))
+        .where(and(eq(inmInmuebles.id, inmuebleId),zoneCondition(request)))
         .limit(1).for("update");
 
       if (!property || property.estado !== "activo") {

@@ -1,4 +1,5 @@
 "use client";
+import { zoneUrl } from "@/lib/zone-url";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -17,7 +18,7 @@ import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 
 import { requestJson } from "@/lib/client-request";
 
-import Link from "next/link";
+import { ContextLink as Link } from "@/app/components/NavigationReturn";
 import { todayInPeru } from "@/lib/calendar.mjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -88,7 +89,7 @@ export default function Page() {
 
     try {
       setGuardando(item.inmuebleId);
-      const response = await fetch("/api/tasaciones", {
+      const response = await fetch(zoneUrl("/api/tasaciones"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,8 +1,9 @@
 "use client";
+import { zoneUrl } from "@/lib/zone-url";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
-import Link from "next/link";
+import { ContextLink as Link } from "@/app/components/NavigationReturn";
 import { propertyDisplayId } from "@/lib/property-display-id";
 
 import PageHeading from "@/app/components/PageHeading";
@@ -128,7 +129,7 @@ export default function Page() {
     try {
       setGuardando(item.inmuebleId);
 
-      const response = await fetch("/api/liberaciones", {
+      const response = await fetch(zoneUrl("/api/liberaciones"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

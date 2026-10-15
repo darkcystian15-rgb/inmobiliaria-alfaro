@@ -1,3 +1,4 @@
+import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { databaseInstant } from '@/lib/business-time';
 import { authorizeApi } from "@/lib/auth";
@@ -26,7 +27,7 @@ function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const auth = await authorizeApi();
     if (auth.response) return auth.response;
@@ -37,6 +38,8 @@ export async function GET() {
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
         direccion: inmInmuebles.direccion,
 
         distrito: inmInmuebles.distrito,
@@ -67,7 +70,7 @@ export async function GET() {
         )
       )
       .where(
-        and(
+        and(zoneCondition(request),
           eq(inmInmuebles.estado, "activo"),
           sql`${inmVisitas.id} IS NULL`
         )
@@ -99,6 +102,8 @@ export async function GET() {
         tipo: row.tipo,
     operacion: row.operacion,
         nombre: row.referencia,
+        zona: row.zona,
+        zonaId: row.zonaId,
         direccion: row.direccion,
         ubicacion: propertyAddress(row),
         propietario: row.propietario || "",
@@ -159,9 +164,11 @@ export async function POST(request: Request) {
           codigo: inmInmuebles.codigo,
           estado: inmInmuebles.estado,
           referencia: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
         })
         .from(inmInmuebles)
-        .where(eq(inmInmuebles.id, inmuebleId))
+        .where(and(eq(inmInmuebles.id, inmuebleId),zoneCondition(request)))
         .limit(1).for("update");
 
       if (!property) {

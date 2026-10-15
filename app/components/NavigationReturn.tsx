@@ -1,5 +1,7 @@
 "use client";
 
+import { zoneHref } from "@/lib/zone-url";
+import { useZoneWorkspace } from "./ZoneWorkspace";
 import NextLink from "next/link";
 import { createContext, useContext, useEffect, useState, type ComponentProps, type ReactNode } from "react";
 import { returnLabel, safeReturnHref, withReturnHref } from "@/lib/navigation-return";
@@ -18,8 +20,9 @@ export function useReturnHref(fallback = "/cartera") {
 }
 export function ContextLink({ href, ...props }: ComponentProps<typeof NextLink>) {
   const origin = useContext(OriginContext);
+  const {zone} = useZoneWorkspace();
   const inherited = useReturnHref("");
-  return <NextLink {...props} href={typeof href === "string" ? withReturnHref(href, origin || inherited) : href} />;
+  return <NextLink {...props} href={typeof href === "string" ? withReturnHref(zoneHref(href,zone?.nombre), origin || inherited) : href} />;
 }
 export function ReturnLink({ className = "aa-button aa-button-secondary", fallback = "/cartera" }: { className?: string; fallback?: string }) {
   const href = useReturnHref(fallback);

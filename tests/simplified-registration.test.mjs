@@ -5,10 +5,12 @@ import { simplifiedRegistration } from '../lib/simplified-registration.mjs';
 
 const capture = { posicion: 1, operacion: 'alquiler', tipo: 'Casa', direccion: 'Frente al mercado', nombreContacto: 'Ana Pérez', departamento: 'Áncash', provincia: 'Santa', distrito: 'Chimbote' };
 
-test('a capture requires the eight agreed fields, without personal details or a property name', () => {
+test('a zoned capture requires only position, operation, type, reference and contact', () => {
   const result = registrationInput(capture);
   assert.equal(result.referencia, capture.direccion);
-  for (const key of Object.keys(capture)) {
+  const zoned=Object.fromEntries(Object.entries(capture).filter(([key])=>!['departamento','provincia','distrito'].includes(key)));
+  assert.equal(registrationInput(zoned).nombreContacto,capture.nombreContacto);
+  for (const key of ['posicion','operacion','tipo','direccion','nombreContacto']) {
     assert.throws(() => registrationInput({ ...capture, [key]: '' }), undefined, key);
   }
   for (const posicion of [0, 91, 1.5, true, [], {}]) assert.throws(() => registrationInput({ ...capture, posicion }));

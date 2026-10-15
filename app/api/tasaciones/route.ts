@@ -1,3 +1,4 @@
+import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { appraisalAfterVisit } from "@/lib/workflow-dates.mjs";
 import { priceLabel } from "@/lib/operation.mjs";
@@ -25,7 +26,7 @@ function toMoney(value: unknown) {
 }
 
 type TasacionRow = {
-  inmuebleId: number; codigo: string; posicion: number | null; referencia: string; tipo: string; operacion: string;
+  zona: string; zonaId: number | null; inmuebleId: number; codigo: string; posicion: number | null; referencia: string; tipo: string; operacion: string;
   distrito: string | null; provincia: string | null; departamento: string | null; direccion: string | null;
   propietarioNombres: string | null; propietarioApellidos: string | null;
   tasacionId?: number; fechaTasacion?: Date | string | null; valorReferencia?: string | null;
@@ -42,6 +43,8 @@ function mapRow(row: TasacionRow) {
       ? String(row.posicion).padStart(2, "0")
       : "—",
     nombre: row.referencia,
+    zona: row.zona,
+    zonaId: row.zonaId,
     direccion: row.direccion,
     ubicacion: propertyAddress(row),
     tipo: row.tipo,
@@ -59,7 +62,7 @@ function mapRow(row: TasacionRow) {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const auth = await authorizeApi();
     if (auth.response) return auth.response;
@@ -70,6 +73,8 @@ export async function GET() {
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
         direccion: inmInmuebles.direccion,
 
         distrito: inmInmuebles.distrito,
@@ -110,7 +115,7 @@ export async function GET() {
         )
       )
       .where(
-        and(
+        and(zoneCondition(request),
           eq(inmInmuebles.estado, "activo"),
           isNull(inmTasaciones.id)
         )
@@ -125,6 +130,8 @@ export async function GET() {
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
         direccion: inmInmuebles.direccion,
 
         distrito: inmInmuebles.distrito,
@@ -163,7 +170,7 @@ export async function GET() {
           inmAsignacionesPosicion.posicionId
         )
       )
-      .where(eq(inmInmuebles.estado, "activo"))
+      .where(and(eq(inmInmuebles.estado, "activo"),zoneCondition(request)))
       .orderBy(desc(inmTasaciones.fechaActualizacion));
 
     const aprobadas = registradas.filter(
@@ -223,7 +230,7 @@ export async function POST(request: Request) {
       const [property] = await tx
         .select()
         .from(inmInmuebles)
-        .where(eq(inmInmuebles.id, inmuebleId))
+        .where(and(eq(inmInmuebles.id, inmuebleId),zoneCondition(request)))
         .limit(1).for("update");
 
       if (!property) {
@@ -325,7 +332,7 @@ export async function PATCH(request: Request) {
   try {
     const result = await db.transaction(async (tx) => {
       const [property] = await tx.select({ estado: inmInmuebles.estado, operacion: inmInmuebles.operacion }).from(inmInmuebles)
-        .where(eq(inmInmuebles.id, inmuebleId)).limit(1).for("update");
+        .where(and(eq(inmInmuebles.id, inmuebleId),zoneCondition(request))).limit(1).for("update");
       if (property?.estado !== "activo") throw new Error("El inmueble ya no está activo.");
       const [tasacion] = await tx.select().from(inmTasaciones)
         .where(eq(inmTasaciones.inmuebleId, inmuebleId)).limit(1).for("update");

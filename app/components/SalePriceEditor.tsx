@@ -1,4 +1,5 @@
 "use client";
+import { zoneUrl } from "@/lib/zone-url";
 
 import { priceLabel, referenceLabel, targetLabel } from "@/lib/operation.mjs";
 import FieldGuidance from "./FieldGuidance";
@@ -30,7 +31,7 @@ export default function SalePriceEditor({ item, onSaved }: { item: PropertyPrice
     event.preventDefault();
     setPending(true); setError(""); setMessage("");
     try {
-      const response = await fetch("/api/tasaciones", {
+      const response = await fetch(zoneUrl("/api/tasaciones"), {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ inmuebleId: item.inmuebleId, precioVenta: price, observacion: observation }),
       });

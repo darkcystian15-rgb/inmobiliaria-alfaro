@@ -1,4 +1,5 @@
 "use client";
+import { zoneUrl } from "@/lib/zone-url";
 
 import PropertyListIdentity from "@/app/components/PropertyListIdentity";
 
@@ -17,7 +18,7 @@ import { ContextLink as Link, NavigationReturnProvider } from "@/app/components/
 import { Suspense, useEffect, useMemo, useState, useCallback } from "react";
 
 type VisitaPendiente = {
-  distrito: string | null; vencida?:boolean;responsable?:string|null;fechaLimite?:string|null;id: number; codigo: string; posicion: string; nombre: string; ubicacion: string; direccion: string | null; dias: number; tipo: string; operacion: string; propietario: string;
+  zona?:string; distrito: string | null; vencida?:boolean;responsable?:string|null;fechaLimite?:string|null;id: number; codigo: string; posicion: string; nombre: string; ubicacion: string; direccion: string | null; dias: number; tipo: string; operacion: string; propietario: string;
 };
 
 export default function Page() {
@@ -36,7 +37,7 @@ function VisitInbox() {
   const cargar = useCallback(async () => {
     setCargando(true); setError("");
     try {
-      const response = await fetch("/api/visitas", { cache: "no-store" });
+      const response = await fetch(zoneUrl("/api/visitas"), { cache: "no-store" });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "No se pudieron cargar las visitas.");
       setItems(body.items ?? []);

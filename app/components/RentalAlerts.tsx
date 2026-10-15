@@ -1,4 +1,5 @@
 "use client";
+import { zoneUrl } from "@/lib/zone-url";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -14,7 +15,7 @@ export default function RentalAlerts() {
   const [error, setError] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/alquileres', { signal: controller.signal, cache: 'no-store' }).then(async response => {
+    fetch(zoneUrl('/api/alquileres'), { signal: controller.signal, cache: 'no-store' }).then(async response => {
       if (!response.ok) throw new Error();
       const data = await response.json();
       if (!controller.signal.aborted) {

@@ -1,11 +1,11 @@
 export const ALL_ZONES = "*";
 export const NO_ZONE = "Sin zona registrada";
-type ZonedProperty = { distrito?: string | null; estado: string; visitaPendiente?: boolean; tasacionPendiente?: boolean };
+type ZonedProperty = { zona?: string | null; distrito?: string | null; estado: string; visitaPendiente?: boolean; tasacionPendiente?: boolean };
 const key = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase("es-PE");
-export function propertyZone(property: Pick<ZonedProperty, "distrito">) {
-  return property.distrito?.trim().replace(/\s+/g, " ") || NO_ZONE;
+export function propertyZone(property: Pick<ZonedProperty, "distrito" | "zona">) {
+  return (property.zona || property.distrito)?.trim().replace(/\s+/g, " ") || NO_ZONE;
 }
-export function inZone(property: Pick<ZonedProperty, "distrito">, zone: string | null) {
+export function inZone(property: Pick<ZonedProperty, "distrito" | "zona">, zone: string | null) {
   return zone === null || zone === ALL_ZONES || key(propertyZone(property)) === key(zone);
 }
 export function propertyZones(properties: ZonedProperty[]) {

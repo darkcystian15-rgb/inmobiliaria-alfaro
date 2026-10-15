@@ -1,3 +1,4 @@
+import { positionZoneCondition } from "@/lib/zone-scope";
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { and, eq, sql } from "drizzle-orm";
@@ -17,12 +18,15 @@ const tipoMap: Record<string, string> = {
   otros: "Otros",
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const auth = await authorizeApi();
     if (auth.response) return auth.response;
     const rows = await db
       .select({
+        id: inmPosiciones.id,
+        zonaId: inmPosiciones.zonaId,
+        zona: sql<string>`(SELECT z.nombre FROM inm_zonas z WHERE z.id=${inmPosiciones.zonaId})`,
         numero: inmPosiciones.numero,
         activa: inmPosiciones.activo,
         inmuebleId: inmInmuebles.id,
@@ -45,10 +49,12 @@ export async function GET() {
         eq(inmInmuebles.id, inmAsignacionesPosicion.inmuebleId)
       )
 
-      .orderBy(inmPosiciones.numero);
+      .where(and(eq(inmPosiciones.activo,true),positionZoneCondition(request)))
+      .orderBy(inmPosiciones.zonaId,inmPosiciones.numero);
 
     return NextResponse.json({
       posiciones: rows.map((row) => ({
+        id:row.id,zonaId:row.zonaId,zona:row.zona,
         numero: row.numero,
         disponible: Boolean(row.activa) && row.inmuebleId == null,
         codigo: row.codigo ?? null,

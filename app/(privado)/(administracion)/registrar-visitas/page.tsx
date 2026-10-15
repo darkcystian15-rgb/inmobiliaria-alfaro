@@ -1,4 +1,5 @@
 "use client";
+import { zoneUrl } from "@/lib/zone-url";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -14,7 +15,7 @@ import PageHeading from "@/app/components/PageHeading";
 
 import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 
-import Link from "next/link";
+import { ContextLink as Link } from "@/app/components/NavigationReturn";
 import { todayInPeru } from "@/lib/calendar.mjs";
 import PhotoUploader, { type UploadedPhoto } from "@/app/components/PhotoUploader";
 import { useEffect, useState } from "react";
@@ -52,7 +53,7 @@ export default function Page() {
     setError(null); setErrorCarga(false);
 
     try {
-      const response = await fetch("/api/visitas", {
+      const response = await fetch(zoneUrl("/api/visitas"), {
         cache: "no-store",
       });
 
@@ -104,7 +105,7 @@ export default function Page() {
     setError(null);
 
     try {
-      const response = await fetch("/api/visitas", {
+      const response = await fetch(zoneUrl("/api/visitas"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,5 +1,7 @@
 "use client";
 
+import { useZoneWorkspace } from "./ZoneWorkspace";
+import { zoneHref } from "@/lib/zone-url";
 import Image from "next/image";
 import { useState } from "react";
 import { dashboardMenuItem, menuGroups } from "@/lib/navigation";
@@ -32,10 +34,11 @@ function Icon({ name }: { name: string }) {
 
 function MenuLink({ item, onNavigate }: { item: { href: string; label: string; icon: string }; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { zone } = useZoneWorkspace();
   const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
   return (
     <Link
-      href={item.href}
+      href={item.href === "/cartera" && zone ? `/cartera?zona=${encodeURIComponent(zone.nombre)}` : zoneHref(item.href, zone?.nombre)}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={`group relative flex items-center gap-3 rounded-full px-3 py-2.5 text-[13px] font-medium transition ${active ? "bg-[var(--aa-brand-soft)] text-[var(--aa-red-dark)]" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
@@ -50,6 +53,9 @@ function MenuLink({ item, onNavigate }: { item: { href: string; label: string; i
 
 function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   const user = useSessionUser();
+  const {zone} = useZoneWorkspace();
+  const hidden = new Set(["/registrar-inmueble","/visitas-pendientes","/registrar-visitas","/registrar-tasaciones","/tasaciones-textos-pendientes","/liberar-inmuebles"]);
+  const groups=menuGroups.map(group=>({...group,items:group.items.filter(item=>!isAdministrator(user)?item.href==="/datos-inmuebles":zone||!hidden.has(item.href))})).filter(group=>group.items.length);
   return (
     <>
       {isAdministrator(user) && <>
@@ -57,7 +63,9 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
           <MenuLink item={dashboardMenuItem} onNavigate={onNavigate} />
         </div>
       </>}
-      {menuGroups.filter(group => isAdministrator(user) || group.items.some(item => item.href === "/datos-inmuebles")).map(group => <div key={group.label}>
+      {zone && <Link href="/cartera" onClick={onNavigate} className="aa-button aa-button-secondary mb-3 w-full">← Todas las zonas</Link>}
+      {zone && <p className="px-3 text-sm font-bold text-slate-900">Zona: {zone.nombre}</p>}
+      {groups.map(group => <div key={group.label}>
         <div className="mb-2 mt-6 px-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{group.label}</div>
         <div className="space-y-1">
           {group.items.map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate} />)}

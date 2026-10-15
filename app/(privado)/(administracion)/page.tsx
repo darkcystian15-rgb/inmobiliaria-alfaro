@@ -1,4 +1,5 @@
 "use client";
+import { zoneUrl } from "@/lib/zone-url";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -56,7 +57,7 @@ export default function Home() {
   }, []);
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/dashboard", { cache: "no-store", signal: controller.signal }).then(async response => {
+    fetch(zoneUrl("/api/dashboard"), { cache: "no-store", signal: controller.signal }).then(async response => {
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "No se pudo cargar el panel.");
       if (!controller.signal.aborted) setData(body);
@@ -70,7 +71,7 @@ export default function Home() {
     <div className="mx-auto max-w-[1500px] space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <PageHeading href="/" />
-        <Link href="/registrar-inmueble" className="aa-button aa-button-primary">+ Registrar inmueble</Link>
+        <Link href="/cartera" className="aa-button aa-button-primary">Seleccionar zona para registrar</Link>
       </header>
       <section className="aa-card relative overflow-hidden p-5 sm:p-7">
         <div aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-[#c80000]" />
@@ -107,7 +108,7 @@ export default function Home() {
           </li>) : <li className="px-5 py-4 text-sm text-slate-600">Todavía no hay movimientos registrados.</li>}</ul>
         </section>
       </>}
-      <section className="aa-card p-5 sm:p-6"><h2 className="text-lg font-bold text-slate-900">Acciones rápidas</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[["Registrar visita", "/registrar-visitas"], ["Registrar tasación", "/registrar-tasaciones"], ["Completar material", "/tasaciones-textos-pendientes#material"], ["Consultar fichas", "/datos-inmuebles"]].map(([label, href]) => <Link key={href} href={href} className="cartera-folder-navigation aa-button aa-button-secondary justify-between border-amber-200 bg-amber-50/40"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />{label}<span aria-hidden="true">→</span></Link>)}</div></section>
+      <section className="aa-card p-5 sm:p-6"><h2 className="text-lg font-bold text-slate-900">Acciones rápidas</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[["Trabajar por zonas", "/cartera"], ["Ver reportes", "/reportes"], ["Consultar contratos", "/alquileres"], ["Consultar fichas", "/datos-inmuebles"]].map(([label, href]) => <Link key={href} href={href} className="cartera-folder-navigation aa-button aa-button-secondary justify-between border-amber-200 bg-amber-50/40"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />{label}<span aria-hidden="true">→</span></Link>)}</div></section>
     </div>
   </main>;
 }

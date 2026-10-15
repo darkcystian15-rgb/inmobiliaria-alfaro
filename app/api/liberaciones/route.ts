@@ -1,3 +1,4 @@
+import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { rentalResult } from "@/lib/rental-result.mjs";
 import { saleResult } from "@/lib/sale-result.mjs";
@@ -26,7 +27,7 @@ const MOTIVOS = new Set([
 ]);
 
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const auth = await authorizeApi();
     if (auth.response) return auth.response;
@@ -37,6 +38,8 @@ export async function GET() {
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
         direccion: inmInmuebles.direccion,
 
         distrito: inmInmuebles.distrito,
@@ -66,7 +69,7 @@ export async function GET() {
           inmAsignacionesPosicion.posicionId
         )
       )
-      .where(eq(inmInmuebles.estado, "activo"))
+      .where(and(eq(inmInmuebles.estado, "activo"),zoneCondition(request)))
      .orderBy(inmPosiciones.numero);
 
     return NextResponse.json({
@@ -78,6 +81,7 @@ export async function GET() {
           ? String(row.posicion).padStart(2, "0")
           : "—",
         nombre: row.referencia,
+        zona:row.zona,zonaId:row.zonaId,
         ubicacion: propertyAddress(row),
         tipo: row.tipo,
     operacion: row.operacion,
@@ -168,7 +172,7 @@ export async function POST(request: Request) {
       const [property] = await tx
         .select()
         .from(inmInmuebles)
-        .where(eq(inmInmuebles.id, inmuebleId))
+        .where(and(eq(inmInmuebles.id, inmuebleId),zoneCondition(request)))
         .limit(1).for("update");
 
       if (!property) {
@@ -263,7 +267,7 @@ export async function POST(request: Request) {
           estado: "inactivo",
           fechaSalida: ahora,
         })
-        .where(eq(inmInmuebles.id, inmuebleId));
+        .where(and(eq(inmInmuebles.id, inmuebleId),zoneCondition(request)));
 
       const motivoLabel = {
         vendido: "Vendido",

@@ -1,4 +1,7 @@
 "use client";
+import { useZoneWorkspace } from "@/app/components/ZoneWorkspace";
+import { zoneHref } from "@/lib/zone-url";
+import { zoneUrl } from "@/lib/zone-url";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -11,7 +14,7 @@ import PropertyTypeSelect from "@/app/components/PropertyTypeSelect";
 import { propertyDisplayId } from "@/lib/property-display-id";
 
 import PageHeading from "@/app/components/PageHeading";
-import { ALL_ZONES, inZone, propertyZones } from "@/lib/property-zones";
+import { ALL_ZONES, inZone } from "@/lib/property-zones";
 
 
 import { useEffect, useMemo, useState } from "react";
@@ -72,6 +75,7 @@ type Inmueble = {
   ubicacion: string;
   direccion: string | null;
   zona?: string;
+  zonaId: number;
   distrito: string | null;
   latitud: string | null;
   longitud: string | null;
@@ -91,6 +95,7 @@ type Inmueble = {
 };
 
 type Posicion = {
+  id:number; zonaId:number; zona:string;
   numero: number;
   disponible: boolean;
 };
@@ -281,6 +286,9 @@ function salePrice(value: string | null) {
 }
 
 export default function CarteraPage() {
+  const {zones:catalogoZonas,zone:zonaActual,reload:recargarZonas}=useZoneWorkspace();
+  const [nuevaZona,setNuevaZona]=useState("");
+  const [creandoZona,setCreandoZona]=useState(false);
   const [zonaSeleccionada, setZonaSeleccionada] = useState<string | null>(null);
   const [estado, setEstado] = useState<"Todos" | Estado>("Activo");
   const [operacion, setOperacion] = useState("Todos");
@@ -305,15 +313,15 @@ export default function CarteraPage() {
     return () => dialog?.close();
   }, [galeria]);
   const [inmuebles, setInmuebles] = useState<Inmueble[]>([]);
-  const [posiciones, setPosiciones] = useState<Posicion[]>([]);
+  const [todasPosiciones, setPosiciones] = useState<Posicion[]>([]);
   const [resumen, setResumen] = useState<Resumen>({
     enCartera: 0,
-    disponibles: 90,
+    disponibles: 0,
     visitasPendientes: 0,
     tasacionesPendientes: 0,
     materialPendiente: 0,
     negociaciones: 0,
-    capacidad: 90,
+    capacidad: 0,
   });
 
   const [cargando, setCargando] = useState(true);
@@ -327,8 +335,8 @@ export default function CarteraPage() {
 
       const [carteraResponse, posicionesResponse] =
         await Promise.all([
-          fetch("/api/cartera", { cache: "no-store" }),
-          fetch("/api/posiciones", { cache: "no-store" }),
+          fetch(zoneUrl("/api/cartera"), { cache: "no-store" }),
+          fetch(zoneUrl("/api/posiciones"), { cache: "no-store" }),
         ]);
 
       const carteraData = await carteraResponse.json();
@@ -352,12 +360,12 @@ export default function CarteraPage() {
       setResumen(
         carteraData.resumen ?? {
           enCartera: 0,
-          disponibles: 90,
+          disponibles: 0,
           visitasPendientes: 0,
           tasacionesPendientes: 0,
           materialPendiente: 0,
           negociaciones: 0,
-          capacidad: 90,
+          capacidad: 0,
         }
       );
       setPosiciones(posicionesData.posiciones ?? []);
@@ -411,16 +419,14 @@ export default function CarteraPage() {
     [inmuebles]
   );
 
-  const distritosCartera = useMemo(() => {
-    const unicos = new Map<string, string>();
-    for (const inmueble of activos) {
-      const distrito = inmueble.distrito?.trim().replace(/\s+/g, " ");
-      if (distrito) unicos.set(distrito.toLocaleLowerCase("es-PE"), distrito);
-    }
-    return [...unicos.values()].sort((a, b) => a.localeCompare(b, "es-PE"));
-  }, [activos]);
 
-  const zonas = useMemo(() => propertyZones(inmuebles), [inmuebles]);
+  const posiciones=todasPosiciones.filter(p=>!zonaSeleccionada||zonaSeleccionada===ALL_ZONES||p.zona===zonaSeleccionada);
+  const zonas=catalogoZonas.map(z=>({...z,activos:z.ocupados}));
+  async function crearZona(){
+    setCreandoZona(true);setError("");
+    try { const response=await fetch("/api/zonas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre:nuevaZona})});const data=await response.json();if(!response.ok)throw Error(data.error);await recargarZonas();setNuevaZona(""); }
+    catch(e){setError(e instanceof Error?e.message:"No se pudo crear la zona.");}finally{setCreandoZona(false);}
+  }
   const inmueblesZona = useMemo(() => inmuebles.filter(x => inZone(x, zonaSeleccionada)), [inmuebles, zonaSeleccionada]);
   const activosZona = useMemo(() => inmueblesZona.filter(x => x.estado === "Activo"), [inmueblesZona]);
 
@@ -475,11 +481,11 @@ export default function CarteraPage() {
       : 0;
 
   const inmueblePorPosicion = useMemo(() => {
-    const mapa = new Map<number, Inmueble>();
+    const mapa = new Map<string, Inmueble>();
 
     activos.forEach((inmueble) => {
       if (inmueble.posicion != null) {
-        mapa.set(inmueble.posicion, inmueble);
+        mapa.set(`${inmueble.zonaId}:${inmueble.posicion}`, inmueble);
       }
     });
 
@@ -528,25 +534,26 @@ export default function CarteraPage() {
       <div className="mx-auto max-w-[1550px]">
         {/* CABECERA */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0"><PageHeading href="/cartera" /><p className="mt-2 break-words text-xs leading-5 text-slate-500">Distritos de la cartera: {cargando ? "Cargando…" : distritosCartera.length ? distritosCartera.join(", ") : error ? "No se pudieron consultar." : "Sin distritos registrados."}</p></div>
+          <div className="min-w-0"><PageHeading href="/cartera" /><p className="mt-2 text-xs leading-5 text-slate-500">Capacidades y posiciones independientes por zona.</p></div>
 
-          <Link
-            href="/registrar-inmueble"
+          {zonaActual && <Link
+            href={zoneHref("/registrar-inmueble",zonaActual?.nombre)}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c80000] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#a90000]"
           >
             + Registrar inmueble
-          </Link>
+          </Link>}
         </div>
 
         <p className="mt-4 text-sm text-slate-600">{zonaSeleccionada === null ? "Selecciona una zona para consultar sus inmuebles." : "Selecciona un inmueble de la lista para ver su información y abrir la ficha completa."}</p>
         {zonaSeleccionada !== null && <nav aria-label="Ruta de la cartera" className="mt-4 flex flex-wrap items-center gap-3 text-sm"><button type="button" onClick={() => abrirZona(null)} className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 font-semibold text-slate-800 hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />← Volver a zonas</button><ZoneContext name={zonaSeleccionada === ALL_ZONES ? "Listado general" : zonaSeleccionada} general={zonaSeleccionada === ALL_ZONES} /></nav>}
         {zonaSeleccionada === null && <section aria-label="Cartera por zonas" className="mt-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">Cartera de inmuebles por zona</h2><button type="button" onClick={() => abrirZona(ALL_ZONES)} className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />Ver listado general →</button></div>
+          <form onSubmit={event=>{event.preventDefault();void crearZona();}} className="mb-6 flex flex-wrap items-end gap-3"><label className="text-xs font-semibold text-slate-600">Añadir zona pequeña · 10 posiciones<input required maxLength={100} value={nuevaZona} onChange={event=>setNuevaZona(event.target.value)} placeholder="Nombre de la zona" className="aa-input mt-2 block"/></label><button disabled={creandoZona||!nuevaZona.trim()} className="aa-button aa-button-secondary disabled:opacity-50">{creandoZona?"Creando…":"Crear zona"}</button></form>
           <ul className="grid grid-cols-1 gap-x-4 gap-y-7 pt-5 sm:grid-cols-2 xl:grid-cols-3">{zonas.map(zona => <li key={zona.nombre} className="min-w-0">
             <button type="button" onClick={() => abrirZona(zona.nombre)} className="cartera-folder relative flex min-h-24 w-full items-center gap-3 rounded-b-2xl rounded-tr-2xl border border-amber-200 bg-amber-50/40 px-4 py-4 text-left shadow-sm hover:border-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c80000]">
               <span aria-hidden="true" className="cartera-folder-tab absolute -top-4 -left-px h-4 w-20 rounded-t-lg border border-b-0 border-amber-200 bg-amber-100" />
               <FolderIcon />
-              <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold text-slate-900">{zona.nombre}</span><span className="mt-1 block text-xs text-slate-500">{zona.activos} activo{zona.activos === 1 ? "" : "s"}{zona.historicos > 0 ? ` · ${zona.historicos} histórico${zona.historicos === 1 ? "" : "s"}` : ""}</span></span>
+              <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold text-slate-900">{zona.nombre}</span><span className="mt-1 block text-xs text-slate-500">{zona.activos} / {zona.capacidad} ocupados · {zona.disponibles} disponibles{zona.historicos > 0 ? ` · ${zona.historicos} histórico${zona.historicos === 1 ? "" : "s"}` : ""}</span></span>
               <span aria-hidden="true" className="text-slate-400">→</span>
             </button>
           </li>)}</ul>
@@ -558,13 +565,13 @@ export default function CarteraPage() {
             {
               label: "En cartera",
               value: zonaSeleccionada && zonaSeleccionada !== ALL_ZONES ? activosZona.length : resumen.enCartera,
-              detail: zonaSeleccionada && zonaSeleccionada !== ALL_ZONES ? "en esta zona" : `de ${resumen.capacidad}`,
+              detail: `de ${resumen.capacidad} posiciones${zonaActual ? " en esta zona" : " entre todas las zonas"}`,
               icon: "home" as const,
             },
             {
               label: "Disponibles",
               value: resumen.disponibles,
-              detail: "posiciones libres globales",
+              detail: zonaActual ? "posiciones libres en esta zona" : "posiciones libres entre todas las zonas",
               icon: "map" as const,
             },
             {
@@ -652,12 +659,12 @@ export default function CarteraPage() {
             ) : posiciones.length > 0 ? (
               posiciones.map((pos) => {
                 const x = inmueblePorPosicion.get(
-                  pos.numero
+                  `${pos.zonaId}:${pos.numero}`
                 );
 
                 const coincidePosicion = posicionFiltro === "Todas" || posicionFiltro === String(pos.numero);
                 const soloFiltroPosicion = posicionFiltro !== "Todas" && !busqueda && tipo === "Todos" && distrito === "Todos" && operacion === "Todos" && actividad === "Todas" && estado === "Activo";
-                const zonaPosicion = zonaSeleccionada === ALL_ZONES || zonaSeleccionada === null || (!!x && inZone(x, zonaSeleccionada));
+                const zonaPosicion = zonaSeleccionada === ALL_ZONES || zonaSeleccionada === null || pos.zona===zonaSeleccionada;
                 const visible = zonaPosicion && coincidePosicion && (soloDisponibles ? !x : x ? filtrados.some(item => item.inmuebleId === x.inmuebleId) : soloFiltroPosicion || !tieneFiltros);
 
                 if (!visible) {
@@ -666,7 +673,7 @@ export default function CarteraPage() {
 
                 const theme = x ? cardTheme(x) : null;
                 return (
-                  <article data-folder-card="true" key={pos.numero} className={`cartera-folder relative mt-4 flex h-full min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border transition duration-200 ${x ? "border-amber-200 bg-amber-50/40 shadow-[0_3px_14px_rgba(15,23,42,0.04)] hover:border-amber-300 hover:shadow-lg" : "border-dashed border-slate-200 bg-slate-50/60"}`}>
+                  <article data-folder-card="true" key={pos.id} className={`cartera-folder relative mt-4 flex h-full min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border transition duration-200 ${x ? "border-amber-200 bg-amber-50/40 shadow-[0_3px_14px_rgba(15,23,42,0.04)] hover:border-amber-300 hover:shadow-lg" : "border-dashed border-slate-200 bg-slate-50/60"}`}>
                   <span aria-hidden="true" className={`cartera-folder-tab absolute -top-4 left-[-1px] h-4 w-24 rounded-t-xl border border-b-0 ${x ? "border-amber-200 bg-amber-100" : "border-slate-200 bg-slate-100"}`} />
                   <button
                     type="button"
@@ -678,7 +685,7 @@ export default function CarteraPage() {
                     <div aria-hidden="true" className="h-1.5 w-full rounded-tr-2xl bg-amber-100/70" />
                     <div className="flex w-full flex-1 flex-col p-3.5 sm:p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-mono text-xl font-bold tracking-tight ${theme?.position ?? "bg-slate-100 text-slate-500"}`}>{String(pos.numero).padStart(2, "0")}</span>
+                        {zonaSeleccionada===ALL_ZONES&&<span className="text-xs text-slate-500">{pos.zona}</span>}<span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-mono text-xl font-bold tracking-tight ${theme?.position ?? "bg-slate-100 text-slate-500"}`}>{String(pos.numero).padStart(2, "0")}</span>
                         <span className={x ? "text-slate-300" : "text-slate-300 text-2xl font-light"}>{x ? <FolderIcon /> : <FolderIcon className="h-7 w-7 shrink-0 text-slate-300" />}</span>
                       </div>
                       {x && theme ? <>
@@ -742,7 +749,7 @@ export default function CarteraPage() {
 
               <div>
                 <p className="text-sm font-semibold text-slate-800">
-                  Capacidad global de cartera
+                  {zonaActual ? `Capacidad de ${zonaActual.nombre}` : "Capacidad total de las zonas"}
                 </p>
 
                 <p className="mt-1 text-xs text-slate-500">

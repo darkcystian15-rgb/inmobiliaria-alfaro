@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { inmInmuebles, inmTasaciones, inmPublicaciones } from '@/db/schema';
 export const visitDone=sql`EXISTS(SELECT 1 FROM inm_visitas v WHERE v.inmueble_id=${inmInmuebles.id} AND v.completada=1)`;
-export const positioned=sql`EXISTS(SELECT 1 FROM inm_asignaciones_posicion p WHERE p.inmueble_id=${inmInmuebles.id} AND p.activa=1)`;
+export const positioned=sql`EXISTS(SELECT 1 FROM inm_asignaciones_zona p WHERE p.inmueble_id=${inmInmuebles.id} AND p.activa=1)`;
 export const readyFile=sql`(EXISTS(SELECT 1 FROM inm_archivos a WHERE a.inmueble_id=${inmInmuebles.id} AND a.tipo_documento='DNI_PROPIETARIO' AND a.almacenamiento='hosting') AND EXISTS(SELECT 1 FROM inm_archivos a WHERE a.inmueble_id=${inmInmuebles.id} AND a.tipo_documento='TASACION' AND a.almacenamiento='hosting') AND EXISTS(SELECT 1 FROM inm_archivos a JOIN inm_visitas v ON v.id=a.visita_id AND v.inmueble_id=a.inmueble_id AND v.completada=1 WHERE a.inmueble_id=${inmInmuebles.id} AND a.tipo_documento='FOTO_INMUEBLE' AND a.almacenamiento='hosting' AND a.tipo_mime LIKE 'image/%') AND LENGTH(TRIM(COALESCE(${inmPublicaciones.texto},'')))>0)`;
 export const factsFrom=sql`FROM ${inmInmuebles} LEFT JOIN ${inmTasaciones} ON ${inmTasaciones.inmuebleId}=${inmInmuebles.id} LEFT JOIN ${inmPublicaciones} ON ${inmPublicaciones.inmuebleId}=${inmInmuebles.id}`;
 export const reportPredicates:Record<string,ReturnType<typeof sql>>={

@@ -1,3 +1,4 @@
+import { propertyZoneName, zoneCondition, positionZoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { publicationReadiness } from "@/lib/publication-readiness";
 import { authorizeApi } from "@/lib/auth";
@@ -24,7 +25,7 @@ const tipoMap: Record<string, string> = {
   otros: "Otros",
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const auth = await authorizeApi();
     if (auth.response) return auth.response;
@@ -42,6 +43,8 @@ export async function GET() {
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
+      zona: propertyZoneName,
+      zonaId: inmInmuebles.zonaId,
         direccion: inmInmuebles.direccion,
 
         latitud: inmInmuebles.latitud,
@@ -69,13 +72,14 @@ export async function GET() {
         inmPosiciones,
         eq(inmPosiciones.id, inmAsignacionesPosicion.posicionId)
       )
+      .where(zoneCondition(request))
       .orderBy(sql`${inmPosiciones.numero} IS NULL`,asc(inmPosiciones.numero),asc(inmInmuebles.id));
 
     const positionAvailability = await db.select({ numero: inmPosiciones.numero, assigned: inmAsignacionesPosicion.id })
       .from(inmPosiciones).leftJoin(inmAsignacionesPosicion, and(
         eq(inmAsignacionesPosicion.posicionId, inmPosiciones.id), eq(inmAsignacionesPosicion.activa, true),
-      )).where(eq(inmPosiciones.activo, true));
-    const capacidad = new Set(positionAvailability.map(position => position.numero)).size;
+      )).where(and(eq(inmPosiciones.activo, true),positionZoneCondition(request)));
+    const capacidad = positionAvailability.length;
     const disponibles = positionAvailability.filter(position => position.assigned == null).length;
 
     if (inmuebles.length === 0) {
@@ -311,7 +315,8 @@ const materialPendiente =
         ubicacion: propertyAddress(row),
 
         distrito: row.distrito?.trim() || null,
-        zona: [row.distrito, row.provincia, row.departamento].filter(Boolean).join(", "),
+        zona: row.zona,
+        zonaId: row.zonaId,
         operacion: row.operacion,
         direccion: row.direccion || null,
         latitud: row.latitud ?? null,
