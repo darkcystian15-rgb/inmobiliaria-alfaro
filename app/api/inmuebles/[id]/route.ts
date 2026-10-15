@@ -1,6 +1,7 @@
+import { propertyZoneName } from "@/lib/zone-scope";
+import { validatePropertyEditFields, canChangeOperation } from "@/lib/property-edit-policy.mjs";
 import { propertyCode } from "@/lib/property-code.mjs";
 import { propertyIdentifierCondition } from "@/lib/property-identity";
-import {lockGeography,validateGeography} from "@/lib/geography";
 import { assignedPropertyType } from "@/lib/property-types";
 import { databaseInstant } from '@/lib/business-time';
 import { publicationReadiness } from "@/lib/publication-readiness";
@@ -28,6 +29,7 @@ async function findProperty(key: string) {
     .select({
       id: inmInmuebles.id,
       codigo: inmInmuebles.codigo,
+      zona: propertyZoneName,
       numeroOrden: inmInmuebles.numeroOrden,
       nombreContacto: inmInmuebles.nombreContacto,
       tipo: inmInmuebles.tipo,
@@ -112,8 +114,16 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 }
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
+  return updateProperty(request, context, false);
+}
+
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  return updateProperty(request, context, true);
+}
+
+async function updateProperty(request: Request, context: { params: Promise<{ id: string }> }, portfolio: boolean) {
   try {
-    const auth = await authorizeApi(request, "informacion");
+    const auth = await authorizeApi(request, portfolio ? "administrador" : "informacion");
     if (auth.response) return auth.response;
     const key = (await context.params).id;
     const row = await findProperty(key);
@@ -122,18 +132,16 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     let body;
     try { body = await request.json(); } catch { return NextResponse.json({ error: "Datos no válidos." }, { status: 400 }); }
     const propertyValues: Partial<typeof inmInmuebles.$inferInsert> = propertyInput(body);
+    validatePropertyEditFields(body, portfolio);
     await db.transaction(async tx => {
-      const locationEdited=["departamento","provincia","distrito"].some(key=>body[key]!==undefined);
-      if(locationEdited)await lockGeography(tx);
       const [current] = await tx.select().from(inmInmuebles)
         .where(eq(inmInmuebles.id, row.id)).limit(1).for("update");
       if (!current) throw new PropertyInputError("Inmueble no encontrado.");
-      if(locationEdited)Object.assign(propertyValues,await validateGeography(tx,{departamento:propertyValues.departamento===undefined?current.departamento:propertyValues.departamento,provincia:propertyValues.provincia===undefined?current.provincia:propertyValues.provincia,distrito:propertyValues.distrito===undefined?current.distrito:propertyValues.distrito},current));
       if (propertyValues.operacion && propertyValues.operacion !== current.operacion) {
         if (auth.user.rol !== 'administrador') throw new PropertyInputError('Solo el administrador puede cambiar la operación.');
         const [prices] = await tx.select({ id: inmTasaciones.id }).from(inmTasaciones).where(eq(inmTasaciones.inmuebleId, current.id)).limit(1);
         const [publication] = await tx.select({ id: inmPublicaciones.id }).from(inmPublicaciones).where(eq(inmPublicaciones.inmuebleId, current.id)).limit(1);
-        if (prices || publication || current.estado !== 'activo') throw new PropertyInputError('La operación solo se puede cambiar antes de registrar precios o publicación, y mientras el inmueble esté activo.');
+        if (!canChangeOperation({ estado: current.estado, hasPrices: Boolean(prices), hasPublication: Boolean(publication) })) throw new PropertyInputError('La operación solo se puede cambiar antes de registrar precios o publicación, y mientras el inmueble esté activo.');
       }
       if (propertyValues.tipo) propertyValues.tipo = await assignedPropertyType(tx, propertyValues.tipo, current.tipo);
       if (propertyValues.direccion !== undefined) propertyValues.referencia = propertyValues.direccion!.slice(0, 255);

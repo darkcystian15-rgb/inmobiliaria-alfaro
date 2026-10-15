@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Precios y tasaciones negociadas
 
 Una nueva tasación se registra cuando la negociación con el propietario ya terminó. Se requieren fecha y tres precios mayores que cero, con hasta dos decimales:

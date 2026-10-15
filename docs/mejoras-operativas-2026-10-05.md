@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Mejoras operativas — 5 de octubre de 2026
 
 Alcance autorizado: recomendaciones 1–8, 10–12, 14 y 17. Las recomendaciones 9, 13, 15 y 16 siguen pendientes. No se cambia el módulo de cierre, la organización en pestañas de Tasaciones y textos, los respaldos automáticos ni la política de acceso/infraestructura.

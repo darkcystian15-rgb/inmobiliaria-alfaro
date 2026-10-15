@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Revisión del sistema — 3 de octubre de 2026
 
 Se revisaron las páginas y API de cartera, registro de inmuebles, ficha, propietarios, visitas, tasaciones, preparación/publicación, liberación, panel, reportes, autenticación y archivos del hosting. La revisión combina lectura del código, consultas de integridad y pruebas de los flujos con registros temporales.

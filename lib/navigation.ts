@@ -29,7 +29,7 @@ export const menuGroups = [
   {
     label: "Administración",
     items: [
-      { href: "/ubicaciones", label: "Ubicaciones", icon: "map" },
+      { href: "/ubicaciones", label: "Zonas de cartera", icon: "map" },
       { href: "/tipos-inmueble", label: "Tipos de inmueble", icon: "home" },
       { href: "/usuarios", label: "Usuarios y accesos", icon: "users" },
       { href: "/seguridad", label: "Registro de seguridad", icon: "clipboard" },

@@ -15,3 +15,9 @@ test('whitespace is normalized; missing addresses use the chosen fallback', () =
   assert.equal(propertyAddress({}), 'Ubicación por completar');
   assert.equal(propertyAddress(null, ''), '');
 });
+
+test('zone supplies a map search reference when optional geography is absent', () => {
+  assert.equal(propertyAddress({ direccion: 'Frente al mercado', zona: 'Santa' }), 'Frente al mercado, Santa');
+  assert.equal(propertyAddress({ zona: 'Huanchaco' }), 'Huanchaco');
+  assert.equal(propertyAddress({ direccion: 'Calle 1', distrito: 'Chimbote', provincia: 'Santa', departamento: 'Áncash', zona: 'Zona comercial' }), 'Calle 1, Chimbote, Santa, Áncash');
+});

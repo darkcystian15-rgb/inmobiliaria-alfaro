@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Catálogo de ubicaciones
 
 Administración → Ubicaciones permite crear departamentos, provincias y distritos, editar sus nombres, activar/desactivar y eliminar entradas sin vínculos. Un departamento contiene provincias y una provincia contiene distritos. No se pueden eliminar entradas que tengan hijos o inmuebles activos o históricos vinculados.

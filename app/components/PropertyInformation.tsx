@@ -11,9 +11,9 @@ import GeographySelect from "./GeographySelect";
 
 import { propertyDisplayId } from "@/lib/property-display-id";
 
-import OperationSelect from "./OperationSelect";
+
 import { priceLabel, referenceLabel, targetLabel } from "@/lib/operation.mjs";
-import PropertyTypeSelect from "./PropertyTypeSelect";
+
 import DraftRecovery from './DraftRecovery';
 import OperationalTracking from './OperationalTracking';
 import PropertyHistory from './PropertyHistory';
@@ -38,7 +38,7 @@ import { filterProperties } from "@/lib/property-list.mjs";
 
 type Item = { id: string; posicion: number | null; nombre: string; tipo: string; operacion: string; ubicacion: string; propietario: string; estado: string };
 type Property = {
-  id: number; inmuebleOrigenId?:number|null; codigo: string; posicion: number | null; tipo: string; operacion: string; referencia: string; estado: string;
+  zona?: string; id: number; inmuebleOrigenId?:number|null; codigo: string; posicion: number | null; tipo: string; operacion: string; referencia: string; estado: string;
   nombreContacto: string | null; direccion: string | null; distrito: string | null; provincia: string | null; departamento: string | null;
   latitud: string | null; longitud: string | null;
   areaTerreno: string | null; areaConstruida: string | null; habitaciones: string | number | null; banos: string | number | null;
@@ -201,7 +201,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     if (!form || busy) return;
     setBusy(true); setError(""); setMessage("");
     try {
-      await requestJson(`/api/inmuebles/${encodeURIComponent(code)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      await requestJson(`/api/inmuebles/${encodeURIComponent(code)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(Object.entries(form).filter(([key]) => !["operacion", "tipo", "nombreContacto"].includes(key)))) });
       setLoading(true);
       await load(code);
       setMessage("Cambios guardados correctamente.");
@@ -287,7 +287,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
               </nav>
             </section>
 
-            <DraftRecovery key={code} draftKey={`ficha:simple-${details.inmueble.id}`} data={{form}} dirty={dirty} onRestore={draft=>{if(draft.form&&typeof draft.form==='object')setForm(draft.form as Property);}}/>
+            <DraftRecovery key={code} draftKey={`ficha:simple-${details.inmueble.id}`} data={{form}} dirty={dirty} onRestore={draft=>{if(draft.form&&typeof draft.form==='object')setForm({...draft.form as Property, operacion: details.inmueble.operacion, tipo: details.inmueble.tipo, nombreContacto: details.inmueble.nombreContacto});}}/>
             <PropertyProgress data={details.progreso} administrator={admin} propertyId={details.inmueble.id} />
             <OperationalTracking key={`tracking-${code}`} propertyId={details.inmueble.id} administrator={admin} progress={details.progreso}/>
             <PropertyHistory events={details.historial??[]}/>
@@ -297,16 +297,16 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
             <section aria-label={tab} className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_4px_24px_rgba(15,23,42,0.03)] sm:p-6">
               {tab === "Resumen" && <div className="space-y-6">{details.inmueble.inmuebleOrigenId&&<Link href={`/datos-inmuebles?codigo=${details.inmueble.inmuebleOrigenId}`} className="text-sm font-semibold text-[#c80000]">Consultar contrato y ficha de la captación anterior →</Link>}{details.alquiler && <Block title="Alquiler registrado" description={`Cierre: ${formatDate(details.alquiler.fechaAlquiler)} · Inicio: ${formatDate(details.alquiler.fechaInicioAlquiler)} · Fin: ${formatDate(details.alquiler.fechaFinAlquiler)}`}><div className="grid gap-3 sm:grid-cols-2"><Stat label="Renta mensual acordada" value={money(details.alquiler.rentaMensual)} icon="chart" /><Stat label="Comisión" value={money(details.alquiler.comision)} icon="chart" /><Stat label="Garantía" value={money(details.alquiler.garantia)} icon="chart" /><Stat label="Adelanto" value={money(details.alquiler.adelanto)} icon="chart" /></div></Block>}
 
-                <PropertyLocation key={`${code}-summary`} latitude={details.inmueble.latitud} longitude={details.inmueble.longitud} address={propertyAddress(details.inmueble, "")} />
+                <PropertyLocation key={`${code}-summary`} latitude={details.inmueble.latitud} longitude={details.inmueble.longitud} approximateArea={details.inmueble.zona} address={propertyAddress(details.inmueble, "")} />
                 <Block title="Una mirada al inmueble" description="Los datos principales para continuar completando la ficha."><div className="grid gap-3 sm:grid-cols-2"><Stat label="Contacto" value={details.inmueble.nombreContacto || "Por completar"} icon="user" /><Stat label="Ubicación referencial" value={details.inmueble.direccion || "Por completar"} icon="map" /><Stat label="Documentación" value={`${documentFiles.length} documento${documentFiles.length === 1 ? "" : "s"} registrado${documentFiles.length === 1 ? "" : "s"}`} icon="document" /><Stat label="Publicación" value={details.publicacion?.publicado ? "Publicado" : details.publicacion ? details.expediente?.complete ? "Lista para publicar" : "Expediente pendiente" : "Sin publicación"} icon="publish" /></div></Block>
                 <Block title="Precios del inmueble"><div className="grid gap-3 sm:grid-cols-3">{[[referenceLabel(details.inmueble.operacion), details.tasacion?.valorReferencia], [targetLabel(details.inmueble.operacion), details.tasacion?.precioObjetivo], [priceLabel(details.inmueble.operacion), details.tasacion?.precioVenta]].map(([label, value]) => <div key={label} className={`rounded-2xl border p-4 ${label === priceLabel(details.inmueble.operacion) ? "border-red-100 bg-[#fff5f4]" : "border-slate-100 bg-slate-50"}`}><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-2 text-sm font-bold text-slate-900">{money(value)}</p></div>)}</div></Block>
                 <div className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setTab("Inmueble")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Completar datos del inmueble</span><span className="mt-1 block text-xs text-slate-500">Ubicación y características</span></span><Icon name="arrow" /></button><button type="button" onClick={() => setTab("Documentación")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Organizar documentación</span><span className="mt-1 block text-xs text-slate-500">Archivos y documentos</span></span><Icon name="arrow" /></button></div>
               </div>}
 
-              {tab === "Contacto" && <form onSubmit={save} className="space-y-6"><Block title="Nombre de contacto" description="Persona con quien se coordina este inmueble. El DNI del propietario se adjunta en Documentación.">{propertyField("Nombre de contacto", "nombreContacto")}</Block><SaveBar dirty={dirty} busy={busy || loading} /></form>}
+              {tab === "Contacto" && <Block title="Nombre de contacto" description="Este dato se edita únicamente desde el panel de Cartera. El DNI del propietario se adjunta en Documentación."><Stat label="Nombre de contacto" value={details.inmueble.nombreContacto || "Por completar"} icon="user" /></Block>}
 
               {tab === "Inmueble" && <form onSubmit={save} className="space-y-7">
-                <Block title="Identificación" description="Operación y tipo de inmueble."><label className="mt-4 block text-xs font-semibold text-slate-600">Tipo de operación<OperationSelect value={form?.operacion || "venta"} disabled={busy || loading || !admin || Boolean(details.tasacion) || Boolean(details.publicacion) || details.inmueble.estado !== "activo"} onChange={operacion => setForm(previous => previous ? { ...previous, operacion } : previous)} className={inputClass} /></label><p className="mt-2 text-xs text-slate-500">La operación se define antes de registrar precios o publicación.</p><label className="mt-4 block text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect value={form?.tipo || ""} preserveCurrent disabled={busy || loading} onChange={tipo => setForm(previous => previous ? { ...previous, tipo } : previous)} className={inputClass} /></label></Block>
+                <Block title="Identificación" description="Operación y tipo se editan únicamente desde el panel de Cartera."><div className="grid gap-3 sm:grid-cols-2"><Stat label="Tipo de operación" value={details.inmueble.operacion === "alquiler" ? "Alquiler" : "Venta"} icon="home" /><Stat label="Tipo de inmueble" value={details.inmueble.tipo} icon="home" /></div></Block>
                 <div className="border-t border-slate-100" />
                 <Block title="Ubicación"><div className="space-y-4">{propertyField("Ubicación referencial", "direccion", "text", "Dirección o referencia para reconocer el inmueble")}<GeographySelect disabled={busy||loading} value={{departamento:form?.departamento||null,provincia:form?.provincia||null,distrito:form?.distrito||null}} onChange={next=>setForm(old=>old?{...old,...next}:old)}/></div></Block>
                 <PropertyLocation key={`${code}-edit`} latitude={form?.latitud ?? null} longitude={form?.longitud ?? null} address={[propertyAddress(form, ""), propertyAddress(form, "") ? "Perú" : ""].filter(Boolean).join(", ")} editable disabled={busy || loading} onChange={point => setForm(previous => previous ? { ...previous, latitud: point ? point.lat.toFixed(7) : null, longitud: point ? point.lng.toFixed(7) : null } : previous)} />

@@ -29,13 +29,13 @@ try{
   if(!columns.some(c=>c.Field==='zona_id'))await db.query('ALTER TABLE inm_inmuebles ADD COLUMN zona_id INT UNSIGNED NULL, ADD CONSTRAINT fk_inm_zona FOREIGN KEY(zona_id) REFERENCES inm_zonas(id)');
   // Guard the short cutover: an old deployment may read but cannot allocate legacy positions.
   const triggers=[
-   ['inm_zona_guard_legacy_insert','BEFORE INSERT ON inm_asignaciones_posicion',"IF EXISTS(SELECT 1 FROM inm_zona_cutover WHERE id=1 AND activo=1) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Actualizacion por zonas: recarga la aplicacion'; END IF"],
-   ['inm_zona_guard_legacy_update','BEFORE UPDATE ON inm_asignaciones_posicion',"IF EXISTS(SELECT 1 FROM inm_zona_cutover WHERE id=1 AND activo=1) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Actualizacion por zonas: recarga la aplicacion'; END IF"],
-   ['inm_zona_guard_property','BEFORE INSERT ON inm_inmuebles',"IF NEW.zona_id IS NULL AND EXISTS(SELECT 1 FROM inm_zona_cutover WHERE id=1 AND activo=1) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Selecciona una zona para registrar'; END IF"],
+   ['inm_zona_guard_legacy_insert','BEFORE INSERT ON inm_asignaciones_posicion',"IF guard_active=1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Actualizacion por zonas: recarga la aplicacion'; END IF"],
+   ['inm_zona_guard_legacy_update','BEFORE UPDATE ON inm_asignaciones_posicion',"IF guard_active=1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Actualizacion por zonas: recarga la aplicacion'; END IF"],
+   ['inm_zona_guard_property','BEFORE INSERT ON inm_inmuebles',"IF NEW.zona_id IS NULL AND guard_active=1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Selecciona una zona para registrar'; END IF"],
    ['inm_zona_guard_assignment','BEFORE INSERT ON inm_asignaciones_zona',"IF NOT EXISTS(SELECT 1 FROM inm_inmuebles i JOIN inm_posiciones_zona p ON p.zona_id=i.zona_id JOIN inm_zonas z ON z.id=p.zona_id WHERE i.id=NEW.inmueble_id AND p.id=NEW.posicion_id AND (NEW.activa=0 OR (p.activo=1 AND z.activo=1 AND p.numero<=z.capacidad))) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='La posicion no pertenece a la zona del inmueble'; END IF"],
   ];
   const [existing]=await db.query('SHOW TRIGGERS');
-  for(const [name,event,body] of triggers)if(!existing.some(t=>t.Trigger===name))await db.query(`CREATE TRIGGER ${name} ${event} FOR EACH ROW BEGIN ${body}; END`);
+  for(const [name,event,body] of triggers)if(!existing.some(t=>t.Trigger===name))await db.query(`CREATE TRIGGER ${name} ${event} FOR EACH ROW BEGIN DECLARE guard_active INT DEFAULT 0; SELECT activo INTO guard_active FROM inm_zona_cutover WHERE id=1 FOR SHARE; ${body}; END`);
   await db.beginTransaction();
   for(const [name,saved] of [['inm_inmuebles',before.inm_inmuebles.rows],['inm_asignaciones_posicion',before.inm_asignaciones_posicion.rows],['inm_posiciones',before.inm_posiciones.rows]]){
    const [now]=await db.query('SELECT * FROM ?? ORDER BY id FOR UPDATE',[name]);

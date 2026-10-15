@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Tasaciones y textos pendientes por zona
 
 Las carpetas por distrito están en «Tasaciones y textos pendientes». «Registrar tasaciones» conserva su vista de registro anterior.

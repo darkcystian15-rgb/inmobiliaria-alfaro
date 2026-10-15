@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Revisión de las cuatro referencias del ingeniero
 
 - Cartera abre en Lista compacta; Tarjetas sigue disponible para consultar posiciones. El acceso a posiciones disponibles desde el panel abre Tarjetas.

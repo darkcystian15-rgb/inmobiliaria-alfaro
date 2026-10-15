@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Organización de fichas
 
 `scripts/organize-property-records.mjs` organiza los datos existentes de las posiciones 1 a 12 siguiendo la ficha 13:

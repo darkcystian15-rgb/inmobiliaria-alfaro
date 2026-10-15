@@ -1,44 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Inmobiliaria Alfaro — intranet
 
-## Getting Started
+Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScript, MySQL y Drizzle. Incluye cartera por zonas, captación, visitas, precios, documentación, publicación, cierres, alquileres y reportes.
 
-First, run the development server:
+## Estado y avances
 
-```bash
+Consultar primero [Estado actual](docs/estado-actual-2026-10-15.md). Los documentos históricos conservan decisiones y pruebas de versiones anteriores; sus pendientes no describen necesariamente la versión actual.
+
+- [Seguimiento de cambios](docs/seguimiento-cambios-2026-10-15.md).
+- [Zonas de cartera unificadas](docs/zonas-cartera-unificadas-2026-10-15.md).
+- [Edición desde Cartera](docs/edicion-desde-cartera.md).
+- [Registro simplificado y recuperación](docs/registro-simplificado-2026-10-15.md).
+- [Mapa funcional de la versión anterior](docs/mapa-funcional-revisado-2026-10-15.md).
+- [Acceso y usuarios](docs/acceso.md).
+
+## Desarrollo
+
+Instalar las dependencias con `npm ci` y configurar privadamente `.env.local` según los servicios del entorno. No guardar credenciales en Git. La aplicación requiere MySQL y el almacenamiento documental usa un servicio HTTPS de hosting.
+
+```sh
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir http://localhost:3000. Los administradores gestionan la cartera; los operadores acceden a Información de inmuebles según sus permisos.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Comprobaciones
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```sh
+node --test tests/*.test.mjs
+npm run lint -- --max-warnings=0
+npm run build -- --webpack
+```
 
-## Learn More
+Las integraciones que escriben datos requieren revisar su configuración y usar bases aisladas. No ejecutarlas contra producción para comprobar un despliegue.
 
-To learn more about Next.js, take a look at the following resources:
+## Comportamiento actual
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+La captación se realiza dentro de una zona y solicita posición disponible, operación, tipo, ubicación referencial y contacto. Departamento, provincia y distrito son opcionales en la ficha e independientes de la zona comercial. El DNI del propietario se adjunta como archivo.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Operación, tipo y contacto se editan desde Cartera. El cambio de operación requiere inmueble activo sin precios ni publicación preparada. Los demás datos se completan en Información de inmuebles.
 
-## Deploy on Vercel
+## Producción
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Proyecto Vercel: `puma19/inmobiliaria-alfarov2`. Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## Acceso al sistema
-
-El sistema requiere iniciar sesión con una cuenta de MySQL. Consulta [la guía de acceso](docs/acceso.md) para preparar los campos y configurar las cuentas de Alberto y del operador.
-
-## Registro simplificado
-
-El registro utiliza posición, operación, tipo, departamento, provincia, distrito, ubicación referencial y nombre de contacto. El DNI se adjunta como archivo después en Información de inmuebles. Consulta [el cambio, la conversión de datos y la restauración](docs/registro-simplificado-2026-10-15.md) antes de desplegar esta versión sobre una base existente.
+Las migraciones de registro simplificado y zonas ya constan como aplicadas. No repetir `--apply` ni instaladores para desplegar actualizaciones de interfaz. Revisar siempre las referencias de recuperación y el estado de la base antes de cualquier adaptación de datos.

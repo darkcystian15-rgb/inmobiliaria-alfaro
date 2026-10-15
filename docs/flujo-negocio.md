@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Reglas del negocio
 
 La captación ocupa una posición desde el registro. Dirección, coordenadas y propietario pueden completarse después. El operador conserva acceso únicamente a Información de inmuebles; el administrador registra y avanza las etapas.

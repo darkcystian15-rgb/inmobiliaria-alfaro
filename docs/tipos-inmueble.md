@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Tipos de inmueble
 
 Administración → Tipos de inmueble permite agregar, renombrar, activar y desactivar opciones. Solo el administrador puede realizar cambios; el operador consulta el catálogo para editar fichas. Los nombres son únicos y tienen un máximo de 30 caracteres.

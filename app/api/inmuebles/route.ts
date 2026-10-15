@@ -46,7 +46,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ inmuebles: rows.map(({ direccion, distrito, provincia, departamento, ...row }) => ({
       ...row,
       estado: row.estado === "activo" ? "activo" : "historico",
-      ubicacion: propertyAddress({direccion, distrito, provincia, departamento}),
+      ubicacion: propertyAddress({direccion, distrito, provincia, departamento, zona: row.zona}),
       propietario: row.contacto || "Sin contacto",
     })) });
   } catch {

@@ -1,13 +1,46 @@
 "use client";
-import {useCallback,useEffect,useState} from 'react';
-import ConfirmDialog from '@/app/components/ConfirmDialog';
-import {requestJson} from '@/lib/client-request';
-type Location={id:number;nivel:string;nombre:string;padreId:number|null;activo:boolean};
-export default function Locations(){
- const [items,setItems]=useState<Location[]>([]);const [nivel,setNivel]=useState('departamento');const [padre,setPadre]=useState('');const [nombre,setNombre]=useState('');const [editing,setEditing]=useState<Location|null>(null);const [deleting,setDeleting]=useState<Location|null>(null);const [busy,setBusy]=useState(false);const [loading,setLoading]=useState(true);const [error,setError]=useState('');const [message,setMessage]=useState('');
- const load=useCallback(async(signal?:AbortSignal)=>{try{const data=await requestJson<{items:Location[]}>('/api/catalogo-ubicaciones',{signal});if(!signal?.aborted){setItems(data.items);setError('');}}catch(e){if(!signal?.aborted)setError(e instanceof Error?e.message:'No se pudieron consultar las ubicaciones.');}finally{if(!signal?.aborted)setLoading(false);}},[]);
- useEffect(()=>{const controller=new AbortController();void Promise.resolve().then(()=>load(controller.signal));return()=>controller.abort();},[load]);
- const path=(item:Location):string=>{const parent=items.find(x=>x.id===item.padreId);return parent?`${path(parent)} → ${item.nombre}`:item.nombre;};
- async function mutate(method:string,body:Record<string,unknown>){setBusy(true);setError('');setMessage('');try{await requestJson('/api/catalogo-ubicaciones',{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});await load();setMessage('Cambio guardado. Las selecciones están disponibles en el registro y la ficha.');setEditing(null);setNombre('');setDeleting(null);}catch(e){setError(e instanceof Error?e.message:'No se pudo guardar.');}finally{setBusy(false);}}
- return <main className="min-h-screen bg-background p-4 sm:p-8"><div className="mx-auto max-w-6xl"><h1 className="text-2xl font-bold">Ubicaciones</h1><p className="mt-2 text-sm text-slate-600">Administra departamentos, provincias y distritos. Renombrar actualiza los inmuebles vinculados; desactivar conserva el histórico. Solo se pueden eliminar opciones sin hijos ni inmuebles vinculados.</p>{error&&<p role="alert" className="mt-4 text-red-700">{error}</p>}{message&&<p role="status" className="mt-4 text-emerald-800">{message}</p>}<form onSubmit={e=>{e.preventDefault();void mutate(editing?'PATCH':'POST',editing?{id:editing.id,nombre}:{nivel,nombre,padreId:padre?Number(padre):null});}} className="mt-5 rounded-xl border border-slate-200 bg-white p-5"><h2 className="font-bold">{editing?'Editar nombre':'Agregar ubicación'}</h2><fieldset disabled={busy} className="mt-3 grid gap-4 sm:grid-cols-3"><label className="text-sm">Nivel<select disabled={!!editing} value={editing?.nivel||nivel} onChange={e=>{setNivel(e.target.value);setPadre('');}} className="mt-2 w-full rounded-xl border p-3"><option value="departamento">Departamento</option><option value="provincia">Provincia</option><option value="distrito">Distrito</option></select></label>{!editing&&nivel!=='departamento'&&<label className="text-sm">{nivel==='provincia'?'Departamento':'Provincia'}<select required value={padre} onChange={e=>setPadre(e.target.value)} className="mt-2 w-full rounded-xl border p-3"><option value="">Seleccionar</option>{items.filter(x=>x.activo&&x.nivel===(nivel==='provincia'?'departamento':'provincia')&&(x.nivel!=='provincia'||items.find(p=>p.id===x.padreId)?.activo)).map(x=><option key={x.id} value={x.id}>{path(x)}</option>)}</select></label>}<label className="text-sm">Nombre<input required maxLength={100} value={nombre} onChange={e=>setNombre(e.target.value)} className="mt-2 w-full rounded-xl border p-3"/></label></fieldset><button disabled={busy||loading} className="aa-button aa-button-primary mt-4">{busy?'Guardando…':'Guardar'}</button>{editing&&<button type="button" onClick={()=>{setEditing(null);setNombre('');}} className="aa-button aa-button-secondary ml-3">Cancelar</button>}</form>{loading?<p className="mt-5">Cargando ubicaciones…</p>:<div className="mt-5 divide-y rounded-xl border border-slate-200 bg-white">{items.map(item=><article key={item.id} className="flex flex-wrap items-center justify-between gap-3 p-4"><div><p className="text-sm font-semibold">{path(item)}</p><p className="mt-1 text-xs text-slate-500">{item.nivel} · {item.activo?'Activo':'Inactivo'}</p></div><div className="flex flex-wrap gap-2"><button disabled={busy} onClick={()=>{setEditing(item);setNombre(item.nombre);}} className="aa-button aa-button-secondary">Editar</button><button disabled={busy} onClick={()=>{void mutate('PATCH',{id:item.id,activo:!item.activo});}} className="aa-button aa-button-secondary">{item.activo?'Desactivar':'Activar'}</button><button disabled={busy||items.some(x=>x.padreId===item.id)} onClick={()=>setDeleting(item)} className="aa-button aa-button-secondary">Eliminar</button></div></article>)}</div>}{deleting&&<ConfirmDialog title="Eliminar ubicación" confirmLabel="Eliminar" busy={busy} onCancel={()=>setDeleting(null)} onConfirm={()=>{void mutate('DELETE',{id:deleting.id});}}><p>{path(deleting)}</p><p>Se eliminará únicamente si no tiene ubicaciones ni inmuebles vinculados.</p>{error&&<p role="alert" className="text-red-700">{error}</p>}</ConfirmDialog>}</div></main>;
+
+import { useState, type FormEvent } from "react";
+import Link from "next/link";
+import PageHeading from "@/app/components/PageHeading";
+import { useZoneWorkspace } from "@/app/components/ZoneWorkspace";
+
+export default function Zones() {
+  const { zones, loading, error: loadError, reload } = useZoneWorkspace();
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [created, setCreated] = useState("");
+  async function create(event: FormEvent) {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true); setError(""); setCreated("");
+    try {
+      const nombre = name.trim().replace(/\s+/g, " ");
+      const response = await fetch("/api/zonas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "No se pudo crear la zona.");
+      setName(""); setCreated(nombre);
+      await reload();
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "No se pudo crear la zona."); }
+    finally { setBusy(false); }
+  }
+  return <main className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <PageHeading href="/ubicaciones" />
+    <p className="text-sm leading-6 text-slate-600">Cada zona es una carpeta de Cartera donde registras y gestionas sus inmuebles. Para agregarla basta su nombre, sin registrar departamento, provincia ni distrito.</p>
+    <form onSubmit={create} className="aa-card space-y-4 p-5">
+      <h2 className="text-base font-bold">Agregar zona</h2>
+      <label className="block text-sm font-semibold">Nombre de la zona<input required maxLength={100} value={name} disabled={busy} onChange={event => setName(event.target.value)} placeholder="Ej. Santa o Huanchaco" className="aa-input mt-2 block w-full sm:max-w-md" /></label>
+      <p className="text-xs text-slate-500">Cada zona nueva tendrá 10 posiciones disponibles en Cartera.</p>
+      <button type="submit" disabled={busy || !name.trim()} className="aa-button aa-button-primary">{busy ? "Creando…" : "Agregar zona"}</button>
+    </form>
+    {error && <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+    {created && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">Zona «{created}» creada con 10 posiciones. <Link href={`/cartera?zona=${encodeURIComponent(created)}`} className="font-semibold underline">Abrir carpeta en Cartera</Link></p>}
+    {loadError && <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{loadError}<button type="button" disabled={loading || busy} onClick={() => void reload()} className="ml-3 underline">Reintentar</button></p>}
+    <section className="aa-card p-5" aria-label="Zonas de cartera registradas">
+      <h2 className="text-base font-bold">Zonas registradas</h2>
+      {loading ? <p role="status" className="mt-4 text-sm text-slate-500">Cargando zonas…</p> : <ul className="mt-3 divide-y divide-slate-200">{zones.map(zone => <li key={zone.id} className="flex flex-wrap items-center justify-between gap-3 py-4"><div className="min-w-0"><h3 className="break-words text-sm font-bold">{zone.nombre}</h3><p className="mt-2 text-xs text-slate-500">{zone.capacidad} posiciones · {zone.ocupados} ocupadas · {zone.disponibles} disponibles</p></div><Link href={`/cartera?zona=${encodeURIComponent(zone.nombre)}`} className="aa-button aa-button-secondary">Abrir cartera</Link></li>)}</ul>}
+      {!loading && !loadError && zones.length === 0 && <p className="mt-4 text-sm text-slate-500">Agrega la primera zona para comenzar.</p>}
+    </section>
+  </main>;
 }

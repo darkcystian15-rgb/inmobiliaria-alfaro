@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Diseño de los submenús
 
 Punto de restauración previo: `recuperacion-antes-diseno-submenus-20261011`, commit `d0cadb3`. Copia ZIP: `output/recuperacion-cartera/antes-diseno-submenus.zip` en el espacio de trabajo.

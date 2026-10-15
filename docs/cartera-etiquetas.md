@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Lista de cartera tipo Drive
 
 La lista compacta mantiene la posición y el icono de carpeta. La primera línea presenta operación, tipo y dirección en texto destacado. La segunda presenta propietario y zona en texto discreto, seguidos de las etiquetas de pendientes o estado. El precio permanece visible y cada fila abre el detalle del inmueble.

@@ -48,3 +48,11 @@ test('a migrated record retains its contact on a subsequent conversion without s
   first.nombre_contacto = 'Contacto corregido';
   assert.equal(second.nombre_contacto, 'Ana Pérez');
 });
+
+test('optional geographic fields can be edited independently without changing the commercial zone', () => {
+  assert.deepEqual(propertyInput({ distrito: ' Santa ' }), { distrito: 'Santa' });
+  assert.deepEqual(propertyInput({ provincia: null }), { provincia: null });
+  assert.deepEqual(propertyInput({ departamento: '', provincia: '', distrito: '' }), { departamento: null, provincia: null, distrito: null });
+  assert.equal('zonaId' in propertyInput({ distrito: 'Santa', zonaId: 2 }), false);
+  assert.throws(() => propertyInput({ distrito: 'a'.repeat(101) }));
+});

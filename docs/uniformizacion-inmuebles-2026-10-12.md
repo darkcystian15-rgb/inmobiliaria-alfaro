@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 El sistema trata todos los inmuebles como registros operativos. Se retiraron los controles, las etiquetas y los filtros de clasificación de prueba de reportes, cartera y fichas. Los indicadores incluyen todos los registros que cumplen los filtros de negocio.
 
 Los códigos siguen `001-CASA-NOMBRE-DEL-INMUEBLE`. El número de orden se asigna una sola vez, de forma correlativa y dentro de la misma transacción que crea la ficha. Se conserva al cambiar nombre, tipo o posición. El tipo y el nombre del código se actualizan al editar la ficha. La numeración también se aplica a los reingresos de alquiler.

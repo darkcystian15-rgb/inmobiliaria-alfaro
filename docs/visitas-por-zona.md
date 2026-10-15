@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Visitas pendientes por zona
 
 La entrada de «Visitas pendientes» presenta carpetas agrupadas por el distrito registrado del inmueble, siguiendo el criterio de zonas de la cartera. Cada carpeta muestra su cantidad de visitas y las que requieren atención según el plazo de seguimiento existente.

@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Armonización visual — 13 de octubre de 2026
 
 Base: `a312174` de `darkcystian15-rgb/inmobiliaria-alfaro`.

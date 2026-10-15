@@ -3,6 +3,7 @@ import { useZoneWorkspace } from "@/app/components/ZoneWorkspace";
 import { zoneHref } from "@/lib/zone-url";
 import { zoneUrl } from "@/lib/zone-url";
 
+import PortfolioPropertyEditor from "@/app/components/PortfolioPropertyEditor";
 import PropertySummary from "@/app/components/PropertySummary";
 
 import PortfolioLabelRow from "@/app/components/PortfolioLabelRow";
@@ -23,17 +24,10 @@ import { useRef } from "react";
 import PublicationChecklist, { type Checklist } from "@/app/components/PublicationChecklist";
 import StatusBadge from "@/app/components/StatusBadge";
 import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
-import ResponsiveFilters from "@/app/components/ResponsiveFilters";
 import PhotoGallery from "@/app/components/PhotoGallery";
 import PropertyMapDialog from "@/app/components/PropertyMapDialog";
 
 type Estado = "Activo" | "Histórico";
-type FiltroActividad =
-  | "Todas"
-  | "Visita pendiente"
-  | "Tasación pendiente"
-  | "Material pendiente";
-
 type Actividades = {
   visita: {
     estado: string;
@@ -286,17 +280,11 @@ function salePrice(value: string | null) {
 }
 
 export default function CarteraPage() {
-  const {zones:catalogoZonas,zone:zonaActual,reload:recargarZonas}=useZoneWorkspace();
-  const [nuevaZona,setNuevaZona]=useState("");
-  const [creandoZona,setCreandoZona]=useState(false);
+  const {zones:catalogoZonas,zone:zonaActual}=useZoneWorkspace();
   const [zonaSeleccionada, setZonaSeleccionada] = useState<string | null>(null);
   const [estado, setEstado] = useState<"Todos" | Estado>("Activo");
   const [operacion, setOperacion] = useState("Todos");
   const [tipo, setTipo] = useState("Todos");
-  const [distrito, setDistrito] = useState("Todos");
-  const [posicionFiltro, setPosicionFiltro] = useState("Todas");
-  const [actividad, setActividad] =
-    useState<FiltroActividad>("Todas");
   const [soloDisponibles, setSoloDisponibles] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [vista, setVista] =
@@ -385,14 +373,10 @@ export default function CarteraPage() {
     setZonaSeleccionada(params.get("zona") || (["actividad", "vista", "disponibles"].some(key => params.has(key)) ? ALL_ZONES : null));
     const state = params.get("estado");
     setEstado(state === "Todos" || state === "Histórico" ? state : "Activo");
-    const activity = params.get("actividad");
-    setActividad(["Visita pendiente", "Tasación pendiente", "Material pendiente"].includes(activity ?? "") ? activity as FiltroActividad : "Todas");
     setVista(params.get("vista") === "posiciones" || params.get("disponibles") === "1" ? "posiciones" : "lista");
     setSoloDisponibles(params.get("disponibles") === "1");
     setOperacion(params.get("operacion") || "Todos");
     setTipo(params.get("tipo") || "Todos");
-    setDistrito(params.get("distrito") || "Todos");
-    setPosicionFiltro(params.get("posicion") || "Todas");
     setBusqueda(params.get("buscar") || "");
   }
 
@@ -422,15 +406,8 @@ export default function CarteraPage() {
 
   const posiciones=todasPosiciones.filter(p=>!zonaSeleccionada||zonaSeleccionada===ALL_ZONES||p.zona===zonaSeleccionada);
   const zonas=catalogoZonas.map(z=>({...z,activos:z.ocupados}));
-  async function crearZona(){
-    setCreandoZona(true);setError("");
-    try { const response=await fetch("/api/zonas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nombre:nuevaZona})});const data=await response.json();if(!response.ok)throw Error(data.error);await recargarZonas();setNuevaZona(""); }
-    catch(e){setError(e instanceof Error?e.message:"No se pudo crear la zona.");}finally{setCreandoZona(false);}
-  }
   const inmueblesZona = useMemo(() => inmuebles.filter(x => inZone(x, zonaSeleccionada)), [inmuebles, zonaSeleccionada]);
   const activosZona = useMemo(() => inmueblesZona.filter(x => x.estado === "Activo"), [inmueblesZona]);
-
-  const distritosFiltro = useMemo(() => [...new Set(inmueblesZona.map(x => x.distrito?.trim()).filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, "es-PE")), [inmueblesZona]);
 
   const filtrados = useMemo(() => {
     const texto = busqueda.toLowerCase().trim();
@@ -442,22 +419,10 @@ export default function CarteraPage() {
           .toLowerCase()
           .includes(texto);
 
-      const coincideActividad =
-        actividad === "Todas" ||
-        (actividad === "Visita pendiente" &&
-          x.visitaPendiente) ||
-        (actividad === "Tasación pendiente" &&
-          x.tasacionPendiente) ||
-        (actividad === "Material pendiente" &&
-          x.materialPendiente);
-
       return (
         (estado === "Todos" || x.estado === estado) &&
         (tipo === "Todos" || x.tipo === tipo) &&
-        (distrito === "Todos" || x.distrito?.trim() === distrito) &&
-        (posicionFiltro === "Todas" || (posicionFiltro === "sin" ? x.posicion == null : x.posicion === Number(posicionFiltro))) &&
         (operacion === "Todos" || x.operacion === operacion) &&
-        coincideActividad &&
         coincideTexto
       );
     });
@@ -466,9 +431,6 @@ export default function CarteraPage() {
     estado,
     tipo,
     operacion,
-    distrito,
-    posicionFiltro,
-    actividad,
     busqueda,
   ]);
 
@@ -496,10 +458,7 @@ export default function CarteraPage() {
     setSoloDisponibles(false);
     setEstado("Activo");
     setTipo("Todos");
-    setDistrito("Todos");
-    setPosicionFiltro("Todas");
     setOperacion("Todos");
-    setActividad("Todas");
     setBusqueda("");
   };
 
@@ -513,7 +472,7 @@ export default function CarteraPage() {
 
   const returnParams = new URLSearchParams();
   if (zonaSeleccionada !== null) returnParams.set("zona", zonaSeleccionada);
-  for (const [key, value, defaultValue] of [["estado", estado, "Activo"], ["operacion", operacion, "Todos"], ["tipo", tipo, "Todos"], ["distrito", distrito, "Todos"], ["posicion", posicionFiltro, "Todas"], ["actividad", actividad, "Todas"], ["vista", vista, "lista"], ["buscar", busqueda, ""]]) {
+  for (const [key, value, defaultValue] of [["estado", estado, "Activo"], ["operacion", operacion, "Todos"], ["tipo", tipo, "Todos"], ["vista", vista, "lista"], ["buscar", busqueda, ""]]) {
     if (value !== defaultValue) returnParams.set(key, value);
   }
   if (soloDisponibles) returnParams.set("disponibles", "1");
@@ -524,10 +483,7 @@ export default function CarteraPage() {
     Boolean(busqueda) ||
     estado !== "Activo" ||
     tipo !== "Todos" ||
-    distrito !== "Todos" ||
-    posicionFiltro !== "Todas" ||
-    operacion !== "Todos" ||
-    actividad !== "Todas";
+    operacion !== "Todos";
 
   return (
     <NavigationReturnProvider href={returnHref}><main className="min-h-screen bg-background p-6 lg:p-8">
@@ -548,7 +504,7 @@ export default function CarteraPage() {
         {zonaSeleccionada !== null && <nav aria-label="Ruta de la cartera" className="mt-4 flex flex-wrap items-center gap-3 text-sm"><button type="button" onClick={() => abrirZona(null)} className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 font-semibold text-slate-800 hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />← Volver a zonas</button><ZoneContext name={zonaSeleccionada === ALL_ZONES ? "Listado general" : zonaSeleccionada} general={zonaSeleccionada === ALL_ZONES} /></nav>}
         {zonaSeleccionada === null && <section aria-label="Cartera por zonas" className="mt-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">Cartera de inmuebles por zona</h2><button type="button" onClick={() => abrirZona(ALL_ZONES)} className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />Ver listado general →</button></div>
-          <form onSubmit={event=>{event.preventDefault();void crearZona();}} className="mb-6 flex flex-wrap items-end gap-3"><label className="text-xs font-semibold text-slate-600">Añadir zona pequeña · 10 posiciones<input required maxLength={100} value={nuevaZona} onChange={event=>setNuevaZona(event.target.value)} placeholder="Nombre de la zona" className="aa-input mt-2 block"/></label><button disabled={creandoZona||!nuevaZona.trim()} className="aa-button aa-button-secondary disabled:opacity-50">{creandoZona?"Creando…":"Crear zona"}</button></form>
+          <div className="mb-6"><Link href="/ubicaciones" className="aa-button aa-button-secondary">Agregar zona</Link></div>
           <ul className="grid grid-cols-1 gap-x-4 gap-y-7 pt-5 sm:grid-cols-2 xl:grid-cols-3">{zonas.map(zona => <li key={zona.nombre} className="min-w-0">
             <button type="button" onClick={() => abrirZona(zona.nombre)} className="cartera-folder relative flex min-h-24 w-full items-center gap-3 rounded-b-2xl rounded-tr-2xl border border-amber-200 bg-amber-50/40 px-4 py-4 text-left shadow-sm hover:border-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c80000]">
               <span aria-hidden="true" className="cartera-folder-tab absolute -top-4 -left-px h-4 w-20 rounded-t-lg border border-b-0 border-amber-200 bg-amber-100" />
@@ -609,24 +565,24 @@ export default function CarteraPage() {
         <section aria-label="Buscar y filtrar cartera" className="aa-card mt-5 p-4 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <label className="relative min-w-0 flex-1"><span className="sr-only">Buscar inmueble</span><span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><Icon name="search" /></span><input value={busqueda} onChange={event => setBusqueda(event.target.value)} placeholder="Buscar por contacto o ubicación…" className="aa-input w-full pl-10" /></label>
+
+          </div>
+          <div className="mt-3">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="text-xs font-semibold text-slate-600">Estado<select value={estado} onChange={event => { setEstado(event.target.value as "Todos" | Estado); setSoloDisponibles(false); }} className="aa-input mt-2 w-full"><option>Activo</option><option>Todos</option><option>Histórico</option></select></label>
+              <label className="text-xs font-semibold text-slate-600">Tipo de operación<OperationSelect filter value={operacion} onChange={setOperacion} className="aa-input mt-2 w-full" /></label><label className="text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect filter value={tipo} onChange={setTipo} className="aa-input mt-2 w-full" /></label>
+            </div>
+          </div>
+          {tieneFiltros && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3"><p className="text-xs text-slate-600">{soloDisponibles ? "Mostrando solamente posiciones libres" : `${estado} · ${tipo}${operacion !== "Todos" ? ` · ${operacion === "alquiler" ? "Alquiler" : "Venta"}` : ""}${busqueda ? ` · Búsqueda: ${busqueda}` : ""}`}</p><button type="button" onClick={limpiarFiltros} className="text-sm font-semibold text-[#c80000]">Limpiar filtros</button></div>}
+        </section>
+
+        {/* RESULTADOS */}
+        <div className="mt-5 flex justify-end">
             <div aria-label="Vista de la cartera" className="grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
               <button type="button" aria-pressed={vista === "posiciones"} onClick={() => setVista("posiciones")} className={`rounded-lg px-4 py-2 text-sm font-semibold ${vista === "posiciones" ? "bg-[#c80000] text-white" : "text-slate-600"}`}>Tarjetas</button>
               <button type="button" aria-pressed={vista === "lista"} onClick={() => { setVista("lista"); setSoloDisponibles(false); }} className={`rounded-lg px-4 py-2 text-sm font-semibold ${vista === "lista" ? "bg-[#c80000] text-white" : "text-slate-600"}`}>Lista compacta</button>
             </div>
-          </div>
-          <div className="mt-3"><ResponsiveFilters active={tieneFiltros}>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="text-xs font-semibold text-slate-600">Estado<select value={estado} onChange={event => { setEstado(event.target.value as "Todos" | Estado); setSoloDisponibles(false); }} className="aa-input mt-2 w-full"><option>Activo</option><option>Todos</option><option>Histórico</option></select></label>
-              <label className="text-xs font-semibold text-slate-600">Operación<OperationSelect filter value={operacion} onChange={setOperacion} className="aa-input mt-2 w-full" /></label><label className="text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect filter value={tipo} onChange={setTipo} className="aa-input mt-2 w-full" /></label>
-              <label className="text-xs font-semibold text-slate-600">Posición<select aria-label="Posición" value={posicionFiltro} onChange={event => setPosicionFiltro(event.target.value)} className="aa-input mt-2 w-full"><option value="Todas">Todas las posiciones</option>{[...new Set([...posiciones.map(p => p.numero), ...inmuebles.flatMap(x => x.posicion == null ? [] : [x.posicion])])].sort((a, b) => a - b).map(numero => <option key={numero} value={String(numero)}>Posición {String(numero).padStart(2, "0")}</option>)}<option value="sin">Sin posición</option></select></label>
-              <label className="text-xs font-semibold text-slate-600">Distrito<select aria-label="Distrito" value={distrito} onChange={event => { setDistrito(event.target.value); setSoloDisponibles(false); }} className="aa-input mt-2 w-full"><option value="Todos">Todos los distritos</option>{distritosFiltro.map(value => <option key={value} value={value}>{value}</option>)}</select></label>
-              <label className="text-xs font-semibold text-slate-600">Actividad<select value={actividad} onChange={event => setActividad(event.target.value as FiltroActividad)} className="aa-input mt-2 w-full">{["Todas", "Visita pendiente", "Tasación pendiente", "Material pendiente"].map(value => <option key={value}>{value}</option>)}</select></label>
-            </div>
-          </ResponsiveFilters></div>
-          {tieneFiltros && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3"><p className="text-xs text-slate-600">{soloDisponibles ? "Mostrando solamente posiciones libres" : `${estado} · ${tipo} · ${distrito} · ${posicionFiltro === "Todas" ? "Todas las posiciones" : posicionFiltro === "sin" ? "Sin posición" : `Posición ${posicionFiltro}`} · ${actividad}${operacion !== "Todos" ? ` · ${operacion === "alquiler" ? "Alquiler" : "Venta"}` : ""}${busqueda ? ` · Búsqueda: ${busqueda}` : ""}`}</p><button type="button" onClick={limpiarFiltros} className="text-sm font-semibold text-[#c80000]">Limpiar filtros</button></div>}
-        </section>
-
-        {/* RESULTADOS */}
+        </div>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-bold text-slate-900">
@@ -636,7 +592,7 @@ export default function CarteraPage() {
             </h2>
 
             <p className="mt-1 text-xs text-slate-500">
-              Mostrando {soloDisponibles ? posiciones.filter(pos => pos.disponible && (posicionFiltro === "Todas" || posicionFiltro === String(pos.numero))).length : filtrados.length} registro
+              Mostrando {soloDisponibles ? posiciones.filter(pos => pos.disponible).length : filtrados.length} registro
               {filtrados.length === 1 ? "" : "s"} con los
               filtros actuales.
             </p>
@@ -662,10 +618,8 @@ export default function CarteraPage() {
                   `${pos.zonaId}:${pos.numero}`
                 );
 
-                const coincidePosicion = posicionFiltro === "Todas" || posicionFiltro === String(pos.numero);
-                const soloFiltroPosicion = posicionFiltro !== "Todas" && !busqueda && tipo === "Todos" && distrito === "Todos" && operacion === "Todos" && actividad === "Todas" && estado === "Activo";
                 const zonaPosicion = zonaSeleccionada === ALL_ZONES || zonaSeleccionada === null || pos.zona===zonaSeleccionada;
-                const visible = zonaPosicion && coincidePosicion && (soloDisponibles ? !x : x ? filtrados.some(item => item.inmuebleId === x.inmuebleId) : soloFiltroPosicion || !tieneFiltros);
+                const visible = zonaPosicion && (soloDisponibles ? !x : x ? filtrados.some(item => item.inmuebleId === x.inmuebleId) : !tieneFiltros);
 
                 if (!visible) {
                   return null;
@@ -847,6 +801,15 @@ export default function CarteraPage() {
                   <Icon name="close" />
                 </button>
               </div>
+
+              <PortfolioPropertyEditor key={seleccionado.inmuebleId} propertyId={seleccionado.inmuebleId} onSaved={async () => {
+                const response = await fetch(zoneUrl("/api/cartera"), { cache: "no-store" });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Los datos se guardaron, pero no se pudo actualizar la cartera. Recarga la página.");
+                const updated = (data.inmuebles as Inmueble[]).find(item => item.inmuebleId === seleccionado.inmuebleId);
+                setInmuebles(data.inmuebles ?? []);
+                if (updated) setSeleccionado(updated);
+              }} />
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl bg-background p-4">

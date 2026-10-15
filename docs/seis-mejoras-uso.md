@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Seis mejoras de claridad
 
 Punto de restauración: `recuperacion-antes-seis-mejoras-20261011`. ZIP local: `output/recuperacion-cartera/antes-seis-mejoras.zip`.

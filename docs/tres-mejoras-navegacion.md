@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Navegación, reintentos y formularios móviles
 
 Punto de restauración previo: `recuperacion-antes-tres-mejoras-navegacion-20261011`.

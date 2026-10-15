@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Acceso al sistema
 
 La entrada `/` requiere una sesión y redirige a `/login` cuando no la hay. Las cuentas se validan en `inm_usuarios` mediante `usuario` y `password_hash`. El sistema admite varias cuentas. El rol `administrador` accede a todos los módulos. Los demás usuarios, incluyendo `operador` y el rol anterior `usuario`, solo acceden a Información de inmuebles (`/datos-inmuebles`), donde pueden consultar y completar la ficha, datos del propietario y documentación. Inician sesión directamente en ese módulo. El menú oculta los demás apartados; sus páginas redirigen a Información de inmuebles y sus APIs rechazan el acceso con HTTP 403. Los permisos se verifican en el servidor para cada solicitud.

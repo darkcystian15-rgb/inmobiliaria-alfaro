@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Ubicación de los inmuebles
 
 La ficha muestra un mapa en Resumen y un selector en Inmueble. El usuario confirma un punto haciendo clic, arrastrando el marcador, marcando el centro del mapa, utilizando la geolocalización del dispositivo o importando un enlace de Google Maps. Guarda el punto con el botón existente «Guardar cambios».

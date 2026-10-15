@@ -1,3 +1,5 @@
+> Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.
+
 # Venta y alquiler
 
 El registro exige elegir Venta o Alquiler; las integraciones anteriores que omiten la operación mantienen Venta. Los inmuebles existentes conservan Venta y sus importes actuales. No se eliminan datos.
