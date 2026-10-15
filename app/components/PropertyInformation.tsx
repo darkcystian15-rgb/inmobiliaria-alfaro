@@ -1,4 +1,5 @@
 "use client";
+import { stripCoordinates } from "@/lib/retired-coordinates.mjs";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -30,7 +31,6 @@ import type { PropertyProgressData } from "@/lib/property-progress";
 import ConfirmDialog from "./ConfirmDialog";
 import PropertyVisits from "./PropertyVisits";
 import PhotoGallery from "./PhotoGallery";
-import PropertyLocation from "./PropertyLocation";
 import { compressImage, isImageFile } from "@/lib/client-images";
 import { useSessionUser } from "./SessionProvider";
 import { isAdministrator } from "@/lib/access.mjs";
@@ -40,7 +40,6 @@ type Item = { id: string; posicion: number | null; nombre: string; tipo: string;
 type Property = {
   zona?: string; id: number; inmuebleOrigenId?:number|null; codigo: string; posicion: number | null; tipo: string; operacion: string; referencia: string; estado: string;
   nombreContacto: string | null; direccion: string | null; distrito: string | null; provincia: string | null; departamento: string | null;
-  latitud: string | null; longitud: string | null;
   areaTerreno: string | null; areaConstruida: string | null; habitaciones: string | number | null; banos: string | number | null;
   caracteristicas: string | null; observaciones: string | null; fechaRegistro: string;
 
@@ -287,7 +286,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
               </nav>
             </section>
 
-            <DraftRecovery key={code} draftKey={`ficha:simple-${details.inmueble.id}`} data={{form}} dirty={dirty} onRestore={draft=>{if(draft.form&&typeof draft.form==='object')setForm({...draft.form as Property, operacion: details.inmueble.operacion, tipo: details.inmueble.tipo, nombreContacto: details.inmueble.nombreContacto});}}/>
+            <DraftRecovery key={code} draftKey={`ficha:simple-${details.inmueble.id}`} data={{form}} dirty={dirty} onRestore={draft=>{if(draft.form&&typeof draft.form==='object')setForm({...stripCoordinates(draft.form) as Property, operacion: details.inmueble.operacion, tipo: details.inmueble.tipo, nombreContacto: details.inmueble.nombreContacto});}}/>
             <PropertyProgress data={details.progreso} administrator={admin} propertyId={details.inmueble.id} />
             <OperationalTracking key={`tracking-${code}`} propertyId={details.inmueble.id} administrator={admin} progress={details.progreso}/>
             <PropertyHistory events={details.historial??[]}/>
@@ -297,7 +296,6 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
             <section aria-label={tab} className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_4px_24px_rgba(15,23,42,0.03)] sm:p-6">
               {tab === "Resumen" && <div className="space-y-6">{details.inmueble.inmuebleOrigenId&&<Link href={`/datos-inmuebles?codigo=${details.inmueble.inmuebleOrigenId}`} className="text-sm font-semibold text-[#c80000]">Consultar contrato y ficha de la captación anterior →</Link>}{details.alquiler && <Block title="Alquiler registrado" description={`Cierre: ${formatDate(details.alquiler.fechaAlquiler)} · Inicio: ${formatDate(details.alquiler.fechaInicioAlquiler)} · Fin: ${formatDate(details.alquiler.fechaFinAlquiler)}`}><div className="grid gap-3 sm:grid-cols-2"><Stat label="Renta mensual acordada" value={money(details.alquiler.rentaMensual)} icon="chart" /><Stat label="Comisión" value={money(details.alquiler.comision)} icon="chart" /><Stat label="Garantía" value={money(details.alquiler.garantia)} icon="chart" /><Stat label="Adelanto" value={money(details.alquiler.adelanto)} icon="chart" /></div></Block>}
 
-                <PropertyLocation key={`${code}-summary`} latitude={details.inmueble.latitud} longitude={details.inmueble.longitud} approximateArea={details.inmueble.zona} address={propertyAddress(details.inmueble, "")} />
                 <Block title="Una mirada al inmueble" description="Los datos principales para continuar completando la ficha."><div className="grid gap-3 sm:grid-cols-2"><Stat label="Contacto" value={details.inmueble.nombreContacto || "Por completar"} icon="user" /><Stat label="Ubicación referencial" value={details.inmueble.direccion || "Por completar"} icon="map" /><Stat label="Documentación" value={`${documentFiles.length} documento${documentFiles.length === 1 ? "" : "s"} registrado${documentFiles.length === 1 ? "" : "s"}`} icon="document" /><Stat label="Publicación" value={details.publicacion?.publicado ? "Publicado" : details.publicacion ? details.expediente?.complete ? "Lista para publicar" : "Expediente pendiente" : "Sin publicación"} icon="publish" /></div></Block>
                 <Block title="Precios del inmueble"><div className="grid gap-3 sm:grid-cols-3">{[[referenceLabel(details.inmueble.operacion), details.tasacion?.valorReferencia], [targetLabel(details.inmueble.operacion), details.tasacion?.precioObjetivo], [priceLabel(details.inmueble.operacion), details.tasacion?.precioVenta]].map(([label, value]) => <div key={label} className={`rounded-2xl border p-4 ${label === priceLabel(details.inmueble.operacion) ? "border-red-100 bg-[#fff5f4]" : "border-slate-100 bg-slate-50"}`}><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-2 text-sm font-bold text-slate-900">{money(value)}</p></div>)}</div></Block>
                 <div className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setTab("Inmueble")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Completar datos del inmueble</span><span className="mt-1 block text-xs text-slate-500">Ubicación y características</span></span><Icon name="arrow" /></button><button type="button" onClick={() => setTab("Documentación")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Organizar documentación</span><span className="mt-1 block text-xs text-slate-500">Archivos y documentos</span></span><Icon name="arrow" /></button></div>
@@ -309,7 +307,6 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
                 <Block title="Identificación" description="Operación y tipo se editan únicamente desde el panel de Cartera."><div className="grid gap-3 sm:grid-cols-2"><Stat label="Tipo de operación" value={details.inmueble.operacion === "alquiler" ? "Alquiler" : "Venta"} icon="home" /><Stat label="Tipo de inmueble" value={details.inmueble.tipo} icon="home" /></div></Block>
                 <div className="border-t border-slate-100" />
                 <Block title="Ubicación"><div className="space-y-4">{propertyField("Ubicación referencial", "direccion", "text", "Dirección o referencia para reconocer el inmueble")}<GeographySelect disabled={busy||loading} value={{departamento:form?.departamento||null,provincia:form?.provincia||null,distrito:form?.distrito||null}} onChange={next=>setForm(old=>old?{...old,...next}:old)}/></div></Block>
-                <PropertyLocation key={`${code}-edit`} latitude={form?.latitud ?? null} longitude={form?.longitud ?? null} address={[propertyAddress(form, ""), propertyAddress(form, "") ? "Perú" : ""].filter(Boolean).join(", ")} editable disabled={busy || loading} onChange={point => setForm(previous => previous ? { ...previous, latitud: point ? point.lat.toFixed(7) : null, longitud: point ? point.lng.toFixed(7) : null } : previous)} />
                 <div className="border-t border-slate-100" />
                 {Number(form?.areaConstruida)>Number(form?.areaTerreno)*10 && Number(form?.areaTerreno)>0 && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Revisa las superficies: el área construida supera diez veces el terreno. Puede ser válido en varias plantas; confirma las unidades.</p>}<Block title="Características" description="Superficies y distribución del inmueble."><div className="grid gap-4 sm:grid-cols-2">{propertyField("Área de terreno (m²)", "areaTerreno", "number")}{propertyField("Área construida (m²)", "areaConstruida", "number")}{propertyField(["Local","Local comercial","Oficina"].includes(form?.tipo||"") ? "Ambientes" : "Habitaciones", "habitaciones", "number")}{propertyField("Baños", "banos", "number")}</div><label className="mt-4 block text-xs font-semibold text-slate-600">Detalles adicionales<textarea rows={4} value={form?.caracteristicas || ""} disabled={busy} onChange={event => setForm(previous => previous ? { ...previous, caracteristicas: event.target.value } : previous)} placeholder="Distribución, acabados, servicios y otros detalles…" className={inputClass} /></label></Block>
                 <Block title="Observaciones"><textarea aria-label="Observaciones del inmueble" rows={3} value={form?.observaciones || ""} disabled={busy} onChange={event => setForm(previous => previous ? { ...previous, observaciones: event.target.value } : previous)} placeholder="Comentarios que quieras conservar en la ficha…" className={inputClass} /></Block>

@@ -108,8 +108,6 @@ export const inmInmuebles = mysqlTable("inm_inmuebles", {
   distrito: varchar("distrito", { length: 100 }),
   provincia: varchar("provincia", { length: 100 }),
   departamento: varchar("departamento", { length: 100 }),
-  latitud: decimal("latitud", { precision: 10, scale: 7 }),
-  longitud: decimal("longitud", { precision: 10, scale: 7 }),
   areaTerreno: decimal("area_terreno", { precision: 12, scale: 2 }),
   areaConstruida: decimal("area_construida", { precision: 12, scale: 2 }),
   habitaciones: int("habitaciones"),

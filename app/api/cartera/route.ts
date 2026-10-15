@@ -47,8 +47,6 @@ export async function GET(request: Request) {
       zonaId: inmInmuebles.zonaId,
         direccion: inmInmuebles.direccion,
 
-        latitud: inmInmuebles.latitud,
-        longitud: inmInmuebles.longitud,
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
@@ -319,8 +317,6 @@ const materialPendiente =
         zonaId: row.zonaId,
         operacion: row.operacion,
         direccion: row.direccion || null,
-        latitud: row.latitud ?? null,
-        longitud: row.longitud ?? null,
         precioVenta: tasacion?.precioVenta ?? null,
 
         estado:

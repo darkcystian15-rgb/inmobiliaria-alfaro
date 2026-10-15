@@ -25,7 +25,6 @@ import PublicationChecklist, { type Checklist } from "@/app/components/Publicati
 import StatusBadge from "@/app/components/StatusBadge";
 import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 import PhotoGallery from "@/app/components/PhotoGallery";
-import PropertyMapDialog from "@/app/components/PropertyMapDialog";
 
 type Estado = "Activo" | "Histórico";
 type Actividades = {
@@ -71,8 +70,6 @@ type Inmueble = {
   zona?: string;
   zonaId: number;
   distrito: string | null;
-  latitud: string | null;
-  longitud: string | null;
   estado: Estado;
   propietario: string;
   precioVenta: string | null;
@@ -293,7 +290,6 @@ export default function CarteraPage() {
   const [seleccionado, setSeleccionado] =
     useState<Inmueble | null>(null);
   const [galeria, setGaleria] = useState<Inmueble | null>(null);
-  const [mapa, setMapa] = useState<Inmueble | null>(null);
   const galleryDialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = galleryDialog.current;
@@ -662,7 +658,6 @@ export default function CarteraPage() {
                   </button>
                   {x && <div className="mx-4 mb-4 grid gap-2">
                     <button type="button" onClick={() => setGaleria(x)} disabled={!x.tieneFotos} aria-label={`${x.tieneFotos ? "Ver fotos" : "Fotos pendientes"} de ${x.nombre}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-[#c80000] enabled:hover:bg-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-500"><Icon name="camera" />{x.tieneFotos ? "Ver fotos" : "Fotos pendientes"}</button>
-                    <button type="button" onClick={() => setMapa(x)} aria-label={`${x.direccion?.trim() ? "Consultar ubicación referencial" : "Consultar zona aproximada"} de ${x.nombre}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"><Icon name="map" />{x.direccion?.trim() ? "Consultar ubicación referencial" : "Consultar zona aproximada"}</button>
                   </div>}
                   </article>
                 );
@@ -747,7 +742,6 @@ export default function CarteraPage() {
         <dialog ref={galleryDialog} onCancel={event => { event.preventDefault(); setGaleria(null); }} aria-labelledby="property-gallery-title" className="fixed inset-0 m-auto max-h-[90vh] w-[calc(100%_-_2rem)] max-w-4xl overflow-auto rounded-3xl bg-white p-5 shadow-2xl backdrop:bg-slate-950/50 sm:p-6">
           {galeria && <><div className="mb-5 flex items-start justify-between gap-3"><div className="min-w-0 break-words"><h2 id="property-gallery-title" className="text-lg font-bold text-slate-900">{galeria.nombre}</h2><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(galeria)} · {galeria.posicion ? `Posición ${galeria.posicion}` : 'Sin posición'}</p></div><button type="button" autoFocus onClick={() => setGaleria(null)} className="min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold">Cerrar</button></div><PhotoGallery key={galeria.inmuebleId} propertyId={galeria.inmuebleId} /></>}
         </dialog>
-        {mapa && <PropertyMapDialog key={mapa.inmuebleId} property={mapa} onClose={() => setMapa(null)} />}
         {/* MODAL */}
         {seleccionado && (
           <div
@@ -936,7 +930,6 @@ export default function CarteraPage() {
                 </p>
               </div>
 
-              <button type="button" onClick={() => setMapa(seleccionado)} className="mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"><Icon name="map" />{seleccionado.direccion?.trim() ? "Consultar ubicación referencial" : "Consultar zona aproximada"}</button>
               <button type="button" onClick={() => setGaleria(seleccionado)} disabled={!seleccionado.tieneFotos} className="mt-3 w-full rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-semibold text-[#c80000] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-500">{seleccionado.tieneFotos ? "Ver fotos del inmueble" : "Fotos pendientes"}</button>
               <div className="mt-5 grid grid-cols-2 gap-2">
                 <Link

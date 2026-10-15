@@ -43,8 +43,6 @@ CREATE TABLE inm_inmuebles (
   distrito VARCHAR(100) NULL,
   provincia VARCHAR(100) NULL,
   departamento VARCHAR(100) NULL,
-  latitud DECIMAL(10,7) NULL,
-  longitud DECIMAL(10,7) NULL,
   area_terreno DECIMAL(12,2) NULL,
   area_construida DECIMAL(12,2) NULL,
   habitaciones INT NULL,

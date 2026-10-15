@@ -38,8 +38,6 @@ async function findProperty(key: string) {
       direccion: inmInmuebles.direccion,
 
         inmuebleOrigenId: inmInmuebles.inmuebleOrigenId,
-      latitud: inmInmuebles.latitud,
-      longitud: inmInmuebles.longitud,
       distrito: inmInmuebles.distrito,
       provincia: inmInmuebles.provincia,
       departamento: inmInmuebles.departamento,
