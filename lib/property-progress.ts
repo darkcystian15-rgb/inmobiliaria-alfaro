@@ -18,7 +18,7 @@ export function propertyProgress(data: PropertyProgressData) {
   let next = firstPending;
   if (data.publicado) next = -1;
   return { steps, historical,
-    next: historical ? "Inmueble histórico · Consulta de los avances registrados." : next === -1 ? data.expedienteCompleto === false ? "Publicación completada. El expediente tiene requisitos pendientes; revisa la ficha." : "Publicación completada. Puedes revisar la ficha y el material." : ["", "Registrar la visita del inmueble.", "Registrar los tres precios acordados con el propietario.", "Completar DNI, archivo de tasación, fotos de la visita y texto.", "Confirmar la publicación del inmueble."][next],
+    next: historical ? "Inmueble histórico · Consulta de los avances registrados." : next === -1 ? data.expedienteCompleto === false ? "Publicación completada. El expediente tiene requisitos pendientes; revisa la ficha." : "Publicación completada. Puedes revisar la ficha y el material." : ["", "Registrar la visita del inmueble.", "Registrar los tres precios acordados con el propietario.", "Adjuntar DNI, archivo de tasación, fotos de la visita y texto.", "Confirmar la publicación del inmueble."][next],
     href: historical || next === -1 ? null : [null, "/registrar-visitas", "/registrar-tasaciones", "/tasaciones-textos-pendientes#material", "/tasaciones-textos-pendientes#material"][next],
   };
 }

@@ -38,3 +38,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Acceso al sistema
 
 El sistema requiere iniciar sesión con una cuenta de MySQL. Consulta [la guía de acceso](docs/acceso.md) para preparar los campos y configurar las cuentas de Alberto y del operador.
+
+## Registro simplificado
+
+El registro utiliza posición, operación, tipo, departamento, provincia, distrito, ubicación referencial y nombre de contacto. El DNI se adjunta como archivo después en Información de inmuebles. Consulta [el cambio, la conversión de datos y la restauración](docs/registro-simplificado-2026-10-15.md) antes de desplegar esta versión sobre una base existente.

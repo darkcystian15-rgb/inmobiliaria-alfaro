@@ -1,12 +1,11 @@
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   inmAsignacionesPosicion,
   inmInmuebles,
   inmPosiciones,
-  inmPropietarios,
 } from "@/db/schema";
 
 const tipoMap: Record<string, string> = {
@@ -30,8 +29,8 @@ export async function GET() {
         codigo: inmInmuebles.codigo,
         referencia: inmInmuebles.referencia,
         tipo: inmInmuebles.tipo,
-        propietarioNombres: inmPropietarios.nombres,
-        propietarioApellidos: inmPropietarios.apellidos,
+        propietarioNombres: inmInmuebles.nombreContacto,
+        propietarioApellidos: sql<string>`NULL`,
       })
       .from(inmPosiciones)
       .leftJoin(
@@ -45,10 +44,7 @@ export async function GET() {
         inmInmuebles,
         eq(inmInmuebles.id, inmAsignacionesPosicion.inmuebleId)
       )
-      .leftJoin(
-        inmPropietarios,
-        eq(inmPropietarios.id, inmInmuebles.propietarioId)
-      )
+
       .orderBy(inmPosiciones.numero);
 
     return NextResponse.json({

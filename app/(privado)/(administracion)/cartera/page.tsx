@@ -599,7 +599,7 @@ export default function CarteraPage() {
         {zonaSeleccionada !== null && <>
         <section aria-label="Buscar y filtrar cartera" className="aa-card mt-5 p-4 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <label className="relative min-w-0 flex-1"><span className="sr-only">Buscar inmueble</span><span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><Icon name="search" /></span><input value={busqueda} onChange={event => setBusqueda(event.target.value)} placeholder="Buscar por propietario o ubicación…" className="aa-input w-full pl-10" /></label>
+            <label className="relative min-w-0 flex-1"><span className="sr-only">Buscar inmueble</span><span aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><Icon name="search" /></span><input value={busqueda} onChange={event => setBusqueda(event.target.value)} placeholder="Buscar por contacto o ubicación…" className="aa-input w-full pl-10" /></label>
             <div aria-label="Vista de la cartera" className="grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
               <button type="button" aria-pressed={vista === "posiciones"} onClick={() => setVista("posiciones")} className={`rounded-lg px-4 py-2 text-sm font-semibold ${vista === "posiciones" ? "bg-[#c80000] text-white" : "text-slate-600"}`}>Tarjetas</button>
               <button type="button" aria-pressed={vista === "lista"} onClick={() => { setVista("lista"); setSoloDisponibles(false); }} className={`rounded-lg px-4 py-2 text-sm font-semibold ${vista === "lista" ? "bg-[#c80000] text-white" : "text-slate-600"}`}>Lista compacta</button>
@@ -700,7 +700,7 @@ export default function CarteraPage() {
                   </button>
                   {x && <div className="mx-4 mb-4 grid gap-2">
                     <button type="button" onClick={() => setGaleria(x)} disabled={!x.tieneFotos} aria-label={`${x.tieneFotos ? "Ver fotos" : "Fotos pendientes"} de ${x.nombre}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-[#c80000] enabled:hover:bg-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-500"><Icon name="camera" />{x.tieneFotos ? "Ver fotos" : "Fotos pendientes"}</button>
-                    <button type="button" onClick={() => setMapa(x)} aria-label={`${x.direccion?.trim() ? "Consultar dirección" : "Consultar zona aproximada"} de ${x.nombre}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"><Icon name="map" />{x.direccion?.trim() ? "Consultar dirección" : "Consultar zona aproximada"}</button>
+                    <button type="button" onClick={() => setMapa(x)} aria-label={`${x.direccion?.trim() ? "Consultar ubicación referencial" : "Consultar zona aproximada"} de ${x.nombre}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"><Icon name="map" />{x.direccion?.trim() ? "Consultar ubicación referencial" : "Consultar zona aproximada"}</button>
                   </div>}
                   </article>
                 );
@@ -852,7 +852,7 @@ export default function CarteraPage() {
 
                 <div className="rounded-2xl bg-background p-4">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Propietario
+                    Contacto
                   </p>
                   <p className="mt-1 text-sm font-medium text-slate-700">
                     {seleccionado.propietario}
@@ -965,7 +965,7 @@ export default function CarteraPage() {
                 </p>
               </div>
 
-              <button type="button" onClick={() => setMapa(seleccionado)} className="mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"><Icon name="map" />{seleccionado.direccion?.trim() ? "Consultar dirección" : "Consultar zona aproximada"}</button>
+              <button type="button" onClick={() => setMapa(seleccionado)} className="mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-700 enabled:hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-500"><Icon name="map" />{seleccionado.direccion?.trim() ? "Consultar ubicación referencial" : "Consultar zona aproximada"}</button>
               <button type="button" onClick={() => setGaleria(seleccionado)} disabled={!seleccionado.tieneFotos} className="mt-3 w-full rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-semibold text-[#c80000] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-500">{seleccionado.tieneFotos ? "Ver fotos del inmueble" : "Fotos pendientes"}</button>
               <div className="mt-5 grid grid-cols-2 gap-2">
                 <Link

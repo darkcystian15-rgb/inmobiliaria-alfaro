@@ -14,7 +14,6 @@ import {
   inmLiberaciones,
   inmNegociaciones,
   inmPosiciones,
-  inmPropietarios,
   inmPublicaciones,
   inmTasaciones,
   inmTimeline,
@@ -167,7 +166,7 @@ export async function GET(request: NextRequest) {
       const [positionCountResult]=await db.execute(sql`SELECT COUNT(*) total ${positionFrom} WHERE ${positionWhere}`);
       const total=Number((positionCountResult as unknown as {total:number}[])[0]?.total??0);
       if(all&&total>10000)return NextResponse.json({error:'Reduce el período o los filtros para descargar como máximo 10 000 asignaciones.'},{status:400});
-      const [positionData]=await db.execute(sql`SELECT ${inmInmuebles.codigo} codigo,${inmInmuebles.referencia} nombre,${inmInmuebles.direccion} direccion,${inmInmuebles.numeroDireccion} numeroDireccion,${inmInmuebles.distrito} distrito,${inmInmuebles.provincia} provincia,${inmInmuebles.departamento} departamento,${inmInmuebles.tipo} tipo,${inmInmuebles.operacion} operacion,TRIM(CONCAT(COALESCE(${inmPropietarios.nombres},''),' ',COALESCE(${inmPropietarios.apellidos},''))) propietario,${inmPosiciones.numero} posicion,IF(${inmInmuebles.estado}='activo','Activo','Histórico') estado,${databaseInstant(inmAsignacionesPosicion.fechaInicio)} fechaInicioPosicion,${inmAsignacionesPosicion.fechaFin} fechaFinPosicion,${inmAsignacionesPosicion.activa} activaPosicion ${positionFrom} WHERE ${positionWhere} ORDER BY ${inmAsignacionesPosicion.fechaInicio},${inmAsignacionesPosicion.id} LIMIT ${all?10000:pageSize} OFFSET ${all?0:(page-1)*pageSize}`);
+      const [positionData]=await db.execute(sql`SELECT ${inmInmuebles.codigo} codigo,${inmInmuebles.referencia} nombre,${inmInmuebles.direccion} direccion,${inmInmuebles.distrito} distrito,${inmInmuebles.provincia} provincia,${inmInmuebles.departamento} departamento,${inmInmuebles.tipo} tipo,${inmInmuebles.operacion} operacion,${inmInmuebles.nombreContacto} propietario,${inmPosiciones.numero} posicion,IF(${inmInmuebles.estado}='activo','Activo','Histórico') estado,${databaseInstant(inmAsignacionesPosicion.fechaInicio)} fechaInicioPosicion,${inmAsignacionesPosicion.fechaFin} fechaFinPosicion,${inmAsignacionesPosicion.activa} activaPosicion ${positionFrom} WHERE ${positionWhere} ORDER BY ${inmAsignacionesPosicion.fechaInicio},${inmAsignacionesPosicion.id} LIMIT ${all?10000:pageSize} OFFSET ${all?0:(page-1)*pageSize}`);
       const [available]=await db.execute(sql`SELECT COUNT(*) total FROM inm_posiciones p WHERE p.activo=1 AND NOT EXISTS(SELECT 1 FROM inm_asignaciones_posicion a WHERE a.posicion_id=p.id AND a.activa=1)`);
       return NextResponse.json({ok:true,reporte,rows:(positionData as unknown as Record<string,unknown>[]).map(row=>({...row,ubicacion:propertyAddress(row),activaPosicion:Boolean(row.activaPosicion)})),resumen:{...positionSummary,total,disponibles:Number((available as unknown as {total:number}[])[0]?.total??0),aprobaciones:0,negociaciones:0},paginacion:{pagina:page,tamano:pageSize,total,paginas:Math.ceil(total/pageSize)},fechaFiltro:periodField});
     }
@@ -182,18 +181,15 @@ export async function GET(request: NextRequest) {
         fechaRegistro: databaseInstant(inmInmuebles.fechaRegistro),
         fechaSalida: inmInmuebles.fechaSalida,
         direccion: inmInmuebles.direccion,
-        numeroDireccion: inmInmuebles.numeroDireccion,
+
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
-        propietario: inmPropietarios.nombres,
-        propietarioApellidos: inmPropietarios.apellidos,
+        propietario: inmInmuebles.nombreContacto,
+        propietarioApellidos: sql<string>`NULL`,
       })
       .from(inmInmuebles)
-      .leftJoin(
-        inmPropietarios,
-        eq(inmPropietarios.id, inmInmuebles.propietarioId),
-      )
+
       .leftJoin(inmTasaciones,eq(inmTasaciones.inmuebleId,inmInmuebles.id))
       .leftJoin(inmPublicaciones,eq(inmPublicaciones.inmuebleId,inmInmuebles.id))
       .where(where)
@@ -439,7 +435,7 @@ export async function GET(request: NextRequest) {
             x.propietarioApellidos,
           ]
             .filter(Boolean)
-            .join(" ") || "Sin propietario",
+            .join(" ") || "Sin contacto",
         posicion:
           activePosition?.posicion ??
           latestPosition?.posicion ??

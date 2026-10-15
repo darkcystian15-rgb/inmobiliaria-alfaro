@@ -9,7 +9,6 @@ import {
   inmAsignacionesPosicion,
   inmInmuebles,
   inmPosiciones,
-  inmPropietarios,
   inmTimeline,
   inmVisitas,
   inmSeguimiento,
@@ -39,31 +38,16 @@ export async function GET() {
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
         direccion: inmInmuebles.direccion,
-        numeroDireccion: inmInmuebles.numeroDireccion,
+
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
-        propietario: sql<string>`
-          CONCAT(
-            COALESCE(${inmPropietarios.nombres}, ''),
-            CASE
-              WHEN ${inmPropietarios.nombres} IS NOT NULL
-                AND ${inmPropietarios.apellidos} IS NOT NULL
-                THEN ' '
-              ELSE ''
-            END,
-            COALESCE(${inmPropietarios.apellidos}, '')
-          )
-        `,
-        dni: inmPropietarios.dni,
+        propietario: inmInmuebles.nombreContacto,
         posicion: inmPosiciones.numero,
         fechaRegistro: databaseInstant(inmInmuebles.fechaRegistro),
       })
       .from(inmInmuebles)
-      .leftJoin(
-        inmPropietarios,
-        eq(inmInmuebles.propietarioId, inmPropietarios.id)
-      )
+
       .innerJoin(
         inmAsignacionesPosicion,
         and(
@@ -117,7 +101,6 @@ export async function GET() {
         nombre: row.referencia,
         ubicacion: propertyAddress(row),
         propietario: row.propietario || "",
-        dni: row.dni || "",
         posicion: String(row.posicion),
         dias,
         responsable:seguimiento.find(item=>item.inmuebleId===row.id)?.responsable??null,

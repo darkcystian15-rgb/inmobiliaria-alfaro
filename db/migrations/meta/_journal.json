@@ -106,6 +106,13 @@
       "when": 1791848662968,
       "tag": "0014_uniform-property-identities",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1792036939512,
+      "tag": "0015_simplified_registration",
+      "breakpoints": true
     }
   ]
 }

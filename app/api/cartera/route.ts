@@ -10,7 +10,6 @@ import {
   inmInmuebles,
   inmNegociaciones,
   inmPosiciones,
-  inmPropietarios,
   inmPublicaciones,
   inmTasaciones,
   inmVisitas,
@@ -34,18 +33,17 @@ export async function GET() {
      *
      * La cartera se determina por estado, no por etapa.
      * Un inmueble puede estar activo aunque tenga actividades
-     * pendientes o todavía no tenga propietario registrado.
+     * pendientes o datos de contacto por completar.
      */
     const inmuebles = await db
       .select({
         id: inmInmuebles.id,
         codigo: inmInmuebles.codigo,
-        propietarioId: inmInmuebles.propietarioId,
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
         direccion: inmInmuebles.direccion,
-        numeroDireccion: inmInmuebles.numeroDireccion,
+
         latitud: inmInmuebles.latitud,
         longitud: inmInmuebles.longitud,
         distrito: inmInmuebles.distrito,
@@ -55,14 +53,11 @@ export async function GET() {
         fechaRegistro: inmInmuebles.fechaRegistro,
         fechaSalida: inmInmuebles.fechaSalida,
         posicion: inmPosiciones.numero,
-        propietarioNombres: inmPropietarios.nombres,
-        propietarioApellidos: inmPropietarios.apellidos,
+        propietarioNombres: inmInmuebles.nombreContacto,
+        propietarioApellidos: sql<string>`NULL`,
       })
       .from(inmInmuebles)
-      .leftJoin(
-        inmPropietarios,
-        eq(inmPropietarios.id, inmInmuebles.propietarioId)
-      )
+
       .leftJoin(
         inmAsignacionesPosicion,
         and(
@@ -318,7 +313,7 @@ const materialPendiente =
         distrito: row.distrito?.trim() || null,
         zona: [row.distrito, row.provincia, row.departamento].filter(Boolean).join(", "),
         operacion: row.operacion,
-        direccion: [row.direccion,row.numeroDireccion].filter(Boolean).join(" ") || null,
+        direccion: row.direccion || null,
         latitud: row.latitud ?? null,
         longitud: row.longitud ?? null,
         precioVenta: tasacion?.precioVenta ?? null,
@@ -331,7 +326,7 @@ const materialPendiente =
         propietario:
           [row.propietarioNombres, row.propietarioApellidos]
             .filter(Boolean)
-            .join(" ") || "Sin propietario",
+            .join(" ") || "Sin contacto",
 
         actividades: {
           visita: {

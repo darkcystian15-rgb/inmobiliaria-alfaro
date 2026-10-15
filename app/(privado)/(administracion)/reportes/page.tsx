@@ -379,7 +379,7 @@ export default function Page() {
     codigo: "Código",
     posicion: "Pos.",
     nombre: "Inmueble",
-    propietario: "Propietario",
+    propietario: "Contacto",
     ubicacion: "Ubicación",
     tipo: "Tipo",
     operacion: "Operación",
@@ -761,7 +761,7 @@ export default function Page() {
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 px-5 py-3 print:hidden">
             <label className="w-full text-xs font-semibold text-slate-500 sm:max-w-xs">Buscar en esta página
               <input type="search" value={busquedaResultado} onChange={event => setBusquedaResultado(event.target.value)}
-                placeholder="Código, inmueble, propietario…" className="aa-input mt-1 w-full" />
+                placeholder="Código, ubicación, contacto…" className="aa-input mt-1 w-full" />
             </label>
             <div className="flex flex-wrap gap-2" aria-busy={!!exportando}>
               <button type="button" onClick={() => void descargar("pdf")} disabled={cargando || !!exportando || !rows.length || !columnasElegidas.length} className="aa-button aa-button-secondary disabled:opacity-40">{exportando === "pdf" ? "Preparando PDF…" : "Descargar PDF"}</button>

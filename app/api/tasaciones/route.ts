@@ -5,13 +5,12 @@ import { authorizeApi } from "@/lib/auth";
 import { parseBusinessDate } from "@/lib/calendar.mjs";
 import { parsePrice } from "@/lib/prices.mjs";
 import { NextResponse } from "next/server";
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   inmAsignacionesPosicion,
   inmInmuebles,
   inmPosiciones,
-  inmPropietarios,
   inmTasaciones,
   inmTimeline,
   inmVisitas,
@@ -27,8 +26,8 @@ function toMoney(value: unknown) {
 
 type TasacionRow = {
   inmuebleId: number; codigo: string; posicion: number | null; referencia: string; tipo: string; operacion: string;
-  distrito: string | null; provincia: string | null; departamento: string | null; direccion: string | null; numeroDireccion: string | null;
-  propietarioNombres: string | null; propietarioApellidos: string | null; dni: string | null;
+  distrito: string | null; provincia: string | null; departamento: string | null; direccion: string | null;
+  propietarioNombres: string | null; propietarioApellidos: string | null;
   tasacionId?: number; fechaTasacion?: Date | string | null; valorReferencia?: string | null;
   precioObjetivo?: string | null; precioVenta?: string | null; situacion?: string | null; observacion?: string | null;
 };
@@ -49,8 +48,7 @@ function mapRow(row: TasacionRow) {
     propietario:
       [row.propietarioNombres, row.propietarioApellidos]
         .filter(Boolean)
-        .join(" ") || "Sin propietario",
-    dni: row.dni ?? null,
+        .join(" ") || "Sin contacto",
     fechaTasacion: row.fechaTasacion ?? null,
     valorReferencia: row.valorReferencia ?? null,
     precioObjetivo: row.precioObjetivo ?? null,
@@ -72,20 +70,16 @@ export async function GET() {
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
         direccion: inmInmuebles.direccion,
-        numeroDireccion: inmInmuebles.numeroDireccion,
+
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
-        propietarioNombres: inmPropietarios.nombres,
-        propietarioApellidos: inmPropietarios.apellidos,
-        dni: inmPropietarios.dni,
+        propietarioNombres: inmInmuebles.nombreContacto,
+        propietarioApellidos: sql<string>`NULL`,
         posicion: inmPosiciones.numero,
       })
       .from(inmInmuebles)
-      .leftJoin(
-        inmPropietarios,
-        eq(inmPropietarios.id, inmInmuebles.propietarioId)
-      )
+
       .leftJoin(
         inmTasaciones,
         eq(inmTasaciones.inmuebleId, inmInmuebles.id)
@@ -131,13 +125,12 @@ export async function GET() {
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
         direccion: inmInmuebles.direccion,
-        numeroDireccion: inmInmuebles.numeroDireccion,
+
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
-        propietarioNombres: inmPropietarios.nombres,
-        propietarioApellidos: inmPropietarios.apellidos,
-        dni: inmPropietarios.dni,
+        propietarioNombres: inmInmuebles.nombreContacto,
+        propietarioApellidos: sql<string>`NULL`,
         posicion: inmPosiciones.numero,
         fechaTasacion: inmTasaciones.fechaTasacion,
         valorReferencia: inmTasaciones.valorReferencia,
@@ -151,10 +144,7 @@ export async function GET() {
         inmInmuebles,
         eq(inmInmuebles.id, inmTasaciones.inmuebleId)
       )
-      .leftJoin(
-        inmPropietarios,
-        eq(inmPropietarios.id, inmInmuebles.propietarioId)
-      )
+
       .leftJoin(
         inmAsignacionesPosicion,
         and(

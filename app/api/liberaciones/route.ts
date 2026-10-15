@@ -3,14 +3,13 @@ import { rentalResult } from "@/lib/rental-result.mjs";
 import { saleResult } from "@/lib/sale-result.mjs";
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   inmAsignacionesPosicion,
   inmInmuebles,
   inmLiberaciones,
   inmPosiciones,
-  inmPropietarios,
   inmTimeline,
 } from "@/db/schema";
 
@@ -39,24 +38,17 @@ export async function GET() {
         operacion: inmInmuebles.operacion,
         referencia: inmInmuebles.referencia,
         direccion: inmInmuebles.direccion,
-        numeroDireccion: inmInmuebles.numeroDireccion,
+
         distrito: inmInmuebles.distrito,
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
-        propietarioNombres: inmPropietarios.nombres,
-        propietarioApellidos: inmPropietarios.apellidos,
-        dni: inmPropietarios.dni,
+        propietarioNombres: inmInmuebles.nombreContacto,
+        propietarioApellidos: sql<string>`NULL`,
         posicion: inmPosiciones.numero,
         fechaRegistro: inmInmuebles.fechaRegistro,
       })
       .from(inmInmuebles)
-      .leftJoin(
-        inmPropietarios,
-        eq(
-          inmPropietarios.id,
-          inmInmuebles.propietarioId
-        )
-      )
+
       .leftJoin(
         inmAsignacionesPosicion,
         and(
@@ -95,8 +87,7 @@ export async function GET() {
             row.propietarioApellidos,
           ]
             .filter(Boolean)
-            .join(" ") || "Sin propietario",
-        dni: row.dni,
+            .join(" ") || "Sin contacto",
         fechaRegistro: row.fechaRegistro,
       })),
     });

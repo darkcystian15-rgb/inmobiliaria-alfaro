@@ -2,13 +2,12 @@ import { propertyAddress } from "@/lib/property-address.mjs";
 import { publicationReadiness, requirePublicationReadiness } from "@/lib/publication-readiness";
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   inmAsignacionesPosicion,
   inmInmuebles,
   inmPosiciones,
-  inmPropietarios,
   inmPublicaciones,
   inmTasaciones,
   inmTimeline,
@@ -32,7 +31,7 @@ const mapPending = (row: Awaited<ReturnType<typeof approved>>[number]) => ({
   propietario:
     [row.propietarioNombres, row.propietarioApellidos]
       .filter(Boolean)
-      .join(" ") || "Sin propietario",
+      .join(" ") || "Sin contacto",
   valorReferencia: row.valorReferencia,
   precioObjetivo: row.precioObjetivo,
   precioVenta: row.precioVenta,
@@ -49,11 +48,11 @@ async function approved() {
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
       direccion: inmInmuebles.direccion,
-      numeroDireccion: inmInmuebles.numeroDireccion,
+
       provincia: inmInmuebles.provincia,
       departamento: inmInmuebles.departamento,
-      propietarioNombres: inmPropietarios.nombres,
-      propietarioApellidos: inmPropietarios.apellidos,
+      propietarioNombres: inmInmuebles.nombreContacto,
+      propietarioApellidos: sql<string>`NULL`,
       posicion: inmPosiciones.numero,
       valorReferencia: inmTasaciones.valorReferencia,
       precioObjetivo: inmTasaciones.precioObjetivo,
@@ -66,13 +65,7 @@ async function approved() {
       inmInmuebles,
       eq(inmInmuebles.id, inmTasaciones.inmuebleId)
     )
-    .leftJoin(
-      inmPropietarios,
-      eq(
-        inmPropietarios.id,
-        inmInmuebles.propietarioId
-      )
-    )
+
     .leftJoin(
       inmAsignacionesPosicion,
       and(
@@ -119,7 +112,7 @@ async function published() {
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
       direccion: inmInmuebles.direccion,
-      numeroDireccion: inmInmuebles.numeroDireccion,
+
       provincia: inmInmuebles.provincia,
       departamento: inmInmuebles.departamento,
       posicion: inmPosiciones.numero,
@@ -171,7 +164,7 @@ async function ready() {
         operacion: inmInmuebles.operacion,
       referencia: inmInmuebles.referencia,
       direccion: inmInmuebles.direccion,
-      numeroDireccion: inmInmuebles.numeroDireccion,
+
       provincia: inmInmuebles.provincia,
       departamento: inmInmuebles.departamento,
       posicion: inmPosiciones.numero,

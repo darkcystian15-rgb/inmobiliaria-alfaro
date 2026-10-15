@@ -15,9 +15,9 @@ test('invalid dates cannot silently roll into the next month', () => {
   assert.ok(parseBusinessDate('2024-02-29', now));
 });
 test('partial property edits preserve omitted fields and reject invalid dimensions', () => {
-  assert.deepEqual(propertyInput({ referencia: ' Casa ' }), { referencia: 'Casa' });
+  assert.deepEqual(propertyInput({ direccion: ' Frente al parque ' }), { direccion: 'Frente al parque' });
   assert.deepEqual(propertyInput({ areaTerreno: '150.5', habitaciones: '3', banos: '' }), { areaTerreno: '150.50', habitaciones: 3, banos: null });
-  for (const body of [{ areaTerreno: '-1' }, { habitaciones: '2.5' }, { banos: true }, { areaConstruida: 'abc' }, { referencia: '' }, { distrito: 'X'.repeat(101) }]) assert.throws(() => propertyInput(body));
+  for (const body of [{ areaTerreno: '-1' }, { habitaciones: '2.5' }, { banos: true }, { areaConstruida: 'abc' }, { direccion: '' }, { distrito: 'X'.repeat(101) }]) assert.throws(() => propertyInput(body));
 });
 test('owners are optional until filled, then require consistent identification', () => {
   assert.equal(ownerInput({}), null);

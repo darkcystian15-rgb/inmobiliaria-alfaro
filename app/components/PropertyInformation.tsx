@@ -36,21 +36,19 @@ import { filterProperties } from "@/lib/property-list.mjs";
 type Item = { id: string; posicion: number | null; nombre: string; tipo: string; ubicacion: string; propietario: string; estado: string };
 type Property = {
   id: number; inmuebleOrigenId?:number|null; codigo: string; posicion: number | null; tipo: string; operacion: string; referencia: string; estado: string;
-  propietarioId: number | null; numeroDireccion?:string|null; direccion: string | null; distrito: string | null; provincia: string | null; departamento: string | null;
+  nombreContacto: string | null; direccion: string | null; distrito: string | null; provincia: string | null; departamento: string | null;
   latitud: string | null; longitud: string | null;
   areaTerreno: string | null; areaConstruida: string | null; habitaciones: string | number | null; banos: string | number | null;
   caracteristicas: string | null; observaciones: string | null; fechaRegistro: string;
-  propietarioDni: string | null; propietarioNombres: string | null; propietarioApellidos: string | null;
-  propietarioTelefono: string | null; propietarioEmail: string | null; propietarioReferencia: string | null;
+
 };
-type Owner = { dni: string; nombres: string; apellidos: string; telefono: string; email: string; referenciaContacto: string };
+
 type Document = { id: number; tipoDocumento: string; nombre: string; enlace: string; observacion: string | null; almacenamiento: string; tipoMime: string | null; nombreOriginal: string | null; tamanoBytes: number | null };
 type Details = { alquiler?: {fechaAlquiler:string|null;rentaMensual:string|null;comision:string|null;garantia:string|null;adelanto:string|null;fechaInicioAlquiler:string|null;fechaFinAlquiler:string|null}|null; relacionados?: {id:number;codigo:string;referencia:string}[]; historial?: {id:number;evento:string;observacion:string|null;fecha:string;usuario:string|null}[]; expediente?: Checklist; venta?: { fechaVenta: string | null; precioFinal: string | null; comision: string | null } | null; progreso: PropertyProgressData; inmueble: Property; tasacion: { fechaTasacion: string; valorReferencia: string | null; precioObjetivo: string | null; precioVenta: string | null; observacion: string | null } | null; publicacion: { texto: string; enlace: string; publicado: boolean; fechaPublicacion: string | null } | null };
 type DocumentForm = { tipoDocumento: string; nombre: string; observacion: string };
 const emptyDocument: DocumentForm = { tipoDocumento: "DNI_PROPIETARIO", nombre: "", observacion: "" };
-const emptyOwner: Owner = { dni: "", nombres: "", apellidos: "", telefono: "", email: "", referenciaContacto: "" };
 const documentTypes = [["DNI_PROPIETARIO", "DNI del propietario"], ["DOCUMENTO_PROPIEDAD", "Documento de propiedad"], ["COPIA_LITERAL", "Copia literal"], ["CONTRATO", "Contrato"], ["TASACION", "Tasación"], ["TEXTO_PUBLICACION", "Texto de publicación"], ["VIDEO_INMUEBLE", "Video / recorrido"], ["PLANO", "Plano"], ["RECIBO_SERVICIO", "Recibo de servicio"], ["OTRO", "Otro"]];
-const tabs = [["Resumen", "home"], ["Propietario", "user"], ["Inmueble", "building"], ["Documentación", "document"], ["Fotos", "image"], ["Visitas", "image"], ["Tasación", "chart"], ["Publicación", "publish"]] as const;
+const tabs = [["Resumen", "home"], ["Contacto", "user"], ["Inmueble", "building"], ["Documentación", "document"], ["Fotos", "image"], ["Visitas", "image"], ["Tasación", "chart"], ["Publicación", "publish"]] as const;
 type Tab = (typeof tabs)[number][0];
 type IconName = (typeof tabs)[number][1] | "search" | "map" | "check" | "arrow" | "save" | "close" | "link";
 const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 text-sm font-normal text-slate-800 outline-none transition placeholder:text-slate-500 focus:border-[#c80000]/40 focus:bg-white disabled:opacity-50";
@@ -76,9 +74,6 @@ function Icon({ name, className = "h-4 w-4" }: { name: IconName; className?: str
   return <svg aria-hidden="true" className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
 
-function ownerFrom(property: Property): Owner {
-  return { dni: property.propietarioDni ?? "", nombres: property.propietarioNombres ?? "", apellidos: property.propietarioApellidos ?? "", telefono: property.propietarioTelefono ?? "", email: property.propietarioEmail ?? "", referenciaContacto: property.propietarioReferencia ?? "" };
-}
 const positionLabel = (position: number | null) => position == null ? "—" : String(position).padStart(2, "0");
 const money = (value: string | null | undefined) => value ? `S/ ${Number(value).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Por definir";
 const formatDate = (value: string | null) => value ? new Date(value).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }) : "Sin fecha";
@@ -127,8 +122,6 @@ function DeleteDocumentDialog({ document, busy, onCancel, onConfirm }: {
 
 export default function PropertyInformation({ initialCode = "", initialTab = "Resumen" }: { initialCode?: string; initialTab?: Tab }) {
   const admin = isAdministrator(useSessionUser());
-  const [changeOwner, setChangeOwner] = useState(false);
-  const [confirmOwner, setConfirmOwner] = useState(false);
   const [pendingProperty, setPendingProperty] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [query, setQuery] = useState("");
@@ -137,7 +130,6 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const [tab, setTab] = useState<Tab>(initialTab);
   const [details, setDetails] = useState<Details | null>(null);
   const [form, setForm] = useState<Property | null>(null);
-  const [owner, setOwner] = useState<Owner>(emptyOwner);
   const [documents, setDocuments] = useState<Document[]>([]);
   const documentFiles = documents.filter(document => document.tipoDocumento !== "FOTO_INMUEBLE");
   const photoCount = documents.filter(document => document.tipoDocumento === "FOTO_INMUEBLE" && document.tipoMime?.startsWith("image/")).length;
@@ -158,7 +150,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const loadRequest = useRef(0);
   const sheet = useRef<HTMLDivElement>(null);
   const filtered = useMemo(() => filterProperties(items, query, status) as Item[], [items, query, status]);
-  const dirty = !!details && (JSON.stringify(form) !== JSON.stringify(details.inmueble) || JSON.stringify(owner) !== JSON.stringify(ownerFrom(details.inmueble)));
+  const dirty = !!details && (JSON.stringify(form) !== JSON.stringify(details.inmueble));
 
   const load = useCallback((key: string, signal?: AbortSignal, preserveForm = false) => {
     const id = ++loadRequest.current;
@@ -169,8 +161,8 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
       requestJson<{ archivos: Document[]; subidaHabilitada: boolean }>(`/api/inmuebles/${encodeURIComponent(key)}/archivos`, { signal }),
     ]).then(([data, files]) => {
       if (signal?.aborted || id !== loadRequest.current) return;
-      setError(""); setDetails(data); if(!preserveForm){setForm(data.inmueble); setOwner(ownerFrom(data.inmueble));} setDocuments(files.archivos); setUploadReady(files.subidaHabilitada);
-      setItems(previous => previous.map(item => item.id !== data.inmueble.codigo ? item : { ...item, nombre: data.inmueble.referencia, ubicacion: propertyAddress(data.inmueble), propietario: [data.inmueble.propietarioNombres, data.inmueble.propietarioApellidos].filter(Boolean).join(" ") || "Sin propietario" }));
+      setError(""); setDetails(data); if(!preserveForm){setForm(data.inmueble);} setDocuments(files.archivos); setUploadReady(files.subidaHabilitada);
+      setItems(previous => previous.map(item => item.id !== data.inmueble.codigo ? item : { ...item, nombre: data.inmueble.referencia, ubicacion: propertyAddress(data.inmueble), propietario: data.inmueble.nombreContacto || "Sin contacto" }));
     }).catch(error => {
       if (!signal?.aborted && id === loadRequest.current) { setErrorCarga(true); setError(error instanceof Error ? error.message : "No se pudo cargar la ficha."); }
     }).finally(() => {
@@ -198,21 +190,17 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     setPendingProperty(null);
     ++loadRequest.current;
     setCode(key); setTab("Resumen"); setError(""); setMessage(""); setDocumentForm(emptyDocument); setDocumentFile(null);
-    setDetails(null); setForm(null); setOwner(emptyOwner); setDocuments([]); setLoading(Boolean(key));
+    setDetails(null); setForm(null); setDocuments([]); setLoading(Boolean(key));
     if (key && window.innerWidth < 1536) window.requestAnimationFrame(() => sheet.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));
   }
-  async function save(event?: FormEvent<HTMLFormElement>, sharedConfirmed = false) {
+  async function save(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
-    const ownerDirty = !!details && JSON.stringify(owner) !== JSON.stringify(ownerFrom(details.inmueble));
-    if (ownerDirty && !changeOwner && (details?.relacionados?.length ?? 0) > 1 && !sharedConfirmed) { setConfirmOwner(true); return; }
-    setConfirmOwner(false);
     if (!form || busy) return;
     setBusy(true); setError(""); setMessage("");
     try {
-      await requestJson(`/api/inmuebles/${encodeURIComponent(code)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, propietario: owner, cambiarPropietario: changeOwner, confirmarPropietarioCompartido: sharedConfirmed }) });
+      await requestJson(`/api/inmuebles/${encodeURIComponent(code)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       setLoading(true);
       await load(code);
-      setChangeOwner(false);
       setMessage("Cambios guardados correctamente.");
     } catch (error) { setError(error instanceof Error ? error.message : "No se pudieron guardar los cambios."); }
     finally { setBusy(false); }
@@ -247,11 +235,9 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     finally { setBusy(false); setDocumentToDelete(null); }
   }
   function propertyField(label: string, key: keyof Property, type = "text", placeholder?: string) {
-    return <label className="block text-xs font-semibold text-slate-600">{label}<input type={type} min={type === "number" ? 0 : undefined} step={type === "number" ? (key === "habitaciones" || key === "banos" ? "1" : "0.01") : undefined} value={typeof form?.[key] === "boolean" ? "" : form?.[key] ?? ""} placeholder={placeholder} required={key === "referencia"} disabled={busy} onChange={event => setForm(previous => previous ? { ...previous, [key]: event.target.value } : previous)} className={inputClass} /></label>;
+    return <label className="block text-xs font-semibold text-slate-600">{label}<input type={type} min={type === "number" ? 0 : undefined} step={type === "number" ? (key === "habitaciones" || key === "banos" ? "1" : "0.01") : undefined} value={typeof form?.[key] === "boolean" ? "" : form?.[key] ?? ""} placeholder={placeholder} required={key === "direccion" || key === "nombreContacto"} maxLength={key === "direccion" ? 350 : key === "nombreContacto" ? 281 : undefined} disabled={busy} onChange={event => setForm(previous => previous ? { ...previous, [key]: event.target.value } : previous)} className={inputClass} /></label>;
   }
-  function ownerField(label: string, key: keyof Owner, type = "text") {
-    return <label className="block text-xs font-semibold text-slate-600">{label}<input type={type} maxLength={key === "dni" ? 8 : undefined} inputMode={key === "dni" ? "numeric" : undefined} value={owner[key]} disabled={busy} onChange={event => setOwner(previous => ({ ...previous, [key]: event.target.value }))} className={inputClass} /></label>;
-  }
+
 
   return <NavigationReturnProvider href={originHref}><main className="min-h-screen bg-background p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
     {pendingProperty !== null && <ConfirmDialog title="Cambios sin guardar" confirmLabel="Descartar cambios" onCancel={() => setPendingProperty(null)} onConfirm={() => selectProperty(pendingProperty, true)}><p>Tienes cambios pendientes en esta ficha. Si cambias de inmueble, se descartarán.</p></ConfirmDialog>}
@@ -286,7 +272,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
           {code && <button type="button" disabled={busy} onClick={() => selectProperty("")} className="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-500 2xl:hidden">← Volver a elegir inmueble</button>}
           {error && <MobileFormFeedback value={error}><Feedback tone="error" className="mb-4">{error}{errorCarga && <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); void load(code, undefined, !!details); }} className="aa-button aa-button-secondary mt-3">{loading ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
           {message && <MobileFormFeedback value={message}><Feedback className="mb-4">{message}</Feedback></MobileFormFeedback>}
-          {loading && !details ? <div role="status" className="space-y-5 rounded-3xl border border-slate-200 bg-white p-8"><p className="text-sm text-slate-500">Cargando ficha del inmueble…</p><div className="h-28 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" /><div className="h-64 animate-pulse rounded-2xl bg-slate-50 motion-reduce:animate-none" /></div> : !details ? <div className="flex min-h-[480px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center"><div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-red-100 bg-[#fff5f4] text-[#c80000]"><Icon name="home" className="h-9 w-9" /></div><p className="mt-6 text-lg font-bold text-slate-900">La ficha de tu inmueble, en un solo lugar</p><p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">Selecciona un inmueble de la lista para consultar sus datos, completar la información y organizar sus documentos.</p><div className="mt-7 flex flex-wrap justify-center gap-2">{["Datos del propietario", "Características", "Documentación"].map(label => <span key={label} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500">{label}</span>)}</div></div> : <>
+          {loading && !details ? <div role="status" className="space-y-5 rounded-3xl border border-slate-200 bg-white p-8"><p className="text-sm text-slate-500">Cargando ficha del inmueble…</p><div className="h-28 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" /><div className="h-64 animate-pulse rounded-2xl bg-slate-50 motion-reduce:animate-none" /></div> : !details ? <div className="flex min-h-[480px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center"><div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-red-100 bg-[#fff5f4] text-[#c80000]"><Icon name="home" className="h-9 w-9" /></div><p className="mt-6 text-lg font-bold text-slate-900">La ficha de tu inmueble, en un solo lugar</p><p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">Selecciona un inmueble de la lista para consultar sus datos, completar la información y organizar sus documentos.</p><div className="mt-7 flex flex-wrap justify-center gap-2">{["Nombre de contacto", "Características", "Documentación"].map(label => <span key={label} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500">{label}</span>)}</div></div> : <>
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.03)]">
               <div className="h-1.5 bg-[#c80000]" />
               <div className="grid grid-cols-1 items-start gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-6">
@@ -298,7 +284,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
               </nav>
             </section>
 
-            <DraftRecovery key={code} draftKey={`ficha:${details.inmueble.id}`} data={{form,owner,changeOwner}} dirty={dirty} onRestore={draft=>{if(draft.form&&typeof draft.form==='object'&&draft.owner&&typeof draft.owner==='object'){setForm(draft.form as Property);setOwner(draft.owner as Owner);setChangeOwner(draft.changeOwner===true);}}}/>
+            <DraftRecovery key={code} draftKey={`ficha:simple-${details.inmueble.id}`} data={{form}} dirty={dirty} onRestore={draft=>{if(draft.form&&typeof draft.form==='object')setForm(draft.form as Property);}}/>
             <PropertyProgress data={details.progreso} administrator={admin} propertyId={details.inmueble.id} />
             <OperationalTracking key={`tracking-${code}`} propertyId={details.inmueble.id} administrator={admin} progress={details.progreso}/>
             <PropertyHistory events={details.historial??[]}/>
@@ -309,24 +295,17 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
               {tab === "Resumen" && <div className="space-y-6">{details.inmueble.inmuebleOrigenId&&<Link href={`/datos-inmuebles?codigo=${details.inmueble.inmuebleOrigenId}`} className="text-sm font-semibold text-[#c80000]">Consultar contrato y ficha de la captación anterior →</Link>}{details.alquiler && <Block title="Alquiler registrado" description={`Cierre: ${formatDate(details.alquiler.fechaAlquiler)} · Inicio: ${formatDate(details.alquiler.fechaInicioAlquiler)} · Fin: ${formatDate(details.alquiler.fechaFinAlquiler)}`}><div className="grid gap-3 sm:grid-cols-2"><Stat label="Renta mensual acordada" value={money(details.alquiler.rentaMensual)} icon="chart" /><Stat label="Comisión" value={money(details.alquiler.comision)} icon="chart" /><Stat label="Garantía" value={money(details.alquiler.garantia)} icon="chart" /><Stat label="Adelanto" value={money(details.alquiler.adelanto)} icon="chart" /></div></Block>}
 
                 <PropertyLocation key={`${code}-summary`} latitude={details.inmueble.latitud} longitude={details.inmueble.longitud} address={propertyAddress(details.inmueble, "")} />
-                <Block title="Una mirada al inmueble" description="Los datos principales para continuar completando la ficha."><div className="grid gap-3 sm:grid-cols-2"><Stat label="Propietario" value={[details.inmueble.propietarioNombres, details.inmueble.propietarioApellidos].filter(Boolean).join(" ") || "Por completar"} icon="user" /><Stat label="Dirección" value={details.inmueble.direccion || "Por completar"} icon="map" /><Stat label="Documentación" value={`${documentFiles.length} documento${documentFiles.length === 1 ? "" : "s"} registrado${documentFiles.length === 1 ? "" : "s"}`} icon="document" /><Stat label="Publicación" value={details.publicacion?.publicado ? "Publicado" : details.publicacion ? details.expediente?.complete ? "Lista para publicar" : "Expediente pendiente" : "Sin publicación"} icon="publish" /></div></Block>
+                <Block title="Una mirada al inmueble" description="Los datos principales para continuar completando la ficha."><div className="grid gap-3 sm:grid-cols-2"><Stat label="Contacto" value={details.inmueble.nombreContacto || "Por completar"} icon="user" /><Stat label="Ubicación referencial" value={details.inmueble.direccion || "Por completar"} icon="map" /><Stat label="Documentación" value={`${documentFiles.length} documento${documentFiles.length === 1 ? "" : "s"} registrado${documentFiles.length === 1 ? "" : "s"}`} icon="document" /><Stat label="Publicación" value={details.publicacion?.publicado ? "Publicado" : details.publicacion ? details.expediente?.complete ? "Lista para publicar" : "Expediente pendiente" : "Sin publicación"} icon="publish" /></div></Block>
                 <Block title="Precios del inmueble"><div className="grid gap-3 sm:grid-cols-3">{[[referenceLabel(details.inmueble.operacion), details.tasacion?.valorReferencia], [targetLabel(details.inmueble.operacion), details.tasacion?.precioObjetivo], [priceLabel(details.inmueble.operacion), details.tasacion?.precioVenta]].map(([label, value]) => <div key={label} className={`rounded-2xl border p-4 ${label === priceLabel(details.inmueble.operacion) ? "border-red-100 bg-[#fff5f4]" : "border-slate-100 bg-slate-50"}`}><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-2 text-sm font-bold text-slate-900">{money(value)}</p></div>)}</div></Block>
                 <div className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setTab("Inmueble")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Completar datos del inmueble</span><span className="mt-1 block text-xs text-slate-500">Ubicación y características</span></span><Icon name="arrow" /></button><button type="button" onClick={() => setTab("Documentación")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Organizar documentación</span><span className="mt-1 block text-xs text-slate-500">Archivos y documentos</span></span><Icon name="arrow" /></button></div>
               </div>}
 
-              {tab === "Propietario" && (<form onSubmit={save} className="space-y-7">
-                {!!details.relacionados?.length && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm"><p>Este propietario está vinculado a {details.relacionados.length} inmueble(s). Una corrección de sus datos se aplica a todas sus fichas.</p><ul className="mt-2 space-y-1">{details.relacionados.map(item=><li key={item.id}>{propertyDisplayId(item)} · {item.referencia}</li>)}</ul><label className="mt-3 flex items-center gap-2"><input type="checkbox" checked={changeOwner} onChange={event=>{setChangeOwner(event.target.checked);if(event.target.checked)setOwner(emptyOwner);else setOwner(ownerFrom(details.inmueble));}}/>Cambiar propietario de este inmueble</label>{changeOwner&&<p className="mt-2 text-xs">Vincula el nuevo DNI sin cambiar los datos del propietario anterior. Si el DNI ya existe, se conservan sus datos registrados.</p>}</div>}
-                {details.inmueble.propietarioId == null && <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">Completa el nombre del propietario; el DNI y los demás datos son opcionales.</p>}
-                <Block title="Datos personales" description="Identifica al propietario del inmueble."><div className="grid gap-4 sm:grid-cols-2">{ownerField("DNI", "dni")}{ownerField("Nombres", "nombres")}{ownerField("Apellidos", "apellidos")}</div></Block>
-                <div className="border-t border-slate-100" />
-                <Block title="Contacto" description="Mantén a mano los datos para comunicarte con el propietario."><div className="grid gap-4 sm:grid-cols-2">{ownerField("Teléfono", "telefono", "tel")}{ownerField("Correo electrónico", "email", "email")}</div><div className="mt-4">{ownerField("Referencia de contacto", "referenciaContacto")}</div></Block>
-                <SaveBar dirty={dirty} busy={busy || loading} />
-              </form>)}
+              {tab === "Contacto" && <form onSubmit={save} className="space-y-6"><Block title="Nombre de contacto" description="Persona con quien se coordina este inmueble. El DNI del propietario se adjunta en Documentación.">{propertyField("Nombre de contacto", "nombreContacto")}</Block><SaveBar dirty={dirty} busy={busy || loading} /></form>}
 
               {tab === "Inmueble" && <form onSubmit={save} className="space-y-7">
-                <Block title="Identificación" description="Nombre registrado al incorporar el inmueble.">{propertyField("Nombre o referencia", "referencia", "text", "Nombre del inmueble")}<label className="mt-4 block text-xs font-semibold text-slate-600">Tipo de operación<OperationSelect value={form?.operacion || "venta"} disabled={busy || loading || !admin || Boolean(details.tasacion) || Boolean(details.publicacion) || details.inmueble.estado !== "activo"} onChange={operacion => setForm(previous => previous ? { ...previous, operacion } : previous)} className={inputClass} /></label><p className="mt-2 text-xs text-slate-500">La operación se define antes de registrar precios o publicación.</p><label className="mt-4 block text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect value={form?.tipo || ""} preserveCurrent disabled={busy || loading} onChange={tipo => setForm(previous => previous ? { ...previous, tipo } : previous)} className={inputClass} /></label></Block>
+                <Block title="Identificación" description="Operación y tipo de inmueble."><label className="mt-4 block text-xs font-semibold text-slate-600">Tipo de operación<OperationSelect value={form?.operacion || "venta"} disabled={busy || loading || !admin || Boolean(details.tasacion) || Boolean(details.publicacion) || details.inmueble.estado !== "activo"} onChange={operacion => setForm(previous => previous ? { ...previous, operacion } : previous)} className={inputClass} /></label><p className="mt-2 text-xs text-slate-500">La operación se define antes de registrar precios o publicación.</p><label className="mt-4 block text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect value={form?.tipo || ""} preserveCurrent disabled={busy || loading} onChange={tipo => setForm(previous => previous ? { ...previous, tipo } : previous)} className={inputClass} /></label></Block>
                 <div className="border-t border-slate-100" />
-                <Block title="Ubicación"><div className="space-y-4">{propertyField("Calle / avenida", "direccion", "text", "Calle o avenida")}{propertyField("Número / lote", "numeroDireccion")}<GeographySelect disabled={busy||loading} value={{departamento:form?.departamento||null,provincia:form?.provincia||null,distrito:form?.distrito||null}} onChange={next=>setForm(old=>old?{...old,...next}:old)}/></div></Block>
+                <Block title="Ubicación"><div className="space-y-4">{propertyField("Ubicación referencial", "direccion", "text", "Dirección o referencia para reconocer el inmueble")}<GeographySelect disabled={busy||loading} value={{departamento:form?.departamento||null,provincia:form?.provincia||null,distrito:form?.distrito||null}} onChange={next=>setForm(old=>old?{...old,...next}:old)}/></div></Block>
                 <PropertyLocation key={`${code}-edit`} latitude={form?.latitud ?? null} longitude={form?.longitud ?? null} address={[propertyAddress(form, ""), propertyAddress(form, "") ? "Perú" : ""].filter(Boolean).join(", ")} editable disabled={busy || loading} onChange={point => setForm(previous => previous ? { ...previous, latitud: point ? point.lat.toFixed(7) : null, longitud: point ? point.lng.toFixed(7) : null } : previous)} />
                 <div className="border-t border-slate-100" />
                 {Number(form?.areaConstruida)>Number(form?.areaTerreno)*10 && Number(form?.areaTerreno)>0 && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Revisa las superficies: el área construida supera diez veces el terreno. Puede ser válido en varias plantas; confirma las unidades.</p>}<Block title="Características" description="Superficies y distribución del inmueble."><div className="grid gap-4 sm:grid-cols-2">{propertyField("Área de terreno (m²)", "areaTerreno", "number")}{propertyField("Área construida (m²)", "areaConstruida", "number")}{propertyField(["Local","Local comercial","Oficina"].includes(form?.tipo||"") ? "Ambientes" : "Habitaciones", "habitaciones", "number")}{propertyField("Baños", "banos", "number")}</div><label className="mt-4 block text-xs font-semibold text-slate-600">Detalles adicionales<textarea rows={4} value={form?.caracteristicas || ""} disabled={busy} onChange={event => setForm(previous => previous ? { ...previous, caracteristicas: event.target.value } : previous)} placeholder="Distribución, acabados, servicios y otros detalles…" className={inputClass} /></label></Block>
@@ -354,7 +333,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
         </div>
       </div>
     </div>
-    {confirmOwner && <ConfirmDialog title="Corregir propietario compartido" confirmLabel="Aplicar a sus inmuebles" onCancel={()=>setConfirmOwner(false)} onConfirm={()=>void save(undefined,true)}><p>Los datos de este propietario se actualizarán en todas sus fichas vinculadas. Confirma que se trata de la misma persona.</p></ConfirmDialog>}
+
     {documentToDelete && <DeleteDocumentDialog document={documentToDelete} busy={busy} onCancel={() => setDocumentToDelete(null)} onConfirm={() => { void removeDocument(documentToDelete); }} />}
   {tab === "Documentación" && details && <MobileFormActions><a href="#agregar-documento" className="aa-button aa-button-secondary">Ver formulario</a><button type="submit" form="agregar-documento" disabled={busy || !uploadReady || !documentFile} className={primaryClass}><Icon name="document" />{busy ? "Guardando…" : "Subir documento"}</button></MobileFormActions>}</main></NavigationReturnProvider>;
 }

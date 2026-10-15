@@ -25,7 +25,6 @@ type Visita = {
   ubicacion: string;
   tipo: string;
   propietario: string;
-  dni: string;
   dias: number;
   fotos: UploadedPhoto[];
 };
@@ -330,10 +329,10 @@ export default function Page() {
 
                           <p className="mt-2 text-xs text-slate-500">
                             <span className="font-semibold text-slate-600">
-                              Propietario:
+                              Contacto:
                             </span>{" "}
-                            {item.propietario || "Sin propietario registrado"}
-                            {item.dni ? ` · DNI ${item.dni}` : ""}
+                            {item.propietario || "Sin contacto registrado"}
+
                           </p>
                         </div>
                       </div>
