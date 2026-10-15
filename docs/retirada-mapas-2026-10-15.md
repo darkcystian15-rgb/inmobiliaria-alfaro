@@ -40,4 +40,14 @@ Previsualización inicial: 0 inmuebles con coordenadas, 1 movimiento histórico 
 - ESLint con cero advertencias: correcto.
 - Compilación local de producción con Webpack y TypeScript: correcta. Se retiraron tipos de desarrollo generados obsoletos que aún referenciaban la ruta eliminada.
 - `git diff --check`: correcto.
-- Limpieza definitiva, publicación y comprobación del dominio: en curso. Esta sección se actualizará con evidencia real.
+- Código publicado: commit `73d042c`, rama `feat/registro-simplificado`, sincronizado con GitHub.
+- Vercel: `dpl_FBiq3YGd3qcaBQZT5zMZPYnRrAwL`, READY, production. Compilación remota con Turbopack y TypeScript correcta.
+- URL de versión: https://inmobiliaria-alfarov2-9l6m044y8-puma19.vercel.app.
+- Dominio confirmado por Vercel: https://intranet.inmobiliariaalbertoalfaro.com.pe apunta al nuevo despliegue.
+- Limpieza aplicada después de publicar el código: 0 inmuebles con coordenadas en campos principales; se retiraron coordenadas de 1 movimiento histórico y 1 borrador, conservando los demás datos.
+- Consulta posterior: 0 inmuebles, 0 movimientos y 0 borradores con coordenadas estructuradas pendientes de limpieza.
+- Verificación de recuperación sin escribir: hash e identidad de base correctos, 2 filas JSON restaurables, sin aplicar restauración.
+- Prueba autenticada real: ficha Resumen e Inmueble en escritorio y móvil; Cartera en tarjetas; sin componentes ni peticiones a Google Maps/OpenStreetMap, sin errores de navegador ni desborde móvil. APIs de ficha y cartera sin coordenadas; importador retirado devuelve 404. Un borrador aislado enviado con coordenadas se recupera sin ellas.
+- Evidencia visual privada: `output/remove-maps-production/ficha-desktop.png`, `ficha-mobile.png` y `cartera-desktop.png`; excluida de Git/Vercel.
+- La cuenta, sesión y borrador de prueba se eliminaron al terminar. No se modificaron inmuebles para probar la interfaz.
+- `coordinates-applied.json` confirma que la transacción de limpieza quedó comprometida. Fuente y datos respaldados con permisos privados; no se publican secretos ni datos del respaldo.
