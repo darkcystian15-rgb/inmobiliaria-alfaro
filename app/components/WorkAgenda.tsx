@@ -29,7 +29,7 @@ export default function WorkAgenda() {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [reload]);
-  return <section aria-labelledby="work-priorities-title" className="aa-card w-full max-w-5xl overflow-hidden">
+  return <section aria-labelledby="work-priorities-title" className="aa-card w-full overflow-hidden">
     <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5">
       <h2 id="work-priorities-title" className="text-lg font-bold">Prioridades de trabajo</h2>
       <p className="text-xs text-slate-500">Los 3 más antiguos · Fechas de Perú</p>

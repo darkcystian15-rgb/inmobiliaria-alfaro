@@ -94,7 +94,7 @@ export default function Home() {
           })}</div> : <p className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">✓ No hay visitas, tasaciones, expedientes ni publicaciones pendientes en las áreas consultadas.</p>}
         </details>
 
-        <section aria-labelledby="recent-progress-title" className="aa-card w-full max-w-5xl overflow-hidden">
+        <section aria-labelledby="recent-progress-title" className="aa-card w-full overflow-hidden">
           <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5"><h2 id="recent-progress-title" className="text-lg font-bold text-slate-900">Avances recientes</h2><p className="text-xs text-slate-500">Últimos cinco movimientos · Hora de Perú</p></header>
           <ul className="divide-y divide-slate-100">{data.recientes.length ? data.recientes.map((item, index) => <li key={`${item.inmuebleId}-${index}`} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3 transition hover:bg-slate-50/70 sm:px-5">
             <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
