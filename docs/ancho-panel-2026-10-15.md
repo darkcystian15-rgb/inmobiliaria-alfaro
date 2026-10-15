@@ -14,4 +14,3 @@ Punto de restauración privado: `restore-points/ancho-panel-20261015T224115Z/`, 
 - Medición autenticada en producción: Prioridades, Avances y Qué necesita atención tienen idénticos bordes y anchos: 1088 px con ventana de 1440; 1500 px con ventana de 1920; 327 px con ventana móvil de 375.
 - Sin desbordes horizontales ni errores de JavaScript. Cuenta y sesión temporales eliminadas al terminar; no se modificaron inmuebles.
 - Capturas y medidas privadas en `output/dashboard-width-{1440,1920,375}.png` y `output/dashboard-width-measurements.json`.
-
