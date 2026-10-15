@@ -18,4 +18,14 @@ Punto privado: `restore-points/revision-publicacion-20261015T184712Z/`. Conserva
 
 ## Entrega
 
-La evidencia de la publicación se añade tras confirmar READY y el alias de producción. No se realizan escrituras de prueba en producción ni se acredita el recorrido autenticado completo solo comprobando el acceso público.
+- Commit de código desplegado: `b69208f` (rama `feat/registro-simplificado`).
+- Despliegue: `dpl_4Ccej2A1cEUCn3ejQCVBnkFbYwir`, READY, entorno production.
+- URL de versión: https://inmobiliaria-alfarov2-38s439yki-puma19.vercel.app.
+- Vercel confirmó que https://intranet.inmobiliariaalbertoalfaro.com.pe apunta al nuevo despliegue.
+- Compilación remota con Turbopack y TypeScript: correctos.
+- Comprobaciones HTTP sobre el dominio: `/login` y `/branding/logo.png` 200; `/`, `/cartera` y `/ubicaciones` 307 a `/login`; `/api/zonas` y `/api/cartera` 401 sin sesión.
+- No se realizan escrituras de prueba en producción ni se acredita el recorrido autenticado completo solo comprobando el acceso público.
+
+## Sincronización de GitHub
+
+Los cambios se guardaron en Git local. `git push origin feat/registro-simplificado` fue rechazado con HTTP 403: la cuenta disponible `Cystian` no tiene permiso de escritura sobre `darkcystian15-rgb/inmobiliaria-alfaro`. El despliegue se realizó directamente desde la fuente local validada. La rama remota permanece en `be27049`; hace falta una cuenta con permiso de escritura para sincronizarla. No se modificó `main` ni se forzó el historial.

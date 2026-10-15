@@ -36,3 +36,7 @@ Punto privado anterior a esta revisión: `restore-points/revision-publicacion-20
 - Vercel confirmó antes de actualizar: `dpl_97m1Y3ZewN36uaNupv5GrT8mUKxi`, READY, asignado al dominio de la intranet.
 - Compilación de producción con Webpack y TypeScript: correctos. El resultado del nuevo despliegue se registra en [Publicación de la revisión](publicacion-revision-2026-10-15.md).
 - No se ejecutan integraciones con escrituras contra producción ni se da por verificado el recorrido autenticado completo mediante una comprobación pública de `/login`.
+
+## Entrega confirmada
+
+Código `b69208f` publicado como `dpl_4Ccej2A1cEUCn3ejQCVBnkFbYwir`, READY y asignado al dominio de la intranet. Comprobaciones HTTP correctas. El envío a GitHub está pendiente por rechazo 403 de permisos; los commits se conservan localmente. Ver [evidencia de publicación](publicacion-revision-2026-10-15.md).
