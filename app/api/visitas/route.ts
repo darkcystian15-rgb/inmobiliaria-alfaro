@@ -99,6 +99,7 @@ export async function GET() {
         tipo: row.tipo,
     operacion: row.operacion,
         nombre: row.referencia,
+        direccion: row.direccion,
         ubicacion: propertyAddress(row),
         propietario: row.propietario || "",
         posicion: String(row.posicion),

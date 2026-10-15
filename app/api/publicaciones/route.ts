@@ -25,6 +25,7 @@ const mapPending = (row: Awaited<ReturnType<typeof approved>>[number]) => ({
     ? String(row.posicion).padStart(2, "0")
     : "—",
   nombre: row.referencia,
+  direccion: row.direccion,
   ubicacion: propertyAddress(row),
   tipo: row.tipo,
     operacion: row.operacion,
