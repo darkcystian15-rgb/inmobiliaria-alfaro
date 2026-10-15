@@ -26,6 +26,10 @@ Punto privado: `restore-points/revision-publicacion-20261015T184712Z/`. Conserva
 - Comprobaciones HTTP sobre el dominio: `/login` y `/branding/logo.png` 200; `/`, `/cartera` y `/ubicaciones` 307 a `/login`; `/api/zonas` y `/api/cartera` 401 sin sesión.
 - No se realizan escrituras de prueba en producción ni se acredita el recorrido autenticado completo solo comprobando el acceso público.
 
-## Sincronización de GitHub
+## Sincronización de GitHub — resuelta
 
-Los cambios se guardaron en Git local. `git push origin feat/registro-simplificado` fue rechazado con HTTP 403: la cuenta disponible `Cystian` no tiene permiso de escritura sobre `darkcystian15-rgb/inmobiliaria-alfaro`. El despliegue se realizó directamente desde la fuente local validada. La rama remota permanece en `be27049`; hace falta una cuenta con permiso de escritura para sincronizarla. No se modificó `main` ni se forzó el historial.
+El primer envío fue rechazado con HTTP 403 por la credencial automática del Codespace. Se comprobó que `Cystian` sí tenía permiso de escritura; el problema era la credencial utilizada, no la condición de colaborador.
+
+El usuario renovó la autenticación mediante GitHub CLI. Usando la sesión guardada, sin las variables automáticas `GITHUB_TOKEN` y `GH_TOKEN`, Git confirmó `Everything up-to-date`. Se verificó que HEAD local y `refs/heads/feat/registro-simplificado` remota coincidían en `4f05af90a6a002a30c960fd119d02a30eb75043f`.
+
+Los cambios están sincronizados en el repositorio de Dark. `main` no se modificó. El despliegue contiene el código de `b69208f`; `4f05af9` añade solamente evidencia documental posterior, sin cambios de aplicación.

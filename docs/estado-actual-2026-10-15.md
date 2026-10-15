@@ -39,4 +39,4 @@ Punto privado anterior a esta revisión: `restore-points/revision-publicacion-20
 
 ## Entrega confirmada
 
-Código `b69208f` publicado como `dpl_4Ccej2A1cEUCn3ejQCVBnkFbYwir`, READY y asignado al dominio de la intranet. Comprobaciones HTTP correctas. El envío a GitHub está pendiente por rechazo 403 de permisos; los commits se conservan localmente. Ver [evidencia de publicación](publicacion-revision-2026-10-15.md).
+Código `b69208f` publicado como `dpl_4Ccej2A1cEUCn3ejQCVBnkFbYwir`, READY y asignado al dominio de la intranet. Comprobaciones HTTP correctas. La sincronización con GitHub quedó confirmada en `feat/registro-simplificado` tras renovar la credencial. El rechazo 403 anterior quedó resuelto; `Cystian` sí tiene permiso de escritura. `main` conserva la versión anterior. Ver [evidencia de publicación](publicacion-revision-2026-10-15.md).
