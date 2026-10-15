@@ -83,4 +83,12 @@ Con el acceso MySQL configurado, añadir `--apply` restaura únicamente los camp
 
 ## Estado de publicación
 
-La cuenta GitHub disponible (`Cystian`) solo tiene permiso READ sobre `darkcystian15-rgb/inmobiliaria-alfaro`. No hay acceso Vercel ni credenciales MySQL de producción configuradas en esta copia. No se ha aplicado la conversión a producción ni desplegado esta actualización. Hace falta habilitar esos accesos para completar la publicación autorizada.
+La CLI ya está autenticada como `darkcystian15-1398` y vinculada a `puma19/inmobiliaria-alfarov2` (`prj_Y4rkO3CVHKLA2akcLF6rguUJksvG`).
+
+La versión del commit `a796f23` compiló en Vercel y quedó READY como `dpl_3KvYixUfDzfTNuSTFygHCA7Dx6uD`, URL `https://inmobiliaria-alfarov2-51onl59dr-puma19.vercel.app`. Todavía no se activa en el dominio de la intranet: falta la copia y migración de MySQL.
+
+El despliegue anterior es `dpl_ENYbSVdZVMbaRrT43X2UbProZgY3`, URL `https://inmobiliaria-alfarov2-lrnrre8kf-puma19.vercel.app`. Se registraron ambas versiones en el manifiesto privado del punto de recuperación.
+
+Las variables de producción se descargaron a `.env.local` (excluido de Git y Vercel, permisos 0600). Los secretos sensibles, incluido DATABASE_URL, no pueden descargarse: Vercel escribe el marcador `[SENSITIVE]`. Falta configurar la conexión MySQL real privadamente en ese archivo para crear la copia y ejecutar la conversión. Las credenciales de documentos continúan disponibles para el runtime de Vercel; no hace falta exponerlas para desplegar.
+
+La cuenta GitHub disponible (`Cystian`) mantiene permiso READ en el repositorio remoto. El cambio está guardado en la rama local `feat/registro-simplificado`; aún falta habilitar escritura para sincronizarlo con GitHub.
