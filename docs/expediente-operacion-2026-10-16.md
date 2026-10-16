@@ -49,13 +49,20 @@ La recuperación exige verificar hashes, comparar cambios posteriores y restaura
 - 24 archivos de pruebas unitarias pasan, incluido `transaction-dossier.test.mjs`.
 - ESLint con cero advertencias y compilación local de producción con Webpack/TypeScript correctos.
 - Integración real contra MySQL 8.4 temporal, sin datos de producción: previsualización sin escrituras, respaldo, migración idempotente, documentos ambiguos conservados, roles, HTTP 409 por conflicto, validaciones condicionales, archivos PDF/imagen/Word/Excel, varias tasaciones, reclasificación, descargas privadas y eliminación con actualización del estado.
-- Navegador autenticado en escritorio y móvil de 375 px: pestañas, filtro de zona, vista previa de imagen/PDF y ausencia de errores JavaScript/desbordes.
+- Navegador autenticado en escritorio y móvil de 375 px: pestañas, filtro de zona, cambio y guardado de condiciones, carga real desde el formulario con nombre individual, actualización de alertas, vista previa de imagen/PDF y ausencia de errores JavaScript/desbordes.
 - Capturas locales privadas en `output/dossier-local/`.
 
-## Publicación
+## Publicación confirmada
 
-La tabla nueva se añadió en producción mediante `--schema-only`, con copia privada de los ocho registros de archivos existentes y sin reclasificar todavía documentos. La previsualización identifica dos archivos con categoría inequívoca y ninguno ambiguo.
+- Código de aplicación: `f76b31c5e7401c0cd7994f91085fe63b8a5d3cdf`, sincronizado con GitHub en `feat/registro-simplificado`. `main` no se modifica.
+- Despliegue Vercel: `dpl_DKnnyeZGpPs3gZEPy8P53a8h93KM`, **READY**, production. La API confirmó el commit y la asignación del dominio.
+- URL de versión: https://inmobiliaria-alfarov2-fywebwkx7-puma19.vercel.app.
+- Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
+- Despliegue anterior recuperable: `dpl_BJDo8yKXNLnAtfQeWAFUto85LHbM`, commit `a4b33cf`.
+- Antes de publicar se añadió únicamente la tabla mediante `--schema-only`, con respaldo de los ocho registros de archivos existentes. Tras confirmar READY y el dominio, se aplicó la reclasificación de dos archivos; no se borraron archivos, no quedaron categorías ambiguas en esta consulta y las fotos se conservaron.
+- Respaldos de metadatos y constancias de transacción: `restore-points/expediente-20261016/schema/` y `restore-points/expediente-20261016/datos/`. Se comprobaron los SHA-256 de ambas copias y de la fuente original.
+- `tests/transaction-dossier.production.smoke.mjs`: comprobación autenticada real de API de expediente/ficha, siete grupos, categorías nuevas, acceso a archivo privado, rechazo anónimo HTTP 401 y pestañas en escritorio/móvil sin errores ni desbordes. No se editaron inmuebles, expedientes ni documentos para probar producción. Cuenta y sesión temporales eliminadas en el bloque de limpieza.
+- Capturas privadas de producción: `output/dossier-production/estado-desktop.png` y `estado-mobile.png`, excluidas de Git y Vercel.
+- MySQL temporal de integración detenido y retirado al terminar. Los datos ficticios se mantuvieron exclusivamente en ese entorno aislado.
 
-Despliegue anterior confirmado: `dpl_BJDo8yKXNLnAtfQeWAFUto85LHbM`, READY, commit `a4b33cf`, asignado al dominio de la intranet.
-
-Pendiente de registrar el resultado del despliegue y de la reclasificación posterior. Este apartado se actualizará con evidencia real antes de cerrar la entrega.
+Los cambios posteriores de evidencia/documentación y del selector de inmueble de la prueba de humo no alteran el comportamiento publicado ni requieren otro despliegue. No se ha integrado la rama en `main`.

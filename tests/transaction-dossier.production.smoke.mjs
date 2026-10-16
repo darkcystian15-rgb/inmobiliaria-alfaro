@@ -18,7 +18,7 @@ try {
   const [user] = await db.query('INSERT INTO inm_usuarios(nombre,email,usuario,password_hash,rol,activo,mfa_secret) VALUES(?,?,?,?,?,1,?)', ['Verificación expediente', `dossier-${suffix}@example.invalid`, `dossier_${suffix}`, await hashPassword(randomBytes(32).toString('hex')), 'administrador', randomBytes(48).toString('base64')]);
   userId = user.insertId;
   await db.query('INSERT INTO inm_sesiones(token_hash,usuario_id,expira,last_seen,authenticated_at) VALUES(?,?,?,?,?)', [hashSessionToken(token), userId, new Date(Date.now() + 600000), new Date(), new Date()]);
-  const [properties] = await db.query('SELECT id FROM inm_inmuebles ORDER BY id LIMIT 1');
+  const [properties] = await db.query("SELECT id FROM inm_inmuebles ORDER BY EXISTS(SELECT 1 FROM inm_archivos a WHERE a.inmueble_id=inm_inmuebles.id AND a.almacenamiento='hosting' AND a.tipo_documento<>'FOTO_INMUEBLE') DESC,id LIMIT 1");
   assert.ok(properties.length);
   const id = properties[0].id;
   let response = await request(`/api/inmuebles/${id}/expediente`);
