@@ -5,6 +5,8 @@ import { propertyIdentifierCondition } from "@/lib/property-identity";
 import { assignedPropertyType } from "@/lib/property-types";
 import { databaseInstant } from '@/lib/business-time';
 import { publicationReadiness } from "@/lib/publication-readiness";
+import { readDossier } from '@/lib/dossier-record';
+import { dossierStatus } from '@/lib/transaction-dossier.mjs';
 import { auditValues } from "@/lib/security-audit";
 import { propertyInput, PropertyInputError } from "@/lib/property-input.mjs";
 import { authorizeApi } from "@/lib/auth";
@@ -22,6 +24,7 @@ import {
   securityAudit,
   inmTimeline,
   inmUsuarios,
+  inmArchivos,
 } from "@/db/schema";
 
 async function findProperty(key: string) {
@@ -92,10 +95,14 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const { visitaRealizada, tasacionId, fechaTasacion, valorReferencia, precioObjetivo, precioVenta, situacionTasacion, observacionTasacion, publicacionId, textoPublicacion, enlacePublicacion, publicado, fechaPublicacion, ...inmueble } = row;
 
     const expediente = (await publicationReadiness(db, row.id)).get(row.id);
+    const dossier = await readDossier(row.id);
+    const files = await db.select({ tipoDocumento: inmArchivos.tipoDocumento, almacenamiento: inmArchivos.almacenamiento }).from(inmArchivos).where(eq(inmArchivos.inmuebleId, row.id));
+    const { complete, completed, total, alerts } = dossierStatus(dossier.config, files);
     const [venta] = await db.select({ fechaVenta: inmLiberaciones.fechaVenta, precioFinal: inmLiberaciones.precioFinal, comision: inmLiberaciones.comision }).from(inmLiberaciones).where(and(eq(inmLiberaciones.inmuebleId, row.id), eq(inmLiberaciones.motivo, "vendido"), eq(inmLiberaciones.confirmado, true), eq(inmLiberaciones.anulada, false))).limit(1);
     const [alquiler] = await db.select({ fechaAlquiler: inmLiberaciones.fechaAlquiler, rentaMensual: inmLiberaciones.rentaMensual, comision: inmLiberaciones.comision, garantia: inmLiberaciones.garantia, adelanto: inmLiberaciones.adelanto, fechaInicioAlquiler: inmLiberaciones.fechaInicioAlquiler, fechaFinAlquiler: inmLiberaciones.fechaFinAlquiler }).from(inmLiberaciones).where(and(eq(inmLiberaciones.inmuebleId, row.id), eq(inmLiberaciones.motivo, "alquilado"), eq(inmLiberaciones.confirmado, true), eq(inmLiberaciones.anulada, false))).limit(1);
     const historial = await db.select({id:inmTimeline.id,evento:inmTimeline.evento,observacion:inmTimeline.observacion,fecha:databaseInstant(inmTimeline.fechaEvento),usuario:inmUsuarios.nombre}).from(inmTimeline).leftJoin(inmUsuarios,eq(inmUsuarios.id,inmTimeline.usuarioId)).where(eq(inmTimeline.inmuebleId,row.id)).orderBy(inmTimeline.fechaEvento,inmTimeline.id);
     return NextResponse.json({
+      documentacion: { complete, completed, total, alerts },
       historial,
       inmueble,
       expediente,

@@ -248,6 +248,13 @@ export const inmArchivos = mysqlTable("inm_archivos", {
   fechaRegistro: timestamp("fecha_registro", { mode: "date" }).defaultNow().notNull(),
 });
 
+export const inmExpedientes = mysqlTable('inm_expedientes', {
+  inmuebleId: bigint('inmueble_id', { mode: 'number', unsigned: true }).primaryKey().references(() => inmInmuebles.id),
+  configuracion: text('configuracion').notNull(),
+  version: int('version', { unsigned: true }).notNull().default(1),
+  actualizado: timestamp('actualizado', { mode: 'date' }).defaultNow().onUpdateNow().notNull(),
+});
+
 export const inmTimeline = mysqlTable("inm_timeline", {
   id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
   inmuebleId: bigint("inmueble_id", { mode: "number", unsigned: true }).notNull().references(() => inmInmuebles.id),

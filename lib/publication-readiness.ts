@@ -8,8 +8,8 @@ export async function publicationReadiness(executor: Pick<typeof db, 'select'> =
   const rows = await executor.select({
     id: inmInmuebles.id,
     texto: inmPublicaciones.texto,
-    documentoDni: sql<number>`EXISTS (SELECT 1 FROM inm_archivos a WHERE a.inmueble_id = ${inmInmuebles.id} AND a.tipo_documento = 'DNI_PROPIETARIO' AND a.almacenamiento = 'hosting')`,
-    archivoTasacion: sql<number>`EXISTS (SELECT 1 FROM inm_archivos a WHERE a.inmueble_id = ${inmInmuebles.id} AND a.tipo_documento = 'TASACION' AND a.almacenamiento = 'hosting')`,
+    documentoDni: sql<number>`EXISTS (SELECT 1 FROM inm_archivos a WHERE a.inmueble_id = ${inmInmuebles.id} AND a.tipo_documento IN ('DNI_PROPIETARIO', 'VENDEDOR_DNI', 'VENDEDOR_DNI_GERENTE') AND a.almacenamiento = 'hosting')`,
+    archivoTasacion: sql<number>`EXISTS (SELECT 1 FROM inm_archivos a WHERE a.inmueble_id = ${inmInmuebles.id} AND a.tipo_documento IN ('TASACION', 'TASACION_EXPRESS') AND a.almacenamiento = 'hosting')`,
     fotosVisita: sql<number>`EXISTS (SELECT 1 FROM inm_archivos a INNER JOIN inm_visitas v ON v.id = a.visita_id AND v.inmueble_id = a.inmueble_id AND v.completada = 1 WHERE a.inmueble_id = ${inmInmuebles.id} AND a.tipo_documento = 'FOTO_INMUEBLE' AND a.almacenamiento = 'hosting' AND a.tipo_mime LIKE 'image/%')`,
   }).from(inmInmuebles)
     .leftJoin(inmPublicaciones, eq(inmPublicaciones.inmuebleId, inmInmuebles.id))

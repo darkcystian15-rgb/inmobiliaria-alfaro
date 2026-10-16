@@ -4,6 +4,7 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
+- [Expediente de vendedor, comprador e inmueble](docs/expediente-operacion-2026-10-16.md): nueva organización documental y estado del expediente; mismas reglas para venta y alquiler.
 - [Retirada de mapas y coordenadas](docs/retirada-mapas-2026-10-15.md): cambio posterior al estado consolidado; conserva ubicación referencial y zonas comerciales.
 
 Consultar primero [Estado actual](docs/estado-actual-2026-10-15.md). Los documentos históricos conservan decisiones y pruebas de versiones anteriores; sus pendientes no describen necesariamente la versión actual.

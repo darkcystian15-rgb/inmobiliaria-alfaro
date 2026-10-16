@@ -4,10 +4,9 @@ import { stripCoordinates } from "@/lib/retired-coordinates.mjs";
 import PropertySummary from "@/app/components/PropertySummary";
 
 import { propertyAddress } from "@/lib/property-address.mjs";
-import MobileFormActions, { MobileFormFeedback } from "./MobileFormActions";
+import { MobileFormFeedback } from "./MobileFormActions";
 import ActiveFilters from "./ActiveFilters";
-import DocumentLibrary from "./DocumentLibrary";
-import WorkspaceFileIcon from "./WorkspaceFileIcon";
+import TransactionDossier from "./TransactionDossier";
 import GeographySelect from "./GeographySelect";
 
 import { propertyDisplayId } from "@/lib/property-display-id";
@@ -31,10 +30,10 @@ import type { PropertyProgressData } from "@/lib/property-progress";
 import ConfirmDialog from "./ConfirmDialog";
 import PropertyVisits from "./PropertyVisits";
 import PhotoGallery from "./PhotoGallery";
-import { compressImage, isImageFile } from "@/lib/client-images";
 import { useSessionUser } from "./SessionProvider";
 import { isAdministrator } from "@/lib/access.mjs";
 import { filterProperties } from "@/lib/property-list.mjs";
+import { requestJson } from "@/lib/client-request";
 
 type Item = { id: string; posicion: number | null; nombre: string; tipo: string; operacion: string; ubicacion: string; propietario: string; estado: string };
 type Property = {
@@ -46,11 +45,8 @@ type Property = {
 };
 
 type Document = { id: number; tipoDocumento: string; nombre: string; enlace: string; observacion: string | null; almacenamiento: string; tipoMime: string | null; nombreOriginal: string | null; tamanoBytes: number | null };
-type Details = { alquiler?: {fechaAlquiler:string|null;rentaMensual:string|null;comision:string|null;garantia:string|null;adelanto:string|null;fechaInicioAlquiler:string|null;fechaFinAlquiler:string|null}|null; relacionados?: {id:number;codigo:string;referencia:string}[]; historial?: {id:number;evento:string;observacion:string|null;fecha:string;usuario:string|null}[]; expediente?: Checklist; venta?: { fechaVenta: string | null; precioFinal: string | null; comision: string | null } | null; progreso: PropertyProgressData; inmueble: Property; tasacion: { fechaTasacion: string; valorReferencia: string | null; precioObjetivo: string | null; precioVenta: string | null; observacion: string | null } | null; publicacion: { texto: string; enlace: string; publicado: boolean; fechaPublicacion: string | null } | null };
-type DocumentForm = { tipoDocumento: string; nombre: string; observacion: string };
-const emptyDocument: DocumentForm = { tipoDocumento: "DNI_PROPIETARIO", nombre: "", observacion: "" };
-const documentTypes = [["DNI_PROPIETARIO", "DNI del propietario"], ["DOCUMENTO_PROPIEDAD", "Documento de propiedad"], ["COPIA_LITERAL", "Copia literal"], ["CONTRATO", "Contrato"], ["TASACION", "Tasación"], ["TEXTO_PUBLICACION", "Texto de publicación"], ["VIDEO_INMUEBLE", "Video / recorrido"], ["PLANO", "Plano"], ["RECIBO_SERVICIO", "Recibo de servicio"], ["OTRO", "Otro"]];
-const tabs = [["Resumen", "home"], ["Contacto", "user"], ["Inmueble", "building"], ["Documentación", "document"], ["Fotos", "image"], ["Visitas", "image"], ["Tasación", "chart"], ["Publicación", "publish"]] as const;
+type Details = { documentacion?: { complete: boolean; completed: number; total: number; alerts: string[] }; alquiler?: {fechaAlquiler:string|null;rentaMensual:string|null;comision:string|null;garantia:string|null;adelanto:string|null;fechaInicioAlquiler:string|null;fechaFinAlquiler:string|null}|null; relacionados?: {id:number;codigo:string;referencia:string}[]; historial?: {id:number;evento:string;observacion:string|null;fecha:string;usuario:string|null}[]; expediente?: Checklist; venta?: { fechaVenta: string | null; precioFinal: string | null; comision: string | null } | null; progreso: PropertyProgressData; inmueble: Property; tasacion: { fechaTasacion: string; valorReferencia: string | null; precioObjetivo: string | null; precioVenta: string | null; observacion: string | null } | null; publicacion: { texto: string; enlace: string; publicado: boolean; fechaPublicacion: string | null } | null };
+const tabs = [["Resumen", "home"], ["Estado del expediente", "check"], ["Vendedor", "user"], ["Comprador", "user"], ["Inmueble", "building"], ["Documentación", "document"], ["Fotos", "image"], ["Visitas", "image"], ["Tasación", "chart"], ["Publicación", "publish"]] as const;
 type Tab = (typeof tabs)[number][0];
 type IconName = (typeof tabs)[number][1] | "search" | "map" | "check" | "arrow" | "save" | "close" | "link";
 const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 text-sm font-normal text-slate-800 outline-none transition placeholder:text-slate-500 focus:border-[#c80000]/40 focus:bg-white disabled:opacity-50";
@@ -80,13 +76,6 @@ const positionLabel = (position: number | null) => position == null ? "—" : St
 const money = (value: string | null | undefined) => value ? `S/ ${Number(value).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Por definir";
 const formatDate = (value: string | null) => value ? new Date(value).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }) : "Sin fecha";
 
-async function requestJson<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, { cache: "no-store", credentials: "same-origin", ...options });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "No se pudo completar la solicitud.");
-  return data as T;
-}
-
 function Block({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return <section className="space-y-4"><div><h3 className="text-sm font-bold text-slate-900">{title}</h3>{description && <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>}</div>{children}</section>;
 }
@@ -95,31 +84,6 @@ function Stat({ label, value, icon }: { label: string; value: string; icon: Icon
 }
 function SaveBar({ dirty, busy }: { dirty: boolean; busy: boolean }) {
   return <div className="sticky bottom-3 z-10 flex flex-col items-stretch justify-between sm:flex-row sm:items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm"><p className={`flex items-center gap-2 text-xs ${dirty ? "text-amber-700" : "text-slate-500"}`}><Icon name={dirty ? "document" : "check"} />{dirty ? "Tienes cambios por guardar" : "Sin cambios pendientes"}</p><button type="submit" disabled={!dirty || busy} className={primaryClass}><Icon name="save" />{busy ? "Guardando…" : "Guardar cambios"}</button></div>;
-}
-
-function DeleteDocumentDialog({ document, busy, onCancel, onConfirm }: {
-  document: Document; busy: boolean; onCancel: () => void; onConfirm: () => void;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const hosted = document.almacenamiento === "hosting";
-  useEffect(() => {
-    const element = dialog.current;
-    element?.showModal();
-    return () => element?.close();
-  }, []);
-
-  return <dialog ref={dialog} aria-labelledby="delete-document-title" aria-describedby="delete-document-description"
-    onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }}
-    className="fixed inset-0 m-auto w-[calc(100%_-_2rem)] max-w-md rounded-3xl border border-slate-200 bg-white p-6 text-slate-800 shadow-2xl backdrop:bg-slate-950/40 backdrop:backdrop-blur-sm">
-    <span className="mb-4 inline-flex rounded-2xl bg-red-50 p-3 text-[#c80000]"><Icon name="document" className="h-6 w-6" /></span>
-    <h2 id="delete-document-title" className="text-lg font-bold text-slate-900">{hosted ? "Eliminar documento" : "Quitar enlace"}</h2>
-    <p className="mt-3 break-words rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold">{document.nombre}</p>
-    <p id="delete-document-description" className="mt-4 text-sm leading-6 text-slate-500">{hosted ? "Se eliminará el documento y su archivo guardado. Esta acción no se puede deshacer." : "Se quitará el enlace de la ficha. El archivo externo se conservará."}</p>
-    <div className="mt-6 flex flex-wrap justify-end gap-3">
-      <button type="button" autoFocus disabled={busy} onClick={onCancel} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 disabled:opacity-50">Cancelar</button>
-      <button type="button" disabled={busy} onClick={onConfirm} className={`${primaryClass} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c80000]`}>{busy ? "Eliminando…" : hosted ? "Eliminar documento" : "Quitar enlace"}</button>
-    </div>
-  </dialog>;
 }
 
 export default function PropertyInformation({ initialCode = "", initialTab = "Resumen" }: { initialCode?: string; initialTab?: Tab }) {
@@ -135,12 +99,9 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const [documents, setDocuments] = useState<Document[]>([]);
   const documentFiles = documents.filter(document => document.tipoDocumento !== "FOTO_INMUEBLE");
   const photoCount = documents.filter(document => document.tipoDocumento === "FOTO_INMUEBLE" && document.tipoMime?.startsWith("image/")).length;
-  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [dossierDirty, setDossierDirty] = useState(false);
   const [uploadReady, setUploadReady] = useState(false);
   const originHref = useReturnHref(`/datos-inmuebles?codigo=${encodeURIComponent(code)}&pestana=${encodeURIComponent(tab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}`);
-  const fileInput = useRef<HTMLInputElement>(null);
-  const [documentForm, setDocumentForm] = useState<DocumentForm>(emptyDocument);
   const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState("");
   const [listReload, setListReload] = useState(0);
@@ -153,6 +114,12 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const sheet = useRef<HTMLDivElement>(null);
   const filtered = useMemo(() => filterProperties(items, query, status) as Item[], [items, query, status]);
   const dirty = !!details && (JSON.stringify(form) !== JSON.stringify(details.inmueble));
+  useEffect(() => {
+    if (!dirty && !dossierDirty) return;
+    const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty, dossierDirty]);
 
   const load = useCallback((key: string, signal?: AbortSignal, preserveForm = false) => {
     const id = ++loadRequest.current;
@@ -188,10 +155,10 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
 
   function selectProperty(key: string, discard = false) {
     if (busy || key === code) return;
-    if (!discard && (dirty || documentForm.nombre || documentFile || documentForm.observacion)) { setPendingProperty(key); return; }
+    if (!discard && (dirty || dossierDirty)) { setPendingProperty(key); return; }
     setPendingProperty(null);
     ++loadRequest.current;
-    setCode(key); setTab("Resumen"); setError(""); setMessage(""); setDocumentForm(emptyDocument); setDocumentFile(null);
+    setCode(key); setTab("Resumen"); setError(""); setMessage(""); setDossierDirty(false);
     setDetails(null); setForm(null); setDocuments([]); setLoading(Boolean(key));
     if (key && window.innerWidth < 1536) window.requestAnimationFrame(() => sheet.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));
   }
@@ -206,35 +173,6 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
       setMessage("Cambios guardados correctamente.");
     } catch (error) { setError(error instanceof Error ? error.message : "No se pudieron guardar los cambios."); }
     finally { setBusy(false); }
-  }
-  async function addDocument(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (busy || !documentFile || !uploadReady) return;
-    if (!isImageFile(documentFile) && documentFile.size > 4 * 1024 * 1024) { setError("El archivo debe pesar como máximo 4 MB."); return; }
-    const body = new FormData();
-    body.set("archivo", documentFile);
-    body.set("tipoDocumento", documentForm.tipoDocumento);
-    body.set("nombre", documentForm.nombre);
-    body.set("observacion", documentForm.observacion);
-    setBusy(true); setError(""); setMessage("");
-    try {
-      if (isImageFile(documentFile)) body.set("archivo", await compressImage(documentFile));
-      await requestJson(`/api/inmuebles/${encodeURIComponent(code)}/archivos`, { method: "POST", body });
-      setDocumentForm(emptyDocument); setDocumentFile(null);
-      if (fileInput.current) fileInput.current.value = "";
-      await load(code,undefined,true); setMessage("Archivo guardado en el hosting correctamente.");
-    } catch (error) { setError(error instanceof Error ? error.message : "No se pudo registrar el documento."); }
-    finally { setBusy(false); }
-  }
-  async function removeDocument(document: Document) {
-    const hosted = document.almacenamiento === "hosting";
-    if (busy) return;
-    setBusy(true); setError(""); setMessage("");
-    try {
-      await requestJson(`/api/inmuebles/${encodeURIComponent(code)}/archivos?archivoId=${document.id}`, { method: "DELETE" });
-      await load(code,undefined,true); setMessage(hosted ? "Documento eliminado del hosting." : "Enlace retirado. El archivo externo se conserva.");
-    } catch (error) { setError(error instanceof Error ? error.message : "No se pudo quitar el enlace."); }
-    finally { setBusy(false); setDocumentToDelete(null); }
   }
   function propertyField(label: string, key: keyof Property, type = "text", placeholder?: string) {
     return <label className="block text-xs font-semibold text-slate-600">{label}<input type={type} min={type === "number" ? 0 : undefined} step={type === "number" ? (key === "habitaciones" || key === "banos" ? "1" : "0.01") : undefined} value={typeof form?.[key] === "boolean" ? "" : form?.[key] ?? ""} placeholder={placeholder} required={key === "direccion" || key === "nombreContacto"} maxLength={key === "direccion" ? 350 : key === "nombreContacto" ? 281 : undefined} disabled={busy} onChange={event => setForm(previous => previous ? { ...previous, [key]: event.target.value } : previous)} className={inputClass} /></label>;
@@ -287,10 +225,13 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
             </section>
 
             <DraftRecovery key={code} draftKey={`ficha:simple-${details.inmueble.id}`} data={{form}} dirty={dirty} onRestore={draft=>{if(draft.form&&typeof draft.form==='object')setForm({...stripCoordinates(draft.form) as Property, operacion: details.inmueble.operacion, tipo: details.inmueble.tipo, nombreContacto: details.inmueble.nombreContacto});}}/>
+            {details.documentacion && <button type="button" onClick={() => setTab("Estado del expediente")} className={`mt-4 w-full rounded-xl border p-4 text-left text-sm ${details.documentacion.complete ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}><span className="font-bold">{details.documentacion.complete ? "Expediente documental completo" : "El expediente tiene pendientes"}</span><span className="mt-1 block">{details.documentacion.completed} de {details.documentacion.total} requisitos documentales completos · Ver estado del expediente →</span></button>}
+            {tab === "Resumen" && <>
             <PropertyProgress data={details.progreso} administrator={admin} propertyId={details.inmueble.id} />
             <OperationalTracking key={`tracking-${code}`} propertyId={details.inmueble.id} administrator={admin} progress={details.progreso}/>
             <PropertyHistory events={details.historial??[]}/>
             <PublicationChecklist data={details.expediente} code={code} onSelect={value=>setTab(value as Tab)} />
+            </>}
             {details.venta && <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5"><h3 className="text-base font-bold">Resultado económico de la venta</h3><div className="mt-3 grid gap-3 sm:grid-cols-3"><Stat label="Fecha de venta" value={formatDate(details.venta.fechaVenta)} icon="chart" /><Stat label="Precio final" value={money(details.venta.precioFinal)} icon="chart" /><Stat label="Comisión de la inmobiliaria" value={money(details.venta.comision)} icon="chart" /></div><p className="mt-2 text-xs text-slate-600">La comisión es ingreso antes de gastos. Los cierres anteriores pueden figurar sin importes registrados.</p></section>}
 
             <section aria-label={tab} className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_4px_24px_rgba(15,23,42,0.03)] sm:p-6">
@@ -300,8 +241,6 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
                 <Block title="Precios del inmueble"><div className="grid gap-3 sm:grid-cols-3">{[[referenceLabel(details.inmueble.operacion), details.tasacion?.valorReferencia], [targetLabel(details.inmueble.operacion), details.tasacion?.precioObjetivo], [priceLabel(details.inmueble.operacion), details.tasacion?.precioVenta]].map(([label, value]) => <div key={label} className={`rounded-2xl border p-4 ${label === priceLabel(details.inmueble.operacion) ? "border-red-100 bg-[#fff5f4]" : "border-slate-100 bg-slate-50"}`}><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-2 text-sm font-bold text-slate-900">{money(value)}</p></div>)}</div></Block>
                 <div className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setTab("Inmueble")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Completar datos del inmueble</span><span className="mt-1 block text-xs text-slate-500">Ubicación y características</span></span><Icon name="arrow" /></button><button type="button" onClick={() => setTab("Documentación")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Organizar documentación</span><span className="mt-1 block text-xs text-slate-500">Archivos y documentos</span></span><Icon name="arrow" /></button></div>
               </div>}
-
-              {tab === "Contacto" && <Block title="Nombre de contacto" description="Este dato se edita únicamente desde el panel de Cartera. El DNI del propietario se adjunta en Documentación."><Stat label="Nombre de contacto" value={details.inmueble.nombreContacto || "Por completar"} icon="user" /></Block>}
 
               {tab === "Inmueble" && <form onSubmit={save} className="space-y-7">
                 <Block title="Identificación" description="Operación y tipo se editan únicamente desde el panel de Cartera."><div className="grid gap-3 sm:grid-cols-2"><Stat label="Tipo de operación" value={details.inmueble.operacion === "alquiler" ? "Alquiler" : "Venta"} icon="home" /><Stat label="Tipo de inmueble" value={details.inmueble.tipo} icon="home" /></div></Block>
@@ -317,11 +256,9 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
                 void Promise.all([requestJson<Details>(`/api/inmuebles/${encodeURIComponent(code)}`), requestJson<{archivos:Document[];subidaHabilitada:boolean}>(`/api/inmuebles/${encodeURIComponent(code)}/archivos`)]).then(([updated,files])=>{setDetails(updated);setDocuments(files.archivos);setUploadReady(files.subidaHabilitada);}).catch(error=>setError(error instanceof Error?error.message:'No se pudo actualizar la ficha.'));
               }} />}
 
-              {tab === "Documentación" && <div className="space-y-7">
-                <DocumentLibrary key={code} documents={documentFiles} categories={documentTypes} renderDocument={document => (<article key={document.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4"><div className="flex min-w-0 basis-full items-start gap-3 sm:flex-1 sm:basis-auto"><WorkspaceFileIcon name={document.nombreOriginal || document.nombre} /><div className="min-w-0"><p className="break-words text-xs font-bold text-slate-800">{document.nombre}</p><p className="mt-1 text-xs text-slate-500">{documentTypes.find(([value]) => value === document.tipoDocumento)?.[1] || document.tipoDocumento}</p>{document.almacenamiento === "hosting" && <p className="mt-1 break-words text-xs text-emerald-700">Guardado en hosting · {document.nombreOriginal} · {((document.tamanoBytes || 0) / 1024).toLocaleString("es-PE", { maximumFractionDigits: 0 })} KB</p>}{document.observacion && <p className="mt-2 whitespace-pre-wrap text-xs text-slate-500">{document.observacion}</p>}</div></div><div className="flex flex-wrap gap-2"><a href={document.enlace} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Icon name="link" />Abrir</a>{document.almacenamiento === "hosting" && <a href={`${document.enlace}?download=1`} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">Descargar</a>}{admin && <button type="button" disabled={busy} onClick={() => setDocumentToDelete(document)} aria-label={`${document.almacenamiento === "hosting" ? "Eliminar documento" : "Quitar enlace"} de ${document.nombre}`} className="rounded-lg px-2.5 py-2 text-slate-500 transition hover:bg-red-50 hover:text-red-700 disabled:opacity-50"><Icon name="close" /></button>}</div></article>)} />
-                {!uploadReady && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-800">{admin ? "Para activar la subida, configura el almacenamiento de documentos y vuelve a desplegar el proyecto." : "La subida de documentos está pendiente de activación por el administrador."}</p>}
-                <form id="agregar-documento" onSubmit={addDocument} className="scroll-mt-24 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 pb-28 sm:p-5"><Block title="Agregar un documento" description="PDF, Word, Excel o documentos escaneados en JPG, PNG y WebP. Hasta 4 MB por archivo; las imágenes se comprimen automáticamente. Se guarda de forma privada, organizado por inmueble y tipo de documento."><div className="grid gap-4 sm:grid-cols-2"><label className="text-xs font-semibold text-slate-600">Tipo de documento<select value={documentForm.tipoDocumento} disabled={busy} onChange={event => setDocumentForm(previous => ({ ...previous, tipoDocumento: event.target.value }))} className={inputClass}>{documentTypes.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="text-xs font-semibold text-slate-600">Nombre<input required maxLength={255} value={documentForm.nombre} disabled={busy} onChange={event => setDocumentForm(previous => ({ ...previous, nombre: event.target.value }))} placeholder="Ej. Copia literal actualizada" className={inputClass} /></label><label className="text-xs font-semibold text-slate-600 sm:col-span-2">Archivo<input ref={fileInput} required type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" disabled={busy || !uploadReady} onChange={event => { const selected = event.target.files?.[0] || null; setDocumentFile(selected); if (selected && !documentForm.nombre) setDocumentForm(previous => ({ ...previous, nombre: selected.name.replace(/\.[^.]+$/, "") })); }} className={`${inputClass} file:mr-3 file:rounded-lg file:border-0 file:bg-red-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-red-700`} />{documentFile && <span className="mt-2 block break-words text-xs font-normal text-slate-500">{documentFile.name} · {(documentFile.size / 1024 / 1024).toFixed(2)} MB</span>}</label><label className="text-xs font-semibold text-slate-600 sm:col-span-2">Observación<textarea rows={2} maxLength={500} value={documentForm.observacion} disabled={busy} onChange={event => setDocumentForm(previous => ({ ...previous, observacion: event.target.value }))} placeholder="Fecha, versión o comentario sobre el documento" className={inputClass} /></label></div><button type="submit" disabled={busy || !uploadReady || !documentFile} className={`${primaryClass} mt-5 hidden sm:inline-flex`}><Icon name="document" />{busy ? "Guardando…" : "Subir documento"}</button></Block></form>
-              </div>}
+              <div hidden={!["Estado del expediente", "Vendedor", "Comprador", "Documentación"].includes(tab)}>
+                <TransactionDossier key={details.inmueble.id} propertyId={details.inmueble.id} view={tab === "Vendedor" ? "vendedor" : tab === "Comprador" ? "comprador" : tab === "Documentación" ? "inmueble" : "estado"} files={documentFiles} uploadReady={uploadReady} administrator={admin} onChanged={() => load(code, undefined, true)} onBusyChange={setBusy} onDirtyChange={setDossierDirty} />
+              </div>
 
               {tab === "Visitas" && <PropertyVisits key={code} propertyId={details.inmueble.id} onBusyChange={setBusy} onChanged={() => { void load(code, undefined, true); }} />}
               {tab === "Tasación" && (details.tasacion ? <div className="space-y-6"><Block title="Tasación registrada" description={`Fecha de tasación: ${formatDate(details.tasacion.fechaTasacion)}`}><div className="grid gap-3 sm:grid-cols-3"><Stat label={referenceLabel(details.inmueble.operacion)} value={money(details.tasacion.valorReferencia)} icon="chart" /><Stat label={targetLabel(details.inmueble.operacion)} value={money(details.tasacion.precioObjetivo)} icon="chart" /><Stat label={priceLabel(details.inmueble.operacion)} value={money(details.tasacion.precioVenta)} icon="chart" /></div></Block><Block title="Observación"><p className="whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">{details.tasacion.observacion || "Sin observaciones registradas."}</p></Block>{admin && <Link href={`/tasaciones-textos-pendientes?inmueble=${details.inmueble.id}#material`} className="inline-flex items-center gap-2 text-xs font-semibold text-[#c80000]">Gestionar {priceLabel(details.inmueble.operacion).toLowerCase()} <Icon name="arrow" /></Link>}</div> : <div className="rounded-2xl bg-slate-50 p-6"><p className="text-sm text-slate-500">Todavía no hay una tasación registrada.</p>{admin && <Link href={`/registrar-tasaciones?inmueble=${details.inmueble.id}`} className="mt-3 inline-flex text-xs font-semibold text-[#c80000]">Registrar tasación →</Link>}</div>)}
@@ -334,6 +271,5 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
       </div>
     </div>
 
-    {documentToDelete && <DeleteDocumentDialog document={documentToDelete} busy={busy} onCancel={() => setDocumentToDelete(null)} onConfirm={() => { void removeDocument(documentToDelete); }} />}
-  {tab === "Documentación" && details && <MobileFormActions><a href="#agregar-documento" className="aa-button aa-button-secondary">Ver formulario</a><button type="submit" form="agregar-documento" disabled={busy || !uploadReady || !documentFile} className={primaryClass}><Icon name="document" />{busy ? "Guardando…" : "Subir documento"}</button></MobileFormActions>}</main></NavigationReturnProvider>;
+    </main></NavigationReturnProvider>;
 }

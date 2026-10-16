@@ -17,7 +17,10 @@
     "db:restore-registration": "node scripts/restore-simplified-registration.mjs",
     "test:registration": "node --test tests/simplified-registration.test.mjs tests/publication-checklist.test.mjs tests/property-address.test.mjs",
     "test:zones": "node --test tests/zone-plan.test.mjs tests/simplified-registration.test.mjs tests/property-address.test.mjs",
-    "test:zones:integration": "node tests/zones.integration.mjs"
+    "test:zones:integration": "node tests/zones.integration.mjs",
+    "db:transaction-dossier": "node scripts/install-transaction-dossier.mjs",
+    "test:dossier": "node --test tests/transaction-dossier.test.mjs",
+    "test:dossier:integration": "node tests/transaction-dossier.integration.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

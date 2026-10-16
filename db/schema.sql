@@ -317,3 +317,12 @@ CREATE INDEX `idx_ubicaciones_padre` ON `inm_ubicaciones` (`padre_id`);
 CREATE TABLE inm_secuencias (nombre VARCHAR(50) PRIMARY KEY, valor BIGINT UNSIGNED NOT NULL DEFAULT 0);
 INSERT INTO inm_secuencias (nombre, valor) VALUES ('inmueble', 0);
 CREATE TABLE inm_codigos_anteriores (codigo VARCHAR(350) PRIMARY KEY, inmueble_id BIGINT UNSIGNED NOT NULL, FOREIGN KEY (inmueble_id) REFERENCES inm_inmuebles(id));
+
+-- Additive schema; existing files are reorganized by scripts/install-transaction-dossier.mjs.
+CREATE TABLE IF NOT EXISTS inm_expedientes (
+  inmueble_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  configuracion TEXT NOT NULL,
+  version INT UNSIGNED NOT NULL DEFAULT 1,
+  actualizado TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_expediente_inmueble FOREIGN KEY (inmueble_id) REFERENCES inm_inmuebles(id)
+);

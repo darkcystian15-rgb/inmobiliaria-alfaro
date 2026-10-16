@@ -1,5 +1,7 @@
 # Estado actual — 15 de octubre de 2026
 
+Actualización del 16 de octubre: consultar [Expediente de la operación](expediente-operacion-2026-10-16.md) para la nueva organización de Información de inmuebles, condiciones del vendedor/comprador y alertas documentales.
+
 Actualización posterior: [retirada de mapas y coordenadas](retirada-mapas-2026-10-15.md). La ubicación del inmueble queda como texto y geografía opcional, sin mapa ni punto GPS. Consultar ese registro para la limpieza de datos, restauración y nueva publicación.
 
 Referencia consolidada tras revisar los documentos de avances y los cambios locales. La comprobación de despliegue se realiza en Vercel; los conteos de datos corresponden a la consulta anterior indicada, no a una nueva auditoría de la BD.
