@@ -2,6 +2,8 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
+Actualización de catálogo: [Tipos de inmueble](docs/tipos-inmueble.md), con Módulo, Condominio, Colegio y Almacén activos y comprobados en el selector. **Única zona pendiente de migrar desde Drive: Nuevo Chimbote.** Su análisis está realizado; las altas y exclusiones aún no se ejecutan. La ampliación del catálogo no modifica sus fichas actuales.
+
 Reorganización posterior: [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md).
 
 Ajuste posterior: [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md).

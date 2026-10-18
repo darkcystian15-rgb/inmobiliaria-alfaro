@@ -13,3 +13,12 @@ El registro, la ficha y los filtros de Cartera y Reportes consultan el catálogo
 Instalación idempotente: `node scripts/install-property-types.mjs`. Crea `inm_tipos_inmueble`, instala las opciones iniciales solo si el catálogo está vacío e importa los tipos que ya utilizan los inmuebles sin cambiar sus datos. La migración equivalente está en `db/migrations/0010_amazing_bromley.sql`.
 
 Prueba: `tests/photos.integration.mjs` comprueba permisos, duplicados, tipos desconocidos, renombrado compartido, rechazo de asignaciones inactivas, conservación del tipo inactivo y reactivación, usando datos temporales que elimina al finalizar.
+
+
+## Ampliación del 18 de octubre de 2026
+
+Se agregaron al catálogo activo **Módulo**, **Condominio**, **Colegio** y **Almacén**, por solicitud del usuario, como preparación para Nuevo Chimbote. La operación usa la API de administración existente, sin migración de esquema ni cambios de código de aplicación. Se conservan los tipos anteriores y no se asignan estos tipos a fichas existentes.
+
+Verificación completada el `2026-10-18T13:44:25.244Z`: 13 tipos en total; Módulo (40), Condominio (41), Colegio (42) y Almacén (43), activos y sin duplicados. La consulta de catálogo, la pantalla Tipos de inmueble y las cuatro opciones del selector de Registrar inmueble de Nuevo Chimbote pasaron la comprobación, sin guardar ninguna ficha. Evidencia y copia previa del catálogo en `output/catalog-types/`, privado y excluido de Git y Vercel. Las cuentas y sesiones temporales de comprobación se eliminan al terminar.
+
+**Pendiente:** migrar Nuevo Chimbote. Agregar estos tipos no carga inmuebles ni elimina su data actual. El análisis de nombres identificó 86 carpetas con número entero, de las cuales diez solo contienen X y 76 tienen nombres identificables; además existe la carpeta especial 37A. La selección de posiciones y resolución de datos ambiguos aún no se ha ejecutado. Las carpetas sin numerar no se cargarán, según la instrucción del usuario.
