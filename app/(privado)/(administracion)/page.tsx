@@ -18,7 +18,7 @@ import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 type DashboardData = {
   resumen: { activos: number; posicionesDisponibles: number; visitasPendientes: number; tasacionesPendientes: number; aprobaciones: number; negociaciones: number; textosPendientes: number; listosParaPublicar: number };
   pendientes: { etapa: string; total: number; tone: string }[];
-  recientes: { inmuebleId: number; numero: string; nombre: string; nombreContacto: string | null; tipo: string; operacion: string; direccion: string | null; etapa: string; fecha: string | null }[];
+  recientes: { inmuebleId: number; numero: string; nombre: string; nombreContacto: string | null; tipo: string; operacion: string; direccion: string | null; etapa: string; detalle?:string|null; usuario?:string|null; fecha: string | null }[];
 };
 const destinations: Record<string, { href: string; action: string }> = {
   "Visita pendiente": { href: "/visitas-pendientes", action: "Revisar visitas" },
@@ -95,13 +95,14 @@ export default function Home() {
         </details>
 
         <section aria-labelledby="recent-progress-title" className="aa-card w-full overflow-hidden">
-          <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5"><h2 id="recent-progress-title" className="text-lg font-bold text-slate-900">Avances recientes</h2><p className="text-xs text-slate-500">Últimos cinco movimientos · Hora de Perú</p></header>
+          <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5"><h2 id="recent-progress-title" className="text-lg font-bold text-slate-900">Avances recientes</h2><p className="text-xs text-slate-500">Últimos cinco movimientos</p></header>
           <ul className="divide-y divide-slate-100">{data.recientes.length ? data.recientes.map((item, index) => <li key={`${item.inmuebleId}-${index}`} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3 transition hover:bg-slate-50/70 sm:px-5">
             <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
               <span aria-label={`Posición ${item.numero}`} className="flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 px-1 font-mono text-xs font-semibold text-slate-500">{item.numero}</span>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold leading-5 text-slate-900" title={item.nombreContacto || "Sin contacto"}>{item.nombreContacto || "Sin contacto"}</p><p className="mt-1 break-words text-xs leading-5 text-slate-500"><PropertySummary operation={item.operacion} type={item.tipo} location={item.direccion} /></p>
                 <p className="mt-0.5 break-words text-xs leading-5 text-slate-600"><span>{item.etapa}</span><span aria-hidden="true" className="mx-2 text-slate-300">·</span><time dateTime={item.fecha ?? undefined} className="text-slate-500">{item.fecha ? new Date(item.fecha).toLocaleString("es-PE", { timeZone: "America/Lima", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "Sin fecha"}</time></p>
+                {item.detalle&&<p className="mt-1 break-words text-xs text-slate-600">{item.detalle}</p>}{item.usuario&&<p className="mt-1 text-xs text-slate-500">Por: {item.usuario}</p>}
               </div>
             </div>
             <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}&pestana=seguimiento#historial`} aria-label={`Ver historial de ${item.nombre}`} className="col-start-2 inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-[#c80000] transition hover:bg-slate-50 sm:col-start-auto">Ver historial →</Link>

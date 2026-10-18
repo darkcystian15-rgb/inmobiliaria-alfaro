@@ -762,7 +762,7 @@ export default function Page() {
 
           <div className="border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs leading-5 text-slate-600">
             <p><span className="font-semibold">Filtros aplicados:</span> {filtrosAplicados}</p>
-            {generado && <p>Consulta actualizada: {generado.toLocaleString("es-PE", { timeZone: "America/Lima" })} · Hora de Perú · {paginacion.total} resultados</p>}
+            {generado && <p>Consulta actualizada: {generado.toLocaleString("es-PE", { timeZone: "America/Lima" })} · {paginacion.total} resultados</p>}
           </div>
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 px-5 py-3 print:hidden">
             <label className="w-full text-xs font-semibold text-slate-500 sm:max-w-xs">Buscar en esta página

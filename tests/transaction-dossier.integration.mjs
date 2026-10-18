@@ -87,6 +87,14 @@ try {
   assert.equal((await upload('COMPRADOR_DNI', 'No corresponde', pdf, operator)).response.status, 409);
   assert.equal((await upload('VENDEDOR_VOUCHER_RENTA', 'Exonerado', pdf, operator)).response.status, 409);
   result = await upload('COPIA_LITERAL_CRI', 'Copia literal', pdf, operator); assert.equal(result.response.status, 201, JSON.stringify(result.data)); const pdfId = result.data.id;
+  let events=(await db.query("SELECT evento,usuario_id,observacion FROM inm_timeline WHERE inmueble_id=1 AND evento='archivo_subido'"))[0];
+  assert.equal(events.length,1);assert.equal(events[0].usuario_id,2);
+  let metadata=JSON.parse(events[0].observacion).archivo;
+  assert.equal(metadata.nombre,'Copia literal');assert.equal(metadata.nombreOriginal,'Copia literal.pdf');assert.equal(metadata.categoria,'Copia literal o CRI-PU');
+  assert.ok(!events[0].observacion.includes('rutaAlmacenamiento'));
+  const recent=(await request('/api/dashboard',admin)).data.recientes.find(item=>item.etapa==='Archivo subido');
+  assert.ok(recent.detalle.includes('Copia literal.pdf'));assert.equal(recent.usuario,'usuario');
+
   const image = await sharp({ create: { width: 32, height: 32, channels: 3, background: '#c80000' } }).png().toBuffer();
   assert.equal((await upload('VENDEDOR_DNI', 'DNI vendedor', image, operator, 'png')).response.status, 201);
   assert.equal((await upload('HR_VENTA', 'HR Word', Buffer.from('d0cf11e0a1b11ae100000000', 'hex'), operator, 'doc')).response.status, 201);
@@ -97,6 +105,12 @@ try {
   assert.equal((await request(`/api/inmuebles/2/archivos/${pdfId}`, operator)).response.status, 404);
   assert.equal((await request(`/api/inmuebles/1/archivos?archivoId=${pdfId}`, operator, 'DELETE')).response.status, 403);
   result = await request('/api/inmuebles/1/archivos', operator, 'PATCH', { archivoId: pdfId, nombre: 'CRI-PU revisado', tipoDocumento: 'COPIA_LITERAL_CRI', observacion: '' }); assert.equal(result.response.status, 200);
+  const changes=(await db.query("SELECT observacion FROM inm_timeline WHERE inmueble_id=1 AND evento='archivo_actualizado'"))[0];
+  assert.equal(changes.length,1);const change=JSON.parse(changes[0].observacion);
+  assert.equal(change.anterior.nombre,'Copia literal');assert.equal(change.nuevo.nombre,'CRI-PU revisado');
+  assert.equal((await request('/api/inmuebles/1/archivos',operator,'PATCH',{archivoId:pdfId,nombre:'CRI-PU revisado',tipoDocumento:'COPIA_LITERAL_CRI',observacion:''})).response.status,200);
+  assert.equal((await db.query("SELECT COUNT(*) total FROM inm_timeline WHERE inmueble_id=1 AND evento='archivo_actualizado'"))[0][0].total,1,'Saving unchanged metadata does not duplicate activity');
+
   result = await request(url, operator); assert.equal(result.data.status.items.find(item => item.key === 'COPIA_LITERAL_CRI').state, 'completo');
   assert.equal(result.data.status.items.find(item => item.key === 'TASACION_PROPIETARIO').documents.length, 2);
   assert.equal(result.data.status.items.find(item => item.key === 'VENDEDOR_FORMULARIO_RENTA').state, 'no_aplica');
@@ -122,7 +136,10 @@ try {
   assert.equal((await request('/api/inmuebles/3/seguimiento', admin, 'PUT', {actividad:'documentacion',responsableId:1,fechaLimite:'2027-01-01',observacion:'Expediente de alquiler'})).response.status, 200);
   await db.query("INSERT INTO inm_visitas(id,inmueble_id,fecha_visita,completada,observaciones,usuario_id) VALUES(1,3,'2026-10-18',1,'Visita de ensayo',1)");
   const photoBody = new FormData();photoBody.set('tipoDocumento','FOTO_INMUEBLE');photoBody.set('nombre','Evidencia de visita');photoBody.set('visitaId','1');photoBody.set('archivo',new File([image],'visita.png'));
-  assert.equal((await request('/api/inmuebles/3/archivos',operator,'POST',photoBody)).response.status,201);
+  const photoResult=await request('/api/inmuebles/3/archivos',operator,'POST',photoBody);assert.equal(photoResult.response.status,201);
+  assert.equal((await request('/api/inmuebles/3/archivos',operator,'PATCH',{archivoId:photoResult.data.id,nombre:'Evidencia de visita',observacion:'',esPortada:true})).response.status,200);
+  const photoChange=JSON.parse((await db.query("SELECT observacion FROM inm_timeline WHERE inmueble_id=3 AND evento='archivo_actualizado' ORDER BY id DESC LIMIT 1"))[0][0].observacion);
+  assert.equal(photoChange.nuevo.portada,true);assert.equal(photoChange.nuevo.visitaId,1);assert.equal(photoChange.nuevo.seccion,'Visitas');
   assert.equal((await upload('FOTO_INMUEBLE','Foto antigua sin visita',image,operator,'png',3)).response.status,201);
   console.log('PASS: permisos, conflictos de edición, condiciones, carga PDF/imagen/Word/Excel, varios archivos, acceso privado y reclasificación.');
 
@@ -187,7 +204,7 @@ try {
   await navigation.getByRole('button',{name:/^Visitas/}).click();await page.getByRole('region',{name:'Fotos de la visita',exact:true}).getByRole('button',{name:'Ampliar Evidencia de visita',exact:true}).waitFor();await page.getByRole('region',{name:'Fotos anteriores sin visita',exact:true}).getByRole('button',{name:'Ampliar Foto antigua sin visita',exact:true}).waitFor();
   await navigation.getByRole('button',{name:'Seguimiento',exact:true}).click();
   await page.getByRole('heading',{name:'Seguimiento de alquiler',exact:true}).waitFor();
-  await page.getByText('Responsables y plazos',{exact:true}).click();
+  await page.getByRole('heading',{name:'Plazos de este inmueble',exact:true}).waitFor();
   await page.getByRole('group',{name:/Expediente documental de la operación/}).waitFor();
   await page.setViewportSize({width:375,height:850});
   for (const name of ['Arrendador','Arrendatario','Inmueble','Visitas','Seguimiento']) {
@@ -199,5 +216,13 @@ try {
   console.log('PASS: navegador autenticado escritorio/móvil, guardado de condiciones, carga real desde formulario, filtro de zona y vistas previas sin errores/desbordes.');
   assert.equal((await request(`/api/inmuebles/1/archivos?archivoId=${pdfId}`, admin, 'DELETE')).response.status, 200);
   assert.equal((await request(url, admin)).data.status.items.find(item => item.key === 'COPIA_LITERAL_CRI').state, 'pendiente');
+  const deleted=(await db.query("SELECT observacion FROM inm_timeline WHERE inmueble_id=1 AND evento='archivo_eliminado'"))[0];
+  assert.equal(deleted.length,1);assert.equal(JSON.parse(deleted[0].observacion).archivo.nombre,'CRI-PU revisado');
+  assert.equal((await db.query("SELECT COUNT(*) total FROM inm_timeline WHERE evento='archivo_subido' AND JSON_UNQUOTE(JSON_EXTRACT(observacion,'$.archivo.nombre'))='No corresponde'"))[0][0].total,0);
+  const linked=await request('/api/inmuebles/1/archivos',operator,'POST',{tipoDocumento:'OTRO',nombre:'Referencia externa',enlace:'https://example.invalid/document'});assert.equal(linked.response.status,201);
+  const linkEvent=JSON.parse((await db.query("SELECT observacion FROM inm_timeline WHERE inmueble_id=1 AND evento='archivo_enlazado'"))[0][0].observacion);
+  assert.equal(linkEvent.archivo.nombre,'Referencia externa');assert.equal(linkEvent.archivo.nombreOriginal,null);assert.equal(linkEvent.archivo.tamano,null);
+  console.log('PASS: historial transaccional de subida/cambio/eliminación con nombre original, categoría, usuario y detalle en panel; cargas rechazadas sin movimientos ficticios.');
+
 } catch (error) { if(page) { fs.mkdirSync('output/dossier-local',{recursive:true}); await page.screenshot({path:'output/dossier-local/failure.png',fullPage:true}).catch(()=>{}); } console.error(logs.slice(-3000)); throw error; }
 finally { if (browser) await browser.close(); if (app) app.kill('SIGTERM'); if (storage) await new Promise(resolve => storage.close(resolve)); await db.end(); }

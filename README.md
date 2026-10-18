@@ -1,5 +1,7 @@
 # Inmobiliaria Alfaro — intranet
 
+Actualización: [Historial detallado de archivos](docs/historial-archivos-2026-10-18.md). Subidas, cambios y eliminaciones con detalle en ficha y panel; se retiran aclaraciones repetidas de horario.
+
 Actualización: [Alertas y plazos particulares por inmueble](docs/alertas-plazos-particulares-2026-10-18.md). Panel con diez actividades por página, Seguimiento exclusivo del administrador y configuración general separada.
 
 Ajuste posterior: [Prioridades sin etiqueta de origen y contraste de tasaciones con Drive](docs/fechas-prioridades-tasaciones-drive-2026-10-18.md). Se mantienen fechas y avances; los documentos detectados quedan como candidatos por verificar.

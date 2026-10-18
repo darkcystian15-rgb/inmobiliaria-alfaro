@@ -1,5 +1,6 @@
+import { fileActivitySnapshot } from '@/lib/file-activity.mjs';
 import { propertyIdentifierCondition } from "@/lib/property-identity";
-import { audit, auditValues } from "@/lib/security-audit";
+import { auditValues } from "@/lib/security-audit";
 import { authorizeApi } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { and, asc, eq } from 'drizzle-orm';
@@ -7,7 +8,7 @@ import { randomUUID } from 'node:crypto';
 import { hostingRequest } from '@/lib/document-hosting';
 import { IMAGE_EXTENSIONS, prepareImage } from '@/lib/image-files.mjs';
 import { db } from '@/lib/db';
-import { inmArchivos, inmInmuebles, inmAsignacionesPosicion, inmPosiciones, inmVisitas, securityAudit } from '@/db/schema';
+import { inmArchivos, inmInmuebles, inmAsignacionesPosicion, inmPosiciones, inmVisitas, inmTimeline, securityAudit } from '@/db/schema';
 import { DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, documentPath, storageConfigured, storeDocument, validateDocument } from '@/lib/document-files.mjs';
 import { readDossier } from '@/lib/dossier-record';
 import { dossierDocuments, documentApplies, dossierDocumentType } from '@/lib/transaction-dossier.mjs';
@@ -67,8 +68,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       const enlace = String(body.enlace ?? '').trim();
       if (tipoDocumento === 'FOTO_INMUEBLE') return NextResponse.json({ error: 'Sube una imagen directamente; no se admiten enlaces para fotos.' }, { status: 400 });
       if (!/^https?:\/\//i.test(enlace) || enlace.length > 1000) return NextResponse.json({ error: 'Enlace no válido.' }, { status: 400 });
-      const [created] = await db.insert(inmArchivos).values({ inmuebleId: inmueble.id, tipoDocumento, nombre, enlace, observacion: observacion || null, usuarioId }).$returningId();
-      await audit(usuarioId,"file.link",`file:${created.id}`);
+      const created = await db.transaction(async tx => {
+        await tx.select({id:inmInmuebles.id}).from(inmInmuebles).where(eq(inmInmuebles.id,inmueble.id)).for('update');
+        if(definition&&!documentApplies(definition,(await readDossier(inmueble.id,tx)).config,inmueble.operacion))throw new Error('Las condiciones del expediente cambiaron.');
+        const [row]=await tx.insert(inmArchivos).values({inmuebleId:inmueble.id,tipoDocumento,nombre,enlace,observacion:observacion||null,usuarioId}).$returningId();
+        await tx.insert(securityAudit).values(auditValues(usuarioId,'file.link',`file:${row.id}`));
+        await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId,evento:'archivo_enlazado',observacion:JSON.stringify({archivo:fileActivitySnapshot({...row,tipoDocumento,nombre,observacion},inmueble.operacion)})});
+      return row;
+      });
       return NextResponse.json({ ok: true, id: created.id }, { status: 201 });
     }
     if (!file) return NextResponse.json({ error: 'Selecciona un archivo.' }, { status: 400 });
@@ -104,6 +111,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       }
       const [row] = await tx.insert(inmArchivos).values({ inmuebleId: inmueble.id, visitaId, tipoDocumento, nombre, enlace: stored.pathname, almacenamiento: 'hosting', rutaAlmacenamiento: stored.pathname, nombreOriginal: originalName, tamanoBytes: bytes.length, tipoMime: contentType, observacion: observacion || null, usuarioId }).$returningId();
       await tx.insert(securityAudit).values(auditValues(usuarioId,"file.upload",`file:${row.id}`));
+      await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId,evento:'archivo_subido',observacion:JSON.stringify({archivo:fileActivitySnapshot({...row,tipoDocumento,nombre,nombreOriginal:originalName,tipoMime:contentType,tamanoBytes:bytes.length,visitaId,observacion},inmueble.operacion)})});
       return row;
       });
     } });
@@ -128,6 +136,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
         await hostingRequest('DELETE', file.rutaAlmacenamiento);
       }
       await tx.delete(inmArchivos).where(condition);
+      await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId:auth.user.id,evento:'archivo_eliminado',observacion:JSON.stringify({archivo:fileActivitySnapshot(file,inmueble.operacion)})});
       await tx.insert(securityAudit).values(auditValues(auth.user.id,"file.delete",`file:${fileId}`));
       return true;
     });
@@ -158,8 +167,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         const condition = and(eq(inmArchivos.id, archivoId), eq(inmArchivos.inmuebleId, inmueble.id));
         const [file] = await tx.select().from(inmArchivos).where(condition).limit(1).for('update');
         if (!file || file.tipoDocumento === 'FOTO_INMUEBLE') return 'missing';
+        if(file.nombre===nombre&&(file.observacion||null)===(observacion||null)&&file.tipoDocumento===definition.key)return 'ok';
         await tx.update(inmArchivos).set({ nombre, observacion: observacion || null, tipoDocumento: definition.key }).where(condition);
         await tx.insert(securityAudit).values(auditValues(auth.user.id, 'dossier.file.update', `file:${archivoId}`));
+        await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId:auth.user.id,evento:'archivo_actualizado',observacion:JSON.stringify({anterior:fileActivitySnapshot(file,inmueble.operacion),nuevo:fileActivitySnapshot({...file,nombre,observacion:observacion||null,tipoDocumento:definition.key},inmueble.operacion)})});
         return 'ok';
       });
       if (result !== 'ok') return NextResponse.json({ error: result === 'missing' ? 'Documento no encontrado.' : 'Guarda primero las condiciones de esta categoría.' }, { status: result === 'missing' ? 404 : 409 });
@@ -171,9 +182,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       const condition = and(eq(inmArchivos.id, archivoId), eq(inmArchivos.inmuebleId, inmueble.id), eq(inmArchivos.tipoDocumento, 'FOTO_INMUEBLE'), eq(inmArchivos.almacenamiento, 'hosting'));
       const [file] = await tx.select().from(inmArchivos).where(condition).limit(1);
       if (!file?.tipoMime?.startsWith('image/')) return false;
+      if(file.nombre===nombre&&(file.observacion||null)===(observacion||null)&&(body.esPortada===undefined||file.esPortada===body.esPortada))return true;
       if (body.esPortada === true) await tx.update(inmArchivos).set({ esPortada: false }).where(and(eq(inmArchivos.inmuebleId, inmueble.id), eq(inmArchivos.tipoDocumento, 'FOTO_INMUEBLE')));
       await tx.update(inmArchivos).set({ nombre, observacion: observacion || null, ...(typeof body.esPortada === 'boolean' ? { esPortada: body.esPortada } : {}) }).where(condition);
       await tx.insert(securityAudit).values(auditValues(auth.user.id,"photo.update",`file:${archivoId}`));
+      await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId:auth.user.id,evento:'archivo_actualizado',observacion:JSON.stringify({anterior:fileActivitySnapshot(file,inmueble.operacion),nuevo:fileActivitySnapshot({...file,nombre,observacion:observacion||null,...(typeof body.esPortada==='boolean'?{esPortada:body.esPortada}:{})},inmueble.operacion)})});
       return true;
     });
     if (!found) return NextResponse.json({ error: 'Foto no encontrada.' }, { status: 404 });

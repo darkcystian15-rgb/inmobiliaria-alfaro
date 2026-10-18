@@ -1,3 +1,4 @@
+import { fileActivitySummary, fileEventNames } from '@/lib/file-activity.mjs';
 import { databaseInstant } from '@/lib/business-time';
 import { publicationReadiness } from "@/lib/publication-readiness";
 import { authorizeApi } from "@/lib/auth";
@@ -13,9 +14,11 @@ import {
   inmTasaciones,
   inmTimeline,
   inmVisitas,
+  inmUsuarios,
 } from "@/db/schema";
 
 const eventoMap: Record<string, string> = {
+  ...fileEventNames,
   identificacion_actualizada: "Código del inmueble actualizado",
   ficha_organizada: "Ficha actualizada",
   ficha_actualizada: "Ficha actualizada",
@@ -103,9 +106,12 @@ export async function GET() {
           operacion: inmInmuebles.operacion,
           direccion: inmInmuebles.direccion,
           evento: inmTimeline.evento,
+          observacion: inmTimeline.observacion,
+          usuario: inmUsuarios.nombre,
           fecha: databaseInstant(inmTimeline.fechaEvento),
         })
         .from(inmTimeline)
+        .leftJoin(inmUsuarios,eq(inmUsuarios.id,inmTimeline.usuarioId))
         .innerJoin(
           inmInmuebles,
           eq(inmInmuebles.id, inmTimeline.inmuebleId)
@@ -289,6 +295,8 @@ export async function GET() {
         direccion: item.direccion,
         etapa: eventoMap[item.evento] ?? item.evento.replaceAll("_", " ").replace(/^./, character => character.toUpperCase()),
         fecha: item.fecha,
+        detalle: fileActivitySummary(item.evento,item.observacion),
+        usuario: item.usuario,
       })),
     });
   } catch (error) {
