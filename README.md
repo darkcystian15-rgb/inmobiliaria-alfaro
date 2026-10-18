@@ -1,5 +1,8 @@
 # Inmobiliaria Alfaro — intranet
 
+Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. Esta actualización es posterior a los SHA y despliegues de la entrega de IDs citados debajo: consultar el HEAD de ambas ramas y el estado Production de ese SHA para verificar el título publicado.
+
+
 Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScript, MySQL y Drizzle. Incluye cartera por zonas, captación, visitas, precios, documentación, publicación, cierres, alquileres y reportes.
 
 ## Estado y avances
@@ -28,7 +31,7 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 - [Identificación y descripción de Cartera](docs/identificacion-cartera-2026-10-18.md): criterio uniforme para pantallas y reportes, publicado el 18 de octubre.
 
-Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, rama, código publicado, funcionalidad y límites de verificación. Último código publicado: `0ca5c6d`, con despliegue Production completado según los estados de Vercel en GitHub. La pantalla nueva fue comprobada con sesión autenticada en escritorio y móvil; detalle y respaldo en la referencia consolidada.
+Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, rama, código publicado, funcionalidad y límites de verificación. Código previo al ajuste de título: `0ca5c6d`, con despliegue Production completado según los estados de Vercel en GitHub. La pantalla nueva fue comprobada con sesión autenticada en escritorio y móvil; detalle y respaldo en la referencia consolidada.
 
 - [Expediente de vendedor, comprador e inmueble](docs/expediente-operacion-2026-10-16.md): nueva organización documental y estado del expediente; referencia histórica anterior a los grupos específicos de alquiler del 18 de octubre.
 - [Retirada de mapas y coordenadas](docs/retirada-mapas-2026-10-15.md): cambio posterior al estado consolidado; conserva ubicación referencial y zonas comerciales.

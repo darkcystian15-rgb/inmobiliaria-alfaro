@@ -1,5 +1,8 @@
 # Contexto vigente para retomar — 18 de octubre de 2026
 
+Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. Esta actualización es posterior a los SHA y despliegues de la entrega de IDs citados debajo: consultar el HEAD de ambas ramas y el estado Production de ese SHA para verificar el título publicado.
+
+
 Leer primero este archivo y después [REPOSITORIO.md](../REPOSITORIO.md). Esta guía sustituye como punto de entrada al contexto del 15 de octubre; los documentos anteriores conservan sus evidencias históricas.
 
 Último ajuste: [ID por posición y filtros limitados](id-posicion-filtros-2026-10-18.md). El ID visible comienza por la posición de la zona; las claves internas no cambian. Los cuatro buscadores buscan solo contacto, dirección e ID visible. No repetir cargas ni reiniciar avances.
@@ -8,8 +11,8 @@ Leer primero este archivo y después [REPOSITORIO.md](../REPOSITORIO.md). Esta g
 
 - Repositorio: https://github.com/darkcystian15-rgb/inmobiliaria-alfaro.
 - Carpeta de aplicación: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`. El padre es otro repositorio; ejecutar Git dentro de esta carpeta.
-- Ramas `main` y `feat/registro-simplificado` sincronizadas en local y GitHub. Último código de interfaz comprobado: `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9`; los commits posteriores solo actualizan evidencia y esta guía. Verificar el SHA remoto más reciente al retomar.
-- Código operativo de la última entrega de interfaz: `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9`. Los commits posteriores solo registran documentación, incluida esta guía; no vuelven a cargar datos.
+- Ramas `main` y `feat/registro-simplificado` sincronizadas en local y GitHub. Código anterior al ajuste de título: `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9`; los commits posteriores solo actualizan evidencia y esta guía. Verificar el SHA remoto más reciente al retomar.
+- Código de la entrega previa de IDs: `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9`. Los commits posteriores solo registran documentación, incluida esta guía; no vuelven a cargar datos.
 - Vercel: `puma19/inmobiliaria-alfarov2`. Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
 - Para `0ca5c6d`, Production GitHub `7156642003` y Preview `7156635767`, ambos `success`, «Deployment has completed». Production confirmado el `2026-10-18T15:27:19Z`; URL de versión https://inmobiliaria-alfarov2-ltzdk1mnq-puma19.vercel.app.
 - Esta guía genera un commit documental posterior. Al retomar, consultar las referencias y los estados de ese último SHA; no confundir el SHA del código operativo con el último commit documental ni usar cifras antiguas como inventario vivo.

@@ -1,5 +1,8 @@
 # Repositorio y estado de entrega
 
+Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. Esta actualización es posterior a los SHA y despliegues de la entrega de IDs citados debajo: consultar el HEAD de ambas ramas y el estado Production de ese SHA para verificar el título publicado.
+
+
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
 Último ajuste: [ID visible por posición y filtros por contacto, dirección o ID completo](docs/id-posicion-filtros-2026-10-18.md). Este criterio sustituye el prefijo global y la búsqueda por campos adicionales descritos en entregas anteriores.
@@ -24,7 +27,7 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Último código de aplicación publicado: `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9`.
+- Código anterior al ajuste de título: `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9`.
 - Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
 - Punto documental comprobado antes de la guía de nueva sesión: `e4cfa41`, Production `7155765057` y Preview `7155760668`, ambos `success`, Production del 18 de octubre a las 14:15:09 UTC. La guía se añade en un commit documental posterior; verificar ese último SHA al retomar.
 

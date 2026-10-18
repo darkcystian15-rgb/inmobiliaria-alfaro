@@ -581,10 +581,10 @@ export default function CarteraPage() {
         </div>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-bold text-slate-900">
+            <h2 className="break-words text-lg font-bold text-slate-900 sm:text-xl">
               {estado === "Histórico"
                 ? "Histórico de inmuebles"
-                : "Cartera operativa"}
+                : `CARTERA DE INMUEBLES ${zonaSeleccionada === ALL_ZONES ? "TODAS LAS ZONAS" : zonaSeleccionada?.toLocaleUpperCase("es-PE")}`}
             </h2>
 
             <p className="mt-1 text-xs text-slate-500">
