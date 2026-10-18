@@ -44,4 +44,12 @@ Antes de registrar una tasación operativa se debe distinguir el informe de valo
 
 Evidencia privada, excluida de Git y Vercel: `output/investigacion-fechas/database-before.json`, `current-properties.json`, `drive-expanded-matches.json` y `revision-tasaciones.md`. Incluye correspondencias, fuentes y discrepancias; no se publica información documental o comercial de clientes en este informe.
 
-Validación aprobada: 29 archivos de pruebas unitarias, lint y compilación de producción. La integración `tests/workflow-deadline.integration.mjs` pasó contra una base local aislada: visita histórica registrada hoy, primera activación sin reinicio por visita repetida, tasación histórica registrada hoy, publicación, plazo particular, visita y agenda sincronizadas, «Vencido»/«Vence hoy» y navegador móvil sin errores. La evidencia de publicación se completa al verificar el despliegue. La auditoría previa publicada conserva sus pruebas completas y su recuperación desde `237b9d7`.
+Validación aprobada: 29 archivos de pruebas unitarias, lint y compilación de producción. La integración `tests/workflow-deadline.integration.mjs` pasó contra una base local aislada: visita histórica registrada hoy, primera activación sin reinicio por visita repetida, tasación histórica registrada hoy, publicación, plazo particular, visita y agenda sincronizadas, «Vencido»/«Vence hoy» y navegador móvil sin errores. La auditoría previa publicada conserva sus pruebas completas y su recuperación desde `237b9d7`.
+
+## Publicación verificada
+
+- Corrección: commit `67db9ef924c88d8e0746f2c14536d531c64e9ef7`, publicado en `main` y `feat/registro-simplificado`.
+- Vercel Production `7159389521`: `success` el `2026-10-18T19:14:44Z`, URL técnica `https://inmobiliaria-alfarov2-c5zyxbebz-puma19.vercel.app`.
+- Verificación del dominio de producción el `2026-10-18T19:15:10.833Z`: los dos casos históricos contrastados mantienen fechas reales de 2025 y muestran inicio de seguimiento `18/10/2026`, límite de tasación `21/10/2026`. Los diez pendientes de visita comparados coinciden entre agenda y visitas.
+- Interfaz de escritorio y móvil aprobada, sin errores de navegador ni escrituras de negocio. Cuenta y sesiones temporales retiradas. Base local de pruebas retirada al terminar.
+- Evidencia privada: `output/investigacion-fechas/production-deadlines-result.json`. No se importaron tasaciones, documentos ni fechas desde Drive.
