@@ -1,5 +1,7 @@
 # Contexto vigente para retomar — 18 de octubre de 2026
 
+Actualización: [Preparación para publicar](preparacion-publicar-2026-10-18.md). Cuatro requisitos, progreso y enlaces al contenido registrado en los mismos apartados del inmueble.
+
 Actualización: [Reportes alineados con el flujo actual](revision-reportes-flujo-2026-10-18.md). Plazos particulares, alertas, columnas por actividad y exportaciones con zona.
 
 Actualización: [Historial detallado de archivos](historial-archivos-2026-10-18.md). Subidas, cambios y eliminaciones con detalle en ficha y panel; se retiran aclaraciones repetidas de horario.

@@ -1,5 +1,7 @@
 # Repositorio y estado de entrega
 
+Actualización: [Preparación para publicar](docs/preparacion-publicar-2026-10-18.md). Requisitos visuales como cuatro pasos, progreso y navegación directa al contenido registrado.
+
 Actualización: [Reportes alineados con el flujo actual](docs/revision-reportes-flujo-2026-10-18.md). Plazos particulares, alertas, columnas por actividad y exportaciones con zona.
 
 Actualización: [Historial detallado de archivos](docs/historial-archivos-2026-10-18.md). Subidas, cambios y eliminaciones con detalle en ficha y panel; se retiran aclaraciones repetidas de horario.
