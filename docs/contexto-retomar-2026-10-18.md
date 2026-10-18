@@ -1,5 +1,7 @@
 # Contexto vigente para retomar — 18 de octubre de 2026
 
+Ajuste posterior: [Prioridades sin etiqueta de origen y contraste de tasaciones con Drive](fechas-prioridades-tasaciones-drive-2026-10-18.md). Se mantienen fechas y avances; los documentos detectados quedan como candidatos por verificar.
+
 **Última entrega publicada:** [Diseño, datos y continuidad](auditoria-diseno-procesos-2026-10-18.md). Código `fc56a7d`, Production `7158854179` y Preview `7158848637`, ambos completados. Comprobación autenticada de siete zonas y 28 pantallas el `2026-10-18T18:34:11.657Z`, sin escrituras de negocio. El commit documental posterior conserva este código.
 
 Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. El título se conserva en la entrega de auditoría publicada; las entregas anteriores de IDs mantienen su evidencia histórica.

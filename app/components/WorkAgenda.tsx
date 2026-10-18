@@ -41,7 +41,7 @@ export default function WorkAgenda() {
           <div className="col-span-2 min-w-0 sm:col-span-1">
             <PropertyListIdentity position={item.posicion} contact={item.propietarioNombres} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="font-mono text-xs font-semibold leading-5 text-slate-500" icon={<FolderIcon className="h-7 w-7 shrink-0 text-amber-500" />} />
           </div>
-          <div className="min-w-0 sm:max-w-64"><p className={`w-fit rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}>{statuses[item.actividad] || 'Pendiente de revisión'}</p><p className="mt-1 text-[11px] leading-4 text-slate-500">{item.fechaLimite ? <>Límite: {deadline(item.fechaLimite)} · {item.plazoOrigen === 'asignado' ? 'Asignado' : 'Automático'}</> : 'Plazo sin definir'}</p></div>
+          <div className="min-w-0 sm:max-w-64"><p className={`w-fit rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}>{statuses[item.actividad] || 'Pendiente de revisión'}</p><p className="mt-1 text-[11px] leading-4 text-slate-500">{item.fechaLimite ? <>Límite: {deadline(item.fechaLimite)}</> : 'Plazo sin definir'}</p></div>
           <Link aria-label={`${labels[item.actividad] || 'Revisar ficha'}: ${item.propietarioNombres || 'Sin contacto'}`} href={`${destinations[item.actividad] || '/datos-inmuebles'}?zona=${encodeURIComponent(item.zona)}&inmueble=${item.id}${item.actividad === 'expediente' ? '#material' : item.actividad === 'publicacion' ? '#listos' : ''}`} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">{labels[item.actividad] || 'Revisar ficha'} →</Link>
         </li>;
       })}</ul>
