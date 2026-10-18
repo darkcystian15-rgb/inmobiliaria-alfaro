@@ -54,4 +54,11 @@ No requiere migraciones ni se ejecuta al compilar o desplegar. No repetir `--app
 - Navegador de escritorio y móvil de 375 px: las 68 tarjetas en su posición, detalle del inmueble, Visitas pendientes y ausencia de errores JavaScript o desbordes. Acceso anónimo rechazado.
 - Capturas y comprobador privados en `output/nuevo-chimbote-production/` y `output/nuevo-chimbote-production-smoke.mjs`. Cuentas y sesiones temporales eliminadas y ausencia comprobada.
 
-La evidencia de publicación se añade al verificar Vercel.
+## Publicación
+
+- Entrega publicada: `6885fdab4f47e31785374c174387221b1414cedd`, sincronizada en `main` y `feat/registro-simplificado` mediante subida atómica.
+- Vercel informó a GitHub `success`, «Deployment has completed», entorno Production, despliegue `7155739152`, el `2026-10-18T14:12:59Z`.
+- URL de versión: https://inmobiliaria-alfarov2-j9sh9i8wp-puma19.vercel.app.
+- Preview `7155734565` también completado: https://inmobiliaria-alfarov2-8jjxr2g3q-puma19.vercel.app.
+- La carga se ejecutó una sola vez. Los commits posteriores de evidencia solo modifican Markdown; compilar o desplegar no vuelve a eliminar ni registrar inmuebles.
+- Contenedor MySQL de prueba y volumen retirados al terminar la verificación local.
