@@ -4,6 +4,8 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
+- [Reemplazo de Chimbote desde Drive](docs/carga-chimbote-2026-10-18.md): 43 inmuebles en las posiciones de sus carpetas, como recién registrados, con 43 visitas pendientes. Las otras zonas se conservan.
+
 - [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md): Registrar inmueble y Liberar inmueble encabezan el grupo, seguidos por visitas y tasaciones.
 
 - [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md): apartados por operación, cinco grupos de alquiler, documentos en Inmueble, fotos en Visitas y seguimiento documental; publicación verificada.

@@ -8,7 +8,7 @@ Ajuste posterior: [Dirección referencial en Cartera y prioridades sin duplicaci
 
 Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md). Consultar su evidencia de publicación y respaldo.
 
-Última entrega: [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md), publicado y comprobado en escritorio/móvil. La entrega de [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md) conserva su evidencia de publicación y prueba autenticada. La entrega de [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md) conserva su evidencia histórica. La entrega previa de [liberación definitiva](docs/liberacion-definitiva-2026-10-18.md) conserva su evidencia y punto de respaldo privado. La entrega anterior de [Listado de archivos](docs/listado-archivos-2026-10-18.md) conserva su evidencia histórica.
+Última entrega de datos: [Reemplazo de Chimbote desde Drive](docs/carga-chimbote-2026-10-18.md), 43 inmuebles recién registrados y comprobados en producción. Entrega de interfaz: [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md), publicado y comprobado en escritorio/móvil. La entrega de [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md) conserva su evidencia de publicación y prueba autenticada. La entrega de [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md) conserva su evidencia histórica. La entrega previa de [liberación definitiva](docs/liberacion-definitiva-2026-10-18.md) conserva su evidencia y punto de respaldo privado. La entrega anterior de [Listado de archivos](docs/listado-archivos-2026-10-18.md) conserva su evidencia histórica.
 
 ## Repositorio
 
@@ -71,6 +71,8 @@ Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. 
 - Prueba autenticada real de producción correcta, sin escrituras de negocio; cuentas y sesiones de verificación eliminadas. Capturas privadas locales y de producción, excluidas de Git.
 
 ## Datos, recuperación e historial
+
+Chimbote se reemplazó el 18 de octubre: 14 fichas anteriores eliminadas con sus relaciones y cinco archivos privados; 43 altas nuevas, 10 ventas y 33 alquileres, en las posiciones de Drive, con 43 visitas pendientes. Siete posiciones libres y ocho fichas de otras zonas conservadas. Respaldo privado de 25 tablas y nueve archivos en `restore-points/chimbote-20261018/`. Consultar [carga de Chimbote](docs/carga-chimbote-2026-10-18.md) antes de recuperar o trabajar en otra zona. No repetir el script de carga al desplegar.
 
 Las migraciones de registro simplificado, zonas y expediente constan como aplicadas en la evidencia del 15–16 de octubre. La entrega de eliminación definitiva requiere la tabla técnica `inm_eliminaciones_pendientes`, cuya instalación consta como aplicada y cuya existencia se volvió a comprobar sin escrituras. Punto de respaldo: `restore-points/liberacion-definitiva-20261018T022959Z/`, con fuente, bundle Git, instantánea de negocio, archivos privados y hashes. Consultar el documento de la entrega para alcance y recuperación. No repetir `--apply` para verificar o publicar documentación. Los conteos de documentos anteriores son históricos.
 
