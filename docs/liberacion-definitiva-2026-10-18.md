@@ -68,4 +68,13 @@ El hosting local contiene secretos no exportables. Las copias de archivos se obt
 
 ## Publicación
 
-Se incorporan aquí el commit, despliegue y comprobaciones autenticadas una vez completada la entrega.
+- Código publicado: `3604f0606bba6bee81ca287511302fbb9aee0812`, subido atómicamente a `main` y `feat/registro-simplificado`; ambas referencias remotas comprobadas en ese SHA.
+- Vercel informó a GitHub estado `success`, «Deployment has completed», entorno **Production**, despliegue GitHub `7150850215`, el `2026-10-18T06:19:38Z`.
+- URL de versión: https://inmobiliaria-alfarov2-ego6dlnjs-puma19.vercel.app.
+- Evidencia: API de despliegues de GitHub para ese SHA y `/repos/darkcystian15-rgb/inmobiliaria-alfaro/deployments/7150850215/statuses`.
+- Comprobación autenticada del dominio https://intranet.inmobiliariaalbertoalfaro.com.pe con `tests/file-list.production.smoke.mjs`: correcta. Siete zonas activas y un archivo coincidente en esta consulta; filtros de zona y cuatro tipos, permisos anónimo/operador, apertura privada, ID con contacto, etiquetas sin duplicar, zona obligatoria, cancelación del primer diálogo de eliminación y navegador de escritorio/móvil sin errores ni desbordes.
+- La prueba no ejecutó eliminaciones ni modificó inmuebles, documentos o cierres reales. Las dos cuentas y sesiones temporales fueron eliminadas al terminar. La confirmación completa del borrado conserva la evidencia local ficticia descrita arriba.
+- Comprobación de esquema por previsualización: `apply:false`, `newTable:false`, `businessWrites:0`. No se repitió la migración.
+- Validación repetida al completar la entrega: 27 archivos de pruebas correctos, ESLint sin advertencias y compilación final Webpack/TypeScript correcta. El sandbox impidió la primera compilación; fuera de él terminó correctamente tras reintentos de recursos externos.
+- El primer intento de subida recibió HTTP 403 con la credencial activa del entorno. La credencial personal ya guardada permitió completar la subida; no se cambiaron permisos del repositorio.
+- Capturas privadas actualizadas en `output/file-list-production/`, excluidas de Git y Vercel. Los commits posteriores de documentación no alteran el código publicado.
