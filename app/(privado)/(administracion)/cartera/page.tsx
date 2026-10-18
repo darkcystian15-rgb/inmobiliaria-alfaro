@@ -859,7 +859,7 @@ export default function CarteraPage() {
                     </div>
                   </div>
 
-<div className="self-start rounded-2xl border border-slate-200 p-4">
+<div className="rounded-2xl border border-slate-200 p-4">
   <div className="flex flex-wrap items-center justify-between gap-2">
     <p className="text-sm font-semibold text-slate-700">Material</p>
     {seleccionado.actividades.tasacion.estado !== "aprobado" && (
@@ -898,24 +898,23 @@ export default function CarteraPage() {
   )}
 </div>
 
-                  <PublicationChecklist data={seleccionado.expediente} code={seleccionado.id} />
+                  <div className="rounded-2xl bg-background p-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Publicación
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-700">
+                      {!seleccionado.actividades.publicacion.existe
+                        ? "Sin publicación registrada"
+                        : seleccionado.actividades.publicacion.publicado
+                          ? "Publicación realizada"
+                          : "Texto registrado, pendiente de publicación"}
+                    </p>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <PublicationChecklist data={seleccionado.expediente} code={seleccionado.id} />
+                  </div>
                 </div>
-              </div>
-
-              <div className="mt-4 rounded-2xl bg-background p-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Publicación
-                </p>
-
-                <p className="mt-1 text-sm font-medium text-slate-700">
-                  {!seleccionado.actividades.publicacion
-                    .existe
-                    ? "Sin publicación registrada"
-                    : seleccionado.actividades.publicacion
-                          .publicado
-                      ? "Publicación realizada"
-                      : "Texto registrado, pendiente de publicación"}
-                </p>
               </div>
 
               <button type="button" onClick={() => setGaleria(seleccionado)} disabled={!seleccionado.tieneFotos} className="mt-3 w-full rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-semibold text-[#c80000] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-500">{seleccionado.tieneFotos ? "Ver fotos del inmueble" : "Fotos pendientes"}</button>

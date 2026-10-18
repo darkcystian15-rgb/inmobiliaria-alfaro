@@ -8,7 +8,7 @@ La cabecera muestra cuántos requisitos están listos y una barra de progreso. L
 
 El pie aclara la diferencia entre preparar el material y confirmar una publicación. Completar los cuatro requisitos deja el material listo, pero el estado «Publicado» sigue dependiendo del registro de publicación existente. El enlace general para abrir la ficha solo aparece fuera de la ficha; así se evita repetir una acción redundante.
 
-En el panel de Cartera, el estado previo a la aprobación de tasación ahora se muestra como una etiqueta compacta «Disponible tras aprobar la tasación». El recuadro se ajusta a su contenido y deja de ocupar la altura del bloque de preparación que comparte la cuadrícula.
+En el panel de Cartera, el estado previo a la aprobación de tasación se muestra como una etiqueta compacta «Disponible tras aprobar la tasación». La cuadrícula del seguimiento reúne Visita, Tasación, Material y Publicación en cuatro tarjetas equilibradas; la preparación de documentos ocupa una fila completa debajo. Así se evita el hueco que dejaba la tarjeta de Material junto al bloque más alto.
 
 ## Alcance y datos
 
@@ -17,6 +17,7 @@ En el panel de Cartera, el estado previo a la aprobación de tasación ahora se 
 - El componente se usa en Información de inmuebles, Cartera y Tasaciones y textos pendientes; el ajuste conserva esos usos compartidos.
 - No se modificaron fechas, estados, publicaciones ni registros de inmuebles.
 - El estado previo a la aprobación conserva la misma condición; solo cambió su presentación en Cartera.
+- En Cartera solo se reorganizaron las tarjetas visuales; el orden de trabajo y las condiciones de cada estado se conservan.
 
 ## Verificación y publicación
 
