@@ -68,12 +68,58 @@ try {
   await db.query("UPDATE inm_seguimiento SET fecha_limite=DATE_SUB(?,INTERVAL 1 DAY) WHERE inmueble_id=2",[today]);
   pending=(await get('/api/visitas?zona=Chimbote')).items.find(item=>item.id===2);assert.equal(pending.estadoPlazo,'vencido');assert.equal(pending.vencida,true);
 
+  // More than ten overdue tasks: totals must describe the entire group, not the page.
+  for(let id=3;id<=14;id++){
+    await db.query("INSERT INTO inm_posiciones_zona(id,zona_id,numero) VALUES(?,1,?)",[id,id]);
+    await db.query("INSERT INTO inm_inmuebles(id,codigo,numero_orden,tipo,operacion,referencia,nombre_contacto,zona_id) VALUES(?, ?,?,'Casa','venta','Prueba','Caso local',1)",[id,`LOCAL-${id}`,900+id]);
+    await db.query('INSERT INTO inm_asignaciones_zona(inmueble_id,posicion_id) VALUES(?,?)',[id,id]);
+    await db.query("INSERT INTO inm_seguimiento(inmueble_id,actividad,fecha_limite) VALUES(?,'visita',DATE_SUB(?,INTERVAL 2 DAY))",[id,today]);
+  }
+  let alerts=await get('/api/seguimiento?estado=vencidos&limite=10');
+  assert.equal(alerts.total,14);assert.equal(alerts.items.length,10);assert.equal(alerts.resumen.vencidos,14);
+  assert.equal(alerts.items[0].id,1,'Oldest effective deadline first');
+  const next=await get('/api/seguimiento?estado=vencidos&limite=10&pagina=2');
+  assert.equal(next.items.length,4);assert.ok(!next.items.some(t=>alerts.items.some(first=>first.id===t.id)));
+  async function put(path,body){const response=await fetch(origin+path,{method:'PUT',headers:{...headers,Origin:origin,'Content-Type':'application/json'},body:JSON.stringify(body)});assert.equal(response.status,200,await response.text());}
+  const future=workflowDeadline(today,8).fechaLimite;
+  await put('/api/inmuebles/2/seguimiento',{actividad:'visita',fechaLimite:future,observacion:'Reprogramación local'});
+  alerts=await get('/api/seguimiento?estado=vencidos&limite=10');
+  assert.equal(alerts.total,13);assert.ok(!alerts.items.some(item=>item.id===2));
+  assert.equal((await get('/api/visitas?zona=Chimbote')).items.find(item=>item.id===2).fechaLimite,future);
+  assert.equal((await get('/api/inmuebles/2/seguimiento')).vigente.fechaLimite,future);
+  const [history]=await db.query("SELECT observacion FROM inm_timeline WHERE inmueble_id=2 AND evento='seguimiento_actualizado'");
+  assert.equal(history.length,1);assert.equal(JSON.parse(history[0].observacion).nuevo.fechaLimite,future);
+  await put('/api/inmuebles/2/seguimiento',{actividad:'visita',fechaLimite:null,observacion:'Volver al general'});
+  assert.equal((await get('/api/inmuebles/2/seguimiento')).vigente.plazoOrigen,'automatico');
+  assert.equal((await get('/api/visitas?zona=Chimbote')).items.find(item=>item.id===2).fechaLimite,workflowDeadline(today,2).fechaLimite);
+  await put('/api/plazos',{actividad:'visita',dias:4});
+  assert.equal((await get('/api/inmuebles/2/seguimiento')).vigente.fechaLimite,workflowDeadline(today,4).fechaLimite);
+  assert.equal((await get('/api/inmuebles/3/seguimiento')).vigente.estadoPlazo,'vencido','Global change does not overwrite particular deadlines');
+  await db.query("INSERT INTO inm_usuarios(id,nombre,email,rol) VALUES(2,'Operador local','operator@example.invalid','usuario')");
+  const operator=randomBytes(32).toString('hex');
+  await db.query('INSERT INTO inm_sesiones(token_hash,usuario_id,expira,last_seen,authenticated_at) VALUES(?,2,DATE_ADD(NOW(),INTERVAL 1 HOUR),NOW(),NOW())',[hashSessionToken(operator)]);
+  for(const path of ['/api/inmuebles/2/seguimiento','/api/seguimiento','/api/plazos'])assert.equal((await fetch(origin+path,{headers:{Cookie:`aa_session=${operator}`}})).status,403);
+
   const {chromium}=await import(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
   browser=await chromium.launch({headless:true,args:['--no-sandbox']});
   const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'aa_session',value:token,url:origin}]);
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(origin+'/');const region=page.getByRole('region',{name:'Prioridades de trabajo',exact:true});await region.getByText(/^Vencido:/).first().waitFor();assert.ok(!(await region.innerText()).includes('Automático'));
-  await page.goto(origin+'/visitas-pendientes?zona=Chimbote');await page.getByText(/^Vencido:/).waitFor();
+  await page.goto(origin+'/');const region=page.getByRole('region',{name:'Alertas de actividades',exact:true});await region.getByText(/^Vencido:/).first().waitFor();assert.ok(!(await region.innerText()).includes('Automático'));
+  assert.equal(await region.locator('li').count(),10);
+  await region.getByRole('button',{name:'Ver más →',exact:true}).click();await region.getByText(/Página 2/).waitFor();
+  await page.goto(origin+'/datos-inmuebles?codigo=2&pestana=seguimiento');
+  await page.getByRole('heading',{name:'Plazos de este inmueble',exact:true}).waitFor();
+  assert.equal(await page.getByRole('combobox',{name:'Responsable',exact:true}).count(),0);
+  assert.equal(await page.getByText('Plazos generales de alerta',{exact:true}).count(),0);
+  const visitField=page.getByRole('group',{name:'Visita · Pendiente',exact:true});
+  await visitField.getByLabel('Fecha límite particular').fill(future);
+  await visitField.getByRole('button',{name:'Guardar seguimiento'}).click();
+  await page.getByRole('status').filter({hasText:'Plazo del inmueble guardado'}).waitFor();
+  const operatorContext=await browser.newContext();await operatorContext.addCookies([{name:'aa_session',value:operator,url:origin}]);
+  const operatorPage=await operatorContext.newPage();await operatorPage.goto(origin+'/datos-inmuebles?codigo=2&pestana=seguimiento');
+  await operatorPage.getByRole('button',{name:'Resumen',exact:true}).waitFor();assert.equal(await operatorPage.getByRole('button',{name:'Seguimiento',exact:true}).count(),0);
+  await page.goto(origin+'/configuracion-plazos');await page.getByRole('heading',{name:'Plazos generales',exact:true}).waitFor();
+  await page.goto(origin+'/visitas-pendientes?zona=Chimbote');await page.getByText(/^Vencido:/).first().waitFor();
   await page.setViewportSize({width:375,height:850});await page.waitForFunction(()=>document.getElementById('navigation-panel').getBoundingClientRect().right<=1);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);

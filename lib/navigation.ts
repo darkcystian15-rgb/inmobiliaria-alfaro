@@ -32,6 +32,7 @@ export const menuGroups = [
       { href: "/ubicaciones", label: "Zonas de cartera", icon: "map" },
       { href: "/tipos-inmueble", label: "Tipos de inmueble", icon: "home" },
       { href: "/usuarios", label: "Usuarios y accesos", icon: "users" },
+      { href: "/configuracion-plazos", label: "Plazos generales", icon: "clock" },
       { href: "/seguridad", label: "Registro de seguridad", icon: "clipboard" },
     ],
   },
