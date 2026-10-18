@@ -21,4 +21,15 @@ No se incluyen rutas internas de almacenamiento, enlaces externos ni credenciale
 
 ## Validación
 
-Aprobados lint, compilación Webpack/TypeScript y 31 archivos de pruebas unitarias. `tests/transaction-dossier.integration.mjs` pasó contra MySQL y almacenamiento HTTPS locales: PDF, imágenes, Word y Excel; subidas desde formulario; permisos; cambios y eliminación con historial; resumen detallado del panel; ausencia de eventos para cargas rechazadas o guardados sin cambios; enlaces diferenciados de subidas y portada/visita de fotos. Escritorio y móvil sin errores JavaScript ni desbordamiento horizontal. La evidencia de publicación se completa tras verificar producción.
+Aprobados lint, compilación Webpack/TypeScript y 31 archivos de pruebas unitarias. `tests/transaction-dossier.integration.mjs` pasó contra MySQL y almacenamiento HTTPS locales: PDF, imágenes, Word y Excel; subidas desde formulario; permisos; cambios y eliminación con historial; resumen detallado del panel; ausencia de eventos para cargas rechazadas o guardados sin cambios; enlaces diferenciados de subidas y portada/visita de fotos. Escritorio y móvil sin errores JavaScript ni desbordamiento horizontal.
+
+## Publicación verificada
+
+- Código `17e8a1dee60785223788ef7b8a7565cc4f832b62` publicado en `main` y `feat/registro-simplificado`.
+- Vercel Production `7160383171`: `success`, `2026-10-18T20:37:05Z`; URL técnica `https://inmobiliaria-alfarov2-92kq8xfe1-puma19.vercel.app`.
+- Vercel Preview `7160377995`: `success`, `2026-10-18T20:36:38Z`; mismo código.
+- Dominio de producción comprobado el `2026-10-18T20:37:45.927Z`: aclaraciones redundantes retiradas de panel/ficha, estructura de detalle y usuario disponible en avances recientes, panel/ficha sincronizados y permisos conservados. Escritorio y móvil aprobados, sin errores JavaScript ni desbordamiento horizontal.
+- La comprobación de producción no subió archivos ni modificó inmuebles o límites; se bloquearon escrituras de negocio del navegador. Las pruebas reales de archivo/historial se realizaron únicamente en el entorno local aislado. Cuenta y sesiones temporales retiradas y ausencia comprobada; contenedor local retirado.
+- Evidencia privada excluida de Git y Vercel: `output/files-history-production-smoke.mjs` y `output/historial-archivos/production-result.json`.
+
+Punto anterior de recuperación: `b0ff828ad1d824a9eb4698cc00e931cb53976ebb`. Sin migraciones. Los commits posteriores de evidencia solo cambian Markdown.
