@@ -53,7 +53,7 @@ try{
     }
   }
   await page.goto(origin+'/liberar-inmuebles');await page.getByRole('heading',{name:'Selecciona una zona para trabajar'}).waitFor();
-  await page.goto(origin+'/');const priorities=page.getByRole('region',{name:'Prioridades de trabajo',exact:true});await priorities.waitFor();await page.waitForFunction(()=>!document.querySelector('[aria-labelledby="work-priorities-title"]')?.textContent?.includes('Cargando prioridades'));assert.equal(await priorities.getByRole('alert').count(),0);assert.equal(await priorities.locator('li .font-mono').count(),0);for(const row of await priorities.locator('li').all())assert.equal(await row.locator('h3 + p').count(),1);
+  await page.goto(origin+'/');const priorities=page.getByRole('region',{name:'Prioridades de trabajo',exact:true});await priorities.waitFor();await page.waitForFunction(()=>!document.querySelector('[aria-labelledby="work-priorities-title"]')?.textContent?.includes('Cargando prioridades'));assert.equal(await priorities.getByRole('alert').count(),0);assert.equal(await priorities.locator('li p.font-mono').count(),0);for(const row of await priorities.locator('li').all())assert.equal(await row.locator('h3 + p').count(),1);
   assert.deepEqual(errors,[]);console.log(`PASS producción: ${zonas.length} zonas activas, ${expected.length} archivos coincidentes; cuatro filtros, permisos, consulta privada, menú, zona obligatoria y navegador escritorio/móvil. ID con contacto, textos sin duplicar, dirección referencial editable con cancelación sin guardar, prioridades sin ID repetido y cancelación del primer diálogo de eliminación. Sin escrituras de negocio.`);
 }finally{
   if(browser)await browser.close();
