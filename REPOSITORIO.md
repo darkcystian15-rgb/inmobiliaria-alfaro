@@ -8,7 +8,7 @@ Ajuste posterior: [Dirección referencial en Cartera y prioridades sin duplicaci
 
 Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md). Consultar su evidencia de publicación y respaldo.
 
-Última entrega: [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md), con publicación y prueba autenticada verificadas. La entrega de [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md) conserva su evidencia histórica. La entrega previa de [liberación definitiva](docs/liberacion-definitiva-2026-10-18.md) conserva su evidencia y punto de respaldo privado. La entrega anterior de [Listado de archivos](docs/listado-archivos-2026-10-18.md) conserva su evidencia histórica.
+Última entrega: [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md), publicado y comprobado en escritorio/móvil. La entrega de [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md) conserva su evidencia de publicación y prueba autenticada. La entrega de [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md) conserva su evidencia histórica. La entrega previa de [liberación definitiva](docs/liberacion-definitiva-2026-10-18.md) conserva su evidencia y punto de respaldo privado. La entrega anterior de [Listado de archivos](docs/listado-archivos-2026-10-18.md) conserva su evidencia histórica.
 
 ## Repositorio
 
@@ -16,7 +16,7 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Último código de aplicación publicado: `d1ebf60c3f566202ef773a2122c1b0a90ff6012c`.
+- Último código de aplicación publicado: `ceceefb5de5a71be7642005fecccf1f2cee6ea79`.
 - Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
 
 ## Producción
@@ -25,13 +25,13 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 | --- | --- |
 | Proyecto | `puma19/inmobiliaria-alfarov2` |
 | Dominio de la intranet | https://intranet.inmobiliariaalbertoalfaro.com.pe |
-| Código | `d1ebf60c3f566202ef773a2122c1b0a90ff6012c` |
-| Despliegue GitHub | `7154462534`, entorno `Production` |
+| Código | `ceceefb5de5a71be7642005fecccf1f2cee6ea79` |
+| Despliegue GitHub | `7154599205`, entorno `Production` |
 | Estado informado por Vercel a GitHub | `success`, `Deployment has completed` |
-| Fecha del estado | 2026-10-18 12:20:41 UTC |
-| URL de versión | https://inmobiliaria-alfarov2-8zki94y1q-puma19.vercel.app |
+| Fecha del estado | 2026-10-18 12:32:26 UTC |
+| URL de versión | https://inmobiliaria-alfarov2-j0tgomr04-puma19.vercel.app |
 
-Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. La prueba autenticada del dominio confirmó la nueva pantalla, filtros por zonas activas y cuatro tipos, apertura privada de archivo y navegación de escritorio/móvil. La API directa de Vercel había respondido HTTP 403; la evidencia de publicación procede del estado Production informado a GitHub y de la comprobación real de la intranet. La comprobación actual también verificó fichas de venta/alquiler, cinco grupos de alquiler, selector de zona, Visitas y Seguimiento. Detalle: [Fichas de venta y alquiler](docs/ficha-ventas-alquileres-2026-10-18.md).
+Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. La comprobación autenticada actual confirmó el orden de Operación y Seguimiento en escritorio/móvil, la conservación de zona al navegar, las opciones ocultas sin zona y los permisos de operador. Detalle: [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md). La prueba anterior de fichas, archivos y expediente conserva su evidencia en [Fichas de venta y alquiler](docs/ficha-ventas-alquileres-2026-10-18.md); esta actualización solo reorganiza el menú.
 
 ## Presentación uniforme vigente
 
@@ -53,6 +53,7 @@ Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. 
 - Prioridades de trabajo muestra contacto y una sola descripción de operación, tipo y dirección, sin repetir el ID debajo.
 - Sin mapas, coordenadas, importador de puntos ni geolocalización.
 - Estadística agrupa Listado de archivos y Reportes. Listado consulta tasaciones, contratos de alquiler, minutas y escrituras cargadas, con filtros automáticos de zona/tipo y archivos numerados.
+- Seguimiento muestra Registrar inmueble, Liberar inmueble, Visitas pendientes, Registrar visitas, Tasaciones y textos pendientes y Registrar tasaciones, en ese orden. Operación conserva Cartera de inmuebles.
 - Liberar inmueble pertenece a Seguimiento y exige zona tanto en pantalla como en servidor. Permite cerrar una operación realizada conservando su Histórico o eliminar definitivamente con motivo y dos confirmaciones. La limpieza privada pendiente tiene reintento durable. El acceso a Contratos de alquiler se reemplaza en el menú, conservando registros y ruta anterior.
 - Expediente con un vendedor y un comprador, asignación expresa del comprador, condiciones por persona natural/jurídica, siete grupos documentales, porcentaje y alertas. Los faltantes no bloquean el cierre. Venta conserva sus condiciones. Alquiler usa cinco grupos documentales propios, con arrendador y arrendatario; consultar la reorganización del 18 de octubre.
 - Información de inmuebles filtra su selector por zona y usa una sola descripción. Inmueble contiene documentos; Visitas integra fotos, y Seguimiento concentra responsables, plazos e historial. Se retira de la interfaz la pestaña antigua de geografía y superficies, conservando sus datos almacenados.

@@ -4,6 +4,8 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
+- [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md): Registrar inmueble y Liberar inmueble encabezan el grupo, seguidos por visitas y tasaciones.
+
 - [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md): apartados por operación, cinco grupos de alquiler, documentos en Inmueble, fotos en Visitas y seguimiento documental; publicación verificada.
 
 - [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md): cierre a Histórico o eliminación completa con dos confirmaciones; incluye cambio aditivo y punto de restauración de fuente, datos y archivos.
@@ -12,7 +14,7 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 - [Identificación y descripción de Cartera](docs/identificacion-cartera-2026-10-18.md): criterio uniforme para pantallas y reportes, publicado el 18 de octubre.
 
-Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, rama, código publicado, funcionalidad y límites de verificación. Último código publicado: `d1ebf60`, con despliegue Production completado según los estados de Vercel en GitHub. La pantalla nueva fue comprobada con sesión autenticada en escritorio y móvil; detalle y respaldo en la referencia consolidada.
+Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, rama, código publicado, funcionalidad y límites de verificación. Último código publicado: `ceceefb`, con despliegue Production completado según los estados de Vercel en GitHub. La pantalla nueva fue comprobada con sesión autenticada en escritorio y móvil; detalle y respaldo en la referencia consolidada.
 
 - [Expediente de vendedor, comprador e inmueble](docs/expediente-operacion-2026-10-16.md): nueva organización documental y estado del expediente; referencia histórica anterior a los grupos específicos de alquiler del 18 de octubre.
 - [Retirada de mapas y coordenadas](docs/retirada-mapas-2026-10-15.md): cambio posterior al estado consolidado; conserva ubicación referencial y zonas comerciales.

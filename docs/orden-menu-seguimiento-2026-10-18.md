@@ -13,4 +13,16 @@ Al entrar en una zona activa, el menú de administración presenta:
 
 Se reorganiza la configuración compartida del menú de escritorio y móvil. Se conservan las rutas, el contexto de zona y los permisos. Sin zona seleccionada, estas seis opciones siguen ocultas. Los operadores conservan su acceso a Información de inmuebles.
 
-El cambio no requiere migraciones ni cambios de datos. Punto previo de recuperación: commit `b3b51cc26c2b9456b8491cd0e5c2a5d2daeb04ef`. La evidencia de validación y publicación se añade al completar el despliegue.
+El cambio no requiere migraciones ni cambios de datos. Punto previo de recuperación: commit `b3b51cc26c2b9456b8491cd0e5c2a5d2daeb04ef`.
+
+
+## Validación y publicación
+
+- ESLint sin advertencias y compilación completa Webpack/TypeScript correctos.
+- Código publicado: `ceceefb5de5a71be7642005fecccf1f2cee6ea79`, subido atómicamente a `main` y `feat/registro-simplificado`.
+- Vercel informó `success`, «Deployment has completed», entorno Production, despliegue GitHub `7154599205`, el `2026-10-18T12:32:26Z`.
+- URL de versión: https://inmobiliaria-alfarov2-j0tgomr04-puma19.vercel.app.
+- Comprobación autenticada en https://intranet.inmobiliariaalbertoalfaro.com.pe: orden exacto de Operación y Seguimiento en escritorio y móvil de 375 px; enlaces con zona y navegación a Registrar inmueble; seis opciones ocultas sin zona y para operador. Sin errores JavaScript ni desbordamiento horizontal móvil.
+- Capturas y script privado de comprobación en `output/menu-production/` y `output/menu-production-smoke.mjs`, excluidos de Git y Vercel.
+- Sin escrituras de negocio. Las cuentas y sesiones temporales se eliminaron al finalizar y se comprobó su ausencia.
+- Los commits posteriores de evidencia solo cambian Markdown y conservan este código de aplicación.
