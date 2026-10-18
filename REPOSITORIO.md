@@ -16,7 +16,7 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Último código de aplicación publicado: `ceceefb5de5a71be7642005fecccf1f2cee6ea79`.
+- Último código de aplicación publicado: `3351b6e90d17c4e4b37a65537a5066277dfe1105`.
 - Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
 
 ## Producción
@@ -25,13 +25,13 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 | --- | --- |
 | Proyecto | `puma19/inmobiliaria-alfarov2` |
 | Dominio de la intranet | https://intranet.inmobiliariaalbertoalfaro.com.pe |
-| Código | `ceceefb5de5a71be7642005fecccf1f2cee6ea79` |
-| Despliegue GitHub | `7154599205`, entorno `Production` |
+| Código | `3351b6e90d17c4e4b37a65537a5066277dfe1105` |
+| Despliegue GitHub | `7154933132`, entorno `Production` |
 | Estado informado por Vercel a GitHub | `success`, `Deployment has completed` |
-| Fecha del estado | 2026-10-18 12:32:26 UTC |
-| URL de versión | https://inmobiliaria-alfarov2-j0tgomr04-puma19.vercel.app |
+| Fecha del estado | 2026-10-18 13:02:42 UTC |
+| URL de versión | https://inmobiliaria-alfarov2-a8o99cbs6-puma19.vercel.app |
 
-Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. La comprobación autenticada actual confirmó el orden de Operación y Seguimiento en escritorio/móvil, la conservación de zona al navegar, las opciones ocultas sin zona y los permisos de operador. Detalle: [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md). La prueba anterior de fichas, archivos y expediente conserva su evidencia en [Fichas de venta y alquiler](docs/ficha-ventas-alquileres-2026-10-18.md); esta actualización solo reorganiza el menú.
+Se consultaron las API de despliegues y estados de GitHub para el SHA indicado; Production y Preview completados. La entrega incorpora el procedimiento manual ya ejecutado de [carga de Chimbote](docs/carga-chimbote-2026-10-18.md). La comprobación autenticada confirmó 43 fichas en sus posiciones, 43 visitas pendientes, siete posiciones libres y conservación de las ocho fichas de las demás zonas, con escritorio/móvil correctos. Publicar no vuelve a ejecutar la carga. El [orden del menú](docs/orden-menu-seguimiento-2026-10-18.md) y las [fichas de venta y alquiler](docs/ficha-ventas-alquileres-2026-10-18.md) conservan sus evidencias previas.
 
 ## Presentación uniforme vigente
 

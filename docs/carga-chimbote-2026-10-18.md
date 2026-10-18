@@ -43,4 +43,11 @@ Restaurar código no revierte esta carga de datos. Para recuperar el estado ante
 - API autenticada y navegador: las 43 tarjetas en sus posiciones, detalle de CONTACTO7-FTO con ID correcto, Visitas pendientes, permisos anónimos y escritorio/móvil de 375 px sin errores JavaScript ni desbordes.
 - Capturas y comprobador privados en `output/chimbote-production/` y `output/chimbote-production-smoke.mjs`, excluidos de Git y Vercel. Las cuentas y sesiones temporales se eliminaron y se comprobó su ausencia.
 
-La evidencia del despliegue de esta entrega se incorpora tras verificar Vercel.
+## Publicación
+
+- Entrega publicada: `3351b6e90d17c4e4b37a65537a5066277dfe1105`, sincronizada en `main` y `feat/registro-simplificado` mediante subida atómica.
+- Vercel informó a GitHub `success`, «Deployment has completed», Production `7154933132`, el `2026-10-18T13:02:42Z`.
+- URL de versión: https://inmobiliaria-alfarov2-a8o99cbs6-puma19.vercel.app.
+- Preview `7154928708` también completado: https://inmobiliaria-alfarov2-5ivfqljpq-puma19.vercel.app.
+- La carga se ejecutó una sola vez en la base de producción compartida por la intranet. El despliegue no repite eliminaciones ni registros.
+- Los commits posteriores de evidencia solo modifican Markdown y conservan el código operativo indicado arriba. El contenedor y volumen de MySQL de prueba se retiraron al completar la validación.
