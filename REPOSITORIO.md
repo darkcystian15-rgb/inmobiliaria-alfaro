@@ -7,11 +7,11 @@ Referencia consolidada actualizada el 18 de octubre de 2026.
 - GitHub: https://github.com/darkcystian15-rgb/inmobiliaria-alfaro
 - Copia local de la aplicación: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio: `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
-- Rama que contiene la última entrega documentada: `feat/registro-simplificado`.
+- Rama principal integrada: `main`. La rama `feat/registro-simplificado` conserva la misma entrega.
 - Código de aplicación publicado según la evidencia del 16 de octubre: `f76b31c5e7401c0cd7994f91085fe63b8a5d3cdf`.
 - Commit de evidencia posterior: `b5380b2aea02cf26af8c4f43a3f77c6e6e07d323`.
 - Entre esos dos commits solo cambian la documentación del expediente y el selector de inmueble de su prueba de humo; el código de aplicación coincide.
-- `main` local y su referencia remota almacenada siguen en `cf4f5f0`. La rama de entrega tiene 15 commits posteriores antes de esta consolidación documental. Estas referencias no se actualizaron mediante fetch en esta revisión.
+- El 18 de octubre se actualizaron las referencias con `git fetch origin`: `main` estaba en `cf4f5f0` y la rama de entrega en `b5380b2`. Se integró la entrega y su documentación en `main` mediante fast-forward, sin conflictos ni reescritura de historial.
 
 ## Vercel
 
@@ -59,6 +59,8 @@ Los respaldos, capturas y secretos permanecen privados en las ubicaciones descri
 3. [Retirada de mapas](docs/retirada-mapas-2026-10-15.md) y [ancho del panel](docs/ancho-panel-2026-10-15.md): cambios previos incluidos.
 4. Los demás Markdown conservan decisiones, pruebas y recuperación de sus versiones. Sus referencias a mapas, DNI numérico, propietarios compartidos o publicaciones pendientes no sustituyen las reglas consolidadas aquí.
 
-## Alineación pendiente de verificar
+## Integración y verificación pendiente
 
-La integración y sincronización de `main` no se consideran realizadas por esta revisión. Antes de promover una rama como equivalente a producción hay que recuperar acceso de lectura a Vercel, confirmar el commit que sirve el dominio y actualizar las referencias de GitHub. No hace falta volver a desplegar para incorporar esta documentación.
+`main` incorpora la entrega funcional acreditada y esta consolidación documental. Ambas ramas se preparan en el mismo commit para sincronizarlas con GitHub; la igualdad remota debe comprobarse con `git ls-remote origin refs/heads/main refs/heads/feat/registro-simplificado`.
+
+La comprobación en vivo de Vercel sigue pendiente por HTTP 403. La integración en GitHub puede activar un despliegue automático según la configuración del proyecto; no se afirma que ese despliegue exista o haya terminado. No se ejecutaron migraciones ni se cambiaron datos o aliases desde esta revisión.
