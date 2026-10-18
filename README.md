@@ -4,6 +4,8 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
+- [Carga de cinco zonas desde Drive](docs/carga-cinco-zonas-2026-10-18.md): Tortugas 11, Huarmey 1, Casma 2, Lima 1 y Trujillo 3; selección numerada, 18 visitas pendientes y conservación de Chimbote/Nuevo Chimbote.
+
 - [Reemplazo de Chimbote desde Drive](docs/carga-chimbote-2026-10-18.md): 43 inmuebles en las posiciones de sus carpetas, como recién registrados, con 43 visitas pendientes. Las otras zonas se conservan.
 
 - [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md): Registrar inmueble y Liberar inmueble encabezan el grupo, seguidos por visitas y tasaciones.

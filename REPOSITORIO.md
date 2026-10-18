@@ -8,7 +8,7 @@ Ajuste posterior: [Dirección referencial en Cartera y prioridades sin duplicaci
 
 Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md). Consultar su evidencia de publicación y respaldo.
 
-Última entrega de datos: [Reemplazo de Chimbote desde Drive](docs/carga-chimbote-2026-10-18.md), 43 inmuebles recién registrados y comprobados en producción. Entrega de interfaz: [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md), publicado y comprobado en escritorio/móvil. La entrega de [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md) conserva su evidencia de publicación y prueba autenticada. La entrega de [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md) conserva su evidencia histórica. La entrega previa de [liberación definitiva](docs/liberacion-definitiva-2026-10-18.md) conserva su evidencia y punto de respaldo privado. La entrega anterior de [Listado de archivos](docs/listado-archivos-2026-10-18.md) conserva su evidencia histórica.
+Última entrega de datos: [Carga de Tortugas, Huarmey, Casma, Lima y Trujillo](docs/carga-cinco-zonas-2026-10-18.md), 18 inmuebles recién registrados y 18 visitas pendientes, conservando las 46 fichas actuales de Chimbote/Nuevo Chimbote. La entrega previa de [Chimbote](docs/carga-chimbote-2026-10-18.md) conserva su evidencia histórica. Entrega de interfaz: [Orden del menú de Seguimiento](docs/orden-menu-seguimiento-2026-10-18.md), publicado y comprobado en escritorio/móvil. La entrega de [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md) conserva su evidencia de publicación y prueba autenticada. La entrega de [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md) conserva su evidencia histórica. La entrega previa de [liberación definitiva](docs/liberacion-definitiva-2026-10-18.md) conserva su evidencia y punto de respaldo privado. La entrega anterior de [Listado de archivos](docs/listado-archivos-2026-10-18.md) conserva su evidencia histórica.
 
 ## Repositorio
 
@@ -71,6 +71,8 @@ Se consultaron las API de despliegues y estados de GitHub para el SHA indicado; 
 - Prueba autenticada real de producción correcta, sin escrituras de negocio; cuentas y sesiones de verificación eliminadas. Capturas privadas locales y de producción, excluidas de Git.
 
 ## Datos, recuperación e historial
+
+Última carga: cinco fichas anteriores de Tortugas, Huarmey, Casma, Lima y Trujillo eliminadas con sus relaciones y tres archivos privados; 18 fichas nuevas en las posiciones aceptadas, con 18 visitas pendientes. Se conservó el estado más reciente de Chimbote/Nuevo Chimbote, incluidas sus ediciones concurrentes. Respaldo privado: `restore-points/cinco-zonas-20261018-v3/`. Consultar [carga de cinco zonas](docs/carga-cinco-zonas-2026-10-18.md) para selección, comprobación y recuperación.
 
 Chimbote se reemplazó el 18 de octubre: 14 fichas anteriores eliminadas con sus relaciones y cinco archivos privados; 43 altas nuevas, 10 ventas y 33 alquileres, en las posiciones de Drive, con 43 visitas pendientes. Siete posiciones libres y ocho fichas de otras zonas conservadas. Respaldo privado de 25 tablas y nueve archivos en `restore-points/chimbote-20261018/`. Consultar [carga de Chimbote](docs/carga-chimbote-2026-10-18.md) antes de recuperar o trabajar en otra zona. No repetir el script de carga al desplegar.
 
