@@ -1,5 +1,7 @@
 # Identificación y descripción de Cartera — 18 de octubre de 2026
 
+Criterio actualizado posteriormente: [el prefijo visible usa la posición de la zona](id-posicion-filtros-2026-10-18.md). El número global descrito aquí corresponde a la versión histórica.
+
 Se uniformiza la identificación visible en Cartera (tarjetas, lista, galería y detalle), Información de inmuebles, visitas, tasaciones, publicaciones, cierres y contratos de alquiler. El panel y las alertas ya usan contacto y dirección referencial. Reportes aplica el mismo identificador y contacto en pantalla y exportación PDF/Excel.
 
 - Formato: número de orden estable del código existente, operación actual, tipo actual y ubicación referencial escrita. Ejemplo: `012-venta-local-av meigss c3`.
