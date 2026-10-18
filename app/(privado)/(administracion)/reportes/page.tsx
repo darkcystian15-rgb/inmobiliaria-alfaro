@@ -518,7 +518,7 @@ export default function Page() {
               </span>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
+            <div className="grid grid-cols-2 gap-2 xl:grid-cols-4 2xl:grid-cols-8">
               {[
                 [
                   "Registros del reporte",
@@ -663,6 +663,7 @@ export default function Page() {
             </details>
           )}
           <nav aria-label="Páginas del reporte" className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4"><p className="text-sm text-slate-600">{paginacion.total} resultados · Página {paginacion.pagina} de {Math.max(1,paginacion.paginas)}</p><div className="flex gap-3">{[-1,1].map(direction=><button key={direction} type="button" disabled={cargando||direction===-1&&paginacion.pagina<=1||direction===1&&paginacion.pagina>=paginacion.paginas} className="aa-button aa-button-secondary disabled:opacity-40" onClick={()=>{setCargando(true);setConsulta(current=>({...current,pagina:String(paginacion.pagina+direction)}));}}>{direction===-1?'Anterior':'Siguiente'}</button>)}</div></nav>
+          {!!rows.length&&columnasElegidas.length>3&&<p className="border-b border-slate-100 px-4 py-2 text-xs text-slate-500 sm:hidden print:hidden">Desliza la tabla para ver las demás columnas.</p>}
           <div className="max-h-[65vh] overflow-auto print:max-h-none" aria-busy={cargando}>
             {filasVisibles.length && columnasElegidas.length ? (
               <table className="w-full text-left text-sm">
