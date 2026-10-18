@@ -26,3 +26,5 @@ ESLint de los componentes de publicación y Cartera pasó y `tsc --noEmit` termi
 El cambio de código quedó en el commit `f4ca899f851029c01a08877236c8dd5ca8f439d6`; `main`, `feat/registro-simplificado` y sus ramas remotas quedaron en ese mismo SHA. GitHub recibió de Vercel el estado `success`, «Deployment has completed», a las `2026-10-18 21:38:44 UTC`. [Ver despliegue en Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/HTJM2LMYKpvM8kKokz5sNVRoVXp6).
 
 El ajuste compacto de Cartera quedó en el commit `98c8f0a888c58e72f45a13ba7fa4415fc533de7d`. Vercel confirmó «Deployment has completed» para ese SHA a las `2026-10-18 21:51:03 UTC`. [Ver despliegue](https://vercel.com/puma19/inmobiliaria-alfarov2/4r3Sv3zFXXc4Jrw26WrT1GX68Ei8).
+
+La redistribución de Visita, Tasación, Material y Publicación quedó en `04e4c76d3d50682ea7c31059698abffc6756a1d9`. Vercel confirmó «Deployment has completed» a las `2026-10-18 22:05:34 UTC`. [Ver despliegue](https://vercel.com/puma19/inmobiliaria-alfarov2/6bTYSowPA56sUZcqvwgjZLdxPo2q).
