@@ -1,3 +1,5 @@
+> Estado consolidado: [Repositorio y estado de entrega](../REPOSITORIO.md). Este documento conserva la evidencia de su fecha; los estados de despliegue, conteos y pendientes históricos deben interpretarse según esa referencia.
+
 # Estado actual — 15 de octubre de 2026
 
 Actualización del 16 de octubre: consultar [Expediente de la operación](expediente-operacion-2026-10-16.md) para la nueva organización de Información de inmuebles, condiciones del vendedor/comprador y alertas documentales.

@@ -1,3 +1,5 @@
+> Estado consolidado: [Repositorio y estado de entrega](../REPOSITORIO.md). Este documento conserva la evidencia de su fecha; los estados de despliegue, conteos y pendientes históricos deben interpretarse según esa referencia.
+
 # Ancho uniforme del panel — 15 de octubre de 2026
 
 Se retira `max-w-5xl` de Prioridades de trabajo (`WorkAgenda`) y Avances recientes (página principal). Ambas conservan `w-full` y ocupan el ancho del contenedor común del panel, igual que las otras secciones. El contenedor mantiene su máximo de 1500 px y el comportamiento móvil.

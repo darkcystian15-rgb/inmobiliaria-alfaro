@@ -4,10 +4,12 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
+Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, rama, código publicado, funcionalidad y límites de verificación. Última publicación acreditada: expediente del 16 de octubre; consulta en vivo del 18 de octubre bloqueada por HTTP 403.
+
 - [Expediente de vendedor, comprador e inmueble](docs/expediente-operacion-2026-10-16.md): nueva organización documental y estado del expediente; mismas reglas para venta y alquiler.
 - [Retirada de mapas y coordenadas](docs/retirada-mapas-2026-10-15.md): cambio posterior al estado consolidado; conserva ubicación referencial y zonas comerciales.
 
-Consultar primero [Estado actual](docs/estado-actual-2026-10-15.md). Los documentos históricos conservan decisiones y pruebas de versiones anteriores; sus pendientes no describen necesariamente la versión actual.
+[Estado del 15 de octubre](docs/estado-actual-2026-10-15.md) se conserva como referencia histórica. Los documentos históricos conservan decisiones y pruebas de versiones anteriores; sus pendientes no describen necesariamente la versión actual.
 
 - [Seguimiento de cambios](docs/seguimiento-cambios-2026-10-15.md).
 - [Zonas de cartera unificadas](docs/zonas-cartera-unificadas-2026-10-15.md).

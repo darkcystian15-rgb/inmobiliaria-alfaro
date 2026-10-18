@@ -1,3 +1,5 @@
+> Estado consolidado: [Repositorio y estado de entrega](../REPOSITORIO.md). Este documento conserva la evidencia de su fecha; los estados de despliegue, conteos y pendientes históricos deben interpretarse según esa referencia.
+
 # Retirada de mapas y coordenadas — 15 de octubre de 2026
 
 ## Solicitud y alcance
