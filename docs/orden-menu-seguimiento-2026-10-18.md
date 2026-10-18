@@ -1,5 +1,9 @@
 # Orden del menú de Seguimiento — 18 de octubre de 2026
 
+## Restauración del acceso por zona
+
+Por indicación del usuario, Visitas pendientes y Tasaciones y textos pendientes vuelven a ocultarse en el menú hasta seleccionar una zona, junto con las otras cuatro opciones de Seguimiento. Se restaura el orden de trabajo: Cartera → elegir zona → consultar pendientes o registrar la actividad. El cambio se aplica al menú compartido de escritorio y móvil; los enlaces mantienen la zona seleccionada. No modifica registros, fechas límite, búsqueda ni permisos. Las vistas generales existentes conservan sus rutas para los enlaces de resumen del panel.
+
 Al entrar en una zona activa, el menú de administración presenta:
 
 - **Operación:** Cartera de inmuebles.
