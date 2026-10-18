@@ -17,4 +17,6 @@ El pie aclara la diferencia entre preparar el material y confirmar una publicaci
 
 ## Verificación y publicación
 
-ESLint del componente pasó y `tsc --noEmit` terminó sin errores. La compilación local de Next no llegó a compilar la aplicación: su proceso de lectura de `tsc --showConfig` recibió una salida vacía y terminó con «Could not parse output from TypeScript's --showConfig»; el comando directo de TypeScript sí devolvió configuración JSON válida. El estado de la compilación remota de Vercel para el SHA publicado se añadirá al cerrar el despliegue.
+ESLint del componente pasó y `tsc --noEmit` terminó sin errores. La compilación local de Next no llegó a compilar la aplicación: su proceso de lectura de `tsc --showConfig` recibió una salida vacía y terminó con «Could not parse output from TypeScript's --showConfig»; el comando directo de TypeScript sí devolvió configuración JSON válida. Vercel confirmó después el despliegue remoto del SHA publicado.
+
+El cambio de código quedó en el commit `f4ca899f851029c01a08877236c8dd5ca8f439d6`; `main`, `feat/registro-simplificado` y sus ramas remotas quedaron en ese mismo SHA. GitHub recibió de Vercel el estado `success`, «Deployment has completed», a las `2026-10-18 21:38:44 UTC`. [Ver despliegue en Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/HTJM2LMYKpvM8kKokz5sNVRoVXp6).
