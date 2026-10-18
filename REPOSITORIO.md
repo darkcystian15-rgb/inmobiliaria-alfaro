@@ -2,6 +2,8 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
+Ajuste posterior: [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md).
+
 Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md). Consultar su evidencia de publicación y respaldo.
 
 Última entrega: [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md), publicada y comprobada con sesión autenticada en producción. Incluye punto de respaldo privado. La entrega anterior de [Listado de archivos](docs/listado-archivos-2026-10-18.md) conserva su evidencia histórica.
@@ -43,9 +45,10 @@ Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. 
 
 - Cartera por zonas comerciales y posiciones, independiente de la geografía. Crear una zona en `/ubicaciones` genera diez posiciones; se conservan capacidades anteriores.
 - Captación con posición libre, operación, tipo, ubicación referencial y contacto independiente por inmueble. Departamento, provincia y distrito opcionales en la ficha.
-- Operación, tipo y contacto editables por administrador desde Cartera. Cambiar operación exige inmueble activo sin precios ni publicación preparada.
+- Operación, tipo, contacto y dirección referencial editables por administrador desde Cartera. Cambiar operación exige inmueble activo sin precios ni publicación preparada.
 - Visitas y evidencia fotográfica, precios acordados, preparación y confirmación de publicación, cierres, contratos de alquiler, renovación manual y reingreso con antecedentes.
 - Publicación con archivo DNI del vendedor/gerente, tasación, foto de visita completada y texto, además de las condiciones de precios. Sin exigencia de DNI numérico.
+- Prioridades de trabajo muestra contacto y una sola descripción de operación, tipo y dirección, sin repetir el ID debajo.
 - Sin mapas, coordenadas, importador de puntos ni geolocalización.
 - Estadística agrupa Listado de archivos y Reportes. Listado consulta tasaciones, contratos de alquiler, minutas y escrituras cargadas, con filtros automáticos de zona/tipo y archivos numerados.
 - Liberar inmueble pertenece a Seguimiento y exige zona tanto en pantalla como en servidor. Permite cerrar una operación realizada conservando su Histórico o eliminar definitivamente con motivo y dos confirmaciones. La limpieza privada pendiente tiene reintento durable. El acceso a Contratos de alquiler se reemplaza en el menú, conservando registros y ruta anterior.

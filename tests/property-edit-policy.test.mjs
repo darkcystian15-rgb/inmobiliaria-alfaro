@@ -8,10 +8,12 @@ test('Información rechaza los tres campos reservados incluso junto con cambios 
   }
   assert.doesNotThrow(() => validatePropertyEditFields({ direccion: 'Nueva dirección', habitaciones: 2 }, false));
 });
-test('Cartera permite solo operación, tipo y contacto, también en ediciones parciales', () => {
+test('Cartera permite dirección referencial y conserva las restricciones de los demás campos', () => {
   assert.doesNotThrow(() => validatePropertyEditFields({ operacion: 'alquiler', tipo: 'Casa', nombreContacto: 'Ana' }, true));
   assert.doesNotThrow(() => validatePropertyEditFields({ nombreContacto: 'Ana' }, true));
-  for (const key of ['direccion', 'estado', 'zonaId', 'codigo']) {
+  assert.doesNotThrow(() => validatePropertyEditFields({ direccion: 'Av. Meiggs cuadra 3' }, true));
+  assert.doesNotThrow(() => validatePropertyEditFields({ nombreContacto: 'Ana', direccion: 'Av. Meiggs cuadra 3' }, true));
+  for (const key of ['estado', 'zonaId', 'codigo']) {
     assert.throws(() => validatePropertyEditFields({ nombreContacto: 'Ana', [key]: 'Cambio' }, true), /solo se editan/);
   }
 });

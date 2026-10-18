@@ -5,7 +5,7 @@ import { canChangeOperation } from "@/lib/property-edit-policy.mjs";
 import OperationSelect from "./OperationSelect";
 import PropertyTypeSelect from "./PropertyTypeSelect";
 
-type Values = { operacion: string; tipo: string; nombreContacto: string };
+type Values = { operacion: string; tipo: string; nombreContacto: string; direccion: string };
 type Details = { inmueble: Values & { estado: string }; tasacion: unknown; publicacion: unknown };
 
 export default function PortfolioPropertyEditor({ propertyId, onSaved }: { propertyId: number; onSaved: () => Promise<void> }) {
@@ -21,7 +21,7 @@ export default function PortfolioPropertyEditor({ propertyId, onSaved }: { prope
     fetch(`/api/inmuebles/${propertyId}`, { cache: "no-store", signal: controller.signal }).then(async response => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "No se pudieron consultar los datos.");
-      if (!controller.signal.aborted) { setDetails(data); setForm({ operacion: data.inmueble.operacion, tipo: data.inmueble.tipo, nombreContacto: data.inmueble.nombreContacto || "" }); }
+      if (!controller.signal.aborted) { setDetails(data); setForm({ operacion: data.inmueble.operacion, tipo: data.inmueble.tipo, nombreContacto: data.inmueble.nombreContacto || "", direccion: data.inmueble.direccion || "" }); }
     }).catch(failure => { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "No se pudieron consultar los datos."); });
     return () => controller.abort();
   }, [propertyId, reload]);
@@ -50,8 +50,9 @@ export default function PortfolioPropertyEditor({ propertyId, onSaved }: { prope
       <label className="block text-xs font-semibold text-slate-600">Tipo de operación<OperationSelect value={form.operacion} disabled={busy || operationLocked} onChange={operacion => setForm({ ...form, operacion })} className={inputClass} /></label>
       {operationLocked && <p className="text-xs text-amber-800">Operación bloqueada: el inmueble es histórico o ya tiene precios o publicación registrados.</p>}
       <label className="block text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect value={form.tipo} preserveCurrent disabled={busy} onChange={tipo => setForm({ ...form, tipo })} className={inputClass} /></label>
+      <label className="block text-xs font-semibold text-slate-600">Dirección referencial<input required maxLength={350} value={form.direccion} disabled={busy} onChange={event => setForm({ ...form, direccion: event.target.value })} className={inputClass} /></label>
       <label className="block text-xs font-semibold text-slate-600">Nombre de contacto<input required maxLength={281} value={form.nombreContacto} disabled={busy} onChange={event => setForm({ ...form, nombreContacto: event.target.value })} className={inputClass} /></label>
-      <div className="flex flex-wrap gap-2"><button type="submit" disabled={busy} className="aa-button aa-button-primary">{busy ? "Guardando…" : "Guardar cambios"}</button><button type="button" disabled={busy} onClick={() => { setEditing(false); setError(""); setForm({ operacion: details!.inmueble.operacion, tipo: details!.inmueble.tipo, nombreContacto: details!.inmueble.nombreContacto || "" }); }} className="aa-button aa-button-secondary">Cancelar</button></div>
+      <div className="flex flex-wrap gap-2"><button type="submit" disabled={busy} className="aa-button aa-button-primary">{busy ? "Guardando…" : "Guardar cambios"}</button><button type="button" disabled={busy} onClick={() => { setEditing(false); setError(""); setForm({ operacion: details!.inmueble.operacion, tipo: details!.inmueble.tipo, nombreContacto: details!.inmueble.nombreContacto || "", direccion: details!.inmueble.direccion || "" }); }} className="aa-button aa-button-secondary">Cancelar</button></div>
     </form>}
     {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}{!details && <button type="button" onClick={() => { setError(""); setReload(value => value + 1); }} className="ml-2 underline">Reintentar</button>}</p>}
     {message && <p role="status" className="mt-3 text-sm text-emerald-700">{message}</p>}
