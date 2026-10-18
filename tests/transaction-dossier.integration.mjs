@@ -30,9 +30,9 @@ async function request(resource, token, method = 'GET', body) {
   const response = await fetch(origin + resource, { method, headers: { Origin: origin, ...(token ? { Cookie: `aa_session=${token}` } : {}), ...(body && !(body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}) }, body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body), signal: AbortSignal.timeout(30000), redirect: 'manual' });
   return { response, data: response.headers.get('content-type')?.includes('application/json') ? await response.json() : await response.arrayBuffer() };
 }
-async function upload(type, name, bytes, token, extension = 'pdf') {
+async function upload(type, name, bytes, token, extension = 'pdf', propertyId = 1) {
   const body = new FormData(); body.set('tipoDocumento', type); body.set('nombre', name); body.set('archivo', new File([bytes], `${name}.${extension}`));
-  return request('/api/inmuebles/1/archivos', token, 'POST', body);
+  return request(`/api/inmuebles/${propertyId}/archivos`, token, 'POST', body);
 }
 try {
   assert.equal((await db.query('SHOW TABLES'))[0].length, 0, 'Existing databases are never cleared');
@@ -50,6 +50,9 @@ try {
   const [admin, operator] = tokens;
   await db.query("INSERT INTO inm_zonas(id,clave,nombre,capacidad) VALUES(1,'chimbote','Chimbote',10),(2,'lima','Lima',10)");
   await db.query("INSERT INTO inm_inmuebles(id,codigo,numero_orden,tipo,referencia,direccion,nombre_contacto,zona_id) VALUES(1,'001-CASA-ENSAYO',1,'Casa','Ensayo','Dirección de ensayo','Contacto',1),(2,'002-CASA-LIMA',2,'Casa','Otra zona','Dirección Lima','Contacto Lima',2)");
+  await db.query("INSERT INTO inm_inmuebles(id,codigo,numero_orden,tipo,operacion,referencia,direccion,nombre_contacto,zona_id) VALUES(3,'003-CASA-ALQUILER',3,'Casa','alquiler','Alquiler de ensayo','Dirección alquiler','Contacto alquiler',1)");
+  await db.query("INSERT INTO inm_posiciones_zona(id,zona_id,numero) VALUES(1,1,1),(2,2,1),(3,1,2)");
+  await db.query("INSERT INTO inm_asignaciones_zona(posicion_id,inmueble_id,activa) VALUES(1,1,1),(2,2,1),(3,3,1)");
   await db.query("INSERT INTO inm_archivos(inmueble_id,tipo_documento,nombre,enlace,usuario_id) VALUES(1,'DNI_PROPIETARIO','DNI anterior','https://example.invalid/dni',1),(1,'CONTRATO','Contrato ambiguo','https://example.invalid/contrato',1)");
   assert.equal(installer().createTable, true);
   assert.equal((await db.query("SHOW TABLES LIKE 'inm_expedientes'"))[0].length, 0);
@@ -97,6 +100,30 @@ try {
   result = await request(url, operator); assert.equal(result.data.status.items.find(item => item.key === 'COPIA_LITERAL_CRI').state, 'completo');
   assert.equal(result.data.status.items.find(item => item.key === 'TASACION_PROPIETARIO').documents.length, 2);
   assert.equal(result.data.status.items.find(item => item.key === 'VENDEDOR_FORMULARIO_RENTA').state, 'no_aplica');
+  // Rental files, independent requirements and contract names on disposable local fixtures.
+  const rentalUrl = '/api/inmuebles/3/expediente';
+  result = await request(rentalUrl, operator);
+  assert.equal(result.data.status.sections.length, 5);
+  assert.deepEqual(result.data.status.alerts, []);
+  assert.equal((await upload('VENDEDOR_FORMULARIO_RENTA', 'No pertenece al alquiler', pdf, operator, 'pdf', 3)).response.status, 409);
+  assert.equal((await upload('ARRENDADOR_DNI', 'No pertenece a venta', pdf, operator)).response.status, 409);
+  for (const item of result.data.status.items.filter(item => item.required)) {
+    const uploaded = await upload(item.key, `Alquiler ${item.label}`, pdf, operator, 'pdf', 3);
+    assert.equal(uploaded.response.status, 201, JSON.stringify(uploaded.data));
+  }
+  result = await upload('CONTRATO_ALQUILER', 'Adenda de renovación', pdf, operator, 'pdf', 3);
+  assert.equal(result.response.status, 201);
+  assert.equal((await request('/api/inmuebles/3/archivos', operator, 'PATCH', {archivoId:result.data.id,nombre:'Adenda personalizada',tipoDocumento:'CONTRATO_ALQUILER'})).response.status, 200);
+  result = await request(rentalUrl, operator);
+  assert.equal(result.data.status.complete, true);
+  assert.equal(result.data.status.items.find(item => item.key === 'CONTRATO_ALQUILER').documents.length, 2);
+  assert.equal((await request('/api/inmuebles/3', operator)).data.documentacion.complete, true);
+  assert.equal((await request('/api/inmuebles/3', operator)).data.expediente.items.find(item => item.key === 'documentoDni').complete, true);
+  assert.equal((await request('/api/inmuebles/3/seguimiento', admin, 'PUT', {actividad:'documentacion',responsableId:1,fechaLimite:'2027-01-01',observacion:'Expediente de alquiler'})).response.status, 200);
+  await db.query("INSERT INTO inm_visitas(id,inmueble_id,fecha_visita,completada,observaciones,usuario_id) VALUES(1,3,'2026-10-18',1,'Visita de ensayo',1)");
+  const photoBody = new FormData();photoBody.set('tipoDocumento','FOTO_INMUEBLE');photoBody.set('nombre','Evidencia de visita');photoBody.set('visitaId','1');photoBody.set('archivo',new File([image],'visita.png'));
+  assert.equal((await request('/api/inmuebles/3/archivos',operator,'POST',photoBody)).response.status,201);
+  assert.equal((await upload('FOTO_INMUEBLE','Foto antigua sin visita',image,operator,'png',3)).response.status,201);
   console.log('PASS: permisos, conflictos de edición, condiciones, carga PDF/imagen/Word/Excel, varios archivos, acceso privado y reclasificación.');
 
   const { chromium } = await import(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
@@ -111,7 +138,7 @@ try {
   await page.getByRole('heading', { name: 'Documentación del vendedor', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Ver archivo', exact: true }).last().click();
   await page.getByRole('dialog').waitFor(); await page.getByRole('button', { name: 'Cerrar vista previa' }).click();
-  await page.getByRole('button', { name: 'Documentación', exact: false }).filter({ hasText: /^Documentación/ }).first().click();
+  await page.getByRole('navigation', {name:'Apartados de la ficha'}).getByRole('button', { name: /^Inmueble/ }).click();
   await page.getByRole('heading', { name: 'Documentación del inmueble', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Ver archivo', exact: true }).first().click();
   await page.getByRole('dialog').locator('iframe').waitFor(); await page.getByRole('button', { name: 'Cerrar vista previa' }).click();
@@ -132,11 +159,42 @@ try {
   fs.mkdirSync('output/dossier-local', { recursive: true });
   await page.screenshot({ path: 'output/dossier-local/desktop.png', fullPage: true });
   await page.setViewportSize({ width: 375, height: 850 });
-  for (const name of ['Estado del expediente', 'Vendedor', 'Comprador', 'Documentación']) {
+  for (const name of ['Estado del expediente', 'Vendedor', 'Comprador', 'Inmueble', 'Visitas', 'Seguimiento']) {
     await page.getByRole('navigation', { name: 'Apartados de la ficha' }).getByRole('button', { name: new RegExp(`^${name}`) }).click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, name + ' horizontal overflow');
   }
   await page.screenshot({ path: 'output/dossier-local/mobile.png', fullPage: true });
+  // Zone selector distinguishes equal positions and keeps one description per entry.
+  await page.setViewportSize({width:1440,height:1000});
+  await page.getByRole('combobox',{name:'Zona de inmuebles',exact:true}).selectOption('*');
+  await page.getByRole('button',{name:/Contacto Lima/}).waitFor();
+  assert.equal(await page.getByRole('complementary',{name:'Buscar y seleccionar inmueble'}).locator('button span[title]').filter({hasText:/^00/}).count(),0);
+  await page.getByRole('combobox',{name:'Zona de inmuebles',exact:true}).selectOption('Chimbote');
+  assert.equal(await page.getByRole('button',{name:/Contacto Lima/}).count(),0);
+  await page.getByRole('button',{name:/Contacto alquiler/}).click();
+  const navigation=page.getByRole('navigation',{name:'Apartados de la ficha'});
+  assert.equal(await navigation.getByRole('button',{name:'Fotos',exact:true}).count(),0);
+  assert.equal(await navigation.getByRole('button',{name:'Documentación',exact:true}).count(),0);
+  await navigation.getByRole('button',{name:'Arrendador',exact:true}).click();
+  await page.getByRole('heading',{name:'Documentación del arrendador',exact:true}).waitFor();
+  assert.equal(await page.getByRole('combobox',{name:/Tipo de persona/}).count(),0);
+  await navigation.getByRole('button',{name:'Arrendatario',exact:true}).click();
+  await page.getByRole('heading',{name:'Documentación del arrendatario',exact:true}).waitFor();
+  await navigation.getByRole('button',{name:/^Inmueble/}).click();
+  assert.equal(await page.getByRole('textbox',{name:/Área de terreno/}).count(),0);
+  await page.getByRole('heading',{name:'3. Contratos',exact:true}).waitFor();
+  await page.getByText('Adenda personalizada',{exact:true}).waitFor();
+  await navigation.getByRole('button',{name:/^Visitas/}).click();await page.getByRole('region',{name:'Fotos de la visita',exact:true}).getByRole('button',{name:'Ampliar Evidencia de visita',exact:true}).waitFor();await page.getByRole('region',{name:'Fotos anteriores sin visita',exact:true}).getByRole('button',{name:'Ampliar Foto antigua sin visita',exact:true}).waitFor();
+  await navigation.getByRole('button',{name:'Seguimiento',exact:true}).click();
+  await page.getByRole('heading',{name:'Seguimiento de alquiler',exact:true}).waitFor();
+  await page.getByText('Responsables y plazos',{exact:true}).click();
+  await page.getByRole('group',{name:/Expediente documental de la operación/}).waitFor();
+  await page.setViewportSize({width:375,height:850});
+  for (const name of ['Arrendador','Arrendatario','Inmueble','Visitas','Seguimiento']) {
+    await navigation.getByRole('button',{name:new RegExp(`^${name}`)}).click();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,name);
+  }
+  await page.screenshot({path:'output/dossier-local/rental-mobile.png',fullPage:true});
   assert.deepEqual(errors, []);
   console.log('PASS: navegador autenticado escritorio/móvil, guardado de condiciones, carga real desde formulario, filtro de zona y vistas previas sin errores/desbordes.');
   assert.equal((await request(`/api/inmuebles/1/archivos?archivoId=${pdfId}`, admin, 'DELETE')).response.status, 200);

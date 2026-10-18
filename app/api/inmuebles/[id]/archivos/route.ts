@@ -10,13 +10,13 @@ import { db } from '@/lib/db';
 import { inmArchivos, inmInmuebles, inmAsignacionesPosicion, inmPosiciones, inmVisitas, securityAudit } from '@/db/schema';
 import { DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, documentPath, storageConfigured, storeDocument, validateDocument } from '@/lib/document-files.mjs';
 import { readDossier } from '@/lib/dossier-record';
-import { dossierDocuments, documentApplies, legacyDossierTypes } from '@/lib/transaction-dossier.mjs';
+import { dossierDocuments, documentApplies, dossierDocumentType } from '@/lib/transaction-dossier.mjs';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 async function findInmueble(key: string) {
-  const [row] = await db.select({ id: inmInmuebles.id, codigo: inmInmuebles.codigo }).from(inmInmuebles)
+  const [row] = await db.select({ id: inmInmuebles.id, codigo: inmInmuebles.codigo, operacion: inmInmuebles.operacion }).from(inmInmuebles)
     .where(propertyIdentifierCondition(key)).limit(1);
   return row;
 }
@@ -52,10 +52,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       } else body = await request.json();
     } catch { return NextResponse.json({ error: 'Solicitud de documento no válida.' }, { status: 400 }); }
     const requestedType = String(body.tipoDocumento ?? '').trim();
-    const tipoDocumento = legacyDossierTypes[requestedType as keyof typeof legacyDossierTypes] ?? requestedType, nombre = String(body.nombre ?? '').trim(), observacion = String(body.observacion ?? '').trim();
+    const tipoDocumento = dossierDocumentType(requestedType, inmueble.operacion), nombre = String(body.nombre ?? '').trim(), observacion = String(body.observacion ?? '').trim();
     if (!DOCUMENT_TYPES.has(tipoDocumento) || !nombre || nombre.length > 255 || observacion.length > 500) return NextResponse.json({ error: 'Revisa el tipo, nombre (máximo 255 caracteres) y observación (máximo 500).' }, { status: 400 });
     const definition = dossierDocuments.find(item => item.key === tipoDocumento);
-    if (definition && !documentApplies(definition, (await readDossier(inmueble.id)).config)) return NextResponse.json({ error: 'Guarda primero el tipo de persona y las condiciones de esta sección del expediente.' }, { status: 409 });
+    if (definition && !documentApplies(definition, (await readDossier(inmueble.id)).config, inmueble.operacion)) return NextResponse.json({ error: 'Guarda primero el tipo de persona y las condiciones de esta sección del expediente.' }, { status: 409 });
     const visitaId = body.visitaId === undefined ? null : Number(body.visitaId);
     if (visitaId !== null) {
       if (!multipart || tipoDocumento !== 'FOTO_INMUEBLE' || !Number.isSafeInteger(visitaId) || visitaId < 1) return NextResponse.json({ error: 'La visita seleccionada no es válida.' }, { status: 400 });
@@ -97,7 +97,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       register: async (stored: { pathname: string }) => {
       return db.transaction(async tx => {
       await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, inmueble.id)).for('update');
-      if (definition && !documentApplies(definition, (await readDossier(inmueble.id, tx)).config)) throw new Error('Las condiciones del expediente cambiaron.');
+      if (definition && !documentApplies(definition, (await readDossier(inmueble.id, tx)).config, inmueble.operacion)) throw new Error('Las condiciones del expediente cambiaron.');
       if (visitaId !== null) {
         const [visit] = await tx.select({ id: inmVisitas.id }).from(inmVisitas).where(and(eq(inmVisitas.id, visitaId), eq(inmVisitas.inmuebleId, inmueble.id), eq(inmVisitas.completada, true))).limit(1).for('update');
         if (!visit) throw new Error('La visita ya no está disponible.');
@@ -154,7 +154,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       if (!definition || body.esPortada !== undefined) return NextResponse.json({ error: 'Categoría del expediente no válida.' }, { status: 400 });
       const result = await db.transaction(async tx => {
         await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, inmueble.id)).for('update');
-        if (!documentApplies(definition, (await readDossier(inmueble.id, tx)).config)) return 'conditions';
+        if (!documentApplies(definition, (await readDossier(inmueble.id, tx)).config, inmueble.operacion)) return 'conditions';
         const condition = and(eq(inmArchivos.id, archivoId), eq(inmArchivos.inmuebleId, inmueble.id));
         const [file] = await tx.select().from(inmArchivos).where(condition).limit(1).for('update');
         if (!file || file.tipoDocumento === 'FOTO_INMUEBLE') return 'missing';

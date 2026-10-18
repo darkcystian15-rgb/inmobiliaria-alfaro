@@ -1,5 +1,4 @@
 "use client";
-import { stripCoordinates } from "@/lib/retired-coordinates.mjs";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -7,21 +6,19 @@ import { propertyAddress } from "@/lib/property-address.mjs";
 import { MobileFormFeedback } from "./MobileFormActions";
 import ActiveFilters from "./ActiveFilters";
 import TransactionDossier from "./TransactionDossier";
-import GeographySelect from "./GeographySelect";
 
-import { propertyPanelId } from "@/lib/property-panel-id.mjs";
+import { useSearchParams } from "next/navigation";
 
 
 import { priceLabel, referenceLabel, targetLabel } from "@/lib/operation.mjs";
 
-import DraftRecovery from './DraftRecovery';
 import OperationalTracking from './OperationalTracking';
 import PropertyHistory from './PropertyHistory';
 import ExternalAnnouncements from './ExternalAnnouncements';
 import PageHeading from "@/app/components/PageHeading";
 
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ContextLink as Link, NavigationReturnProvider, useReturnHref, ReturnLink } from "@/app/components/NavigationReturn";
 import PublicationChecklist, { type Checklist } from "./PublicationChecklist";
 import PropertyProgress from "./PropertyProgress";
@@ -35,7 +32,7 @@ import { isAdministrator } from "@/lib/access.mjs";
 import { filterProperties } from "@/lib/property-list.mjs";
 import { requestJson } from "@/lib/client-request";
 
-type Item = { id: string; posicion: number | null; nombre: string; tipo: string; operacion: string; ubicacion: string; direccion: string | null; propietario: string; estado: string };
+type Item = { zona: string; id: string; posicion: number | null; nombre: string; tipo: string; operacion: string; ubicacion: string; direccion: string | null; propietario: string; estado: string };
 type Property = {
   zona?: string; id: number; inmuebleOrigenId?:number|null; codigo: string; posicion: number | null; tipo: string; operacion: string; referencia: string; estado: string;
   nombreContacto: string | null; direccion: string | null; distrito: string | null; provincia: string | null; departamento: string | null;
@@ -46,16 +43,12 @@ type Property = {
 
 type Document = { id: number; tipoDocumento: string; nombre: string; enlace: string; observacion: string | null; almacenamiento: string; tipoMime: string | null; nombreOriginal: string | null; tamanoBytes: number | null };
 type Details = { documentacion?: { complete: boolean; completed: number; total: number; alerts: string[] }; alquiler?: {fechaAlquiler:string|null;rentaMensual:string|null;comision:string|null;garantia:string|null;adelanto:string|null;fechaInicioAlquiler:string|null;fechaFinAlquiler:string|null}|null; relacionados?: {id:number;codigo:string;referencia:string}[]; historial?: {id:number;evento:string;observacion:string|null;fecha:string;usuario:string|null}[]; expediente?: Checklist; venta?: { fechaVenta: string | null; precioFinal: string | null; comision: string | null } | null; progreso: PropertyProgressData; inmueble: Property; tasacion: { fechaTasacion: string; valorReferencia: string | null; precioObjetivo: string | null; precioVenta: string | null; observacion: string | null } | null; publicacion: { texto: string; enlace: string; publicado: boolean; fechaPublicacion: string | null } | null };
-const tabs = [["Resumen", "home"], ["Estado del expediente", "check"], ["Vendedor", "user"], ["Comprador", "user"], ["Inmueble", "building"], ["Documentación", "document"], ["Fotos", "image"], ["Visitas", "image"], ["Tasación", "chart"], ["Publicación", "publish"]] as const;
+const tabs = [["Resumen", "home"], ["Estado del expediente", "check"], ["Vendedor", "user"], ["Comprador", "user"], ["Inmueble", "document"], ["Visitas", "image"], ["Seguimiento", "check"], ["Tasación", "chart"], ["Publicación", "publish"]] as const;
 type Tab = (typeof tabs)[number][0];
 type IconName = (typeof tabs)[number][1] | "search" | "map" | "check" | "arrow" | "save" | "close" | "link";
-const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 text-sm font-normal text-slate-800 outline-none transition placeholder:text-slate-500 focus:border-[#c80000]/40 focus:bg-white disabled:opacity-50";
-const primaryClass = "inline-flex items-center justify-center gap-2 rounded-xl bg-[#c80000] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#a90000] disabled:cursor-not-allowed disabled:opacity-50";
-
 function Icon({ name, className = "h-4 w-4" }: { name: IconName; className?: string }) {
   const paths: Record<IconName, ReactNode> = {
     home: <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9M9 20v-6h6v6" /></>,
-    building: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 7h1m4 0h1M9 11h1m4 0h1M10 21v-6h4v6" /></>,
     user: <><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></>,
     image: <><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8" cy="8" r="1.5" /><path d="m3 16 5-5 4 4 4-6 5 7" /></>,
     document: <><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" /><path d="M14 3v6h6M8 13h8M8 17h5" /></>,
@@ -82,11 +75,9 @@ function Block({ title, description, children }: { title: string; description?: 
 function Stat({ label, value, icon }: { label: string; value: string; icon: IconName }) {
   return <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"><div className="flex items-center gap-2 text-slate-500"><Icon name={icon} /><p className="text-xs font-bold uppercase tracking-wide">{label}</p></div><p className="mt-3 break-words text-sm font-semibold text-slate-800">{value}</p></div>;
 }
-function SaveBar({ dirty, busy }: { dirty: boolean; busy: boolean }) {
-  return <div className="sticky bottom-3 z-10 flex flex-col items-stretch justify-between sm:flex-row sm:items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm"><p className={`flex items-center gap-2 text-xs ${dirty ? "text-amber-700" : "text-slate-500"}`}><Icon name={dirty ? "document" : "check"} />{dirty ? "Tienes cambios por guardar" : "Sin cambios pendientes"}</p><button type="submit" disabled={!dirty || busy} className={primaryClass}><Icon name="save" />{busy ? "Guardando…" : "Guardar cambios"}</button></div>;
-}
-
 export default function PropertyInformation({ initialCode = "", initialTab = "Resumen" }: { initialCode?: string; initialTab?: Tab }) {
+  const params = useSearchParams();
+  const zone = params.get("zona") || "*";
   const admin = isAdministrator(useSessionUser());
   const [pendingProperty, setPendingProperty] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -95,13 +86,12 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const [code, setCode] = useState(initialCode);
   const [tab, setTab] = useState<Tab>(initialTab);
   const [details, setDetails] = useState<Details | null>(null);
-  const [form, setForm] = useState<Property | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const documentFiles = documents.filter(document => document.tipoDocumento !== "FOTO_INMUEBLE");
   const photoCount = documents.filter(document => document.tipoDocumento === "FOTO_INMUEBLE" && document.tipoMime?.startsWith("image/")).length;
   const [dossierDirty, setDossierDirty] = useState(false);
   const [uploadReady, setUploadReady] = useState(false);
-  const originHref = useReturnHref(`/datos-inmuebles?codigo=${encodeURIComponent(code)}&pestana=${encodeURIComponent(tab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}`);
+  const originHref = useReturnHref(`/datos-inmuebles?zona=${encodeURIComponent(zone)}&codigo=${encodeURIComponent(code)}&pestana=${encodeURIComponent(tab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}`);
   const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState("");
   const [listReload, setListReload] = useState(0);
@@ -112,8 +102,18 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const [message, setMessage] = useState("");
   const loadRequest = useRef(0);
   const sheet = useRef<HTMLDivElement>(null);
-  const filtered = useMemo(() => filterProperties(items, query, status) as Item[], [items, query, status]);
-  const dirty = !!details && (JSON.stringify(form) !== JSON.stringify(details.inmueble));
+  const filtered = useMemo(() => filterProperties(items.filter(item => zone === "*" || item.zona === zone), query, status) as Item[], [items, query, status, zone]);
+  const dirty = dossierDirty;
+  const zones = Array.from(new Set(items.map(item => item.zona).filter(Boolean))).sort((a,b) => a.localeCompare(b, "es"));
+  const rental = details?.inmueble.operacion === "alquiler";
+  function changeZone(value: string) {
+    if (busy || dossierDirty) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("zona", value);
+    url.searchParams.delete("codigo");
+    selectProperty("");
+    window.history.replaceState(null, "", url.pathname + url.search);
+  }
   useEffect(() => {
     if (!dirty && !dossierDirty) return;
     const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
@@ -121,7 +121,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     return () => window.removeEventListener("beforeunload", handler);
   }, [dirty, dossierDirty]);
 
-  const load = useCallback((key: string, signal?: AbortSignal, preserveForm = false) => {
+  const load = useCallback((key: string, signal?: AbortSignal) => {
     const id = ++loadRequest.current;
     if (!key) return Promise.resolve();
     setErrorCarga(false);
@@ -130,7 +130,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
       requestJson<{ archivos: Document[]; subidaHabilitada: boolean }>(`/api/inmuebles/${encodeURIComponent(key)}/archivos`, { signal }),
     ]).then(([data, files]) => {
       if (signal?.aborted || id !== loadRequest.current) return;
-      setError(""); setDetails(data); if(!preserveForm){setForm(data.inmueble);} setDocuments(files.archivos); setUploadReady(files.subidaHabilitada);
+      setError(""); setDetails(data); setDocuments(files.archivos); setUploadReady(files.subidaHabilitada);
       setItems(previous => previous.map(item => item.id !== data.inmueble.codigo ? item : { ...item, nombre: data.inmueble.referencia, direccion: data.inmueble.direccion, operacion: data.inmueble.operacion, tipo: data.inmueble.tipo, ubicacion: propertyAddress(data.inmueble), propietario: data.inmueble.nombreContacto || "Sin contacto" }));
     }).catch(error => {
       if (!signal?.aborted && id === loadRequest.current) { setErrorCarga(true); setError(error instanceof Error ? error.message : "No se pudo cargar la ficha."); }
@@ -141,7 +141,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
 
   useEffect(() => {
     const controller = new AbortController();
-    requestJson<{ inmuebles: Item[] }>("/api/inmuebles", { signal: controller.signal })
+    requestJson<{ inmuebles: Item[] }>("/api/inmuebles?zona=*", { signal: controller.signal })
       .then(data => { if (!controller.signal.aborted) setItems(data.inmuebles); })
       .catch(error => { if (!controller.signal.aborted) setListError(error instanceof Error ? error.message : "No se pudieron cargar los inmuebles."); })
       .finally(() => { if (!controller.signal.aborted) setListLoading(false); });
@@ -159,26 +159,9 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     setPendingProperty(null);
     ++loadRequest.current;
     setCode(key); setTab("Resumen"); setError(""); setMessage(""); setDossierDirty(false);
-    setDetails(null); setForm(null); setDocuments([]); setLoading(Boolean(key));
+    setDetails(null); setDocuments([]); setLoading(Boolean(key));
     if (key && window.innerWidth < 1536) window.requestAnimationFrame(() => sheet.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));
   }
-  async function save(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault();
-    if (!form || busy) return;
-    setBusy(true); setError(""); setMessage("");
-    try {
-      await requestJson(`/api/inmuebles/${encodeURIComponent(code)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.fromEntries(Object.entries(form).filter(([key]) => !["operacion", "tipo", "nombreContacto"].includes(key)))) });
-      setLoading(true);
-      await load(code);
-      setMessage("Cambios guardados correctamente.");
-    } catch (error) { setError(error instanceof Error ? error.message : "No se pudieron guardar los cambios."); }
-    finally { setBusy(false); }
-  }
-  function propertyField(label: string, key: keyof Property, type = "text", placeholder?: string) {
-    return <label className="block text-xs font-semibold text-slate-600">{label}<input type={type} min={type === "number" ? 0 : undefined} step={type === "number" ? (key === "habitaciones" || key === "banos" ? "1" : "0.01") : undefined} value={typeof form?.[key] === "boolean" ? "" : form?.[key] ?? ""} placeholder={placeholder} required={key === "direccion" || key === "nombreContacto"} maxLength={key === "direccion" ? 350 : key === "nombreContacto" ? 281 : undefined} disabled={busy} onChange={event => setForm(previous => previous ? { ...previous, [key]: event.target.value } : previous)} className={inputClass} /></label>;
-  }
-
-
   return <NavigationReturnProvider href={originHref}><main className="min-h-screen bg-background p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
     {pendingProperty !== null && <ConfirmDialog title="Cambios sin guardar" confirmLabel="Descartar cambios" onCancel={() => setPendingProperty(null)} onConfirm={() => selectProperty(pendingProperty, true)}><p>Tienes cambios pendientes en esta ficha. Si cambias de inmueble, se descartarán.</p></ConfirmDialog>}
     <div className="mx-auto max-w-[1500px]">
@@ -191,6 +174,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
         <aside aria-label="Buscar y seleccionar inmueble" className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.03)] 2xl:sticky 2xl:top-6">
           <div className="border-b border-slate-100 p-5">
             <div className="flex items-center justify-between"><h2 className="text-sm font-bold text-slate-900">Tus inmuebles</h2><span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">Por posición</span></div>
+            <label className="mt-4 block text-xs font-semibold text-slate-600">Zona<select aria-label="Zona de inmuebles" value={zone} disabled={busy || dossierDirty || listLoading} onChange={event => changeZone(event.target.value)} className="aa-input mt-2 w-full"><option value="*">Todas las zonas</option>{zone !== "*" && !zones.includes(zone) && <option value={zone}>{zone}</option>}{zones.map(name => <option key={name} value={name}>{name}</option>)}</select></label>
             <label className="relative mt-4 block"><span className="sr-only">Buscar inmueble por nombre, posición, código, ubicación o propietario</span><span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500"><Icon name="search" /></span><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar un inmueble…" className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-3 text-xs outline-none transition focus:border-[#c80000]/40 focus:bg-white" /></label>
             <div className="mt-3 flex gap-1 rounded-xl bg-slate-100 p-1" aria-label="Filtrar por estado">
               {[["activo", "Activos"], ["historico", "Históricos"], ["todos", "Todos"]].map(([value, label]) => <button key={value} type="button" aria-pressed={status === value} onClick={() => setStatus(value)} className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition ${status === value ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>{label}</button>)}
@@ -201,7 +185,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
           <div className="max-h-80 overflow-y-auto px-2 pb-3 2xl:max-h-[calc(100vh-22rem)] 2xl:min-h-64">
             {listLoading ? <div className="space-y-2 px-2" aria-label="Cargando lista">{[1, 2, 3].map(value => <div key={value} className="h-24 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" />)}</div> : listError ? <div role="alert" className="rounded-2xl bg-red-50 p-4 text-xs text-red-700"><p>{listError}</p><button type="button" onClick={() => { setListLoading(true); setListError(""); setListReload(value => value + 1); }} className="mt-3 font-bold underline underline-offset-4">Reintentar</button></div> : filtered.length === 0 ? <div className="px-5 py-10 text-center"><div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500"><Icon name="search" /></div><p className="mt-3 text-sm font-semibold text-slate-700">Sin resultados</p><p className="mt-1 text-xs leading-5 text-slate-500">Prueba otro nombre, código o estado.</p>{(query || status !== "todos") && <button type="button" onClick={() => { setQuery(""); setStatus("todos"); }} className="mt-4 text-xs font-semibold text-[#c80000]">Ver todos los inmuebles</button>}</div> : filtered.map(item => <button key={item.id} type="button" aria-pressed={code === item.id} disabled={busy} onClick={() => selectProperty(item.id)} className={`mb-1.5 flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition disabled:cursor-wait ${code === item.id ? "border-red-100 bg-[#fff5f4] shadow-sm" : "border-transparent hover:border-slate-100 hover:bg-slate-50"}`}>
               <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-mono text-sm font-bold ${code === item.id ? "bg-[#c80000] text-white" : "bg-slate-100 text-slate-500"}`}>{positionLabel(item.posicion)}</span>
-              <span className="min-w-0 flex-1"><span className="block break-words text-xs font-bold text-slate-800" title={item.propietario || "Sin contacto"}>{item.propietario || "Sin contacto"}</span><span className="mt-1 block break-words text-xs text-slate-500"><PropertySummary operation={item.operacion} type={item.tipo} location={item.direccion} /></span><span className="mt-1.5 block truncate font-mono text-xs text-slate-500" title={propertyPanelId(item)}>{propertyPanelId(item)}</span></span>
+              <span className="min-w-0 flex-1"><span className="block break-words text-xs font-bold text-slate-800" title={item.propietario || "Sin contacto"}>{item.propietario || "Sin contacto"}</span><span className="mt-1 block break-words text-xs text-slate-500"><PropertySummary operation={item.operacion} type={item.tipo} location={item.direccion} /></span>{zone === "*" && <span className="mt-1 block text-xs font-semibold text-slate-600">{item.zona || "Sin zona"}</span>}</span>
               <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${item.estado === "activo" ? "bg-emerald-500" : "bg-slate-300"}`} title={item.estado === "activo" ? "Activo" : "Histórico"}><span className="sr-only">{item.estado === "activo" ? "Activo" : "Histórico"}</span></span>
             </button>)}
           </div>
@@ -210,27 +194,25 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
 
         <div ref={sheet} className="min-w-0 scroll-mt-5">
           {code && <button type="button" disabled={busy} onClick={() => selectProperty("")} className="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-500 2xl:hidden">← Volver a elegir inmueble</button>}
-          {error && <MobileFormFeedback value={error}><Feedback tone="error" className="mb-4">{error}{errorCarga && <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); void load(code, undefined, !!details); }} className="aa-button aa-button-secondary mt-3">{loading ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
+          {error && <MobileFormFeedback value={error}><Feedback tone="error" className="mb-4">{error}{errorCarga && <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); void load(code); }} className="aa-button aa-button-secondary mt-3">{loading ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
           {message && <MobileFormFeedback value={message}><Feedback className="mb-4">{message}</Feedback></MobileFormFeedback>}
-          {loading && !details ? <div role="status" className="space-y-5 rounded-3xl border border-slate-200 bg-white p-8"><p className="text-sm text-slate-500">Cargando ficha del inmueble…</p><div className="h-28 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" /><div className="h-64 animate-pulse rounded-2xl bg-slate-50 motion-reduce:animate-none" /></div> : !details ? <div className="flex min-h-[480px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center"><div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-red-100 bg-[#fff5f4] text-[#c80000]"><Icon name="home" className="h-9 w-9" /></div><p className="mt-6 text-lg font-bold text-slate-900">La ficha de tu inmueble, en un solo lugar</p><p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">Selecciona un inmueble de la lista para consultar sus datos, completar la información y organizar sus documentos.</p><div className="mt-7 flex flex-wrap justify-center gap-2">{["Nombre de contacto", "Características", "Documentación"].map(label => <span key={label} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500">{label}</span>)}</div></div> : <>
+          {loading && !details ? <div role="status" className="space-y-5 rounded-3xl border border-slate-200 bg-white p-8"><p className="text-sm text-slate-500">Cargando ficha del inmueble…</p><div className="h-28 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" /><div className="h-64 animate-pulse rounded-2xl bg-slate-50 motion-reduce:animate-none" /></div> : !details ? <div className="flex min-h-[480px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center"><div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-red-100 bg-[#fff5f4] text-[#c80000]"><Icon name="home" className="h-9 w-9" /></div><p className="mt-6 text-lg font-bold text-slate-900">La ficha de tu inmueble, en un solo lugar</p><p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">Selecciona un inmueble de la lista para consultar sus datos, completar la información y organizar sus documentos.</p><div className="mt-7 flex flex-wrap justify-center gap-2">{["Contacto", "Expediente", "Visitas y seguimiento"].map(label => <span key={label} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500">{label}</span>)}</div></div> : <>
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.03)]">
               <div className="h-1.5 bg-[#c80000]" />
               <div className="grid grid-cols-1 items-start gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:p-6">
-                <div className="flex min-w-0 items-start gap-3 sm:gap-4"><span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#fff1f1] text-[#c80000]"><span className="text-xs font-bold uppercase tracking-wider">Posición</span><span className="font-mono text-xl font-bold">{positionLabel(details.inmueble.posicion)}</span></span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-semibold capitalize text-slate-500">{details.inmueble.estado === "activo" ? "Inmueble en cartera" : "Ficha histórica"}</span><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${details.inmueble.estado === "activo" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{details.inmueble.estado === "activo" ? "Activo" : "Histórico"}</span></div><h2 className="mt-2 break-words text-xl font-bold tracking-tight text-slate-950">{details.inmueble.nombreContacto || "Sin contacto"}</h2><p className="mt-2 flex items-start gap-1.5 text-xs text-slate-500"><Icon name="map" className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words"><PropertySummary operation={details.inmueble.operacion} type={details.inmueble.tipo} location={details.inmueble.direccion} /></span></p><p className="mt-2 break-all font-mono text-xs text-slate-500">{propertyPanelId(details.inmueble)}</p></div></div>
+                <div className="flex min-w-0 items-start gap-3 sm:gap-4"><span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#fff1f1] text-[#c80000]"><span className="text-xs font-bold uppercase tracking-wider">Posición</span><span className="font-mono text-xl font-bold">{positionLabel(details.inmueble.posicion)}</span></span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-xs font-semibold capitalize text-slate-500">{details.inmueble.estado === "activo" ? "Inmueble en cartera" : "Ficha histórica"}</span><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${details.inmueble.estado === "activo" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{details.inmueble.estado === "activo" ? "Activo" : "Histórico"}</span></div><h2 className="mt-2 break-words text-xl font-bold tracking-tight text-slate-950">{details.inmueble.nombreContacto || "Sin contacto"}</h2><p className="mt-2 flex items-start gap-1.5 text-xs text-slate-500"><Icon name="map" className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words"><PropertySummary operation={details.inmueble.operacion} type={details.inmueble.tipo} location={details.inmueble.direccion} /></span></p><p className="mt-2 text-xs font-semibold text-slate-600">Zona: {details.inmueble.zona || "Sin zona"}</p></div></div>
                 <div className="min-w-0 rounded-2xl bg-slate-50 px-5 py-4"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">{priceLabel(details.inmueble.operacion)}</p><p className="mt-1 break-words text-lg font-bold tracking-tight text-slate-900">{money(details.tasacion?.precioVenta)}</p></div>
               </div>
               <nav aria-label="Apartados de la ficha" className="flex gap-1 overflow-x-auto border-t border-slate-100 px-3 py-2">
-                {tabs.map(([label, icon]) => <button key={label} type="button" aria-current={tab === label ? "page" : undefined} disabled={busy} onClick={() => setTab(label)} className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-3 text-xs font-semibold transition ${tab === label ? "bg-[#fff1f1] text-[#c80000]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}><Icon name={icon} />{label}{label === "Documentación" && documentFiles.length > 0 && <span className="rounded-md bg-white px-1.5 py-0.5 text-xs ring-1 ring-slate-200">{documentFiles.length}</span>}{label === "Fotos" && photoCount > 0 && <span className="rounded-md bg-white px-1.5 py-0.5 text-xs ring-1 ring-slate-200">{photoCount}</span>}</button>)}
+                {tabs.map(([label, icon]) => <button key={label} type="button" aria-current={tab === label ? "page" : undefined} disabled={busy} onClick={() => setTab(label)} className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-3 text-xs font-semibold transition ${tab === label ? "bg-[#fff1f1] text-[#c80000]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}><Icon name={icon} />{label === "Vendedor" && rental ? "Arrendador" : label === "Comprador" && rental ? "Arrendatario" : label}{label === "Inmueble" && documentFiles.length > 0 && <span className="rounded-md bg-white px-1.5 py-0.5 text-xs ring-1 ring-slate-200">{documentFiles.length}</span>}{label === "Visitas" && photoCount > 0 && <span className="rounded-md bg-white px-1.5 py-0.5 text-xs ring-1 ring-slate-200">{photoCount}</span>}</button>)}
               </nav>
             </section>
 
-            <DraftRecovery key={code} draftKey={`ficha:simple-${details.inmueble.id}`} data={{form}} dirty={dirty} onRestore={draft=>{if(draft.form&&typeof draft.form==='object')setForm({...stripCoordinates(draft.form) as Property, operacion: details.inmueble.operacion, tipo: details.inmueble.tipo, nombreContacto: details.inmueble.nombreContacto});}}/>
+
             {details.documentacion && <button type="button" onClick={() => setTab("Estado del expediente")} className={`mt-4 w-full rounded-xl border p-4 text-left text-sm ${details.documentacion.complete ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}><span className="font-bold">{details.documentacion.complete ? "Expediente documental completo" : "El expediente tiene pendientes"}</span><span className="mt-1 block">{details.documentacion.completed} de {details.documentacion.total} requisitos documentales completos · Ver estado del expediente →</span></button>}
             {tab === "Resumen" && <>
             <PropertyProgress data={details.progreso} administrator={admin} propertyId={details.inmueble.id} />
-            <OperationalTracking key={`tracking-${code}`} propertyId={details.inmueble.id} administrator={admin} progress={details.progreso}/>
-            <PropertyHistory events={details.historial??[]}/>
-            <PublicationChecklist data={details.expediente} code={code} onSelect={value=>setTab(value as Tab)} />
+            <PublicationChecklist data={details.expediente} code={code} onSelect={value=>setTab(value === "Documentación" ? "Inmueble" : value as Tab)} />
             </>}
             {details.venta && <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5"><h3 className="text-base font-bold">Resultado económico de la venta</h3><div className="mt-3 grid gap-3 sm:grid-cols-3"><Stat label="Fecha de venta" value={formatDate(details.venta.fechaVenta)} icon="chart" /><Stat label="Precio final" value={money(details.venta.precioFinal)} icon="chart" /><Stat label="Comisión de la inmobiliaria" value={money(details.venta.comision)} icon="chart" /></div><p className="mt-2 text-xs text-slate-600">La comisión es ingreso antes de gastos. Los cierres anteriores pueden figurar sin importes registrados.</p></section>}
 
@@ -239,31 +221,18 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
 
                 <Block title="Una mirada al inmueble" description="Los datos principales para continuar completando la ficha."><div className="grid gap-3 sm:grid-cols-2"><Stat label="Contacto" value={details.inmueble.nombreContacto || "Por completar"} icon="user" /><Stat label="Ubicación referencial" value={details.inmueble.direccion || "Por completar"} icon="map" /><Stat label="Documentación" value={`${documentFiles.length} documento${documentFiles.length === 1 ? "" : "s"} registrado${documentFiles.length === 1 ? "" : "s"}`} icon="document" /><Stat label="Publicación" value={details.publicacion?.publicado ? "Publicado" : details.publicacion ? details.expediente?.complete ? "Lista para publicar" : "Expediente pendiente" : "Sin publicación"} icon="publish" /></div></Block>
                 <Block title="Precios del inmueble"><div className="grid gap-3 sm:grid-cols-3">{[[referenceLabel(details.inmueble.operacion), details.tasacion?.valorReferencia], [targetLabel(details.inmueble.operacion), details.tasacion?.precioObjetivo], [priceLabel(details.inmueble.operacion), details.tasacion?.precioVenta]].map(([label, value]) => <div key={label} className={`rounded-2xl border p-4 ${label === priceLabel(details.inmueble.operacion) ? "border-red-100 bg-[#fff5f4]" : "border-slate-100 bg-slate-50"}`}><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-2 text-sm font-bold text-slate-900">{money(value)}</p></div>)}</div></Block>
-                <div className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setTab("Inmueble")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Completar datos del inmueble</span><span className="mt-1 block text-xs text-slate-500">Ubicación y características</span></span><Icon name="arrow" /></button><button type="button" onClick={() => setTab("Documentación")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Organizar documentación</span><span className="mt-1 block text-xs text-slate-500">Archivos y documentos</span></span><Icon name="arrow" /></button></div>
+                <div className="grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setTab("Visitas")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Consultar visitas y fotos</span><span className="mt-1 block text-xs text-slate-500">Evidencia de las visitas</span></span><Icon name="arrow" /></button><button type="button" onClick={() => setTab("Inmueble")} className="flex items-center justify-between rounded-2xl border border-slate-200 p-4 text-left transition hover:border-red-200 hover:bg-[#fffafa]"><span><span className="block text-xs font-bold text-slate-800">Organizar documentación</span><span className="mt-1 block text-xs text-slate-500">Archivos y documentos</span></span><Icon name="arrow" /></button></div>
               </div>}
 
-              {tab === "Inmueble" && <form onSubmit={save} className="space-y-7">
-                <Block title="Identificación" description="Operación y tipo se editan únicamente desde el panel de Cartera."><div className="grid gap-3 sm:grid-cols-2"><Stat label="Tipo de operación" value={details.inmueble.operacion === "alquiler" ? "Alquiler" : "Venta"} icon="home" /><Stat label="Tipo de inmueble" value={details.inmueble.tipo} icon="home" /></div></Block>
-                <div className="border-t border-slate-100" />
-                <Block title="Ubicación"><div className="space-y-4">{propertyField("Ubicación referencial", "direccion", "text", "Dirección o referencia para reconocer el inmueble")}<GeographySelect disabled={busy||loading} value={{departamento:form?.departamento||null,provincia:form?.provincia||null,distrito:form?.distrito||null}} onChange={next=>setForm(old=>old?{...old,...next}:old)}/></div></Block>
-                <div className="border-t border-slate-100" />
-                {Number(form?.areaConstruida)>Number(form?.areaTerreno)*10 && Number(form?.areaTerreno)>0 && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Revisa las superficies: el área construida supera diez veces el terreno. Puede ser válido en varias plantas; confirma las unidades.</p>}<Block title="Características" description="Superficies y distribución del inmueble."><div className="grid gap-4 sm:grid-cols-2">{propertyField("Área de terreno (m²)", "areaTerreno", "number")}{propertyField("Área construida (m²)", "areaConstruida", "number")}{propertyField(["Local","Local comercial","Oficina"].includes(form?.tipo||"") ? "Ambientes" : "Habitaciones", "habitaciones", "number")}{propertyField("Baños", "banos", "number")}</div><label className="mt-4 block text-xs font-semibold text-slate-600">Detalles adicionales<textarea rows={4} value={form?.caracteristicas || ""} disabled={busy} onChange={event => setForm(previous => previous ? { ...previous, caracteristicas: event.target.value } : previous)} placeholder="Distribución, acabados, servicios y otros detalles…" className={inputClass} /></label></Block>
-                <Block title="Observaciones"><textarea aria-label="Observaciones del inmueble" rows={3} value={form?.observaciones || ""} disabled={busy} onChange={event => setForm(previous => previous ? { ...previous, observaciones: event.target.value } : previous)} placeholder="Comentarios que quieras conservar en la ficha…" className={inputClass} /></Block>
-                <SaveBar dirty={dirty} busy={busy || loading} />
-              </form>}
-
-              {tab === "Fotos" && <PhotoGallery key={code} propertyId={details.inmueble.id} editable onBusyChange={setBusy} onChanged={() => {
-                void Promise.all([requestJson<Details>(`/api/inmuebles/${encodeURIComponent(code)}`), requestJson<{archivos:Document[];subidaHabilitada:boolean}>(`/api/inmuebles/${encodeURIComponent(code)}/archivos`)]).then(([updated,files])=>{setDetails(updated);setDocuments(files.archivos);setUploadReady(files.subidaHabilitada);}).catch(error=>setError(error instanceof Error?error.message:'No se pudo actualizar la ficha.'));
-              }} />}
-
-              <div hidden={!["Estado del expediente", "Vendedor", "Comprador", "Documentación"].includes(tab)}>
-                <TransactionDossier key={details.inmueble.id} propertyId={details.inmueble.id} view={tab === "Vendedor" ? "vendedor" : tab === "Comprador" ? "comprador" : tab === "Documentación" ? "inmueble" : "estado"} files={documentFiles} uploadReady={uploadReady} administrator={admin} onChanged={() => load(code, undefined, true)} onBusyChange={setBusy} onDirtyChange={setDossierDirty} />
+              <div hidden={!["Estado del expediente", "Vendedor", "Comprador", "Inmueble"].includes(tab)}>
+                <TransactionDossier key={details.inmueble.id} propertyId={details.inmueble.id} operation={details.inmueble.operacion} view={tab === "Vendedor" ? "vendedor" : tab === "Comprador" ? "comprador" : tab === "Inmueble" ? "inmueble" : "estado"} files={documentFiles} uploadReady={uploadReady} administrator={admin} onChanged={() => load(code)} onBusyChange={setBusy} onDirtyChange={setDossierDirty} />
               </div>
 
-              {tab === "Visitas" && <PropertyVisits key={code} propertyId={details.inmueble.id} onBusyChange={setBusy} onChanged={() => { void load(code, undefined, true); }} />}
+              {tab === "Seguimiento" && <div className="space-y-5"><h3 className="text-lg font-bold">Seguimiento de {rental ? "alquiler" : "venta"}</h3><p className="text-sm text-slate-600">Responsables, plazos e historial de la operación. Los pendientes documentales se consultan en Estado del expediente.</p><button className="aa-button aa-button-secondary" onClick={() => setTab("Estado del expediente")}>Ver pendientes documentales ({details.documentacion?.completed ?? 0}/{details.documentacion?.total ?? 0})</button><OperationalTracking key={`tracking-${code}`} propertyId={details.inmueble.id} administrator={admin} progress={details.progreso} documentaryComplete={details.documentacion?.complete ?? false}/><PropertyHistory events={details.historial??[]}/></div>}
+              {tab === "Visitas" && <div className="space-y-6"><PropertyVisits key={code} propertyId={details.inmueble.id} onBusyChange={setBusy} onChanged={() => { void load(code); }} /><PhotoGallery key={`photos-${code}-${photoCount}`} propertyId={details.inmueble.id} visitaId={null} editable allowUpload={false} onBusyChange={setBusy} onChanged={() => { void load(code); }} /></div>}
               {tab === "Tasación" && (details.tasacion ? <div className="space-y-6"><Block title="Tasación registrada" description={`Fecha de tasación: ${formatDate(details.tasacion.fechaTasacion)}`}><div className="grid gap-3 sm:grid-cols-3"><Stat label={referenceLabel(details.inmueble.operacion)} value={money(details.tasacion.valorReferencia)} icon="chart" /><Stat label={targetLabel(details.inmueble.operacion)} value={money(details.tasacion.precioObjetivo)} icon="chart" /><Stat label={priceLabel(details.inmueble.operacion)} value={money(details.tasacion.precioVenta)} icon="chart" /></div></Block><Block title="Observación"><p className="whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">{details.tasacion.observacion || "Sin observaciones registradas."}</p></Block>{admin && <Link href={`/tasaciones-textos-pendientes?inmueble=${details.inmueble.id}#material`} className="inline-flex items-center gap-2 text-xs font-semibold text-[#c80000]">Gestionar {priceLabel(details.inmueble.operacion).toLowerCase()} <Icon name="arrow" /></Link>}</div> : <div className="rounded-2xl bg-slate-50 p-6"><p className="text-sm text-slate-500">Todavía no hay una tasación registrada.</p>{admin && <Link href={`/registrar-tasaciones?inmueble=${details.inmueble.id}`} className="mt-3 inline-flex text-xs font-semibold text-[#c80000]">Registrar tasación →</Link>}</div>)}
 
-              {tab === "Publicación" && (details.publicacion ? <div className="space-y-5"><Block title="Publicación del inmueble" description={details.publicacion.publicado ? `Publicada el ${formatDate(details.publicacion.fechaPublicacion)}` : details.expediente?.complete ? "Texto y material listos para publicar." : "La publicación preparada tiene requisitos pendientes."}><p className="whitespace-pre-wrap rounded-2xl bg-slate-50 p-5 text-sm leading-7 text-slate-700">{details.publicacion.texto}</p></Block><button type="button" onClick={() => setTab("Fotos")} className="rounded-xl border border-slate-200 px-4 py-3 text-xs font-semibold text-red-700">Ver fotos de la publicación →</button></div> : <div className="rounded-2xl bg-slate-50 p-6"><p className="text-sm text-slate-500">Todavía no hay una publicación registrada.</p>{admin && <Link href={`/tasaciones-textos-pendientes?inmueble=${details.inmueble.id}#material`} className="mt-3 inline-flex text-xs font-semibold text-[#c80000]">Preparar texto y material →</Link>}</div>)}
+              {tab === "Publicación" && (details.publicacion ? <div className="space-y-5"><Block title="Publicación del inmueble" description={details.publicacion.publicado ? `Publicada el ${formatDate(details.publicacion.fechaPublicacion)}` : details.expediente?.complete ? "Texto y material listos para publicar." : "La publicación preparada tiene requisitos pendientes."}><p className="whitespace-pre-wrap rounded-2xl bg-slate-50 p-5 text-sm leading-7 text-slate-700">{details.publicacion.texto}</p></Block><button type="button" onClick={() => setTab("Visitas")} className="rounded-xl border border-slate-200 px-4 py-3 text-xs font-semibold text-red-700">Ver fotos de la publicación →</button></div> : <div className="rounded-2xl bg-slate-50 p-6"><p className="text-sm text-slate-500">Todavía no hay una publicación registrada.</p>{admin && <Link href={`/tasaciones-textos-pendientes?inmueble=${details.inmueble.id}#material`} className="mt-3 inline-flex text-xs font-semibold text-[#c80000]">Preparar texto y material →</Link>}</div>)}
               {tab === "Publicación" && <ExternalAnnouncements key={code} propertyId={details.inmueble.id} editable={admin&&details.inmueble.estado==='activo'} price={details.tasacion?.precioVenta??null}/>}
             </section>
           </>}

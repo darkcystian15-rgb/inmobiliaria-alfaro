@@ -54,6 +54,25 @@ try{
   }
   await page.goto(origin+'/liberar-inmuebles');await page.getByRole('heading',{name:'Selecciona una zona para trabajar'}).waitFor();
   await page.goto(origin+'/');const priorities=page.getByRole('region',{name:'Prioridades de trabajo',exact:true});await priorities.waitFor();await page.waitForFunction(()=>!document.querySelector('[aria-labelledby="work-priorities-title"]')?.textContent?.includes('Cargando prioridades'));assert.equal(await priorities.getByRole('alert').count(),0);assert.equal(await priorities.locator('li p.font-mono').count(),0);for(const row of await priorities.locator('li').all())assert.equal(await row.locator('h3 + p').count(),1);
+  const selectorResponse=await request('/api/inmuebles?zona=*',admin);assert.equal(selectorResponse.status,200);const selector=(await selectorResponse.json()).inmuebles;
+  for(const operation of ['venta','alquiler']){
+    const sample=selector.find(item=>item.operacion===operation);if(!sample)continue;
+    await page.goto(origin+'/datos-inmuebles?'+new URLSearchParams({codigo:sample.id,zona:sample.zona,pestana:'estado'}));
+    const nav=page.getByRole('navigation',{name:'Apartados de la ficha'});await nav.waitFor();
+    const zoneSelect=page.getByRole('combobox',{name:'Zona de inmuebles',exact:true});assert.equal(await zoneSelect.inputValue(),sample.zona);
+    assert.equal(await nav.getByRole('button',{name:'Fotos',exact:true}).count(),0);assert.equal(await nav.getByRole('button',{name:'Documentación',exact:true}).count(),0);
+    await nav.getByRole('button',{name:operation==='alquiler'?'Arrendador':'Vendedor',exact:true}).click();
+    await page.getByRole('heading',{name:operation==='alquiler'?'Documentación del arrendador':'Documentación del vendedor',exact:true}).waitFor();
+    await nav.getByRole('button',{name:/^Inmueble/}).click();await page.getByRole('heading',{name:'Documentación del inmueble',exact:true}).waitFor();
+    assert.equal(await page.getByRole('textbox',{name:/Área de terreno|Área construida|Departamento/}).count(),0);
+    await nav.getByRole('button',{name:/^Visitas/}).click();await page.getByRole('region',{name:'Visitas y evidencia',exact:true}).waitFor();await page.getByRole('region',{name:'Fotos anteriores sin visita',exact:true}).waitFor();
+    await nav.getByRole('button',{name:'Seguimiento',exact:true}).click();await page.getByRole('heading',{name:`Seguimiento de ${operation}`,exact:true}).waitFor();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    await zoneSelect.selectOption('*');await page.getByRole('complementary',{name:'Buscar y seleccionar inmueble'}).getByRole('button',{name:new RegExp(sample.propietario.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'))}).first().waitFor();
+    if(operation==='alquiler'){
+      const result=await request('/api/inmuebles/'+encodeURIComponent(sample.id)+'/expediente',admin);assert.equal(result.status,200);const dossier=await result.json();assert.equal(dossier.status.sections.length,5);assert.deepEqual(dossier.status.alerts,[]);assert.ok(dossier.status.items.some(item=>item.key==='ARRENDATARIO_PODER'));assert.ok(!dossier.status.items.some(item=>item.section==='impuestos'));
+    }
+  }
   assert.deepEqual(errors,[]);console.log(`PASS producción: ${zonas.length} zonas activas, ${expected.length} archivos coincidentes; cuatro filtros, permisos, consulta privada, menú, zona obligatoria y navegador escritorio/móvil. ID con contacto, textos sin duplicar, dirección referencial editable con cancelación sin guardar, prioridades sin ID repetido y cancelación del primer diálogo de eliminación. Sin escrituras de negocio.`);
 }finally{
   if(browser)await browser.close();

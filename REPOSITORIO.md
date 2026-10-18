@@ -2,6 +2,8 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
+Reorganización posterior: [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md).
+
 Ajuste posterior: [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md).
 
 Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md). Consultar su evidencia de publicación y respaldo.
@@ -52,7 +54,8 @@ Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. 
 - Sin mapas, coordenadas, importador de puntos ni geolocalización.
 - Estadística agrupa Listado de archivos y Reportes. Listado consulta tasaciones, contratos de alquiler, minutas y escrituras cargadas, con filtros automáticos de zona/tipo y archivos numerados.
 - Liberar inmueble pertenece a Seguimiento y exige zona tanto en pantalla como en servidor. Permite cerrar una operación realizada conservando su Histórico o eliminar definitivamente con motivo y dos confirmaciones. La limpieza privada pendiente tiene reintento durable. El acceso a Contratos de alquiler se reemplaza en el menú, conservando registros y ruta anterior.
-- Expediente con un vendedor y un comprador, asignación expresa del comprador, condiciones por persona natural/jurídica, siete grupos documentales, porcentaje y alertas. Los faltantes no bloquean el cierre. Venta y alquiler comparten reglas hasta definir diferencias.
+- Expediente con un vendedor y un comprador, asignación expresa del comprador, condiciones por persona natural/jurídica, siete grupos documentales, porcentaje y alertas. Los faltantes no bloquean el cierre. Venta conserva sus condiciones. Alquiler usa cinco grupos documentales propios, con arrendador y arrendatario; consultar la reorganización del 18 de octubre.
+- Información de inmuebles filtra su selector por zona y usa una sola descripción. Inmueble contiene documentos; Visitas integra fotos, y Seguimiento concentra responsables, plazos e historial. Se retira de la interfaz la pestaña antigua de geografía y superficies, conservando sus datos almacenados.
 - Archivos privados PDF, Word, Excel e imágenes, máximo 4 MB tras compresión de imágenes. Vista previa de imágenes/PDF y descarga de Word/Excel. Eliminación por administrador.
 - Permisos, historial, reportes y protección de concurrencia; conflictos de versión del expediente devuelven HTTP 409.
 

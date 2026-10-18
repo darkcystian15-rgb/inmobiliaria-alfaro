@@ -61,3 +61,30 @@ test('configuration rejects malformed input and validates the single buyer type'
   assert.deepEqual(dossierInput(natural()), natural());
   for (const input of [null, [], { ...natural(), compradorTipo: '' }, { ...natural(), renta: 'no' }, { ...natural(), cargas: 'si' }, { ...natural(), vendedorBusquedaNota: 'a'.repeat(2001) }]) assert.throws(() => dossierInput(input));
 });
+
+test('rental has exactly five groups and both parties without sale taxes or person conditions', () => {
+  const status = dossierStatus(dossierDefaults(), [], 'alquiler');
+  assert.deepEqual(status.sections.map(item => item.key), ['identificacion', 'inmueble', 'contratos', 'servicios', 'tasaciones']);
+  assert.deepEqual(status.alerts, []);
+  for (const key of ['ARRENDADOR_DNI', 'ARRENDADOR_PODER', 'ARRENDATARIO_DNI', 'ARRENDATARIO_PODER', 'COPIA_LITERAL_CRI', 'CONTRATO_ALQUILER', 'RECIBO_SERVICIO', 'PAGO_SERVICIO', 'TASACION_EXPRESS']) {
+    assert.equal(status.items.find(item => item.key === key).state, 'pendiente', key);
+  }
+  assert.ok(!status.items.some(item => item.key.includes('ALCABALA') || item.key === 'HR_VENTA' || item.key.includes('RENTA')));
+  const files = status.items.filter(item => item.required).map(item => file(item.key));
+  assert.equal(dossierStatus(dossierDefaults(), files, 'alquiler').complete, true);
+  assert.equal(dossierStatus(dossierDefaults(), files, 'alquiler').percent, 100);
+  assert.equal(dossierStatus(dossierDefaults(), files.filter(item => item.tipoDocumento !== 'ARRENDATARIO_PODER'), 'alquiler').complete, false);
+});
+test('rental recognizes old party files without rewriting and keeps named contracts independently', () => {
+  const files = ['VENDEDOR_DNI', 'COMPRADOR_DNI_GERENTE', 'VENDEDOR_PODER', 'COMPRADOR_PODER', 'COPIA_LITERAL', 'CONTRATO', 'CONTRATO_ALQUILER', 'VENDEDOR_RECIBO_AGUA', 'TASACION'].map(file);
+  files[5].nombre = 'Contrato inicial'; files[6].nombre = 'Adenda de renovación';
+  const status = dossierStatus({}, files, 'alquiler');
+  for (const key of ['ARRENDADOR_DNI', 'ARRENDATARIO_DNI', 'ARRENDADOR_PODER', 'ARRENDATARIO_PODER', 'COPIA_LITERAL_CRI', 'RECIBO_SERVICIO', 'TASACION_EXPRESS']) assert.equal(status.items.find(item => item.key === key).state, 'completo', key);
+  assert.deepEqual(status.items.find(item => item.key === 'CONTRATO_ALQUILER').documents.map(item => item.nombre), ['Contrato inicial', 'Adenda de renovación']);
+  assert.equal(files[0].tipoDocumento, 'VENDEDOR_DNI');
+});
+test('file categories are restricted by operation for upload and reclassification', () => {
+  assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'ARRENDADOR_DNI'), natural(), 'venta'), false);
+  assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'VENDEDOR_FORMULARIO_RENTA'), natural(), 'alquiler'), false);
+  assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'ARRENDATARIO_PODER'), dossierDefaults(), 'alquiler'), true);
+});
