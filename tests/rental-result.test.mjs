@@ -1,9 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rentalResult } from '../lib/rental-result.mjs';
+import { rentalResult, rentalContractStatus } from '../lib/rental-result.mjs';
 import { operation, priceLabel } from '../lib/operation.mjs';
 const now = new Date('2026-10-06T18:00:00Z');
 const base = {fechaAlquiler:'2026-10-06',rentaMensual:'1500.50'};
+test('contract alerts use the same Peru calendar across the UTC midnight boundary',()=>{
+ const instant = new Date('2026-10-19T02:00:00Z'); // Still October 18 in Peru.
+ assert.equal(rentalContractStatus(null,instant),'Sin fecha de fin');
+ assert.equal(rentalContractStatus('2026-10-17',instant),'Vencido');
+ assert.equal(rentalContractStatus('2026-10-18',instant),'Vence en 30 días');
+ assert.equal(rentalContractStatus('2026-11-17',instant),'Vence en 30 días');
+ assert.equal(rentalContractStatus('2026-11-18',instant),'Vigente');
+ assert.equal(rentalContractStatus('2027-01-15',new Date('2026-12-17T02:00:00Z')),'Vence en 30 días');
+});
 test('operation defaults to sale and validates supported choices',()=>{
  assert.equal(operation(),'venta'); assert.equal(operation('alquiler'),'alquiler'); assert.throws(()=>operation('otro')); assert.equal(priceLabel('alquiler'),'Renta mensual');
 });

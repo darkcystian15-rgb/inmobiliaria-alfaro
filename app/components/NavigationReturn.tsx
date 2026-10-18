@@ -7,8 +7,9 @@ import { createContext, useContext, useEffect, useState, type ComponentProps, ty
 import { returnLabel, safeReturnHref, withReturnHref } from "@/lib/navigation-return";
 
 const OriginContext = createContext<string | null>(null);
-export function NavigationReturnProvider({ href, children }: { href: string; children: ReactNode }) {
-  return <OriginContext.Provider value={href}>{children}</OriginContext.Provider>;
+const PropertyZoneContext = createContext<string | null>(null);
+export function NavigationReturnProvider({ href, zone, children }: { href: string; zone?: string | null; children: ReactNode }) {
+  return <OriginContext.Provider value={href}><PropertyZoneContext.Provider value={zone ?? null}>{children}</PropertyZoneContext.Provider></OriginContext.Provider>;
 }
 export function useReturnHref(fallback = "/cartera") {
   const [href, setHref] = useState(fallback);
@@ -20,9 +21,10 @@ export function useReturnHref(fallback = "/cartera") {
 }
 export function ContextLink({ href, ...props }: ComponentProps<typeof NextLink>) {
   const origin = useContext(OriginContext);
+  const propertyZone = useContext(PropertyZoneContext);
   const {zone} = useZoneWorkspace();
   const inherited = useReturnHref("");
-  return <NextLink {...props} href={typeof href === "string" ? withReturnHref(zoneHref(href,zone?.nombre), origin || inherited) : href} />;
+  return <NextLink {...props} href={typeof href === "string" ? withReturnHref(zoneHref(href,propertyZone || zone?.nombre), origin || inherited) : href} />;
 }
 export function ReturnLink({ className = "aa-button aa-button-secondary", fallback = "/cartera" }: { className?: string; fallback?: string }) {
   const href = useReturnHref(fallback);

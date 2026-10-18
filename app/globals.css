@@ -37,16 +37,16 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .aa-red-bg{background:var(--aa-red)}
 .aa-red-border{border-color:rgb(200 0 0 / .22)}
 
-@media (max-width: 1279px) { .mobile-page-shell > main { padding-top: 5rem; } }
+/* Reserve the fixed header once, including pages wrapped by ZonePage. */
+@media (max-width: 1279px) { .mobile-page-shell { padding-top: 4rem; } }
 
 /* Columns follow the usable content width, including when the sidebar is open. */
 .property-position-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
-.mobile-page-shell > main { min-width: 0; }
+.mobile-page-shell main { min-width: 0; }
 .mobile-page-shell .grid > * { min-width: 0; }
 .mobile-page-shell input, .mobile-page-shell select, .mobile-page-shell textarea { min-width: 0; max-width: 100%; }
-@media (max-width: 639px) { .mobile-page-shell > main { padding-left: 1rem; padding-right: 1rem; } }
+@media (max-width: 639px) { .mobile-page-shell main { padding-left: 1rem; padding-right: 1rem; } }
 
-.property-map-pin { background: transparent; border: 0; }
 
 /* Shared visual language for operational screens. */
 @layer components {

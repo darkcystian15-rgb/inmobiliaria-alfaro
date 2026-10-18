@@ -107,16 +107,10 @@ export async function GET(request: Request) {
           inmAsignacionesPosicion.posicionId
         )
       )
-      .innerJoin(
-        inmVisitas,
-        and(
-          eq(inmVisitas.inmuebleId, inmInmuebles.id),
-          eq(inmVisitas.completada, true)
-        )
-      )
       .where(
         and(zoneCondition(request),
           eq(inmInmuebles.estado, "activo"),
+          sql`EXISTS (SELECT 1 FROM inm_visitas v WHERE v.inmueble_id=${inmInmuebles.id} AND v.completada=1)`,
           isNull(inmTasaciones.id)
         )
       )

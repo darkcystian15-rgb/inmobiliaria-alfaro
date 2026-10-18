@@ -146,17 +146,16 @@ export default function Page() {
         {mensaje && <MobileFormFeedback value={mensaje}><RegistrationSuccess message={mensaje} nextAction={siguienteAccion} /></MobileFormFeedback>}
         {error && <MobileFormFeedback value={error}><Feedback tone="error" className="my-5">{error}{errorCarga && <button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
 
-        <section className="mt-7 grid gap-4 sm:grid-cols-3">
+        <section className="mt-7 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Por registrar</p><p className="mt-2 text-3xl font-bold text-slate-950">{items.length}</p><p className="mt-1 text-xs text-slate-500">inmuebles con visita realizada</p></div>
           <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Tasación vigente</p><p className="mt-2 text-3xl font-bold text-slate-950">{aprobadas.length}</p><p className="mt-1 text-xs text-violet-700/80">negociadas actualmente</p></div>
-          <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Fuente</p><p className="mt-2 text-lg font-bold text-blue-950">Base de datos</p><p className="mt-1 text-xs text-blue-700/80">precios y observaciones guardados</p></div>
         </section>
 
         <section className="mt-7">
           <div className="mb-3"><h2 className="font-bold text-slate-900">Tasaciones por registrar</h2><p className="mt-1 text-sm text-slate-500">Estos inmuebles están activos, tienen posición asignada y todavía no tienen tasación registrada.</p></div>
           <div className="aa-card mb-4 p-4"><PropertyTaskSearch value={busqueda} onChange={setBusqueda} count={totalFiltrados} total={totalBusqueda} disabled={cargando} /></div>
           {cargando ? <LoadingCards label="Cargando inmuebles…" /> : items.length > 0 && filtrados.length === 0 ? (
-            <div className="aa-card p-6 text-sm text-slate-600">No hay inmuebles que coincidan con la búsqueda. Prueba otro contacto, dirección, ID o posición.</div>
+            <div className="aa-card p-6 text-sm text-slate-600">No hay inmuebles que coincidan con la búsqueda. Prueba otro contacto, dirección o ID visible.</div>
           ) : items.length === 0 ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-12 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">{error ? "!" : "✓"}</div><h3 className="mt-4 font-bold text-emerald-950">{error ? "No se pudo consultar las tasaciones" : "No hay tasaciones pendientes"}</h3><p className="mt-1 text-sm text-emerald-800/80">{error ? "Pulsa Reintentar para consultar los inmuebles." : "Las visitas realizadas ya tienen tasación registrada o no existen inmuebles pendientes."}</p></div>
           ) : (

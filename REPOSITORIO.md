@@ -1,5 +1,7 @@
 # Repositorio y estado de entrega
 
+**Auditoría posterior, en la copia local:** [Diseño, datos y continuidad](docs/auditoria-diseno-procesos-2026-10-18.md). Incluye correcciones de navegación, conteos, formularios y móvil; no confundir estas modificaciones sin publicar con la evidencia de Production descrita debajo.
+
 Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. Esta actualización es posterior a los SHA y despliegues de la entrega de IDs citados debajo: consultar el HEAD de ambas ramas y el estado Production de ese SHA para verificar el título publicado.
 
 

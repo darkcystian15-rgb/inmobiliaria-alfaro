@@ -17,6 +17,7 @@ import { requestJson } from "@/lib/client-request";
 import { ContextLink as Link, NavigationReturnProvider } from "@/app/components/NavigationReturn";
 import { useSearchParams } from "next/navigation";
 import FolderIcon from "@/app/components/FolderIcon";
+import ZoneFolderCard from "@/app/components/ZoneFolderCard";
 import ZoneContext from "@/app/components/ZoneContext";
 import { ALL_ZONES, inZone, propertyZone } from "@/lib/property-zones";
 import { useCallback, useEffect, useState, useRef, Suspense, useMemo } from "react";
@@ -361,7 +362,7 @@ function TasacionesTextosContent() {
   const cards = [
     { id: "tasaciones", label: "Tasaciones pendientes", count: visiblesPendientes.length, note: "Registrar tasación", icon: "price", color: "border-violet-200 bg-violet-50/70 text-violet-950", accent: "text-violet-700", badge: "bg-violet-100" },
     { id: "material", label: "Texto pendiente", count: visiblesAprobadas.length, note: "Preparar texto y material", icon: "text", color: "border-amber-200 bg-amber-50/70 text-amber-950", accent: "text-amber-700", badge: "bg-amber-100" },
-    { id: "listos", label: "Listos para publicar", count: visiblesListos.filter(item => item.expediente?.complete).length, note: "Revisar y confirmar publicación", icon: "ready", color: "border-blue-200 bg-blue-50/70 text-blue-950", accent: "text-blue-700", badge: "bg-blue-100" },
+    { id: "listos", label: "Textos preparados", count: visiblesListos.length, note: `${visiblesListos.filter(item => !item.expediente?.complete).length} por completar · ${visiblesListos.filter(item => item.expediente?.complete).length} listos para publicar`, icon: "ready", color: "border-blue-200 bg-blue-50/70 text-blue-950", accent: "text-blue-700", badge: "bg-blue-100" },
     { id: "publicados", label: "Publicados", count: visiblesPublicadas.length, note: "Consultar o corregir material", icon: "published", color: "border-emerald-200 bg-emerald-50/70 text-emerald-950", accent: "text-emerald-700", badge: "bg-emerald-100" },
   ];
   function irASeccion(id: string) {
@@ -389,10 +390,10 @@ function TasacionesTextosContent() {
           <PageHeading href="/tasaciones-textos-pendientes" />
 
           <Link
-            href="/registrar-tasaciones"
+            href={zone && zone !== ALL_ZONES ? "/registrar-tasaciones" : "/cartera"}
             className="inline-flex h-10 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800"
           >
-            Registrar tasaciones
+            {zone && zone !== ALL_ZONES ? "Registrar tasaciones" : "Seleccionar zona para registrar"}
           </Link>
         </div>
 
@@ -434,15 +435,11 @@ function TasacionesTextosContent() {
                 <div><h2 id="appraisal-zones-title" className="text-lg font-bold text-slate-900">Tasaciones y textos pendientes por zona</h2><p className="mt-1 text-sm text-slate-600">Abre una carpeta para revisar las tasaciones y el material de esa zona.</p></div>
                 <button type="button" onClick={() => abrirZona(ALL_ZONES)} className="cartera-folder-navigation aa-button aa-button-secondary border-violet-200 bg-violet-50"><FolderIcon className="h-5 w-5 shrink-0 text-violet-500" />Ver listado general →</button>
               </div>
-              {zones.length === 0 ? <div className="aa-card p-8 text-center"><p className="font-semibold text-slate-900">No hay inmuebles en esta bandeja</p><p className="mt-2 text-sm text-slate-500">La bandeja está sincronizada con la base de datos.</p></div> : <ul className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">{zones.map(group => <li key={group.name} className="min-w-0"><button type="button" onClick={() => abrirZona(group.name)} className="cartera-folder relative flex min-h-36 w-full items-center gap-4 rounded-b-2xl rounded-tr-2xl border border-violet-200 bg-violet-50/40 p-5 text-left shadow-sm hover:border-violet-300">
-                <span aria-hidden="true" className="cartera-folder-tab absolute -top-4 -left-px h-4 w-20 rounded-t-lg border border-b-0 border-violet-200 bg-violet-100" />
-                <FolderIcon className="h-10 w-10 shrink-0 text-violet-500" />
-                <span className="min-w-0 flex-1"><span className="block break-words text-base font-semibold text-slate-900">{group.name}</span><span className="mt-1 block text-sm text-slate-600">{group.ids.size} {group.ids.size === 1 ? "inmueble" : "inmuebles"}</span>
+              {zones.length === 0 ? <div className="aa-card p-8 text-center"><p className="font-semibold text-slate-900">No hay inmuebles en esta bandeja</p><p className="mt-2 text-sm text-slate-500">La bandeja está sincronizada con la base de datos.</p></div> : <ul className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">{zones.map(group => <li key={group.name} className="min-w-0"><ZoneFolderCard name={group.name} onOpen={() => abrirZona(group.name)}><span className="mt-1 block text-sm text-slate-600">{group.ids.size} {group.ids.size === 1 ? "inmueble" : "inmuebles"}</span>
                   <span className="mt-2 block text-xs font-semibold text-violet-700">{pendientesTasacion.filter(item => inZone(item, group.name)).length} tasaciones pendientes</span>
                   <span className="mt-1 block text-xs text-slate-600">{registradas.filter(item => inZone(item, group.name)).length} tasaciones negociadas · {aprobadas.filter(item => inZone(item, group.name)).length} textos pendientes</span>
                   <span className="mt-1 block text-xs text-slate-500">{listos.filter(item => inZone(item, group.name) && item.expediente?.complete).length} listos para publicar · {publicadas.filter(item => inZone(item, group.name)).length} publicados</span>
-                </span><span aria-hidden="true" className="text-violet-400">→</span>
-              </button></li>)}</ul>}
+                </ZoneFolderCard></li>)}</ul>}
             </section>
           ) : (
           <div className="space-y-7">
@@ -453,7 +450,7 @@ function TasacionesTextosContent() {
               </div>
               {visiblesPendientes.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones por registrar{zone !== ALL_ZONES ? ` en ${zone}` : ""}.</div> : <div className="divide-y divide-slate-100">{visiblesPendientes.map(item => <article key={item.inmuebleId} className="flex flex-col gap-4 p-5 transition hover:bg-violet-50/40 sm:flex-row sm:items-center">
                 <div className="min-w-0 flex-1"><PropertyListIdentity code={item.codigo} position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-700" /><p className="ml-15 mt-2 text-xs font-semibold text-violet-700">Visita realizada · Tasación por registrar</p></div>
-                <Link href={`/registrar-tasaciones?inmueble=${item.inmuebleId}`} className="self-start rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-100 sm:self-auto">Registrar tasación →</Link>
+                <Link href={`/registrar-tasaciones?zona=${encodeURIComponent(propertyZone(item))}&inmueble=${item.inmuebleId}`} className="self-start rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-100 sm:self-auto">Registrar tasación →</Link>
               </article>)}</div>}
             </section>
             <section id="negociadas" tabIndex={-1} className="scroll-mt-6 rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
@@ -526,7 +523,7 @@ function TasacionesTextosContent() {
                         </div>
 
                         <div>
-                          <PublicationChecklist data={item.expediente ? { ...item.expediente, items: item.expediente.items.map(entry => entry.key === "texto" ? { ...entry, complete: Boolean((textos[item.inmuebleId] ?? item.texto ?? "").trim()) } : entry) } : undefined} code={item.codigo} /><p className="mt-3 text-xs font-semibold text-slate-600">Fotos de la publicación</p>
+                          <PublicationChecklist data={item.expediente ? { ...item.expediente, items: item.expediente.items.map(entry => entry.key === "texto" ? { ...entry, complete: Boolean((textos[item.inmuebleId] ?? "").trim()) } : entry) } : undefined} code={item.codigo} /><p className="mt-3 text-xs font-semibold text-slate-600">Fotos de la publicación</p>
                           <p className="mt-2 text-xs leading-5 text-slate-500">Usa las fotos de las visitas y de la ficha. Puedes revisarlas y actualizarlas en la galería.</p>
                           <Link href={`/datos-inmuebles?codigo=${encodeURIComponent(item.codigo)}&pestana=fotos`} className="mt-3 inline-flex rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-red-700">Ver y editar fotos →</Link>
                           <button
@@ -571,7 +568,7 @@ function TasacionesTextosContent() {
 
               {visiblesListos.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
-                  No hay inmuebles listos para publicar.
+                  No hay textos preparados en esta vista.
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -616,7 +613,7 @@ function TasacionesTextosContent() {
                           </div>
 
                           <div>
-                            <PublicationChecklist data={item.expediente ? { ...item.expediente, items: item.expediente.items.map(entry => entry.key === "texto" ? { ...entry, complete: Boolean((textos[item.inmuebleId] ?? item.texto ?? "").trim()) } : entry) } : undefined} code={item.codigo} /><p className="mt-3 text-xs font-semibold text-slate-600">Fotos de la publicación</p>
+                            <PublicationChecklist data={item.expediente ? { ...item.expediente, items: item.expediente.items.map(entry => entry.key === "texto" ? { ...entry, complete: Boolean(textoActual.trim()) } : entry) } : undefined} code={item.codigo} /><p className="mt-3 text-xs font-semibold text-slate-600">Fotos de la publicación</p>
                           <p className="mt-2 text-xs leading-5 text-slate-500">Usa las fotos de las visitas y de la ficha. Puedes revisarlas y actualizarlas en la galería.</p>
                           <Link href={`/datos-inmuebles?codigo=${encodeURIComponent(item.codigo)}&pestana=fotos`} className="mt-3 inline-flex rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-red-700">Ver y editar fotos →</Link>
                             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -744,7 +741,7 @@ function TasacionesTextosContent() {
                     Material publicado
                   </div>
 
-                  <PublicationChecklist data={item.expediente ? { ...item.expediente, items: item.expediente.items.map(entry => entry.key === "texto" ? { ...entry, complete: Boolean((textos[item.inmuebleId] ?? item.texto ?? "").trim()) } : entry) } : undefined} code={item.codigo} /><p className="mt-3 text-xs font-semibold text-slate-600">Fotos de la publicación</p>
+                  <PublicationChecklist data={item.expediente ? { ...item.expediente, items: item.expediente.items.map(entry => entry.key === "texto" ? { ...entry, complete: Boolean((textosListos[item.inmuebleId] ?? item.texto ?? "").trim()) } : entry) } : undefined} code={item.codigo} /><p className="mt-3 text-xs font-semibold text-slate-600">Fotos de la publicación</p>
                           <p className="mt-2 text-xs leading-5 text-slate-500">Usa las fotos de las visitas y de la ficha. Puedes revisarlas y actualizarlas en la galería.</p>
                           <Link href={`/datos-inmuebles?codigo=${encodeURIComponent(item.codigo)}&pestana=fotos`} className="mt-3 inline-flex rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-red-700">Ver y editar fotos →</Link>
 

@@ -62,7 +62,7 @@ try {
   for(const query of ['tipo=desconocido','pagina=0','pagina=1.5'])assert.equal((await request('/api/listado-archivos?'+query,admin)).response.status,400);
   let result=await request('/api/listado-archivos',admin);assert.equal(result.response.status,200,JSON.stringify(result.data));assert.equal(result.data.paginacion.total,57);assert.equal(result.data.archivos.length,50);
   assert.ok(result.data.archivos.every(file=>file.zona!=='Inactiva'));
-  result=await request('/api/listado-archivos?zona=Chimbote&tipo=tasaciones',admin);assert.equal(result.data.paginacion.total,53);assert.equal(result.data.archivos[0].tipo,'Tasación 1');assert.equal(result.data.archivos[49].tipo,'Tasación 50');assert.equal(result.data.archivos[0].inmueble,'012-venta-local-av meigss c3-lidia chavarria');
+  result=await request('/api/listado-archivos?zona=Chimbote&tipo=tasaciones',admin);assert.equal(result.data.paginacion.total,53);assert.equal(result.data.archivos[0].tipo,'Tasación 1');assert.equal(result.data.archivos[49].tipo,'Tasación 50');assert.equal(result.data.archivos[0].inmueble,'001-venta-local-av meigss c3-lidia chavarria');
   const first=result.data.archivos[0];
   result=await request('/api/listado-archivos?zona=Chimbote&tipo=tasaciones&pagina=2',admin);assert.deepEqual(result.data.archivos.map(file=>file.tipo),['Tasación 51','Tasación 52','Tasación 53']);
   result=await request('/api/listado-archivos?zona=Lima&tipo=contratos-alquiler',admin);assert.deepEqual(result.data.archivos.map(file=>file.tipo),['Contrato de alquiler 1','Contrato de alquiler 2']);
@@ -96,7 +96,7 @@ try {
   const release=page.locator('nav').getByRole('link',{name:'Liberar inmueble',exact:true});assert.equal(await release.count(),1,'Release action available in a selected zone');assert.ok((await release.getAttribute('href')).includes('zona=Lima'));
   await page.goto(origin+'/liberar-inmuebles');await page.getByRole('heading',{name:'Selecciona una zona para trabajar'}).waitFor();
   await page.goto(origin+'/liberar-inmuebles?zona=Chimbote');await page.getByRole('heading',{name:'Liberar inmueble',exact:true}).waitFor();await page.getByText('Lidia Chavarria',{exact:true}).first().waitFor();
-  await page.goto(origin+'/datos-inmuebles?codigo=2&pestana=documentacion&zona=Lima');await page.getByRole('heading',{name:'Contrato de alquiler',exact:true}).waitFor();
+  await page.goto(origin+'/datos-inmuebles?codigo=2&pestana=documentacion&zona=Lima');await page.getByRole('heading',{name:'Contratos de alquiler',exact:true}).waitFor();
   await page.goto(origin+'/listado-archivos?zona=Lima&tipo=contratos-alquiler');await page.getByText('Contrato de alquiler 3',{exact:true}).waitFor();
   fs.mkdirSync('output/file-list-local',{recursive:true,mode:0o700});await page.screenshot({path:'output/file-list-local/desktop.png',fullPage:true});
   await page.setViewportSize({width:375,height:850});await page.waitForFunction(()=>document.getElementById('navigation-panel').getBoundingClientRect().right<=1);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No mobile overflow');await page.screenshot({path:'output/file-list-local/mobile.png',fullPage:true});
@@ -180,7 +180,7 @@ try {
   failDeletes.clear();result=await request('/api/liberaciones/eliminacion?zona=Chimbote',admin,'PATCH',{eliminacionId:pendingJob});assert.equal(result.response.status,200);assert.equal(result.data.completo,true);assert.equal(stored.has(pendingPaths[1]),false);
   assert.equal((await db.query("SELECT COUNT(*) total FROM inm_eliminaciones_pendientes WHERE estado='archivos'"))[0][0].total,0);
   await page.setViewportSize({width:1440,height:1000});
-  await page.goto(origin+'/cartera?zona=Chimbote');await page.getByRole('button',{name:'Ver detalle de Lidia Chavarria, posición 1',exact:true}).click();await page.getByText('ID del inmueble',{exact:true}).waitFor();assert.equal(await page.getByText('Contacto',{exact:true}).count(),0);await page.getByText('012-venta-local-av meigss c3-lidia chavarria',{exact:true}).waitFor();
+  await page.goto(origin+'/cartera?zona=Chimbote');await page.getByRole('button',{name:'Ver detalle de Lidia Chavarria, posición 1',exact:true}).click();await page.getByText('ID del inmueble',{exact:true}).waitFor();assert.equal(await page.getByText('Contacto',{exact:true}).count(),0);await page.getByText('001-venta-local-av meigss c3-lidia chavarria',{exact:true}).waitFor();
   await page.goto(origin+'/liberar-inmuebles?zona=Chimbote');await page.getByText('Contacto siete',{exact:true}).waitFor();await page.locator('summary').filter({hasText:'Contacto siete'}).click();
   await page.getByRole('radio',{name:/Eliminar definitivamente/}).check();await page.getByRole('combobox',{name:/Motivo de eliminación/}).selectOption('desistimiento');await page.getByRole('button',{name:'Revisar eliminación'}).click();
   await page.getByRole('dialog',{name:'Eliminar inmueble',exact:true}).waitFor();await page.getByRole('button',{name:'Cancelar',exact:true}).click();assert.equal((await db.query('SELECT COUNT(*) total FROM inm_inmuebles WHERE id=7'))[0][0].total,1);

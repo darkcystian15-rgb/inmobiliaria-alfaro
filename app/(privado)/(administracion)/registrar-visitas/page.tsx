@@ -191,96 +191,10 @@ export default function Page() {
           </Link>
         </header>
 
-        {/* Flujo */}
-        <section className="mt-7 rounded-2xl border border-amber-200 bg-amber-50/40 p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)] sm:p-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                Flujo de trabajo
-              </p>
-              <h2 className="mt-1 text-base font-bold text-slate-900">
-                La visita es la actividad que corresponde atender ahora
-              </h2>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#c80000] text-xs font-bold text-white">
-                  01
-                </span>
-                <span className="text-xs font-semibold text-red-800">
-                  Visita pendiente
-                </span>
-              </div>
-
-              <span className="hidden text-slate-300 sm:block">→</span>
-
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-xs font-bold text-slate-500 shadow-sm">
-                  02
-                </span>
-                <span className="text-xs font-semibold text-slate-600">
-                  Visita registrada
-                </span>
-              </div>
-
-              <span className="hidden text-slate-300 sm:block">→</span>
-
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-xs font-bold text-slate-500 shadow-sm">
-                  03
-                </span>
-                <span className="text-xs font-semibold text-slate-600">
-                  Tasación, cuando corresponda
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Mensajes */}
         {mensaje && <MobileFormFeedback value={mensaje}><RegistrationSuccess message={mensaje} nextAction={siguienteAccion} /></MobileFormFeedback>}
 
         {error && <MobileFormFeedback value={error}><Feedback tone="error" className="my-5">{error}{errorCarga && <button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
-
-        {/* Resumen */}
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Visitas pendientes
-            </p>
-            <p className="mt-2 text-3xl font-bold text-slate-950">
-              {items.length}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Inmuebles que requieren registro
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-red-100 bg-red-50/70 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
-              Acción actual
-            </p>
-            <p className="mt-2 text-lg font-bold text-red-950">
-              Registrar visita
-            </p>
-            <p className="mt-1 text-xs text-red-700/80">
-              Solo cuando la visita haya ocurrido
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Trazabilidad
-            </p>
-            <p className="mt-2 text-lg font-bold text-slate-900">
-              Automática
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Fecha, usuario y evento quedan registrados
-            </p>
-          </div>
-        </div>
 
         {/* Lista */}
         <section className="mt-8">
@@ -290,8 +204,8 @@ export default function Page() {
                 Inmuebles con visita pendiente
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Registra la fecha real de la visita y, si corresponde, agrega
-                observaciones y las fotografías de la visita.
+                Registra solo visitas que ya ocurrieron. Indica la fecha real,
+                las observaciones y las fotografías disponibles.
               </p>
             </div>
 
@@ -304,7 +218,7 @@ export default function Page() {
           {cargando ? (
             <LoadingCards label="Cargando visitas pendientes…" />
           ) : items.length > 0 && filtrados.length === 0 ? (
-            <div className="aa-card p-6 text-sm text-slate-600">No hay inmuebles que coincidan con la búsqueda. Prueba otro contacto, dirección, ID o posición.</div>
+            <div className="aa-card p-6 text-sm text-slate-600">No hay inmuebles que coincidan con la búsqueda. Prueba otro contacto, dirección o ID visible.</div>
           ) : items.length > 0 ? (
             <div className="space-y-5">
               {filtrados.map((item) => (

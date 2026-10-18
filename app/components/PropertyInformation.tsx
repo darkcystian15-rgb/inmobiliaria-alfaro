@@ -162,7 +162,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     setDetails(null); setDocuments([]); setLoading(Boolean(key));
     if (key && window.innerWidth < 1536) window.requestAnimationFrame(() => sheet.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));
   }
-  return <NavigationReturnProvider href={originHref}><main className="min-h-screen bg-background p-4 pt-20 sm:p-6 sm:pt-20 lg:p-8">
+  return <NavigationReturnProvider href={originHref} zone={details?.inmueble.zona}><main className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
     {pendingProperty !== null && <ConfirmDialog title="Cambios sin guardar" confirmLabel="Descartar cambios" onCancel={() => setPendingProperty(null)} onConfirm={() => selectProperty(pendingProperty, true)}><p>Tienes cambios pendientes en esta ficha. Si cambias de inmueble, se descartarán.</p></ConfirmDialog>}
     <div className="mx-auto max-w-[1500px]">
       <header className="flex flex-wrap items-end justify-between gap-4">

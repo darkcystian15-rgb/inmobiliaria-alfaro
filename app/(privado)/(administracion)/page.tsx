@@ -104,7 +104,7 @@ export default function Home() {
                 <p className="mt-0.5 break-words text-xs leading-5 text-slate-600"><span>{item.etapa}</span><span aria-hidden="true" className="mx-2 text-slate-300">·</span><time dateTime={item.fecha ?? undefined} className="text-slate-500">{item.fecha ? new Date(item.fecha).toLocaleString("es-PE", { timeZone: "America/Lima", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "Sin fecha"}</time></p>
               </div>
             </div>
-            <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}#historial`} aria-label={`Ver historial de ${item.nombre}`} className="col-start-2 inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-[#c80000] transition hover:bg-slate-50 sm:col-start-auto">Ver historial →</Link>
+            <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}&pestana=seguimiento#historial`} aria-label={`Ver historial de ${item.nombre}`} className="col-start-2 inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-[#c80000] transition hover:bg-slate-50 sm:col-start-auto">Ver historial →</Link>
           </li>) : <li className="px-5 py-4 text-sm text-slate-600">Todavía no hay movimientos registrados.</li>}</ul>
         </section>
       </>}

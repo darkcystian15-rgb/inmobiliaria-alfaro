@@ -1,4 +1,5 @@
 "use client";
+import ZoneFolderCard from "@/app/components/ZoneFolderCard";
 import { useZoneWorkspace } from "@/app/components/ZoneWorkspace";
 import { zoneHref } from "@/lib/zone-url";
 import { zoneUrl } from "@/lib/zone-url";
@@ -502,12 +503,7 @@ export default function CarteraPage() {
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-base font-bold text-slate-900">Cartera de inmuebles por zona</h2><button type="button" onClick={() => abrirZona(ALL_ZONES)} className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-amber-100"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />Ver listado general →</button></div>
           <div className="mb-6"><Link href="/ubicaciones" className="aa-button aa-button-secondary">Agregar zona</Link></div>
           <ul className="grid grid-cols-1 gap-x-4 gap-y-7 pt-5 sm:grid-cols-2 xl:grid-cols-3">{zonas.map(zona => <li key={zona.nombre} className="min-w-0">
-            <button type="button" onClick={() => abrirZona(zona.nombre)} className="cartera-folder relative flex min-h-24 w-full items-center gap-3 rounded-b-2xl rounded-tr-2xl border border-amber-200 bg-amber-50/40 px-4 py-4 text-left shadow-sm hover:border-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c80000]">
-              <span aria-hidden="true" className="cartera-folder-tab absolute -top-4 -left-px h-4 w-20 rounded-t-lg border border-b-0 border-amber-200 bg-amber-100" />
-              <FolderIcon />
-              <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold text-slate-900">{zona.nombre}</span><span className="mt-1 block text-xs text-slate-500">{zona.activos} / {zona.capacidad} ocupados · {zona.disponibles} disponibles{zona.historicos > 0 ? ` · ${zona.historicos} histórico${zona.historicos === 1 ? "" : "s"}` : ""}</span></span>
-              <span aria-hidden="true" className="text-slate-400">→</span>
-            </button>
+            <ZoneFolderCard name={zona.nombre} onOpen={() => abrirZona(zona.nombre)}><span className="mt-1 block text-xs text-slate-500">{zona.activos} / {zona.capacidad} ocupados · {zona.disponibles} disponibles{zona.historicos > 0 ? ` · ${zona.historicos} histórico${zona.historicos === 1 ? "" : "s"}` : ""}</span></ZoneFolderCard>
           </li>)}</ul>
           {!cargando && !error && zonas.length === 0 && <p className="mt-4 text-sm text-slate-500">Todavía no hay inmuebles registrados en la cartera.</p>}
         </section>}
