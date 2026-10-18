@@ -1,15 +1,15 @@
 # Inmobiliaria Alfaro — intranet
 
-**Auditoría posterior, en la copia local:** [Diseño, datos y continuidad](docs/auditoria-diseno-procesos-2026-10-18.md). Incluye correcciones de navegación, conteos, formularios y móvil; no confundir estas modificaciones sin publicar con la evidencia de Production descrita debajo.
+**Última entrega publicada:** [Diseño, datos y continuidad](docs/auditoria-diseno-procesos-2026-10-18.md). Código `fc56a7d`, Production `7158854179` y Preview `7158848637`, ambos completados. Comprobación autenticada de siete zonas y 28 pantallas el `2026-10-18T18:34:11.657Z`, sin escrituras de negocio. El commit documental posterior conserva este código.
 
-Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. Esta actualización es posterior a los SHA y despliegues de la entrega de IDs citados debajo: consultar el HEAD de ambas ramas y el estado Production de ese SHA para verificar el título publicado.
+Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. El título se conserva en la entrega de auditoría publicada; las entregas anteriores de IDs mantienen su evidencia histórica.
 
 
 Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScript, MySQL y Drizzle. Incluye cartera por zonas, captación, visitas, precios, documentación, publicación, cierres, alquileres y reportes.
 
 ## Estado y avances
 
-Último ajuste: [ID visible por posición y filtros por contacto, dirección o ID completo](docs/id-posicion-filtros-2026-10-18.md). Este criterio sustituye el prefijo global y la búsqueda por campos adicionales descritos en entregas anteriores.
+Criterio de identificación vigente: [ID visible por posición y filtros por contacto, dirección o ID completo](docs/id-posicion-filtros-2026-10-18.md). Este criterio sustituye el prefijo global y la búsqueda por campos adicionales descritos en entregas anteriores.
 
 - [Búsqueda automática y orden por posición](docs/busqueda-orden-seguimiento-2026-10-18.md): Registrar visitas, Visitas pendientes, Registrar tasaciones y Tasaciones y textos pendientes, con filtro por contacto/dirección al escribir.
 
@@ -33,7 +33,7 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 - [Identificación y descripción de Cartera](docs/identificacion-cartera-2026-10-18.md): criterio uniforme para pantallas y reportes, publicado el 18 de octubre.
 
-Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, rama, código publicado, funcionalidad y límites de verificación. Código previo al ajuste de título: `0ca5c6d`, con despliegue Production completado según los estados de Vercel en GitHub. La pantalla nueva fue comprobada con sesión autenticada en escritorio y móvil; detalle y respaldo en la referencia consolidada.
+Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, ramas, código publicado y límites de verificación. La entrega de auditoría `fc56a7d` está publicada y comprobada en escritorio y móvil; detalle en su Markdown.
 
 - [Expediente de vendedor, comprador e inmueble](docs/expediente-operacion-2026-10-16.md): nueva organización documental y estado del expediente; referencia histórica anterior a los grupos específicos de alquiler del 18 de octubre.
 - [Retirada de mapas y coordenadas](docs/retirada-mapas-2026-10-15.md): cambio posterior al estado consolidado; conserva ubicación referencial y zonas comerciales.

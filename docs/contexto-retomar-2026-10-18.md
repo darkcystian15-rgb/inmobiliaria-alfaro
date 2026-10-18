@@ -1,22 +1,23 @@
 # Contexto vigente para retomar — 18 de octubre de 2026
 
-**Auditoría posterior, en la copia local:** [Diseño, datos y continuidad](auditoria-diseno-procesos-2026-10-18.md). Incluye correcciones de navegación, conteos, formularios y móvil; no confundir estas modificaciones sin publicar con la evidencia de Production descrita debajo.
+**Última entrega publicada:** [Diseño, datos y continuidad](auditoria-diseno-procesos-2026-10-18.md). Código `fc56a7d`, Production `7158854179` y Preview `7158848637`, ambos completados. Comprobación autenticada de siete zonas y 28 pantallas el `2026-10-18T18:34:11.657Z`, sin escrituras de negocio. El commit documental posterior conserva este código.
 
-Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. Esta actualización es posterior a los SHA y despliegues de la entrega de IDs citados debajo: consultar el HEAD de ambas ramas y el estado Production de ese SHA para verificar el título publicado.
+Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. El título se conserva en la entrega de auditoría publicada; las entregas anteriores de IDs mantienen su evidencia histórica.
 
 
 Leer primero este archivo y después [REPOSITORIO.md](../REPOSITORIO.md). Esta guía sustituye como punto de entrada al contexto del 15 de octubre; los documentos anteriores conservan sus evidencias históricas.
 
-Último ajuste: [ID por posición y filtros limitados](id-posicion-filtros-2026-10-18.md). El ID visible comienza por la posición de la zona; las claves internas no cambian. Los cuatro buscadores buscan solo contacto, dirección e ID visible. No repetir cargas ni reiniciar avances.
+Criterio de identificación vigente: [ID por posición y filtros limitados](id-posicion-filtros-2026-10-18.md). El ID visible comienza por la posición de la zona; las claves internas no cambian. Los cuatro buscadores buscan solo contacto, dirección e ID visible. No repetir cargas ni reiniciar avances.
 
 ## Dónde trabajar y qué está sincronizado
 
 - Repositorio: https://github.com/darkcystian15-rgb/inmobiliaria-alfaro.
 - Carpeta de aplicación: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`. El padre es otro repositorio; ejecutar Git dentro de esta carpeta.
-- Ramas `main` y `feat/registro-simplificado` sincronizadas en local y GitHub. Código anterior al ajuste de título: `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9`; los commits posteriores solo actualizan evidencia y esta guía. Verificar el SHA remoto más reciente al retomar.
-- Código de la entrega previa de IDs: `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9`. Los commits posteriores solo registran documentación, incluida esta guía; no vuelven a cargar datos.
+- Ramas `main` y `feat/registro-simplificado` sincronizadas en Codespaces y GitHub; código operativo `fc56a7defe609e227eff1d090f8cff5be7e820d6`. El commit documental posterior solo registra evidencia.
+- Base previa: `82e96b6`; entrega histórica de IDs `0ca5c6d`. No usar sus despliegues como constancia de la nueva auditoría.
 - Vercel: `puma19/inmobiliaria-alfarov2`. Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
-- Para `0ca5c6d`, Production GitHub `7156642003` y Preview `7156635767`, ambos `success`, «Deployment has completed». Production confirmado el `2026-10-18T15:27:19Z`; URL de versión https://inmobiliaria-alfarov2-ltzdk1mnq-puma19.vercel.app.
+- Para `fc56a7d`, Production GitHub `7158854179` y Preview `7158848637`, ambos `success`, «Deployment has completed». Production confirmado el `2026-10-18T18:30:12Z`; versión https://inmobiliaria-alfarov2-8qfue7kgg-puma19.vercel.app.
+- Comprobación autenticada el `2026-10-18T18:34:11.657Z`: siete zonas por cuatro pantallas, vistas generales, enlaces con zona real, historial y contratos; sin errores ni escrituras de negocio. Evidencia privada `output/design-audit-production/result.json`.
 - Esta guía genera un commit documental posterior. Al retomar, consultar las referencias y los estados de ese último SHA; no confundir el SHA del código operativo con el último commit documental ni usar cifras antiguas como inventario vivo.
 
 ## Cargas de Drive ya realizadas

@@ -1,6 +1,6 @@
 # Auditoría de diseño, datos y continuidad — 18 de octubre de 2026
 
-Revisión sobre `82e96b6`, con correcciones locales posteriores. Esta entrega no acredita un despliegue nuevo ni modifica los datos de producción. Las cifras de las cargas de Drive siguen siendo históricas.
+Revisión sobre `82e96b6`, publicada en el código `fc56a7defe609e227eff1d090f8cff5be7e820d6`. Production y Preview completados y dominio comprobado con sesión autenticada. Sin modificaciones de datos de negocio; las cifras de las cargas de Drive siguen siendo históricas.
 
 ## Criterio de producto
 
@@ -52,9 +52,9 @@ La ampliación de las pruebas detectó expectativas históricas de ID/título qu
 
 Las pruebas de navegador de bandejas combinan autenticación/MySQL reales con respuestas ficticias para cubrir estados que pueden estar vacíos en la base. La deduplicación y comparación entre panel/Cartera/tasaciones consultan las API reales contra la base local. La integración documental comprueba archivos y formularios con almacenamiento HTTPS ficticio. Ninguna de estas pruebas acredita por sí sola el estado de producción.
 
-## Aspectos que deben permanecer visibles antes de una entrega pública
+## Límites y continuidad de la entrega
 
-1. Verificar el despliegue del SHA final y recorrer el dominio autenticado después de publicar. No presentar los despliegues anteriores como prueba de esta corrección.
+1. El código de esta entrega ya tiene despliegue y recorrido autenticado, detallados abajo. El commit documental posterior debe conservar ese código y tener sus propios estados de despliegue; al retomar, consultar el HEAD de ambas ramas.
 2. Los casos pendientes de contacto/tipo/posición de Nuevo Chimbote siguen siendo decisiones de datos del usuario. No completarlos mediante suposiciones ni repetir las importaciones.
 3. Las reglas de material se expresan en `publicationReadiness` y en el SQL de reportes/agenda. Esta duplicación merece una futura unificación con pruebas de equivalencia; en esta entrega no se cambian los requisitos documentales.
 4. La agenda del panel prioriza el siguiente paso de publicación y los vencimientos de alquiler. El expediente documental tiene seguimiento propio en la ficha; no debe interpretarse el panel sin tareas como certificación de expedientes completos.
@@ -62,3 +62,17 @@ Las pruebas de navegador de bandejas combinan autenticación/MySQL reales con re
 ## Recuperación
 
 Los cambios no añaden migraciones ni cargas de inmuebles. La recuperación es de código revisado; no requiere restaurar la base ni reiniciar etapas. Revisar los cambios posteriores antes de revertir. El historial Git conserva los componentes retirados.
+
+## Publicación y verificación real
+
+- Código: `fc56a7defe609e227eff1d090f8cff5be7e820d6`, integrado por fast-forward y enviado atómicamente a `main` y `feat/registro-simplificado`. Referencias remotas comprobadas en ese SHA; sin reescribir historial.
+- Production GitHub `7158854179`: Vercel `success`, «Deployment has completed», `2026-10-18T18:30:12Z`. Versión: https://inmobiliaria-alfarov2-8qfue7kgg-puma19.vercel.app.
+- Preview GitHub `7158848637`: Vercel `success`, `2026-10-18T18:29:44Z`. Versión: https://inmobiliaria-alfarov2-em8k9e6q0-puma19.vercel.app.
+- Evidencia consultada: API GitHub `/repos/darkcystian15-rgb/inmobiliaria-alfaro/deployments?sha=fc56a7defe609e227eff1d090f8cff5be7e820d6` y estados de ambos despliegues.
+- Dominio comprobado: https://intranet.inmobiliariaalbertoalfaro.com.pe, finalizado el `2026-10-18T18:34:11.657Z`.
+- Navegador autenticado: siete zonas por cuatro pantallas (28), orden por posición, búsqueda por contacto/dirección/ID, campos excluidos, limpieza, IDs visibles y escritorio/móvil sin errores JavaScript ni desbordes. Se comprobaron además acceso anónimo/operador, apertura de vistas generales, enlaces de las filas con su zona real, ficha abierta sin zona, apertura del historial y título de contratos.
+- La consulta encontró Chimbote con 31 visitas pendientes y 12 tasaciones por registrar, y Nuevo Chimbote con 68 visitas pendientes. Son cifras de ese momento, no un inventario permanente ni una orden para reiniciar avances.
+- Los grupos negociadas/material/preparados/publicados estaban vacíos en esa consulta. Su comportamiento con contenido, incluido el checklist al editar, conserva la prueba local ficticia; no se afirma haber probado registros inexistentes en producción.
+- `businessWrites: 0`: el navegador bloqueó cualquier petición de escritura a `/api/`. Solo se crearon cuentas/sesiones aisladas para la comprobación y se eliminaron en `finally`, verificando su ausencia. No se ejecutaron migraciones, cargas de Drive, cierres ni eliminaciones reales.
+- Comprobador y evidencia privados: `output/design-audit-production-smoke.mjs`, `output/design-audit-production/result.json` y capturas, excluidos de Git/Vercel. Los commits documentales posteriores no cambian el código anterior ni repiten datos.
+- Recuperación privada de código anterior: `restore-points/auditoria-diseno-20261018/`, fuente e historial de la base `82e96b6`, con `source.tar`, `repository.bundle` y `SHA256SUMS`. No contiene una nueva copia de negocio porque esta entrega no cambia esos datos.

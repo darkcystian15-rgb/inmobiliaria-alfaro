@@ -1,15 +1,15 @@
 # Repositorio y estado de entrega
 
-**Auditoría posterior, en la copia local:** [Diseño, datos y continuidad](docs/auditoria-diseno-procesos-2026-10-18.md). Incluye correcciones de navegación, conteos, formularios y móvil; no confundir estas modificaciones sin publicar con la evidencia de Production descrita debajo.
+**Última entrega publicada:** [Diseño, datos y continuidad](docs/auditoria-diseno-procesos-2026-10-18.md). Código `fc56a7d`, Production `7158854179` y Preview `7158848637`, ambos completados. Comprobación autenticada de siete zonas y 28 pantallas el `2026-10-18T18:34:11.657Z`, sin escrituras de negocio. El commit documental posterior conserva este código.
 
-Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. Esta actualización es posterior a los SHA y despliegues de la entrega de IDs citados debajo: consultar el HEAD de ambas ramas y el estado Production de ese SHA para verificar el título publicado.
+Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. El título se conserva en la entrega de auditoría publicada; las entregas anteriores de IDs mantienen su evidencia histórica.
 
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
-Último ajuste: [ID visible por posición y filtros por contacto, dirección o ID completo](docs/id-posicion-filtros-2026-10-18.md). Este criterio sustituye el prefijo global y la búsqueda por campos adicionales descritos en entregas anteriores.
+Criterio de identificación vigente: [ID visible por posición y filtros por contacto, dirección o ID completo](docs/id-posicion-filtros-2026-10-18.md). Este criterio sustituye el prefijo global y la búsqueda por campos adicionales descritos en entregas anteriores.
 
-Última mejora de interfaz: [Búsqueda automática y orden por posición](docs/busqueda-orden-seguimiento-2026-10-18.md) en los cuatro apartados de visitas y tasaciones. Orden numérico ascendente, contacto/dirección/ID visible al escribir, limpieza y conservación de formularios.
+Mejora previa de interfaz: [Búsqueda automática y orden por posición](docs/busqueda-orden-seguimiento-2026-10-18.md) en los cuatro apartados de visitas y tasaciones. Orden numérico ascendente, contacto/dirección/ID visible al escribir, limpieza y conservación de formularios.
 
 **Nueva sesión:** comenzar por [Contexto vigente para retomar](docs/contexto-retomar-2026-10-18.md), que resume las siete zonas, los casos aún no cargados y cómo comprobar las referencias y Production.
 
@@ -29,9 +29,9 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Código anterior al ajuste de título: `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9`.
-- Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
-- Punto documental comprobado antes de la guía de nueva sesión: `e4cfa41`, Production `7155765057` y Preview `7155760668`, ambos `success`, Production del 18 de octubre a las 14:15:09 UTC. La guía se añade en un commit documental posterior; verificar ese último SHA al retomar.
+- Código vigente de auditoría: `fc56a7defe609e227eff1d090f8cff5be7e820d6`.
+- Los commits documentales posteriores conservan ese código. Al retomar, consultar el HEAD remoto de ambas ramas y los estados de su SHA.
+- Base anterior a la auditoría: `82e96b6475ee21ce3886ece70e5c67687f5b8461`. Las referencias anteriores de IDs y cargas se conservan como evidencia histórica.
 
 ## Producción
 
@@ -39,23 +39,23 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 | --- | --- |
 | Proyecto | `puma19/inmobiliaria-alfarov2` |
 | Dominio de la intranet | https://intranet.inmobiliariaalbertoalfaro.com.pe |
-| Código | `0ca5c6d53d574a5aedde34711b4272e5ab6e58c9` |
-| Despliegue GitHub | `7156642003`, entorno `Production` |
+| Código | `fc56a7defe609e227eff1d090f8cff5be7e820d6` |
+| Despliegue GitHub | `7158854179`, entorno `Production` |
 | Estado informado por Vercel a GitHub | `success`, `Deployment has completed` |
-| Fecha del estado | 2026-10-18 15:27:19 UTC |
-| URL de versión | https://inmobiliaria-alfarov2-ltzdk1mnq-puma19.vercel.app |
+| Fecha del estado | 2026-10-18 18:30:12 UTC |
+| URL de versión | https://inmobiliaria-alfarov2-8qfue7kgg-puma19.vercel.app |
 
-Se consultaron las API de despliegues y estados de GitHub para el SHA indicado; Production y Preview completados. La entrega vigente añade [búsqueda automática y orden numérico por posición](docs/busqueda-orden-seguimiento-2026-10-18.md) a Registrar visitas, Visitas pendientes, Registrar tasaciones y Tasaciones y textos pendientes. La prueba autenticada de las cuatro pantallas en Chimbote/Nuevo Chimbote comprobó orden, filtros y escritorio/móvil sin errores ni escrituras de negocio. Las [cargas anteriores](docs/carga-nuevo-chimbote-2026-10-18.md) y sus pendientes conservan su evidencia histórica; esta mejora no repite cargas, restaura etapas ni modifica inmuebles.
+Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. Production y Preview completados. La [auditoría de diseño y procesos](docs/auditoria-diseno-procesos-2026-10-18.md) corrige duplicados de tasaciones, navegación por zonas, checklist, historial, alquileres y cabecera móvil, unifica carpetas y reduce información repetida. La comprobación autenticada del dominio recorrió siete zonas por cuatro pantallas, vistas generales, enlaces operativos, ficha, historial y contratos; escritorio/móvil sin errores ni desbordes. Cuentas y sesiones temporales eliminadas; sin escrituras de negocio ni repetición de cargas.
 
 ## Presentación uniforme vigente
 
 - Título: nombre del contacto.
 - Descripción operativa: operación, tipo y ubicación referencial escrita; sin añadir distrito, provincia, departamento ni zona a la dirección.
-- ID visible base: número de orden estable, operación, tipo y ubicación referencial. Ejemplo: `012-venta-local-av meigss c3`. En el detalle de Cartera y Listado de archivos se añade el contacto al final y se evita repetirlo en un bloque separado del detalle.
+- ID visible base: posición dentro de la zona con tres dígitos, operación, tipo y ubicación referencial. Ejemplo: `003-alquiler-local-av. pardo`. Sin posición conocida se conserva el correlativo anterior como respaldo. En el detalle de Cartera y Listado de archivos se añade el contacto al final y se evita repetirlo en un bloque separado del detalle.
 - Si falta la dirección, se indica «Ubicación por completar»; no se sustituye por contacto ni geografía.
-- La zona identifica el contexto comercial de cartera. La posición reutilizable y el ID numérico de base no sustituyen al número de orden del identificador.
+- La zona identifica el contexto comercial de cartera. La posición puede repetirse entre zonas; no sustituye a la clave interna del inmueble.
 - Cartera, fichas, visitas, tasaciones, publicaciones, cierres, contratos y agenda comparten el criterio. Reportes usa el mismo ID/contacto en tabla, PDF y Excel.
-- Se conservan códigos persistidos, enlaces antiguos, historial y geografía guardada. Se admite búsqueda por ID visible o código anterior en los filtros ajustados.
+- Se conservan códigos persistidos, enlaces antiguos, historial y geografía guardada. Los cuatro buscadores de visitas/tasaciones consultan contacto, dirección e ID visible; las claves internas y códigos anteriores se conservan para rutas y compatibilidad.
 
 ## Funcionalidad acumulada
 
@@ -76,7 +76,7 @@ Se consultaron las API de despliegues y estados de GitHub para el SHA indicado; 
 
 ## Validación
 
-- 27 archivos de pruebas unitarias correctos tras añadir eliminación definitiva.
+- 28 archivos de pruebas unitarias correctos tras la auditoría; tres integraciones locales completas y comprobación autenticada de producción.
 - ESLint sin errores ni advertencias.
 - Compilación final de producción con Webpack y TypeScript correcta fuera del sandbox.
 - Comprobación directa de ID/contacto compartidos por tabla, PDF y Excel y preservación de importes.
