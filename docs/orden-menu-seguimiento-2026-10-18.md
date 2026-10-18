@@ -4,6 +4,8 @@
 
 Por indicación del usuario, Visitas pendientes y Tasaciones y textos pendientes vuelven a ocultarse en el menú hasta seleccionar una zona, junto con las otras cuatro opciones de Seguimiento. Se restaura el orden de trabajo: Cartera → elegir zona → consultar pendientes o registrar la actividad. El cambio se aplica al menú compartido de escritorio y móvil; los enlaces mantienen la zona seleccionada. No modifica registros, fechas límite, búsqueda ni permisos. Las vistas generales existentes conservan sus rutas para los enlaces de resumen del panel.
 
+Restauración publicada en ambas ramas con el commit `6c94de2b4914096d7eaa37653dc1be35d2b1e874`. Lint y compilación Webpack/TypeScript aprobados. Vercel Production `7159861058` informó `success` el `2026-10-18T19:54:19Z`. La comprobación autenticada en producción pasó: orden del menú, enlaces con zona, seis opciones ocultas sin zona, navegación y permisos de operador, en escritorio y móvil de 375 px. Sin errores JavaScript ni desbordamiento horizontal; sin escrituras de negocio. Cuentas y sesiones temporales retiradas.
+
 Al entrar en una zona activa, el menú de administración presenta:
 
 - **Operación:** Cartera de inmuebles.
