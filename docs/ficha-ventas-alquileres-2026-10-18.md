@@ -43,4 +43,15 @@ Sin migraciones, borrados ni reclasificaciones masivas de producción. Se reutil
 - La primera integración detectó que `requestJson` heredaba la zona al consultar el selector. Se corrigió con una petición explícita `zona=*` y filtro local por la zona elegida; la segunda ejecución completa pasó desde otra base vacía.
 - Capturas privadas en `output/dossier-local/`, excluidas de Git y Vercel.
 
-La evidencia de publicación se incorpora tras verificar el despliegue.
+## Publicación verificada
+
+- Código publicado: `d1ebf60c3f566202ef773a2122c1b0a90ff6012c`, sincronizado en `main` y `feat/registro-simplificado` mediante subida atómica. Las referencias remotas se comprobaron contra la copia de Codespaces.
+- Vercel informó a GitHub `success`, «Deployment has completed», entorno **Production**, despliegue `7154462534`, el `2026-10-18T12:20:41Z`.
+- URL de versión: https://inmobiliaria-alfarov2-8zki94y1q-puma19.vercel.app.
+- Preview también completado: despliegue `7154467101`, https://inmobiliaria-alfarov2-2p0qj180d-puma19.vercel.app.
+- `tests/file-list.production.smoke.mjs` pasó contra https://intranet.inmobiliariaalbertoalfaro.com.pe: siete zonas activas y un archivo coincidente en esta consulta; filtros, permisos anónimo/operador, apertura privada, ID con contacto, edición de dirección cancelada sin guardar, prioridades sin duplicación y cancelación del primer diálogo de eliminación.
+- La misma prueba verificó fichas de venta y alquiler, selector por zona y todas las zonas, pestañas de las partes según operación, Inmueble sin los campos retirados, Visitas con fotos anteriores, Seguimiento y expediente de alquiler con cinco grupos y sin impuestos de venta. Navegador de escritorio/móvil sin errores JavaScript ni desbordes.
+- Sin cambios en inmuebles, documentos, cierres o esquema. Las cuentas y sesiones temporales se eliminaron al terminar y se comprobó su ausencia. Capturas privadas en `output/file-list-production/`, excluidas de Git y Vercel.
+- Verificación repetida: 27 archivos de pruebas correctos, ESLint sin advertencias y compilación Webpack/TypeScript completa. La compilación dentro del sandbox no pudo interpretar `TypeScript --showConfig`; fuera del sandbox terminó correctamente.
+- La credencial activa del entorno recibió HTTP 403 al subir. La cuenta personal ya guardada permitió completar la subida sin cambiar permisos del repositorio.
+- Los commits posteriores que registran esta evidencia solo modifican documentación; conservan el código de aplicación indicado arriba.

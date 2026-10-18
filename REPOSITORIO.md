@@ -8,7 +8,7 @@ Ajuste posterior: [Dirección referencial en Cartera y prioridades sin duplicaci
 
 Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md). Consultar su evidencia de publicación y respaldo.
 
-Última entrega: [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md). La entrega previa de [liberación definitiva](docs/liberacion-definitiva-2026-10-18.md) conserva su evidencia y punto de respaldo privado. La entrega anterior de [Listado de archivos](docs/listado-archivos-2026-10-18.md) conserva su evidencia histórica.
+Última entrega: [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md), con publicación y prueba autenticada verificadas. La entrega de [Dirección referencial en Cartera y prioridades sin duplicación](docs/cartera-direccion-prioridades-2026-10-18.md) conserva su evidencia histórica. La entrega previa de [liberación definitiva](docs/liberacion-definitiva-2026-10-18.md) conserva su evidencia y punto de respaldo privado. La entrega anterior de [Listado de archivos](docs/listado-archivos-2026-10-18.md) conserva su evidencia histórica.
 
 ## Repositorio
 
@@ -16,7 +16,7 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Último código de aplicación publicado: `9eff04fbac0e0efb99009b8caa2b0cfcaa17bdb2`.
+- Último código de aplicación publicado: `d1ebf60c3f566202ef773a2122c1b0a90ff6012c`.
 - Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
 
 ## Producción
@@ -25,13 +25,13 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 | --- | --- |
 | Proyecto | `puma19/inmobiliaria-alfarov2` |
 | Dominio de la intranet | https://intranet.inmobiliariaalbertoalfaro.com.pe |
-| Código | `9eff04fbac0e0efb99009b8caa2b0cfcaa17bdb2` |
-| Despliegue GitHub | `7150999944`, entorno `Production` |
+| Código | `d1ebf60c3f566202ef773a2122c1b0a90ff6012c` |
+| Despliegue GitHub | `7154462534`, entorno `Production` |
 | Estado informado por Vercel a GitHub | `success`, `Deployment has completed` |
-| Fecha del estado | 2026-10-18 06:36:06 UTC |
-| URL de versión | https://inmobiliaria-alfarov2-benaa69b7-puma19.vercel.app |
+| Fecha del estado | 2026-10-18 12:20:41 UTC |
+| URL de versión | https://inmobiliaria-alfarov2-8zki94y1q-puma19.vercel.app |
 
-Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. La prueba autenticada del dominio confirmó la nueva pantalla, filtros por zonas activas y cuatro tipos, apertura privada de archivo y navegación de escritorio/móvil. La API directa de Vercel había respondido HTTP 403; la evidencia de publicación procede del estado Production informado a GitHub y de la comprobación real de la intranet. Detalle y comprobación actual: [Dirección referencial y prioridades](docs/cartera-direccion-prioridades-2026-10-18.md).
+Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. La prueba autenticada del dominio confirmó la nueva pantalla, filtros por zonas activas y cuatro tipos, apertura privada de archivo y navegación de escritorio/móvil. La API directa de Vercel había respondido HTTP 403; la evidencia de publicación procede del estado Production informado a GitHub y de la comprobación real de la intranet. La comprobación actual también verificó fichas de venta/alquiler, cinco grupos de alquiler, selector de zona, Visitas y Seguimiento. Detalle: [Fichas de venta y alquiler](docs/ficha-ventas-alquileres-2026-10-18.md).
 
 ## Presentación uniforme vigente
 
