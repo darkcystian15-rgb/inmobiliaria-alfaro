@@ -1,3 +1,6 @@
+import { reportCatalog } from '@/lib/report-catalog.mjs';
+import { workflowTasks } from '@/lib/workflow-tasks';
+import { inReportPeriod } from '@/lib/report-period.mjs';
 import { propertyZoneName, zoneCondition, positionZoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { databaseBusinessDay, databaseInstant } from '@/lib/business-time';
@@ -106,6 +109,9 @@ export async function GET(request: NextRequest) {
     const sp = request.nextUrl.searchParams;
 
     const reporte = sp.get("reporte") || "Cartera activa";
+    if(!reportCatalog.some(report=>report.nombre===reporte))return NextResponse.json({error:'Reporte no válido.'},{status:400});
+    const plazo=sp.get('plazo')||'Todos';
+    if(!['Todos','Vencido','Vence hoy','En plazo'].includes(plazo))return NextResponse.json({error:'Estado de plazo no válido.'},{status:400});
     const desde = sp.get("desde") || "";
     const hasta = sp.get("hasta") || "";
     const situacion = sp.get("situacion") || "Todas";
@@ -114,32 +120,47 @@ export async function GET(request: NextRequest) {
     const operacion = sp.get("operacion") || "Todos";
     if (!["Todos", "venta", "alquiler"].includes(operacion)) return NextResponse.json({error:"Operación no válida."},{status:400});
     const tipo = sp.get("tipo") || "Todos";
+    if(!['Todos','Activo','Histórico'].includes(estado)||!['Todas','Visita pendiente','Tasación pendiente','Material pendiente','Listo para publicar','Publicado'].includes(situacion))return NextResponse.json({error:'Estado o actividad no válidos.'},{status:400});
+    if(posicionFiltro&&(!Number.isSafeInteger(Number(posicionFiltro))||Number(posicionFiltro)<1||Number(posicionFiltro)>999999))return NextResponse.json({error:'Posición no válida.'},{status:400});
 
     if ((desde && !validCalendarDate(desde)) || (hasta && !validCalendarDate(hasta)) || (desde && hasta && desde > hasta)) return NextResponse.json({error:'Indica un período válido, con Desde anterior o igual a Hasta.'},{status:400});
     const all=sp.get('todos')==='1';
     const page=Number(sp.get('pagina')||1),pageSize=50;
     if(!Number.isSafeInteger(page)||page<1)return NextResponse.json({error:'Página no válida.'},{status:400});
     const periodField=reportPeriodField(reporte);
+    if(reporte==='Posiciones disponibles'){
+      const scope=and(eq(inmPosiciones.activo,true),positionZoneCondition(request),sql`NOT EXISTS(SELECT 1 FROM inm_asignaciones_zona a WHERE a.posicion_id=${inmPosiciones.id} AND a.activa=1)`,...(posicionFiltro?[eq(inmPosiciones.numero,Number(posicionFiltro))]:[]))!;
+      const [result]=await db.execute(sql`SELECT COUNT(*) total FROM ${inmPosiciones} WHERE ${scope}`);
+      const total=Number((result as unknown as {total:number}[])[0].total);
+      if(all&&total>10000)return NextResponse.json({error:'Reduce la zona o posición para descargar como máximo 10 000 posiciones.'},{status:400});
+      const rows=await db.select({zona:sql<string>`(SELECT z.nombre FROM inm_zonas z WHERE z.id=${inmPosiciones.zonaId})`,posicion:inmPosiciones.numero,estado:sql<string>`'Disponible'`}).from(inmPosiciones).where(scope).orderBy(asc(inmPosiciones.zonaId),asc(inmPosiciones.numero)).limit(all?10000:pageSize).offset(all?0:(page-1)*pageSize);
+      return NextResponse.json({ok:true,reporte,rows,resumen:{total,activos:0,historicos:0,disponibles:total,visitasPendientes:0,visitasRealizadas:0,tasacionesPendientes:0,tasacionesRealizadas:0,materialPendiente:0,listosParaPublicar:0,publicados:0,aprobaciones:0,negociaciones:0},paginacion:{pagina:page,tamano:pageSize,total,paginas:Math.ceil(total/pageSize)},fechaFiltro:null});
+    }
+    const withDeadline=reporte==='Alertas de actividades'||plazo!=='Todos';
+    const pending=withDeadline?await workflowTasks(zoneCondition(request)):[];
+    const deadlineMatch=pending.filter(task=>(plazo==='Todos'||task.estadoPlazo===({'Vencido':'vencido','Vence hoy':'vence_hoy','En plazo':'en_plazo'}[plazo]))&&(reporte!=='Alertas de actividades'||inReportPeriod(task.fechaLimite,desde,hasta,true)));
+
     const flowStarts:Record<string,string>={'Registro → visita':'inmueble_registrado','Visita → tasación':'visita_realizada','Tasación → publicación':'tasacion_realizada','Tasación → aprobación':'tasacion_realizada'};
     const periods:Record<string,ReturnType<typeof sql>>={
-      fechaInicioFlujo:sql`(SELECT DATE(DATE_SUB(t.fecha_evento, INTERVAL (TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(),NOW()) + 18000) SECOND)) FROM inm_timeline t WHERE t.inmueble_id=${inmInmuebles.id} AND t.evento=${flowStarts[reporte]??""} ORDER BY t.fecha_evento LIMIT 1)`,
+      fechaInicioFlujo:sql`(SELECT DATE(DATE_SUB(t.fecha_evento, INTERVAL (TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(),NOW()) + 18000) SECOND)) FROM inm_timeline t WHERE t.inmueble_id=${inmInmuebles.id} AND t.evento=${flowStarts[reporte]??""} ORDER BY t.fecha_evento,t.id LIMIT 1)`,
       fechaRegistro:databaseBusinessDay(inmInmuebles.fechaRegistro),
       fechaSalida:sql`DATE(DATE_SUB(${inmInmuebles.fechaSalida}, INTERVAL 5 HOUR))`,
       fechaAlquiler:sql`(SELECT l.fecha_alquiler FROM inm_liberaciones l WHERE l.inmueble_id=${inmInmuebles.id} AND l.motivo='alquilado' AND l.confirmado=1 AND l.anulada=0 ORDER BY l.id DESC LIMIT 1)`,
       fechaVenta:sql`(SELECT l.fecha_venta FROM inm_liberaciones l WHERE l.inmueble_id=${inmInmuebles.id} AND l.motivo='vendido' AND l.confirmado=1 AND l.anulada=0 ORDER BY l.id DESC LIMIT 1)`,
-      fechaVisita:sql`(SELECT v.fecha_visita FROM inm_visitas v WHERE v.inmueble_id=${inmInmuebles.id} AND v.completada=1 ORDER BY v.fecha_registro DESC LIMIT 1)`,
+      fechaVisita:sql`(SELECT v.fecha_visita FROM inm_visitas v WHERE v.inmueble_id=${inmInmuebles.id} AND v.completada=1 ORDER BY v.fecha_registro DESC,v.id DESC LIMIT 1)`,
       fechaTasacion:sql`${inmTasaciones.fechaTasacion}`,
       fechaPublicacion:sql`DATE(DATE_SUB(${inmPublicaciones.fechaPublicacion}, INTERVAL 5 HOUR))`,
       fechaInicioPosicion:sql`(SELECT DATE(DATE_SUB(p.fecha_inicio, INTERVAL (TIMESTAMPDIFF(SECOND,UTC_TIMESTAMP(),NOW()) + 18000) SECOND)) FROM inm_asignaciones_zona p WHERE p.inmueble_id=${inmInmuebles.id} ORDER BY p.fecha_inicio DESC LIMIT 1)`,
     };
     const conditions=[zoneCondition(request)];
-    if(desde)conditions.push(sql`${periods[periodField]} >= ${desde}`);
-    if(hasta)conditions.push(sql`${periods[periodField]} <= ${hasta}`);
+    if(withDeadline)conditions.push(deadlineMatch.length?inArray(inmInmuebles.id,deadlineMatch.map(task=>task.id)):sql`0=1`);
+    if(desde&&periodField!=='fechaLimite')conditions.push(sql`${periods[periodField]} >= ${desde}`);
+    if(hasta&&periodField!=='fechaLimite')conditions.push(sql`${periods[periodField]} <= ${hasta}`);
     if(estado==='Activo')conditions.push(eq(inmInmuebles.estado,'activo'));
     if(estado==='Histórico')conditions.push(sql`${inmInmuebles.estado}<>'activo'`);
     if(operacion!=='Todos')conditions.push(eq(inmInmuebles.operacion,operacion));
     if(tipo!=='Todos')conditions.push(eq(inmInmuebles.tipo,tipo));
-    if(posicionFiltro){const position=Number(posicionFiltro);if(!Number.isInteger(position)||position<1||position>90)return NextResponse.json({error:'Posición no válida.'},{status:400});conditions.push(sql`EXISTS(SELECT 1 FROM inm_asignaciones_zona a JOIN inm_posiciones_zona p ON p.id=a.posicion_id WHERE a.inmueble_id=${inmInmuebles.id} AND p.numero=${position} AND (a.activa=1 OR ${inmInmuebles.estado}<>'activo'))`);}
+    if(posicionFiltro){const position=Number(posicionFiltro);if(!Number.isSafeInteger(position)||position<1||position>999999)return NextResponse.json({error:'Posición no válida.'},{status:400});conditions.push(sql`(SELECT p.numero FROM inm_asignaciones_zona a JOIN inm_posiciones_zona p ON p.id=a.posicion_id WHERE a.inmueble_id=${inmInmuebles.id} ORDER BY a.activa DESC,a.fecha_inicio DESC,a.id DESC LIMIT 1)=${position}`);}
     if(flowStarts[reporte])conditions.push(sql`EXISTS(SELECT 1 FROM inm_timeline t WHERE t.inmueble_id=${inmInmuebles.id} AND t.evento=${flowStarts[reporte]})`);
     if(reportPredicates[reporte])conditions.push(reportPredicates[reporte]);
     const situationReports:Record<string,string>={'Visita pendiente':'Visitas pendientes','Tasación pendiente':'Tasaciones pendientes','Material pendiente':'Material pendiente','Listo para publicar':'Listos para publicar','Publicado':'Publicados'};
@@ -152,6 +173,7 @@ export async function GET(request: NextRequest) {
     const filteredSummary=Object.fromEntries(Object.entries((summaryResult as unknown as Record<string,unknown>[])[0]??{}).map(([key,value])=>[key,Number(value)]));
     if(reporte==='Posición ocupada'){
       const positionConditions=[zoneCondition(request)];
+      if(withDeadline)positionConditions.push(deadlineMatch.length?inArray(inmInmuebles.id,deadlineMatch.map(task=>task.id)):sql`0=1`);
       if(desde)positionConditions.push(sql`${databaseBusinessDay(inmAsignacionesPosicion.fechaInicio)} >= ${desde}`);
       if(hasta)positionConditions.push(sql`${databaseBusinessDay(inmAsignacionesPosicion.fechaInicio)} <= ${hasta}`);
       if(estado==='Activo')positionConditions.push(eq(inmInmuebles.estado,'activo'));
@@ -167,10 +189,11 @@ export async function GET(request: NextRequest) {
       const [positionCountResult]=await db.execute(sql`SELECT COUNT(*) total ${positionFrom} WHERE ${positionWhere}`);
       const total=Number((positionCountResult as unknown as {total:number}[])[0]?.total??0);
       if(all&&total>10000)return NextResponse.json({error:'Reduce el período o los filtros para descargar como máximo 10 000 asignaciones.'},{status:400});
-      const [positionData]=await db.execute(sql`SELECT ${propertyZoneName} zona,${inmInmuebles.codigo} codigo,${inmInmuebles.referencia} nombre,${inmInmuebles.direccion} direccion,${inmInmuebles.distrito} distrito,${inmInmuebles.provincia} provincia,${inmInmuebles.departamento} departamento,${inmInmuebles.tipo} tipo,${inmInmuebles.operacion} operacion,${inmInmuebles.nombreContacto} propietario,${inmPosiciones.numero} posicion,IF(${inmInmuebles.estado}='activo','Activo','Histórico') estado,${databaseInstant(inmAsignacionesPosicion.fechaInicio)} fechaInicioPosicion,${inmAsignacionesPosicion.fechaFin} fechaFinPosicion,${inmAsignacionesPosicion.activa} activaPosicion ${positionFrom} WHERE ${positionWhere} ORDER BY ${inmAsignacionesPosicion.fechaInicio},${inmAsignacionesPosicion.id} LIMIT ${all?10000:pageSize} OFFSET ${all?0:(page-1)*pageSize}`);
+      const [positionData]=await db.execute(sql`SELECT ${inmInmuebles.id} inmuebleId,${propertyZoneName} zona,${inmInmuebles.codigo} codigo,${inmInmuebles.referencia} nombre,${inmInmuebles.direccion} direccion,${inmInmuebles.distrito} distrito,${inmInmuebles.provincia} provincia,${inmInmuebles.departamento} departamento,${inmInmuebles.tipo} tipo,${inmInmuebles.operacion} operacion,${inmInmuebles.nombreContacto} propietario,${inmPosiciones.numero} posicion,IF(${inmInmuebles.estado}='activo','Activo','Histórico') estado,${databaseInstant(inmAsignacionesPosicion.fechaInicio)} fechaInicioPosicion,${inmAsignacionesPosicion.fechaFin} fechaFinPosicion,${inmAsignacionesPosicion.activa} activaPosicion ${positionFrom} WHERE ${positionWhere} ORDER BY ${inmAsignacionesPosicion.fechaInicio},${inmAsignacionesPosicion.id} LIMIT ${all?10000:pageSize} OFFSET ${all?0:(page-1)*pageSize}`);
       const [available]=await db.execute(sql`SELECT COUNT(*) total FROM inm_posiciones_zona p WHERE p.activo=1 AND ${new URL(request.url).searchParams.get("zona") && new URL(request.url).searchParams.get("zona")!=="*" ? sql`p.zona_id=(SELECT id FROM inm_zonas WHERE nombre=${new URL(request.url).searchParams.get("zona")})`:sql`1=1`} AND NOT EXISTS(SELECT 1 FROM inm_asignaciones_zona a WHERE a.posicion_id=p.id AND a.activa=1)`);
       return NextResponse.json({ok:true,reporte,rows:(positionData as unknown as Record<string,unknown>[]).map(row=>({...row,ubicacion:propertyAddress(row),activaPosicion:Boolean(row.activaPosicion)})),resumen:{...positionSummary,total,disponibles:Number((available as unknown as {total:number}[])[0]?.total??0),aprobaciones:0,negociaciones:0},paginacion:{pagina:page,tamano:pageSize,total,paginas:Math.ceil(total/pageSize)},fechaFiltro:periodField});
     }
+    const reportOrder=reporte==='Alertas de actividades'&&deadlineMatch.length?sql`FIELD(${inmInmuebles.id},${sql.join([...deadlineMatch].sort((a,b)=>String(a.fechaLimite||'9999').localeCompare(String(b.fechaLimite||'9999'))||a.id-b.id).map(task=>sql`${task.id}`),sql`,`)})`:inmInmuebles.fechaRegistro;
     const inmuebleRows = await db
       .select({
         id: inmInmuebles.id,
@@ -195,10 +218,12 @@ export async function GET(request: NextRequest) {
       .leftJoin(inmTasaciones,eq(inmTasaciones.inmuebleId,inmInmuebles.id))
       .leftJoin(inmPublicaciones,eq(inmPublicaciones.inmuebleId,inmInmuebles.id))
       .where(where)
-      .orderBy(asc(inmInmuebles.fechaRegistro),asc(inmInmuebles.id))
+      .orderBy(asc(reportOrder),asc(inmInmuebles.id))
       .limit(all ? 10000 : pageSize).offset(all ? 0 : (page-1)*pageSize);
 
     const ids=inmuebleRows.map(item=>item.id);
+    const deadlines=withDeadline?pending:ids.length?await workflowTasks(inArray(inmInmuebles.id,ids)):[];
+    const deadlinesById=new Map(deadlines.map(task=>[task.id,task]));
     const positionRows = await db
       .select({
         inmuebleId: inmAsignacionesPosicion.inmuebleId,
@@ -214,7 +239,7 @@ export async function GET(request: NextRequest) {
       )
       .where(ids.length?inArray(inmAsignacionesPosicion.inmuebleId,ids):sql`0=1`)
       .orderBy(
-        asc(inmAsignacionesPosicion.fechaInicio),
+        asc(inmAsignacionesPosicion.fechaInicio),asc(inmAsignacionesPosicion.id),
       );
 
     const positionAvailability = await db.select({ zona: sql<string>`(SELECT z.nombre FROM inm_zonas z WHERE z.id=${inmPosiciones.zonaId})`, numero: inmPosiciones.numero, assigned: inmAsignacionesPosicion.id })
@@ -227,7 +252,7 @@ export async function GET(request: NextRequest) {
       .select()
       .from(inmVisitas)
       .where(and(eq(inmVisitas.completada,true),ids.length?inArray(inmVisitas.inmuebleId,ids):sql`0=1`))
-      .orderBy(desc(inmVisitas.fechaRegistro));
+      .orderBy(desc(inmVisitas.fechaRegistro),desc(inmVisitas.id));
 
     const expedientes = await publicationReadiness(db, ids);
 
@@ -259,7 +284,7 @@ export async function GET(request: NextRequest) {
       .select({id:inmTimeline.id,inmuebleId:inmTimeline.inmuebleId,evento:inmTimeline.evento,fechaEvento:databaseInstant(inmTimeline.fechaEvento)})
       .from(inmTimeline)
       .where(ids.length?inArray(inmTimeline.inmuebleId,ids):sql`0=1`)
-      .orderBy(asc(inmTimeline.fechaEvento));
+      .orderBy(asc(inmTimeline.fechaEvento),asc(inmTimeline.id));
 
     const posByInmueble = new Map<
       number,
@@ -364,6 +389,7 @@ export async function GET(request: NextRequest) {
       const negociacion = negociacionByInmueble.get(x.id);
       const liberacion = liberacionByInmueble.get(x.id);
 
+      const task=deadlinesById.get(x.id);
       const activo = esActivo(x.estado);
 
       const visitaRealizada = Boolean(
@@ -425,6 +451,11 @@ export async function GET(request: NextRequest) {
 
       return {
         inmuebleId: x.id,
+        actividadPendiente:task?.actividad??null,
+        fechaLimite:task?.fechaLimite??null,
+        estadoPlazo:task?.estadoPlazo??null,
+        diasRetraso:task?.diasRetraso??null,
+        plazoOrigen:task?(task.fechaLimiteAsignada?'Particular':'General'):null,
         codigo: x.codigo,
         nombre: x.referencia,
         zona:x.zona,
@@ -552,21 +583,7 @@ export async function GET(request: NextRequest) {
 
     let rows: ReportRow[] = filtered;
 
-    if (reporte === "Posiciones disponibles") {
-      const posicionSolicitada =
-        posicionFiltro
-          ? Number(posicionFiltro)
-          : null;
-
-      rows = availablePositions.filter(position => !posicionSolicitada || position.numero === posicionSolicitada)
-        .map((position) => ({
-          zona:position.zona,
-          posicion: position.numero,
-          estado: "Disponible",
-        }));
-    } else if (
-      reporte === "Visitas realizadas"
-    ) {
+    if (reporte === "Visitas realizadas") {
       rows = filtered.filter(
         (x) => x.visitaRealizada,
       );
@@ -643,13 +660,7 @@ export async function GET(request: NextRequest) {
     ) {
       rows = filtered.filter(
         (x) =>
-          [
-            "cancelacion_propietario",
-            "cancelacion_externa",
-            "otro",
-          ].includes(
-            x.motivoLiberacion || "",
-          ),
+          Boolean(x.motivoLiberacion)&&!['vendido','alquilado'].includes(x.motivoLiberacion||''),
       );
     } else if (
       reporte === "Motivos de liberación"
@@ -797,10 +808,7 @@ export async function GET(request: NextRequest) {
       rows = active;
     }
 
-    const total = reporte === 'Posiciones disponibles' ? rows.length : count;
-    if (reporte === 'Posiciones disponibles' && !all) {
-      rows = rows.slice((page - 1) * pageSize, page * pageSize);
-    }
+    const total = count;
     const resumen={...filteredSummary,total,disponibles:availablePositions.length,aprobaciones:0,negociaciones:0};
     return NextResponse.json({
       ok: true,

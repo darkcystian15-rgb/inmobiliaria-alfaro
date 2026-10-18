@@ -1,4 +1,7 @@
 "use client";
+import { reportCatalog as reportes, recommendedReportColumns } from "@/lib/report-catalog.mjs";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { zoneUrl } from "@/lib/zone-url";
 
 import ZoneReportFilter from "@/app/components/ZoneReportFilter";
@@ -18,168 +21,7 @@ import { Feedback } from "@/app/components/InterfaceFeedback";
 import Image from "next/image";
 import { reportPDFLayout, reportText, reportCellValue } from "@/lib/report-export";
 
-type Reporte = {
-  nombre: string;
-  descripcion: string;
-  categoria: string;
-  icono: string;
-};
-
 type Row = ReportRow;
-
-const reportes: Reporte[] = [
-  {
-    nombre: "Cartera activa",
-    descripcion:
-      "Inmuebles con una posición activa en la cartera.",
-    categoria: "Cartera",
-    icono: "⌂",
-  },
-  {
-    nombre: "Posiciones disponibles",
-    descripcion:
-      "Posiciones libres para nuevos registros.",
-    categoria: "Cartera",
-    icono: "▦",
-  },
-  {
-    nombre: "Situación de cartera",
-    descripcion:
-      "Vista de las actividades pendientes y situaciones actuales.",
-    categoria: "Cartera",
-    icono: "◫",
-  },
-  {
-    nombre: "Inmuebles por estado",
-    descripcion:
-      "Situación actual de los registros activos e históricos.",
-    categoria: "Cartera",
-    icono: "✓",
-  },
-
-  {
-    nombre: "Visitas realizadas",
-    descripcion:
-      "Visitas efectivamente completadas y registradas.",
-    categoria: "Gestión",
-    icono: "◉",
-  },
-  {
-    nombre: "Visitas pendientes",
-    descripcion:
-      "Inmuebles activos que todavía requieren visita.",
-    categoria: "Gestión",
-    icono: "◌",
-  },
-  {
-    nombre: "Tasaciones realizadas",
-    descripcion:
-      "Tasaciones registradas en el sistema.",
-    categoria: "Gestión",
-    icono: "⌁",
-  },
-  {
-    nombre: "Tasaciones pendientes",
-    descripcion:
-      "Inmuebles con visita realizada que aún requieren tasación.",
-    categoria: "Gestión",
-    icono: "⌁",
-  },
-  {
-    nombre: "Material pendiente",
-    descripcion:
-      "Inmuebles aprobados que aún requieren registrar material de publicación.",
-    categoria: "Gestión",
-    icono: "≡",
-  },
-  {
-    nombre: "Listos para publicar",
-    descripcion:
-      "Publicaciones registradas que esperan ser publicadas.",
-    categoria: "Gestión",
-    icono: "↗",
-  },
-  {
-    nombre: "Publicados",
-    descripcion:
-      "Inmuebles cuya publicación ya fue registrada como publicada.",
-    categoria: "Gestión",
-    icono: "●",
-  },
-
-  {
-    nombre: "Alquilados",
-    descripcion:
-      "Inmuebles liberados por alquiler.",
-    categoria: "Salidas",
-    icono: "✓",
-  },
-  {
-    nombre: "Vendidos",
-    descripcion:
-      "Inmuebles liberados por venta.",
-    categoria: "Salidas",
-    icono: "✓",
-  },
-  {
-    nombre: "Retirados / cancelados",
-    descripcion:
-      "Salidas por cancelación u otros motivos.",
-    categoria: "Salidas",
-    icono: "↩",
-  },
-  {
-    nombre: "Motivos de liberación",
-    descripcion:
-      "Detalle de las causas de salida de cartera.",
-    categoria: "Salidas",
-    icono: "!",
-  },
-
-  {
-    nombre: "Histórico de inmuebles",
-    descripcion:
-      "Registros que ya no están activos.",
-    categoria: "Histórico",
-    icono: "◷",
-  },
-  {
-    nombre: "Tiempo de permanencia",
-    descripcion:
-      "Días desde el registro hasta la salida o actualidad.",
-    categoria: "Histórico",
-    icono: "◌",
-  },
-  {
-    nombre: "Posición ocupada",
-    descripcion:
-      "Historial de uso de cada posición reutilizable.",
-    categoria: "Histórico",
-    icono: "01",
-  },
-
-  {
-    nombre: "Registro → visita",
-    descripcion:
-      "Tiempo desde el alta hasta la visita.",
-    categoria: "Flujo",
-    icono: "→",
-  },
-  {
-    nombre: "Visita → tasación",
-    descripcion:
-      "Tiempo entre visita y tasación.",
-    categoria: "Flujo",
-    icono: "→",
-  },
-  {
-    nombre: "Tasación → publicación",
-    descripcion:
-      "Tiempo desde el registro de precios acordados hasta publicación.",
-    categoria: "Flujo",
-    icono: "→",
-  },
-];
 
 const grupos = [
   "Todos",
@@ -192,13 +34,16 @@ const grupos = [
 
 
 export default function Page() {
+  const params = useSearchParams();
+  const zona = params.get("zona") || "*";
+  const [plazo,setPlazo]=useState("Todos");
   const [busquedaResultado, setBusquedaResultado] = useState("");
   const [orden, setOrden] = useState<{ key: string; asc: boolean } | null>(null);
   const [categoria, setCategoria] =
     useState("Todos");
 
   const [consulta, setConsulta] = useState({
-    reporte: "Cartera activa", desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos", pagina: "1",
+    reporte: "Cartera activa", plazo:"Todos", desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos", pagina: "1",
   });
   const [operacion,setOperacion]=useState("Todos");
   const [paginacion,setPaginacion]=useState({pagina:1,paginas:1,total:0});
@@ -265,7 +110,7 @@ export default function Page() {
     setGenerado(null);
     setError("");
     setErrorExportacion("");
-    setConsulta({ reporte, desde: fechaDesde, hasta: fechaHasta, situacion, estado, posicion, tipo,operacion,pagina:"1" });
+    setConsulta({ reporte, plazo:reporte==="Posiciones disponibles"?"Todos":plazo, desde: reporte==="Posiciones disponibles"?"":fechaDesde, hasta: reporte==="Posiciones disponibles"?"":fechaHasta, situacion:reporte==="Posiciones disponibles"?"Todas":situacion, estado:reporte==="Posiciones disponibles"?"Todos":estado, posicion, tipo:reporte==="Posiciones disponibles"?"Todos":tipo,operacion:reporte==="Posiciones disponibles"?"Todos":operacion,pagina:"1" });
   }
 
   function cargar() { solicitarReporte(seleccionado); }
@@ -304,6 +149,7 @@ export default function Page() {
     setPosicion("");
     setTipo("Todos");
     setOperacion("Todos");
+    setPlazo("Todos");
     setBusquedaResultado("");
     setOrden(null);
     setCargando(true);
@@ -312,7 +158,7 @@ export default function Page() {
     setGenerado(null);
     setError("");
     setErrorExportacion("");
-    setConsulta({ reporte: seleccionado, desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos",pagina:"1" });
+    setConsulta({ reporte: seleccionado, plazo:"Todos", desde: "", hasta: "", situacion: "Todas", estado: "Todos", posicion: "", tipo: "Todos", operacion: "Todos",pagina:"1" });
   };
 
   const columnas =
@@ -337,6 +183,13 @@ export default function Page() {
         "fechaFinAlquiler",
         "estado",
         "situaciones",
+        "actividadPendiente",
+        "fechaLimite",
+        "estadoPlazo",
+        "diasRetraso",
+        "plazoOrigen",
+        "fechaSalida",
+        "activaPosicion",
         "fechaRegistro",
         "fechaVisita",
         "fechaTasacion",
@@ -364,8 +217,7 @@ export default function Page() {
       );
     }, [rows]);
 
-  const recomendadas = seleccionado === "Alquilados" ? ["codigo", "nombre", "fechaAlquiler", "rentaMensual", "comision", "fechaFinAlquiler"] : seleccionado === "Vendidos" ? ["codigo", "nombre", "fechaVenta", "precioFinal", "comision"] : columnas.length <= 6 ? columnas : columnas.filter(key =>
-    !["propietario", "ubicacion", "tipo", "fechaRegistro"].includes(key)).slice(0, 6);
+  const recomendadas = recommendedReportColumns(seleccionado,columnas);
   const elegidas = seleccionColumnas[seleccionado] ?? recomendadas;
   const columnasElegidas = columnas.filter(key => elegidas.includes(key));
   const orientacionPDF = reportPDFLayout(columnasElegidas).orientation === "landscape" ? "horizontal" : "vertical";
@@ -377,6 +229,7 @@ export default function Page() {
     string,
     string
   > = {
+    fechaLimite:"Fecha límite", estadoPlazo:"Estado del plazo",diasRetraso:"Días de atraso",plazoOrigen:"Plazo",actividadPendiente:"Actividad pendiente",fechaSalida:"Salida",activaPosicion:"Asignación activa",
     fechaVenta: "Fecha de venta",
     precioFinal: "Precio final (S/)",
     comision: "Comisión (S/)",
@@ -423,6 +276,8 @@ export default function Page() {
   };
 
   const filtrosAplicados = [
+    `Zona: ${zona==="*"?"Todas las zonas":zona}`,
+    consulta.plazo!=="Todos"&&`Plazo: ${consulta.plazo}`,
     consulta.desde && `Desde: ${reportText("fecha", consulta.desde)}`,
     consulta.hasta && `Hasta: ${reportText("fecha", consulta.hasta)}`,
     consulta.situacion !== "Todas" && `Actividad: ${consulta.situacion}`,
@@ -430,9 +285,9 @@ export default function Page() {
     consulta.posicion && `Posición: ${consulta.posicion}`,
     consulta.operacion !== "Todos" && `Operación: ${consulta.operacion === "alquiler" ? "Alquiler" : "Venta"}`,
     consulta.tipo !== "Todos" && `Tipo: ${consulta.tipo}`,
-    `Fecha utilizada: ${{fechaRegistro:"Registro",fechaVenta:"Venta",fechaSalida:"Salida",fechaVisita:"Visita",fechaTasacion:"Tasación",fechaPublicacion:"Publicación",fechaInicioPosicion:"Inicio de posición",fechaInicioFlujo:"Inicio del recorrido"}[reportPeriodField(seleccionado) as "fechaRegistro"]}`,
+    seleccionado==='Posiciones disponibles'?'Disponibilidad actual; sin filtro de fechas':`Fecha utilizada: ${{fechaLimite:"Fecha límite",fechaRegistro:"Registro",fechaVenta:"Venta",fechaSalida:"Salida",fechaVisita:"Visita",fechaTasacion:"Tasación",fechaPublicacion:"Publicación",fechaInicioPosicion:"Inicio de posición",fechaInicioFlujo:"Inicio del recorrido"}[reportPeriodField(seleccionado) as "fechaRegistro"]}`,
   ].filter(Boolean).join(" · ") || "Todos los registros · Sin restricciones";
-  const filtrosPendientes = operacion !== consulta.operacion || fechaDesde !== consulta.desde || fechaHasta !== consulta.hasta || situacion !== consulta.situacion || estado !== consulta.estado || posicion !== consulta.posicion || tipo !== consulta.tipo;
+  const filtrosPendientes = seleccionado==='Posiciones disponibles'?posicion!==consulta.posicion:plazo!==consulta.plazo || operacion !== consulta.operacion || fechaDesde !== consulta.desde || fechaHasta !== consulta.hasta || situacion !== consulta.situacion || estado !== consulta.estado || posicion !== consulta.posicion || tipo !== consulta.tipo;
 
   async function descargar(formato: "pdf" | "excel") {
     if (cargando || exportando || !rows.length || !generado || !columnasElegidas.length) return;
@@ -442,7 +297,7 @@ export default function Page() {
       const exports = await import("@/lib/report-export");
       const response=await fetch(zoneUrl(`/api/reportes?${new URLSearchParams({...consulta,todos:'1'})}`),{cache:'no-store'});
       const full=await response.json();if(!response.ok)throw new Error(full.error||'No se pudo preparar el reporte completo.');
-      const report = { title: seleccionado, description: reporteInfo.descripcion, columns: columnasElegidas, labels: etiqueta, rows:full.rows, summary: full.resumen ?? null, filters: filtrosAplicados, generatedAt: generado };
+      const report = { title: seleccionado, description: reporteInfo.descripcion, columns: columnasElegidas, labels: etiqueta, rows:full.rows, summary: full.resumen ?? null, filters: filtrosAplicados, generatedAt: new Date() };
       await (formato === "pdf" ? exports.exportReportPDF(report) : exports.exportReportExcel(report));
     } catch (err) {
       setErrorExportacion(err instanceof Error ? err.message : "No se pudo descargar el archivo. Inténtalo nuevamente.");
@@ -524,6 +379,7 @@ export default function Page() {
             <label className="text-xs font-semibold text-slate-500">
               Desde
               <input
+                disabled={seleccionado==='Posiciones disponibles'}
                 type="date"
                 value={fechaDesde}
                 onChange={(e) =>
@@ -538,6 +394,7 @@ export default function Page() {
             <label className="text-xs font-semibold text-slate-500">
               Hasta
               <input
+                disabled={seleccionado==='Posiciones disponibles'}
                 type="date"
                 value={fechaHasta}
                 onChange={(e) =>
@@ -552,6 +409,7 @@ export default function Page() {
             <label className="text-xs font-semibold text-slate-500">
               Actividad / situación
               <select
+                disabled={seleccionado==='Posiciones disponibles'}
                 value={situacion}
                 onChange={(e) =>
                   setSituacion(
@@ -581,9 +439,11 @@ export default function Page() {
               </select>
             </label>
 
+            <label className="text-xs font-semibold text-slate-500">Plazo de actividad<select value={plazo} disabled={seleccionado==='Posiciones disponibles'} onChange={e=>setPlazo(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"><option>Todos</option><option>Vencido</option><option>Vence hoy</option><option>En plazo</option></select></label>
             <label className="text-xs font-semibold text-slate-500">
               Estado
               <select
+                disabled={seleccionado==='Posiciones disponibles'}
                 value={estado}
                 onChange={(e) =>
                   setEstado(
@@ -615,27 +475,27 @@ export default function Page() {
                         /\D/g,
                         "",
                       )
-                      .slice(0, 2),
+                      .slice(0, 6),
                   )
                 }
-                placeholder="01–90"
+                placeholder="Número de posición"
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
               />
             </label>
 
             <label className="text-xs font-semibold text-slate-500">
               Operación
-              <OperationSelect filter value={operacion} onChange={setOperacion} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" />
+              <OperationSelect disabled={seleccionado==='Posiciones disponibles'} filter value={operacion} onChange={setOperacion} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" />
             </label>
             <label className="text-xs font-semibold text-slate-500">
               Tipo de inmueble
-              <PropertyTypeSelect filter value={tipo} onChange={setTipo} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" />
+              <PropertyTypeSelect disabled={seleccionado==='Posiciones disponibles'} filter value={tipo} onChange={setTipo} className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" />
             </label>
           </div>
           </ResponsiveFilters></div>
         </section>
 
-        <p className="mt-3 text-xs text-slate-600">El período utiliza la fecha de la actividad del reporte seleccionado. Las descargas incluyen todos los resultados aplicados.</p>
+        <p className="mt-3 text-xs text-slate-600">El período utiliza la fecha indicada en los filtros aplicados. Posiciones disponibles muestra la disponibilidad actual. Las descargas incluyen todos los resultados aplicados.</p>
         {filtrosPendientes && <p className="mt-3 text-sm font-medium text-amber-700" role="status">Hay filtros pendientes de aplicar. Genera el reporte para actualizar el resultado y las descargas.</p>}
         {errorExportacion && <Feedback tone="error" className="mt-4">{errorExportacion}</Feedback>}
         {error && <Feedback tone="error" className="mt-5">{error}</Feedback>}
@@ -673,7 +533,7 @@ export default function Page() {
                   resumen.historicos,
                 ],
                 [
-                  "Posiciones libres (total)",
+                  "Posiciones libres (zona)",
                   resumen.disponibles,
                 ],
                 [
@@ -840,7 +700,7 @@ export default function Page() {
                               key={key}
                               className="px-4 py-3 text-xs text-slate-600"
                             >
-                              {key === "nombre" && typeof row.propietario === "string" ? <div className="min-w-48 max-w-md"><p className="break-words font-semibold text-slate-900">{row.propietario || "Sin contacto"}</p><p className="mt-1 break-words leading-5 text-slate-500"><PropertySummary operation={String(row.operacion || "venta")} type={String(row.tipo || "Tipo por completar")} location={typeof row.ubicacion === "string" ? row.ubicacion : null} /></p></div> : reportText(key, reportCellValue(key, row))}
+                              {key === "nombre" && typeof row.propietario === "string" ? <div className="min-w-48 max-w-md"><p className="break-words font-semibold text-slate-900">{row.inmuebleId?<Link className="underline-offset-2 hover:underline" href={`/datos-inmuebles?codigo=${row.inmuebleId}&zona=${encodeURIComponent(String(row.zona||"*"))}`}>{row.propietario||"Sin contacto"}</Link>:row.propietario||"Sin contacto"}</p><p className="mt-1 break-words leading-5 text-slate-500"><PropertySummary operation={String(row.operacion || "venta")} type={String(row.tipo || "Tipo por completar")} location={typeof row.ubicacion === "string" ? row.ubicacion : null} /></p></div> : reportText(key, reportCellValue(key, row))}
                             </td>
                           ),
                         )}

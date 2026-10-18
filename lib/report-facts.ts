@@ -5,7 +5,7 @@ export const positioned=sql`EXISTS(SELECT 1 FROM inm_asignaciones_zona p WHERE p
 export const readyFile=sql`(EXISTS(SELECT 1 FROM inm_archivos a WHERE a.inmueble_id=${inmInmuebles.id} AND (a.tipo_documento IN ('DNI_PROPIETARIO','VENDEDOR_DNI','VENDEDOR_DNI_GERENTE') OR (${inmInmuebles.operacion}='alquiler' AND a.tipo_documento='ARRENDADOR_DNI')) AND a.almacenamiento='hosting') AND EXISTS(SELECT 1 FROM inm_archivos a WHERE a.inmueble_id=${inmInmuebles.id} AND a.tipo_documento IN ('TASACION','TASACION_EXPRESS') AND a.almacenamiento='hosting') AND EXISTS(SELECT 1 FROM inm_archivos a JOIN inm_visitas v ON v.id=a.visita_id AND v.inmueble_id=a.inmueble_id AND v.completada=1 WHERE a.inmueble_id=${inmInmuebles.id} AND a.tipo_documento='FOTO_INMUEBLE' AND a.almacenamiento='hosting' AND a.tipo_mime LIKE 'image/%') AND LENGTH(TRIM(COALESCE(${inmPublicaciones.texto},'')))>0)`;
 export const factsFrom=sql`FROM ${inmInmuebles} LEFT JOIN ${inmTasaciones} ON ${inmTasaciones.inmuebleId}=${inmInmuebles.id} LEFT JOIN ${inmPublicaciones} ON ${inmPublicaciones.inmuebleId}=${inmInmuebles.id}`;
 export const reportPredicates:Record<string,ReturnType<typeof sql>>={
- 'Cartera activa':sql`${inmInmuebles.estado}='activo'`,
+ 'Cartera activa':sql`${inmInmuebles.estado}='activo' AND ${positioned}`,
  'Histórico de inmuebles':sql`${inmInmuebles.estado}<>'activo'`,
  'Visitas realizadas':visitDone,
  'Visitas pendientes':sql`${inmInmuebles.estado}='activo' AND ${positioned} AND NOT ${visitDone}`,

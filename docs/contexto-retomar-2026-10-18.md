@@ -1,5 +1,7 @@
 # Contexto vigente para retomar — 18 de octubre de 2026
 
+Actualización: [Reportes alineados con el flujo actual](revision-reportes-flujo-2026-10-18.md). Plazos particulares, alertas, columnas por actividad y exportaciones con zona.
+
 Actualización: [Historial detallado de archivos](historial-archivos-2026-10-18.md). Subidas, cambios y eliminaciones con detalle en ficha y panel; se retiran aclaraciones repetidas de horario.
 
 Actualización: [Alertas y plazos particulares por inmueble](alertas-plazos-particulares-2026-10-18.md). Panel con diez actividades por página, Seguimiento exclusivo del administrador y configuración general separada.

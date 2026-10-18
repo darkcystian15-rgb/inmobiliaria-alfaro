@@ -38,6 +38,8 @@ export function reportText(key: string, value: ReportValue): string {
   if (value === null || value === undefined || value === "") return "—";
   if (typeof value === "boolean") return value ? "Sí" : "No";
   if (Array.isArray(value)) return value.length ? value.join(" · ") : "—";
+  if(key==='estadoPlazo')return ({vencido:'Vencido',vence_hoy:'Vence hoy',en_plazo:'En plazo',sin_plazo:'Sin plazo'} as Record<string,string>)[String(value)]??String(value);
+  if(key==='actividadPendiente')return ({visita:'Visita',tasacion:'Tasación',expediente:'Material para publicar',publicacion:'Publicación'} as Record<string,string>)[String(value)]??String(value);
   if (key.toLowerCase().includes("fecha")) return reportDate(value)?.toLocaleDateString("es-PE", { timeZone: "America/Lima" }) ?? "—";
   if (["tasacion", "precioFinal", "comision", "rentaMensual", "rentaMensualSolicitada", "garantia", "adelanto"].includes(key) && Number.isFinite(Number(value))) return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(Number(value));
   return String(value);
@@ -68,7 +70,7 @@ async function logo() {
 }
 function metrics(report: ReportExport): [string, number][] {
   if (!report.summary) return [];
-  return [["Activos", report.summary.activos], ["Históricos", report.summary.historicos], ["Posiciones libres (total)", report.summary.disponibles], ["Visitas pendientes", report.summary.visitasPendientes], ["Tasaciones pendientes", report.summary.tasacionesPendientes], ["Material pendiente", report.summary.materialPendiente], ["Publicados", report.summary.publicados]];
+  return [["Activos", report.summary.activos], ["Históricos", report.summary.historicos], ["Posiciones libres (zona)", report.summary.disponibles], ["Visitas pendientes", report.summary.visitasPendientes], ["Tasaciones pendientes", report.summary.tasacionesPendientes], ["Material pendiente", report.summary.materialPendiente], ["Publicados", report.summary.publicados]];
 }
 
 export async function exportReportPDF(report: ReportExport) {
@@ -84,7 +86,7 @@ export async function exportReportPDF(report: ReportExport) {
   const header = () => {
     doc.addImage(image, "PNG", 14, 10, logoWidth, logoHeight);
     doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(100);
-    doc.text(`Generado: ${stamp(report.generatedAt)} · Hora de Perú`, width - 14, 15, { align: "right" });
+    doc.text(`Generado: ${stamp(report.generatedAt)}`, width - 14, 15, { align: "right" });
     doc.setDrawColor(200, 0, 0); doc.setLineWidth(0.7); doc.line(14, 31, width - 14, 31);
   };
   header();
@@ -145,7 +147,7 @@ export async function exportReportExcel(report: ReportExport) {
   const merged = (row: number, value: string) => { summary.mergeCells(row, 1, row, 4); summary.getCell(row, 1).value = value; summary.getCell(row, 1).alignment = { wrapText: true, vertical: "middle" }; };
   merged(5, report.title); summary.getRow(5).height = 32; summary.getCell("A5").font = { size: 20, bold: true, color: { argb: red } };
   merged(6, report.description); summary.getRow(6).height = 34;
-  merged(7, `Generado: ${stamp(report.generatedAt)} · Hora de Perú`);
+  merged(7, `Generado: ${stamp(report.generatedAt)}`);
   merged(8, `Filtros aplicados: ${report.filters}`); summary.getRow(8).height = 50;
   summary.addRow([]);
   summary.addRow(["Registros del reporte", report.rows.length]);
@@ -157,7 +159,8 @@ export async function exportReportExcel(report: ReportExport) {
   detail.addTable({ name: "DetalleReporte", ref: "A1", headerRow: true, style: { theme: "TableStyleMedium2", showRowStripes: true }, columns: report.columns.map(key => ({ name: report.labels[key] ?? key, filterButton: true })), rows: report.rows.map(row => report.columns.map(key => {
     const value = reportCellValue(key, row);
     if (value == null || value === "") return null;
-    if (key.toLowerCase().includes("fecha")) {
+    if(['estadoPlazo','actividadPendiente'].includes(key))return reportText(key,value);
+  if (key.toLowerCase().includes("fecha")) {
       const date = reportDate(value);
       if (!date) return null;
       const calendar = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
@@ -170,7 +173,7 @@ export async function exportReportExcel(report: ReportExport) {
   detail.getRow(1).eachCell(cell => { cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: red } }; cell.font = { name: "Calibri", bold: true, color: { argb: "FFFFFF" } }; cell.alignment = { vertical: "middle", wrapText: true }; });
   report.columns.forEach((key, index) => {
     const column = detail.getColumn(index + 1);
-    if (key.toLowerCase().includes("fecha")) column.numFmt = "dd/mm/yyyy";
+  if (key.toLowerCase().includes("fecha")) column.numFmt = "dd/mm/yyyy";
     if (["tasacion", "precioFinal", "comision", "rentaMensual", "rentaMensualSolicitada", "garantia", "adelanto"].includes(key)) column.numFmt = '"S/ "#,##0.00';
     if (key === "posicion") column.numFmt = "00";
   });
