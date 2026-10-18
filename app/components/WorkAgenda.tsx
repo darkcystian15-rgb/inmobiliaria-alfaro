@@ -5,15 +5,13 @@ import PropertyListIdentity from "@/app/components/PropertyListIdentity";
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import DeadlineNotice from "./DeadlineNotice";
 import FolderIcon from './FolderIcon';
 
-type Task = { id: number; zona:string; codigo: string; nombre: string; posicion: number | null; tipo: string | null; operacion: string; direccion: string | null; propietarioNombres: string | null; propietarioApellidos: string | null; distrito: string | null; actividad: string; fechaLimite: string | null; plazoOrigen: 'asignado' | 'automatico'; responsable: string | null };
+type Task = { id: number; zona:string; codigo: string; nombre: string; posicion: number | null; tipo: string | null; operacion: string; direccion: string | null; propietarioNombres: string | null; propietarioApellidos: string | null; distrito: string | null; actividad: string; fechaLimite: string | null; estadoPlazo?: string; responsable: string | null };
 const labels: Record<string, string> = { visita: 'Registrar visita', tasacion: 'Registrar tasación', expediente: 'Completar documentos', publicacion: 'Confirmar publicación' };
 const statuses: Record<string, string> = { visita: 'Visita pendiente', tasacion: 'Tasación pendiente', expediente: 'Documentos pendientes', publicacion: 'Publicación pendiente' };
 const destinations: Record<string, string> = { visita: '/registrar-visitas', tasacion: '/registrar-tasaciones', expediente: '/tasaciones-textos-pendientes', publicacion: '/tasaciones-textos-pendientes' };
-function deadline(value: string) {
-  return new Date(`${value}T12:00:00Z`).toLocaleDateString('es-PE', { timeZone: 'America/Lima', day: 'numeric', month: 'short', year: 'numeric' });
-}
 export default function WorkAgenda() {
   const [items, setItems] = useState<Task[]>([]);
   const [error, setError] = useState('');
@@ -41,7 +39,7 @@ export default function WorkAgenda() {
           <div className="col-span-2 min-w-0 sm:col-span-1">
             <PropertyListIdentity position={item.posicion} contact={item.propietarioNombres} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="font-mono text-xs font-semibold leading-5 text-slate-500" icon={<FolderIcon className="h-7 w-7 shrink-0 text-amber-500" />} />
           </div>
-          <div className="min-w-0 sm:max-w-64"><p className={`w-fit rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}>{statuses[item.actividad] || 'Pendiente de revisión'}</p><p className="mt-1 text-[11px] leading-4 text-slate-500">{item.fechaLimite ? <>Límite: {deadline(item.fechaLimite)}</> : 'Plazo sin definir'}</p></div>
+          <div className="min-w-0 sm:max-w-64"><p className={`w-fit rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}>{statuses[item.actividad] || 'Pendiente de revisión'}</p><DeadlineNotice date={item.fechaLimite} state={item.estadoPlazo} /></div>
           <Link aria-label={`${labels[item.actividad] || 'Revisar ficha'}: ${item.propietarioNombres || 'Sin contacto'}`} href={`${destinations[item.actividad] || '/datos-inmuebles'}?zona=${encodeURIComponent(item.zona)}&inmueble=${item.id}${item.actividad === 'expediente' ? '#material' : item.actividad === 'publicacion' ? '#listos' : ''}`} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">{labels[item.actividad] || 'Revisar ficha'} →</Link>
         </li>;
       })}</ul>

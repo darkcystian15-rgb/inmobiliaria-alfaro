@@ -2,9 +2,16 @@
 
 ## Cambio de presentación
 
-Prioridades de trabajo deja de mostrar «Automático» y «Asignado» junto al límite. Se conserva la fecha límite de atención y la actividad pendiente. La eliminación de la etiqueta no cambia el cálculo, la antigüedad, la posición, la fecha real de una visita ni los plazos particulares guardados.
+Prioridades de trabajo deja de mostrar «Automático» y «Asignado» junto al límite. Agenda y visitas pendientes comparten el cálculo y la presentación: «Límite», «Vence hoy» o «Vencido», según el calendario de Perú. Una tarea que vence hoy todavía no está vencida.
 
-La decisión de contar un plazo desde la fecha histórica de la actividad o desde su registro en el sistema se consulta por separado. Esta entrega no modifica esa regla sin una definición del usuario.
+El usuario confirmó que registrar hoy una visita histórica no debe generar un límite de 2025. El plazo empieza cuando la actividad pendiente entra al sistema:
+
+- Visita pendiente: registro del inmueble.
+- Tasación pendiente: registro de la primera visita completada. Registrar otra visita no reinicia el plazo.
+- Material pendiente: registro de la tasación.
+- Publicación pendiente: registro del material de publicación.
+
+Se mantienen los plazos particulares asignados expresamente, incluso si ya están vencidos. Las fechas reales de visita y tasación se conservan; no se reescriben para ajustar las alertas. Ejemplo: visita del 17/06/2025 registrada el 18/10/2026, con plazo de tasación de tres días, genera límite 21/10/2026. El cambio corrige el cálculo de lectura, sin migrar datos de clientes.
 
 ## Origen comprobado de las fechas
 
@@ -37,4 +44,4 @@ Antes de registrar una tasación operativa se debe distinguir el informe de valo
 
 Evidencia privada, excluida de Git y Vercel: `output/investigacion-fechas/database-before.json`, `current-properties.json`, `drive-expanded-matches.json` y `revision-tasaciones.md`. Incluye correspondencias, fuentes y discrepancias; no se publica información documental o comercial de clientes en este informe.
 
-Validación del cambio de interfaz y evidencia de publicación: se registrarán al terminar la entrega. La auditoría previa publicada conserva sus pruebas completas y su recuperación desde `237b9d7`.
+Validación aprobada: 29 archivos de pruebas unitarias, lint y compilación de producción. La integración `tests/workflow-deadline.integration.mjs` pasó contra una base local aislada: visita histórica registrada hoy, primera activación sin reinicio por visita repetida, tasación histórica registrada hoy, publicación, plazo particular, visita y agenda sincronizadas, «Vencido»/«Vence hoy» y navegador móvil sin errores. La evidencia de publicación se completa al verificar el despliegue. La auditoría previa publicada conserva sus pruebas completas y su recuperación desde `237b9d7`.

@@ -1,6 +1,7 @@
 import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
-import { databaseInstant } from '@/lib/business-time';
+import { workflowDeadline } from '@/lib/workflow-deadline.mjs';
+import { databaseBusinessDay } from '@/lib/business-time';
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
@@ -18,7 +19,7 @@ import {
 } from "@/db/schema";
 
 
-import { parseBusinessDate, todayInPeru } from "@/lib/calendar.mjs";
+import { parseBusinessDate } from "@/lib/calendar.mjs";
 import { visitPhotoIds } from '@/lib/visit-photos.mjs';
 
 class VisitInputError extends Error {}
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
         departamento: inmInmuebles.departamento,
         propietario: inmInmuebles.nombreContacto,
         posicion: inmPosiciones.numero,
-        fechaRegistro: databaseInstant(inmInmuebles.fechaRegistro),
+        inicioSeguimiento: sql<string>`DATE_FORMAT(${databaseBusinessDay(inmInmuebles.fechaRegistro)},'%Y-%m-%d')`,
       })
       .from(inmInmuebles)
 
@@ -86,14 +87,10 @@ export async function GET(request: Request) {
 
     const [config] = await db.select({dias:inmConfigAlertas.dias}).from(inmConfigAlertas).where(and(eq(inmConfigAlertas.tipo,'visita'),eq(inmConfigAlertas.activo,true))).limit(1);
     const seguimiento=rows.length ? await db.select({inmuebleId:inmSeguimiento.inmuebleId,fechaLimite:inmSeguimiento.fechaLimite,responsable:inmUsuarios.nombre}).from(inmSeguimiento).leftJoin(inmUsuarios,eq(inmUsuarios.id,inmSeguimiento.responsableId)).where(and(inArray(inmSeguimiento.inmuebleId,rows.map(row=>row.id)),eq(inmSeguimiento.actividad,'visita'))) : [];
-    const ahora = Date.now();
-
+    const now = new Date();
     const items = rows.map((row) => {
-      const fechaRegistro = new Date(row.fechaRegistro).getTime();
-      const dias = Math.max(
-        0,
-        Math.floor((ahora - fechaRegistro) / (1000 * 60 * 60 * 24))
-      );
+      const tracking = seguimiento.find(item => item.inmuebleId === row.id);
+      const deadline = workflowDeadline(row.inicioSeguimiento, config?.dias ?? 2, tracking?.fechaLimite ?? null, now);
 
       return {
         id: row.id,
@@ -108,10 +105,8 @@ export async function GET(request: Request) {
         ubicacion: propertyAddress(row),
         propietario: row.propietario || "",
         posicion: String(row.posicion),
-        dias,
-        responsable:seguimiento.find(item=>item.inmuebleId===row.id)?.responsable??null,
-        fechaLimite:seguimiento.find(item=>item.inmuebleId===row.id)?.fechaLimite??null,
-        vencida:seguimiento.find(item=>item.inmuebleId===row.id)?.fechaLimite ? seguimiento.find(item=>item.inmuebleId===row.id)!.fechaLimite! < todayInPeru() : dias>(config?.dias??2),
+        ...deadline,
+        responsable: tracking?.responsable ?? null,
         fotos: drafts.filter(photo => photo.inmuebleId === row.id).map(photo => ({
           id: photo.id, nombre: photo.nombre, enlace: `/api/inmuebles/${row.id}/archivos/${photo.id}`,
         })),
