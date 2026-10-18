@@ -16,7 +16,7 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Último código de aplicación publicado: `3351b6e90d17c4e4b37a65537a5066277dfe1105`.
+- Último código de aplicación publicado: `f642b70be986c939e862af5f44e1d46d782b7ee7`.
 - Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
 
 ## Producción
@@ -25,13 +25,13 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 | --- | --- |
 | Proyecto | `puma19/inmobiliaria-alfarov2` |
 | Dominio de la intranet | https://intranet.inmobiliariaalbertoalfaro.com.pe |
-| Código | `3351b6e90d17c4e4b37a65537a5066277dfe1105` |
-| Despliegue GitHub | `7154933132`, entorno `Production` |
+| Código | `f642b70be986c939e862af5f44e1d46d782b7ee7` |
+| Despliegue GitHub | `7155268244`, entorno `Production` |
 | Estado informado por Vercel a GitHub | `success`, `Deployment has completed` |
-| Fecha del estado | 2026-10-18 13:02:42 UTC |
-| URL de versión | https://inmobiliaria-alfarov2-a8o99cbs6-puma19.vercel.app |
+| Fecha del estado | 2026-10-18 13:31:49 UTC |
+| URL de versión | https://inmobiliaria-alfarov2-po4f3y6au-puma19.vercel.app |
 
-Se consultaron las API de despliegues y estados de GitHub para el SHA indicado; Production y Preview completados. La entrega incorpora el procedimiento manual ya ejecutado de [carga de Chimbote](docs/carga-chimbote-2026-10-18.md). La comprobación autenticada confirmó 43 fichas en sus posiciones, 43 visitas pendientes, siete posiciones libres y conservación de las ocho fichas de las demás zonas, con escritorio/móvil correctos. Publicar no vuelve a ejecutar la carga. El [orden del menú](docs/orden-menu-seguimiento-2026-10-18.md) y las [fichas de venta y alquiler](docs/ficha-ventas-alquileres-2026-10-18.md) conservan sus evidencias previas.
+Se consultaron las API de despliegues y estados de GitHub para el SHA indicado; Production y Preview completados. La entrega incorpora la carga manual ya ejecutada de [Tortugas, Huarmey, Casma, Lima y Trujillo](docs/carga-cinco-zonas-2026-10-18.md): 18 fichas nuevas, 18 visitas pendientes, posiciones y exclusiones verificadas en API y navegador de escritorio/móvil. Las 46 fichas de Chimbote/Nuevo Chimbote se conservaron con sus valores vigentes, incluidas ediciones recientes. Publicar no repite la carga. La entrega previa de [Chimbote](docs/carga-chimbote-2026-10-18.md), el [orden del menú](docs/orden-menu-seguimiento-2026-10-18.md) y las [fichas de venta y alquiler](docs/ficha-ventas-alquileres-2026-10-18.md) conservan su evidencia histórica.
 
 ## Presentación uniforme vigente
 

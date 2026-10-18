@@ -46,4 +46,11 @@ Volver al código anterior no deshace los cambios de base. Para recuperar, verif
 - Disponibilidad de las cinco posiciones excluidas comprobada en la API. Tarjetas y detalle de cada zona, Visitas pendientes, rechazo anónimo y navegador de escritorio/móvil de 375 px sin errores JavaScript ni desbordamiento horizontal.
 - Capturas y comprobador privados en `output/five-zones-production/` y `output/five-zones-production-smoke.mjs`. Cuentas y sesiones temporales eliminadas y ausencia comprobada.
 
-La evidencia de publicación se añade tras comprobar Vercel.
+## Publicación
+
+- Entrega publicada: `f642b70be986c939e862af5f44e1d46d782b7ee7`, sincronizada en `main` y `feat/registro-simplificado` mediante subida atómica.
+- Vercel informó a GitHub `success`, «Deployment has completed», Production `7155268244`, el `2026-10-18T13:31:49Z`.
+- URL de versión: https://inmobiliaria-alfarov2-po4f3y6au-puma19.vercel.app.
+- Preview `7155263460` también completado: https://inmobiliaria-alfarov2-f785c0ehe-puma19.vercel.app.
+- La carga se ejecutó una sola vez. Compilar o desplegar no vuelve a borrar ni registrar inmuebles. Los commits posteriores de evidencia solo modifican Markdown.
+- El contenedor y volumen de MySQL desechable se retiraron al completar las pruebas.
