@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import mysql from 'mysql2/promise';
-import { businessSnapshot, snapshotHash, replaceChimbote, replacementManifest, replaceFiveZones, fiveZonesManifest, fiveZonePositions } from '../lib/zone-replacement.mjs';
+import { businessSnapshot, snapshotHash, replaceChimbote, replacementManifest, replaceFiveZones, fiveZonesManifest, fiveZonePositions, replaceNuevoChimbote, nuevoChimboteManifest, nuevoCompletePositions, nuevoExcludedPositions } from '../lib/zone-replacement.mjs';
 
 const uri=process.env.TEST_DATABASE_URL, location=new URL(uri||'http://invalid');
 assert.ok(['127.0.0.1','localhost'].includes(location.hostname) && location.pathname==='/alfaro_zone_import_test');
@@ -94,6 +94,30 @@ try {
   const paths=replacement.cleanupJobs.flatMap(job=>JSON.parse(secondAfter.inm_eliminaciones_pendientes.find(row=>row.id===job.id).rutas));
   assert.deepEqual(paths.sort(),['private/five-shared.pdf','private/shared.pdf']);
   await assert.rejects(()=>replaceFiveZones(db,five,secondBackup,true),/base cambió/);
+  const nuevo={zona:'Nuevo Chimbote',inmuebles:Array.from({length:88},(_,i)=>i+1).filter(n=>!nuevoExcludedPositions.includes(n)).map(posicion=>({posicion,tipo:'Casa',direccion:`Dirección local ${posicion}`,operacion:[30,31,39].includes(posicion)?'venta':'alquiler',nombreContacto:`Contacto local ${posicion}${nuevoCompletePositions.includes(posicion)?'':'-FTO'}`}))};
+  const invalidNuevo=structuredClone(nuevo);invalidNuevo.inmuebles[0].posicion=58;assert.throws(()=>nuevoChimboteManifest(invalidNuevo));
+  invalidNuevo.inmuebles[0].posicion=1;invalidNuevo.inmuebles[0].nombreContacto='';assert.throws(()=>nuevoChimboteManifest(invalidNuevo));
+  const thirdBefore=await businessSnapshot(db),thirdBackup={tables:thirdBefore};
+  const thirdPreview=await replaceNuevoChimbote(db,nuevo,thirdBackup,false);assert.equal(thirdPreview.registrar,68);assert.equal(thirdPreview.eliminar,1);assert.equal(thirdPreview.ventas,3);assert.equal(thirdPreview.contactosFTO,51);
+  assert.equal(snapshotHash(await businessSnapshot(db)),snapshotHash(thirdBefore));
+  await db.query('CREATE TABLE unexpected_reference(id INT PRIMARY KEY,inmueble_id BIGINT UNSIGNED,FOREIGN KEY(inmueble_id) REFERENCES inm_inmuebles(id))');
+  await db.query('INSERT INTO unexpected_reference VALUES(1,?)',[secondIds[4]]);
+  await assert.rejects(()=>replaceNuevoChimbote(db,nuevo,thirdBackup,true),/foreign key constraint/i);
+  assert.equal(snapshotHash(await businessSnapshot(db)),snapshotHash(thirdBefore),'Rollback de Nuevo Chimbote ante FK desconocida.');
+  await db.query('DROP TABLE unexpected_reference');
+  const thirdResult=await replaceNuevoChimbote(db,nuevo,thirdBackup,true),thirdAfter=await businessSnapshot(db);
+  assert.equal(thirdResult.created.length,68);assert.equal(thirdResult.otrasZonas,61);
+  assert.deepEqual(thirdResult.created.map(row=>row.posicion),nuevo.inmuebles.map(row=>row.posicion));
+  const otherIds=new Set(thirdBefore.inm_inmuebles.filter(row=>Number(row.zona_id)!==7).map(row=>Number(row.id)));
+  for(const table of ['inm_inmuebles','inm_timeline','inm_asignaciones_zona','inm_archivos','inm_visitas']) {
+    const key=table==='inm_inmuebles'?'id':'inmueble_id';
+    assert.equal(snapshotHash({rows:thirdAfter[table].filter(row=>otherIds.has(Number(row[key])))}),snapshotHash({rows:thirdBefore[table].filter(row=>otherIds.has(Number(row[key])))}),'Se conservan las otras seis zonas.');
+  }
+  const nuevoIds=new Set(thirdResult.created.map(row=>Number(row.id)));
+  assert.equal(thirdAfter.inm_inmuebles.filter(row=>nuevoIds.has(Number(row.id))&&row.estado==='activo'&&row.etapa==='visita_pendiente').length,68);
+  for(const table of ['inm_visitas','inm_archivos','inm_tasaciones','inm_publicaciones','inm_liberaciones'])assert.equal(thirdAfter[table].filter(row=>nuevoIds.has(Number(row.inmueble_id))).length,0);
+  await assert.rejects(()=>replaceNuevoChimbote(db,nuevo,thirdBackup,true),/base cambió/);
+  console.log('PASS Nuevo Chimbote: 68 altas, 17 completos, 51 FTO, exclusiones, rollback, estado inicial y seis zonas conservadas.');
   console.log('PASS cinco zonas: 18 altas, exclusiones estrictas, rollback atómico, archivos compartidos y Chimbote/Nuevo Chimbote conservados.');
   console.log('PASS reemplazo local: 43 registros, posiciones, pendientes, preview sin escritura, rechazo de respaldo desactualizado, rollback ante FK, archivos compartidos, borradores y conservación de otras zonas.');
 } finally { await db.end(); }
