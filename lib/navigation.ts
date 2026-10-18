@@ -6,17 +6,17 @@ export const menuGroups = [
     label: "Operación",
     items: [
       { href: "/cartera", label: "Cartera de inmuebles", icon: "home" },
-      { href: "/registrar-inmueble", label: "Registrar inmueble", icon: "plus" },
     ],
   },
   {
     label: "Seguimiento",
     items: [
+      { href: "/registrar-inmueble", label: "Registrar inmueble", icon: "plus" },
+      { href: "/liberar-inmuebles", label: "Liberar inmueble", icon: "release" },
       { href: "/visitas-pendientes", label: "Visitas pendientes", icon: "clock" },
       { href: "/registrar-visitas", label: "Registrar visitas", icon: "visit" },
       { href: "/tasaciones-textos-pendientes", label: "Tasaciones y textos pendientes", icon: "clipboard" },
       { href: "/registrar-tasaciones", label: "Registrar tasaciones", icon: "valuation" },
-      { href: "/liberar-inmuebles", label: "Liberar inmueble", icon: "release" },
     ],
   },
   {
