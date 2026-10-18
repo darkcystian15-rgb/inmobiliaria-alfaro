@@ -2,7 +2,7 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
-Nueva entrega: [Listado de archivos y navegación por zonas](docs/listado-archivos-2026-10-18.md). La publicación y sus comprobaciones se registran en ese documento.
+Última entrega: [Listado de archivos y navegación por zonas](docs/listado-archivos-2026-10-18.md), publicada y comprobada con sesión autenticada en producción. Incluye punto de respaldo privado.
 
 ## Repositorio
 
@@ -10,7 +10,7 @@ Nueva entrega: [Listado de archivos y navegación por zonas](docs/listado-archiv
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Último código de aplicación publicado: `8446fff6a0c6281c9e3652e457f572c55409deff`.
+- Último código de aplicación publicado: `0b8b6815dfeb25655233a6ac70bcec363842d3f5`.
 - Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
 
 ## Producción
@@ -19,13 +19,13 @@ Nueva entrega: [Listado de archivos y navegación por zonas](docs/listado-archiv
 | --- | --- |
 | Proyecto | `puma19/inmobiliaria-alfarov2` |
 | Dominio de la intranet | https://intranet.inmobiliariaalbertoalfaro.com.pe |
-| Código | `8446fff6a0c6281c9e3652e457f572c55409deff` |
-| Despliegue GitHub | `7148034965`, entorno `Production` |
+| Código | `0b8b6815dfeb25655233a6ac70bcec363842d3f5` |
+| Despliegue GitHub | `7148658405`, entorno `Production` |
 | Estado informado por Vercel a GitHub | `success`, `Deployment has completed` |
-| Fecha del estado | 2026-10-18 00:54:05 UTC |
-| URL de versión | https://inmobiliaria-alfarov2-dswwxroao-puma19.vercel.app |
+| Fecha del estado | 2026-10-18 02:03:41 UTC |
+| URL de versión | https://inmobiliaria-alfarov2-4uwzbw0ux-puma19.vercel.app |
 
-Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. El login del dominio respondió HTTP 200. La URL de versión redirige al login de Vercel y la consulta directa de API de Vercel había respondido HTTP 403; no se verificó independientemente la asignación del alias ni el recorrido autenticado de la nueva versión. Detalle: [identificación y descripción uniformes](docs/identificacion-cartera-2026-10-18.md).
+Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. La prueba autenticada del dominio confirmó la nueva pantalla, filtros por zonas activas y cuatro tipos, apertura privada de archivo y navegación de escritorio/móvil. La API directa de Vercel había respondido HTTP 403; la evidencia de publicación procede del estado Production informado a GitHub y de la comprobación real de la intranet. Detalle: [Listado de archivos](docs/listado-archivos-2026-10-18.md).
 
 ## Presentación uniforme vigente
 
@@ -45,6 +45,8 @@ Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. 
 - Visitas y evidencia fotográfica, precios acordados, preparación y confirmación de publicación, cierres, contratos de alquiler, renovación manual y reingreso con antecedentes.
 - Publicación con archivo DNI del vendedor/gerente, tasación, foto de visita completada y texto, además de las condiciones de precios. Sin exigencia de DNI numérico.
 - Sin mapas, coordenadas, importador de puntos ni geolocalización.
+- Estadística agrupa Listado de archivos y Reportes. Listado consulta tasaciones, contratos de alquiler, minutas y escrituras cargadas, con filtros automáticos de zona/tipo y archivos numerados.
+- Liberar inmueble pertenece a Seguimiento y exige zona tanto en pantalla como en servidor. El acceso a Contratos de alquiler se reemplaza en el menú, conservando registros y ruta anterior.
 - Expediente con un vendedor y un comprador, asignación expresa del comprador, condiciones por persona natural/jurídica, siete grupos documentales, porcentaje y alertas. Los faltantes no bloquean el cierre. Venta y alquiler comparten reglas hasta definir diferencias.
 - Archivos privados PDF, Word, Excel e imágenes, máximo 4 MB tras compresión de imágenes. Vista previa de imágenes/PDF y descarga de Word/Excel. Eliminación por administrador.
 - Permisos, historial, reportes y protección de concurrencia; conflictos de versión del expediente devuelven HTTP 409.
@@ -56,11 +58,12 @@ Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. 
 - Compilación final de producción con Webpack y TypeScript correcta fuera del sandbox.
 - Comprobación directa de ID/contacto compartidos por tabla, PDF y Excel y preservación de importes.
 - Enlaces locales y `git diff --check` correctos.
-- No se ejecutaron integraciones con escrituras contra la base configurada ni una prueba visual autenticada de la nueva entrega en producción.
+- Integración completa con MySQL 8.4 local desechable y navegador: filtros rápidos, numeración de 53 tasaciones, paginación, permisos, subida y cierre por zona.
+- Prueba autenticada real de producción correcta, sin escrituras de negocio; cuentas y sesiones de verificación eliminadas. Capturas privadas locales y de producción, excluidas de Git.
 
 ## Datos, recuperación e historial
 
-Las migraciones de registro simplificado, zonas y expediente constan como aplicadas en la evidencia del 15–16 de octubre. Esta corrección no requiere migración ni modifica datos de negocio. No repetir `--apply` para verificar o publicar documentación. Los conteos de documentos anteriores son históricos.
+Las migraciones de registro simplificado, zonas y expediente constan como aplicadas en la evidencia del 15–16 de octubre. Esta entrega no requiere migración ni modifica datos de negocio. Punto de respaldo: `restore-points/listado-archivos-20261018T015142Z/`, con fuente, bundle Git y manifiesto SHA-256. No repetir `--apply` para verificar o publicar documentación. Los conteos de documentos anteriores son históricos.
 
 Los respaldos, capturas y secretos son privados y no forman parte de Git. Antes de restaurar, comprobar existencia, hashes, identidad de base y cambios posteriores.
 

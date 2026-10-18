@@ -105,6 +105,7 @@ try {
   });
   await page.getByText('Minuta de compraventa 1',{exact:true}).waitFor();
   assert.equal(new URL(page.url()).searchParams.get('zona'),'Chimbote');assert.equal(new URL(page.url()).searchParams.get('tipo'),'minutas');
+  await page.getByRole('combobox',{name:'Zona',exact:true}).selectOption('*');await page.waitForFunction(()=>document.querySelector('h1').getBoundingClientRect().top>=64);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'output/file-list-local/mobile-all-zones.png',fullPage:true});
   assert.deepEqual(errors,[]);console.log('PASS navegador autenticado: filtros automáticos, navegación, vista PDF, categoría de carga, escritorio y móvil sin errores/desbordes.');
 }catch(error){if(page){fs.mkdirSync('output/file-list-local',{recursive:true});await page.screenshot({path:'output/file-list-local/failure.png',fullPage:true}).catch(()=>{});}console.error(logs.slice(-2500));throw error;}
 finally{if(browser)await browser.close();if(app)app.kill('SIGTERM');if(storage)await new Promise(resolve=>storage.close(resolve));await db.end();}

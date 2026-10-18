@@ -59,4 +59,13 @@ Para recuperar, verificar los SHA-256 contra `manifest.json`, extraer o clonar e
 
 ## Publicación
 
-La evidencia del commit, despliegue y comprobación autenticada se incorpora después de publicar. El script `tests/file-list.production.smoke.mjs` consulta datos reales sin editar inmuebles, expedientes ni archivos; solo crea cuentas y sesiones de verificación aisladas, eliminadas en `finally`.
+- Código publicado: `0b8b6815dfeb25655233a6ac70bcec363842d3f5`, sincronizado en `main` y `feat/registro-simplificado` mediante subida atómica.
+- Vercel informó a GitHub `Deployment has completed`, estado `success`, entorno **Production**, despliegue GitHub `7148658405`, fecha `2026-10-18T02:03:41Z`.
+- URL de versión: https://inmobiliaria-alfarov2-4uwzbw0ux-puma19.vercel.app.
+- Dominio comprobado con sesión autenticada: https://intranet.inmobiliariaalbertoalfaro.com.pe/listado-archivos.
+- `tests/file-list.production.smoke.mjs` pasó: siete zonas activas y un archivo coincidente en aquella consulta; cuatro tipos, filtros por cada zona, totales contrastados con MySQL, rechazo anónimo 401 y operador 403, apertura de archivo privado, menú actualizado, Liberar inmueble con zona obligatoria y navegador de escritorio/móvil sin errores ni desbordes. Estos conteos son históricos, no cifras actuales garantizadas.
+- No se editaron inmuebles, expedientes, archivos ni cierres para probar producción. Solo se crearon dos cuentas y sus sesiones temporales de verificación, eliminadas en `finally`; se comprobó que las cuentas ya no existían.
+- La revisión visual detectó que el encabezado fijo móvil tapaba parte del título sin zona seleccionada. Se añade espacio superior en esa vista y una comprobación explícita de que el título quede bajo la barra.
+- Capturas privadas: `output/file-list-production/desktop.png` y `mobile.png`, excluidas de Git y Vercel.
+- Se verificaron nuevamente los hashes del punto de respaldo. El contenedor MySQL local se detuvo y retiró, junto con las bases de datos ficticias.
+- Los commits posteriores de evidencia/documentación no cambian el código de aplicación publicado.

@@ -12,7 +12,7 @@ type Result = { archivos: FileRow[]; paginacion: { pagina: number; paginas: numb
 
 export default function FileListPage() {
   const params = useSearchParams(), pathname = usePathname();
-  const { zones, loading: zonesLoading, error: zonesError, reload } = useZoneWorkspace();
+  const { zones, zone: workspaceZone, loading: zonesLoading, error: zonesError, reload } = useZoneWorkspace();
   const zone = params.get('zona') || '*', type = params.get('tipo') || '*', page = params.get('pagina') || '1';
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(true), [error, setError] = useState('');
@@ -40,7 +40,7 @@ export default function FileListPage() {
     window.history.replaceState(null, '', `${pathname}?${next}`);
   }
   const missingZone = zone !== '*' && !zonesLoading && !zones.some(item => item.nombre === zone);
-  return <main className="min-h-screen p-4 sm:p-6 lg:p-8"><div className="mx-auto max-w-7xl">
+  return <main className={`min-h-screen p-4 sm:p-6 lg:p-8 ${workspaceZone ? "" : "pt-20 sm:pt-20 lg:pt-20 xl:pt-8"}`}><div className="mx-auto max-w-7xl">
     <PageHeading href="/listado-archivos" />
     <p className="mt-3 text-sm text-slate-600">Consulta los archivos cargados en Información de inmuebles. Los resultados se actualizan al cambiar los filtros.</p>
     <section aria-label="Filtros de archivos" className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:grid-cols-2">
