@@ -859,17 +859,17 @@ export default function CarteraPage() {
                     </div>
                   </div>
 
-<div className="rounded-2xl border border-slate-200 p-4">
-  <p className="text-sm font-semibold text-slate-700">
-    Material
-  </p>
+<div className="self-start rounded-2xl border border-slate-200 p-4">
+  <div className="flex flex-wrap items-center justify-between gap-2">
+    <p className="text-sm font-semibold text-slate-700">Material</p>
+    {seleccionado.actividades.tasacion.estado !== "aprobado" && (
+      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+        Disponible tras aprobar la tasación
+      </span>
+    )}
+  </div>
 
-  {seleccionado.actividades.tasacion.estado !==
-  "aprobado" ? (
-    <p className="mt-2 text-xs font-medium text-slate-500">
-      Aún no corresponde
-    </p>
-  ) : (
+  {seleccionado.actividades.tasacion.estado !== "aprobado" ? null : (
     <div className="mt-2 flex flex-wrap gap-1.5">
       <span
         className={`rounded-full px-2 py-1 text-xs font-semibold ${

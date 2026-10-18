@@ -8,15 +8,18 @@ La cabecera muestra cuántos requisitos están listos y una barra de progreso. L
 
 El pie aclara la diferencia entre preparar el material y confirmar una publicación. Completar los cuatro requisitos deja el material listo, pero el estado «Publicado» sigue dependiendo del registro de publicación existente. El enlace general para abrir la ficha solo aparece fuera de la ficha; así se evita repetir una acción redundante.
 
+En el panel de Cartera, el estado previo a la aprobación de tasación ahora se muestra como una etiqueta compacta «Disponible tras aprobar la tasación». El recuadro se ajusta a su contenido y deja de ocupar la altura del bloque de preparación que comparte la cuadrícula.
+
 ## Alcance y datos
 
 - No se añadieron requisitos ni se cambió la regla de preparación en `lib/publication-checklist.mjs`.
 - Los archivos continúan en sus apartados actuales; no se crean copias ni cargas nuevas.
 - El componente se usa en Información de inmuebles, Cartera y Tasaciones y textos pendientes; el ajuste conserva esos usos compartidos.
 - No se modificaron fechas, estados, publicaciones ni registros de inmuebles.
+- El estado previo a la aprobación conserva la misma condición; solo cambió su presentación en Cartera.
 
 ## Verificación y publicación
 
-ESLint del componente pasó y `tsc --noEmit` terminó sin errores. La compilación local de Next no llegó a compilar la aplicación: su proceso de lectura de `tsc --showConfig` recibió una salida vacía y terminó con «Could not parse output from TypeScript's --showConfig»; el comando directo de TypeScript sí devolvió configuración JSON válida. Vercel confirmó después el despliegue remoto del SHA publicado.
+ESLint de los componentes de publicación y Cartera pasó y `tsc --noEmit` terminó sin errores. La compilación local de Next no llegó a compilar la aplicación: su proceso de lectura de `tsc --showConfig` recibió una salida vacía y terminó con «Could not parse output from TypeScript's --showConfig»; el comando directo de TypeScript sí devolvió configuración JSON válida. Vercel confirmó después el despliegue remoto del SHA publicado.
 
 El cambio de código quedó en el commit `f4ca899f851029c01a08877236c8dd5ca8f439d6`; `main`, `feat/registro-simplificado` y sus ramas remotas quedaron en ese mismo SHA. GitHub recibió de Vercel el estado `success`, «Deployment has completed», a las `2026-10-18 21:38:44 UTC`. [Ver despliegue en Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/HTJM2LMYKpvM8kKokz5sNVRoVXp6).
