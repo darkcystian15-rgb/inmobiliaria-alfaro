@@ -4,9 +4,9 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
-- [Identificación y descripción de Cartera](docs/identificacion-cartera-2026-10-18.md): corrección posterior a la última publicación acreditada.
+- [Identificación y descripción de Cartera](docs/identificacion-cartera-2026-10-18.md): criterio uniforme para pantallas y reportes, publicado el 18 de octubre.
 
-Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, rama, código publicado, funcionalidad y límites de verificación. Última publicación acreditada: expediente del 16 de octubre; consulta en vivo del 18 de octubre bloqueada por HTTP 403.
+Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, rama, código publicado, funcionalidad y límites de verificación. Último código publicado: `8446fff`, con despliegue Production completado según los estados de Vercel en GitHub. Los límites de verificación están en la referencia consolidada.
 
 - [Expediente de vendedor, comprador e inmueble](docs/expediente-operacion-2026-10-16.md): nueva organización documental y estado del expediente; mismas reglas para venta y alquiler.
 - [Retirada de mapas y coordenadas](docs/retirada-mapas-2026-10-15.md): cambio posterior al estado consolidado; conserva ubicación referencial y zonas comerciales.

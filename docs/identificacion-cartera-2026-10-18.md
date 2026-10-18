@@ -14,4 +14,12 @@ Se uniformiza la identificación visible en Cartera (tarjetas, lista, galería y
 
 Prueba de regresión en `tests/property-panel-id.test.mjs`: ejemplo solicitado, formas de datos de listado/ficha, operación actual, número estable y ausencia de geografía/contacto al faltar dirección. Se verifica también la búsqueda por el ID visible y el código antiguo. Pasan los 25 archivos de pruebas unitarias y ESLint con cero advertencias. Se comprobó directamente que las celdas de ID/contacto compartidas por tabla, PDF y Excel usan la misma presentación y conservan los valores económicos. La compilación final de producción con Webpack y TypeScript terminó correctamente. Los intentos en sandbox fallaron al leer la salida de `tsc --showConfig`; la ejecución con permisos ampliados completó todas las etapas. No se ejecutó la integración de reportes contra la base configurada ni se verificó un recorrido autenticado en navegador.
 
-Esta corrección es posterior al despliegue acreditado `f76b31c`. Su presencia en GitHub no demuestra una publicación en Vercel; la consulta anterior de API devolvió HTTP 403. No se afirma verificación visual en producción.
+## Publicación
+
+- Código: `8446fff6a0c6281c9e3652e457f572c55409deff`, subido e integrado mediante fast-forward en `main` y `feat/registro-simplificado`. Ambas referencias remotas quedaron en ese commit tras la subida atómica.
+- GitHub recibió del proveedor Vercel un despliegue **Production**, ID GitHub `7148034965`, para ese SHA. Su estado es `success`, descripción `Deployment has completed`, registrado el 18 de octubre de 2026 a las 00:54:05 UTC.
+- Evidencia consultada: `GET /repos/darkcystian15-rgb/inmobiliaria-alfaro/deployments?sha=8446fff6a0c6281c9e3652e457f572c55409deff` y `GET /repos/darkcystian15-rgb/inmobiliaria-alfaro/deployments/7148034965/statuses` de GitHub.
+- URL de versión declarada por el despliegue: https://inmobiliaria-alfarov2-dswwxroao-puma19.vercel.app.
+- El dominio https://intranet.inmobiliariaalbertoalfaro.com.pe/login respondió HTTP 200 con el login de la intranet.
+- La URL de versión redirige al login de Vercel. No se pudo comparar sus recursos con los del dominio. La API directa de Vercel había devuelto HTTP 403: no se afirma una comprobación independiente de la asignación del alias ni una revisión visual autenticada de las pantallas en producción.
+- No se ejecutaron migraciones ni escrituras de negocio. Los commits posteriores de evidencia documental no cambian el código de aplicación.
