@@ -6,10 +6,10 @@ Leer primero este archivo y después [REPOSITORIO.md](../REPOSITORIO.md). Esta g
 
 - Repositorio: https://github.com/darkcystian15-rgb/inmobiliaria-alfaro.
 - Carpeta de aplicación: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`. El padre es otro repositorio; ejecutar Git dentro de esta carpeta.
-- Ramas `main` y `feat/registro-simplificado` iguales en local y en GitHub. Punto comprobado antes de añadir esta guía: `e4cfa41b52f5836a93b178407f760d2fcb77495a`, sin cambios pendientes.
-- Código operativo de la última entrega: `6885fdab4f47e31785374c174387221b1414cedd`. Los commits posteriores solo registran documentación, incluida esta guía; no vuelven a cargar datos.
+- Ramas `main` y `feat/registro-simplificado` sincronizadas en local y GitHub. Último código de interfaz comprobado: `0af8642c2381d0b91ebc40d6a33b921793e27615`; los commits posteriores solo actualizan evidencia y esta guía. Verificar el SHA remoto más reciente al retomar.
+- Código operativo de la última entrega de interfaz: `0af8642c2381d0b91ebc40d6a33b921793e27615`. Los commits posteriores solo registran documentación, incluida esta guía; no vuelven a cargar datos.
 - Vercel: `puma19/inmobiliaria-alfarov2`. Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
-- Para `e4cfa41`, Production GitHub `7155765057` y Preview `7155760668`, ambos `success`, «Deployment has completed». Production confirmado el `2026-10-18T14:15:09Z`; URL de versión https://inmobiliaria-alfarov2-21yzvg9ui-puma19.vercel.app.
+- Para `0af8642`, Production GitHub `7156330817` y Preview `7156335949`, ambos `success`, «Deployment has completed». Production confirmado el `2026-10-18T15:02:34Z`; URL de versión https://inmobiliaria-alfarov2-piwcrwn2w-puma19.vercel.app.
 - Esta guía genera un commit documental posterior. Al retomar, consultar las referencias y los estados de ese último SHA; no confundir el SHA del código operativo con el último commit documental ni usar cifras antiguas como inventario vivo.
 
 ## Cargas de Drive ya realizadas
@@ -42,6 +42,8 @@ En Nuevo Chimbote: 17 nombres completos y 51 sin operación explícita, 3 ventas
 - Carpetas solo con X: 19, 23, 28, 49, 53, 54, 57, 59, 82 y 86, excluidas. No aparecen 16 y 77.
 - Todas las carpetas sin numeración y la carpeta 0 de modelo permanecen excluidas. No incluirlas ni renumerarlas automáticamente.
 
+Los conteos de etapas al importar son históricos: el usuario ya registra avances. La comprobación del buscador encontró Chimbote con 37 visitas pendientes y seis tasaciones por registrar; no restaurar esos avances al estado inicial.
+
 No volver a proponer migrar toda la zona desde cero: los 68 ya están cargados. Si se autoriza completar casos pendientes, partir del estado vigente y agregar únicamente lo aprobado, sin borrar las fichas importadas ni sus avances posteriores.
 
 ## Catálogo, interfaz y validación
@@ -51,7 +53,7 @@ No volver a proponer migrar toda la zona desde cero: los 68 ya están cargados. 
 - Activos Módulo, Condominio, Colegio y Almacén, además de los tipos anteriores. [Catálogo y comprobación](tipos-inmueble.md).
 - Operación contiene Cartera de inmuebles. Seguimiento: Registrar inmueble, Liberar inmueble, Visitas pendientes, Registrar visitas, Tasaciones y textos pendientes, Registrar tasaciones. Opciones por zona y permisos vigentes. [Orden](orden-menu-seguimiento-2026-10-18.md).
 - Fichas de venta/alquiler, documentos en Inmueble, fotos en Visitas, seguimiento documental y cinco grupos específicos de alquiler. [Organización](ficha-ventas-alquileres-2026-10-18.md).
-- Las entregas registran 27 archivos unitarios correctos, ESLint sin advertencias, compilación Webpack/TypeScript completa, integraciones MySQL 8.4 desechables y comprobación autenticada de producción en escritorio/móvil sin errores JavaScript ni desbordes. En cada carga se verificaron posiciones, estado inicial y conservación de zonas ajenas.
+- La mejora de búsqueda registra 28 archivos unitarios correctos, ESLint sin advertencias y compilación final correcta, además de navegador local sobre las cuatro pantallas con datos ficticios. Producción se comprobó en Chimbote/Nuevo Chimbote: orden por posición y filtros en escritorio/móvil sin errores ni escrituras de negocio. Las cargas anteriores conservaron sus pruebas de integración y de protección de zonas ajenas.
 - Cuentas/sesiones temporales eliminadas y contenedores/volúmenes de prueba retirados. Las capturas privadas y comprobadores están en `output/`, excluido de Git y Vercel.
 
 ## Respaldos y comprobaciones para una nueva sesión

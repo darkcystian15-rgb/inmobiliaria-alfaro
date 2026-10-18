@@ -26,4 +26,14 @@ Respaldo privado de fuente e historial: `restore-points/busqueda-seguimiento-202
 - `tests/task-search.integration.mjs`: MySQL local desechable para autenticación y respuestas ficticias de las bandejas, desordenadas intencionadamente. Navegador sobre las cuatro páginas: posición 2 antes de 10, Campos y Meiggs, cinco grupos de la bandeja, sin coincidencias, limpieza, antigüedad, conservación de fecha/importe/borrador al filtrar, enlace a inmueble concreto, contador y ausencia de nuevas consultas al escribir. Escritorio y móvil de 375 px sin errores JavaScript ni desbordamiento horizontal. Las pruebas no registran visitas, tasaciones ni publicaciones.
 - Capturas locales privadas en `output/task-search-local/`, excluidas de Git y Vercel. Los datos ficticios solo existen en el MySQL desechable.
 
-La evidencia de publicación y comprobación real se registra al completar la entrega.
+## Publicación y comprobación real
+
+- Código publicado: `0af8642c2381d0b91ebc40d6a33b921793e27615`, subido atómicamente a `main` y `feat/registro-simplificado`.
+- Vercel informó a GitHub `success`, «Deployment has completed», Production `7156330817`, el `2026-10-18T15:02:34Z`.
+- URL de versión: https://inmobiliaria-alfarov2-piwcrwn2w-puma19.vercel.app.
+- Preview `7156335949` también completado: https://inmobiliaria-alfarov2-pvup0s1bx-puma19.vercel.app.
+- Comprobación autenticada real el `2026-10-18T15:08:15.116Z` en los cuatro apartados de Chimbote y Nuevo Chimbote. Se contrastó cada respuesta real con los contactos y el orden mostrado, Campos, Av. Meiggs, ausencia de coincidencias, limpieza y móvil sin desbordes ni errores JavaScript.
+- Datos consultados en esa comprobación: Chimbote tenía 37 visitas pendientes y seis tasaciones por registrar; Nuevo Chimbote tenía 68 visitas pendientes y ninguna tasación por registrar. Es actividad vigente del usuario, no una regresión de la carga: no se restablecieron etapas ni registros. Las fases de negociadas/material/listos/publicados vacías en esa consulta conservaron su estado; los cinco grupos con contenido se probaron con las respuestas ficticias locales descritas arriba.
+- Sin escrituras de negocio. El comprobador intercepta y bloquea cualquier intento de escritura en visitas/tasaciones/publicaciones. Cuentas y sesiones temporales eliminadas y ausencia comprobada.
+- Resultado y capturas privados: `output/task-search-production/` y `output/task-search-production-smoke.mjs`, excluidos de Git y Vercel. Contenedor y volumen MySQL desechables retirados.
+- Los commits posteriores de evidencia solo modifican Markdown; no cambian el código publicado ni los datos.

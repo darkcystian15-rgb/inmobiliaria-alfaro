@@ -22,7 +22,7 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Último código de aplicación publicado: `6885fdab4f47e31785374c174387221b1414cedd`.
+- Último código de aplicación publicado: `0af8642c2381d0b91ebc40d6a33b921793e27615`.
 - Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
 - Punto documental comprobado antes de la guía de nueva sesión: `e4cfa41`, Production `7155765057` y Preview `7155760668`, ambos `success`, Production del 18 de octubre a las 14:15:09 UTC. La guía se añade en un commit documental posterior; verificar ese último SHA al retomar.
 
@@ -32,13 +32,13 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 | --- | --- |
 | Proyecto | `puma19/inmobiliaria-alfarov2` |
 | Dominio de la intranet | https://intranet.inmobiliariaalbertoalfaro.com.pe |
-| Código | `6885fdab4f47e31785374c174387221b1414cedd` |
-| Despliegue GitHub | `7155739152`, entorno `Production` |
+| Código | `0af8642c2381d0b91ebc40d6a33b921793e27615` |
+| Despliegue GitHub | `7156330817`, entorno `Production` |
 | Estado informado por Vercel a GitHub | `success`, `Deployment has completed` |
-| Fecha del estado | 2026-10-18 14:12:59 UTC |
-| URL de versión | https://inmobiliaria-alfarov2-j9sh9i8wp-puma19.vercel.app |
+| Fecha del estado | 2026-10-18 15:02:34 UTC |
+| URL de versión | https://inmobiliaria-alfarov2-piwcrwn2w-puma19.vercel.app |
 
-Se consultaron las API de despliegues y estados de GitHub para el SHA indicado; Production y Preview completados. La entrega incorpora la carga manual ya ejecutada de [Nuevo Chimbote](docs/carga-nuevo-chimbote-2026-10-18.md): 68 altas, 3 ventas, 65 alquileres, 51 contactos con FTO, 68 visitas pendientes y 22 posiciones libres. Se verificaron en API y navegador de escritorio/móvil los datos y posiciones, la eliminación de las tres fichas anteriores y su archivo privado, y la conservación exacta de las 61 fichas de las otras seis zonas. Publicar no repite la carga. Los casos de Nuevo Chimbote excluidos siguen pendientes según su documento; no se incorporaron automáticamente.
+Se consultaron las API de despliegues y estados de GitHub para el SHA indicado; Production y Preview completados. La entrega vigente añade [búsqueda automática y orden numérico por posición](docs/busqueda-orden-seguimiento-2026-10-18.md) a Registrar visitas, Visitas pendientes, Registrar tasaciones y Tasaciones y textos pendientes. La prueba autenticada de las cuatro pantallas en Chimbote/Nuevo Chimbote comprobó orden, filtros y escritorio/móvil sin errores ni escrituras de negocio. Las [cargas anteriores](docs/carga-nuevo-chimbote-2026-10-18.md) y sus pendientes conservan su evidencia histórica; esta mejora no repite cargas, restaura etapas ni modifica inmuebles.
 
 ## Presentación uniforme vigente
 
