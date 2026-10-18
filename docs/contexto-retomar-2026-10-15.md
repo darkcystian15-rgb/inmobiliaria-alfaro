@@ -1,3 +1,5 @@
+> Para una sesión nueva, usar [Contexto vigente del 18 de octubre de 2026](contexto-retomar-2026-10-18.md). Este documento del día 15 es histórico y no describe las ramas, cargas ni pendientes actuales.
+
 > Estado consolidado: [Repositorio y estado de entrega](../REPOSITORIO.md). Este documento conserva la evidencia de su fecha; los estados de despliegue, conteos y pendientes históricos deben interpretarse según esa referencia.
 
 > Referencia de versión: consultar [Estado actual](estado-actual-2026-10-15.md) antes de usar los pendientes o instrucciones de este documento. Se conserva el contenido como registro de su revisión.

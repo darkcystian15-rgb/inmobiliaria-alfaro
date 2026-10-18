@@ -2,6 +2,8 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
+**Nueva sesión:** comenzar por [Contexto vigente para retomar](docs/contexto-retomar-2026-10-18.md), que resume las siete zonas, los casos aún no cargados y cómo comprobar las referencias y Production.
+
 Actualización de catálogo: [Tipos de inmueble](docs/tipos-inmueble.md), con Módulo, Condominio, Colegio y Almacén activos y comprobados en el selector. **Nuevo Chimbote ya tiene cargada su selección aprobada de 68 inmuebles**; quedan casos individuales pendientes, detallados en [su entrega](docs/carga-nuevo-chimbote-2026-10-18.md). La ampliación previa del catálogo no modificó fichas existentes.
 
 Reorganización posterior: [Fichas de venta y alquiler por operación y zona](docs/ficha-ventas-alquileres-2026-10-18.md).
@@ -20,6 +22,7 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
 - Último código de aplicación publicado: `6885fdab4f47e31785374c174387221b1414cedd`.
 - Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
+- Punto documental comprobado antes de la guía de nueva sesión: `e4cfa41`, Production `7155765057` y Preview `7155760668`, ambos `success`, Production del 18 de octubre a las 14:15:09 UTC. La guía se añade en un commit documental posterior; verificar ese último SHA al retomar.
 
 ## Producción
 
