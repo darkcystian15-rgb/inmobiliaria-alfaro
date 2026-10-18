@@ -10,7 +10,7 @@ Referencia consolidada actualizada el 18 de octubre de 2026.
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Último código de aplicación publicado: `0b8b6815dfeb25655233a6ac70bcec363842d3f5`.
+- Último código de aplicación publicado: `be75db0235bdaf4dc7c42a1dbc31cf6cde6a9295`.
 - Los commits posteriores de evidencia/documentación no alteran ese código. Consultar las ramas para el último commit documental.
 
 ## Producción
@@ -19,11 +19,11 @@ Referencia consolidada actualizada el 18 de octubre de 2026.
 | --- | --- |
 | Proyecto | `puma19/inmobiliaria-alfarov2` |
 | Dominio de la intranet | https://intranet.inmobiliariaalbertoalfaro.com.pe |
-| Código | `0b8b6815dfeb25655233a6ac70bcec363842d3f5` |
-| Despliegue GitHub | `7148658405`, entorno `Production` |
+| Código | `be75db0235bdaf4dc7c42a1dbc31cf6cde6a9295` |
+| Despliegue GitHub | `7148704744`, entorno `Production` |
 | Estado informado por Vercel a GitHub | `success`, `Deployment has completed` |
-| Fecha del estado | 2026-10-18 02:03:41 UTC |
-| URL de versión | https://inmobiliaria-alfarov2-4uwzbw0ux-puma19.vercel.app |
+| Fecha del estado | 2026-10-18 02:08:59 UTC |
+| URL de versión | https://inmobiliaria-alfarov2-8fmhtptt8-puma19.vercel.app |
 
 Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. La prueba autenticada del dominio confirmó la nueva pantalla, filtros por zonas activas y cuatro tipos, apertura privada de archivo y navegación de escritorio/móvil. La API directa de Vercel había respondido HTTP 403; la evidencia de publicación procede del estado Production informado a GitHub y de la comprobación real de la intranet. Detalle: [Listado de archivos](docs/listado-archivos-2026-10-18.md).
 
