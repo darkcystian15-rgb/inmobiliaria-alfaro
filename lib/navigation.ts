@@ -16,13 +16,13 @@ export const menuGroups = [
       { href: "/registrar-visitas", label: "Registrar visitas", icon: "visit" },
       { href: "/tasaciones-textos-pendientes", label: "Tasaciones y textos pendientes", icon: "clipboard" },
       { href: "/registrar-tasaciones", label: "Registrar tasaciones", icon: "valuation" },
+      { href: "/liberar-inmuebles", label: "Liberar inmueble", icon: "release" },
     ],
   },
   {
-    label: "Cierre e información",
+    label: "Estadística",
     items: [
-      { href: "/alquileres", label: "Contratos de alquiler", icon: "clipboard" },
-      { href: "/liberar-inmuebles", label: "Liberar inmueble", icon: "release" },
+      { href: "/listado-archivos", label: "Listado de archivos", icon: "clipboard" },
       { href: "/reportes", label: "Reportes", icon: "report" },
     ],
   },

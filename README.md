@@ -4,6 +4,8 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
+- [Listado de archivos y navegación por zonas](docs/listado-archivos-2026-10-18.md): filtros automáticos, tipos documentales, Estadística y Liberar inmueble en Seguimiento; incluye respaldo y verificación de entrega.
+
 - [Identificación y descripción de Cartera](docs/identificacion-cartera-2026-10-18.md): criterio uniforme para pantallas y reportes, publicado el 18 de octubre.
 
 Consultar primero [Repositorio y estado de entrega](REPOSITORIO.md): repositorio, rama, código publicado, funcionalidad y límites de verificación. Último código publicado: `8446fff`, con despliegue Production completado según los estados de Vercel en GitHub. Los límites de verificación están en la referencia consolidada.

@@ -1,4 +1,4 @@
-import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
+import { propertyZoneName, zoneCondition, selectedZone } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { rentalResult } from "@/lib/rental-result.mjs";
 import { saleResult } from "@/lib/sale-result.mjs";
@@ -31,6 +31,7 @@ export async function GET(request: Request) {
   try {
     const auth = await authorizeApi();
     if (auth.response) return auth.response;
+    if (!selectedZone(request)) return NextResponse.json({ error: "Selecciona una zona de cartera para liberar inmuebles." }, { status: 400 });
     const rows = await db
       .select({
         inmuebleId: inmInmuebles.id,
@@ -114,6 +115,7 @@ export async function POST(request: Request) {
   try {
     const auth = await authorizeApi(request);
     if (auth.response) return auth.response;
+    if (!selectedZone(request)) return NextResponse.json({ error: "Selecciona una zona de cartera para liberar inmuebles." }, { status: 400 });
     let body;
     try { body = await request.json(); } catch { return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 }); }
     if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 });

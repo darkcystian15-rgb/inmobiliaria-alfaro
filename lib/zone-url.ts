@@ -1,4 +1,4 @@
-const contextual = new Set(["/registrar-inmueble", "/visitas-pendientes", "/registrar-visitas", "/registrar-tasaciones", "/tasaciones-textos-pendientes", "/liberar-inmuebles", "/alquileres", "/reportes", "/datos-inmuebles"]);
+const contextual = new Set(["/registrar-inmueble", "/visitas-pendientes", "/registrar-visitas", "/registrar-tasaciones", "/tasaciones-textos-pendientes", "/liberar-inmuebles", "/alquileres", "/reportes", "/listado-archivos", "/datos-inmuebles"]);
 export function zoneHref(href: string, zone?: string | null) {
   if (!zone || zone === "*" || !href.startsWith("/")) return href;
   const url = new URL(href, "https://workspace.local");

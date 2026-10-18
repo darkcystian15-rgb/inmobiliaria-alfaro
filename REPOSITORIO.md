@@ -2,6 +2,8 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
+Nueva entrega: [Listado de archivos y navegación por zonas](docs/listado-archivos-2026-10-18.md). La publicación y sus comprobaciones se registran en ese documento.
+
 ## Repositorio
 
 - GitHub: https://github.com/darkcystian15-rgb/inmobiliaria-alfaro
@@ -49,7 +51,7 @@ Se consultaron las API de despliegues y estados de GitHub para el SHA indicado. 
 
 ## Validación
 
-- 25 archivos de pruebas unitarias correctos.
+- 26 archivos de pruebas unitarias correctos tras añadir Listado de archivos.
 - ESLint sin errores ni advertencias.
 - Compilación final de producción con Webpack y TypeScript correcta fuera del sandbox.
 - Comprobación directa de ID/contacto compartidos por tabla, PDF y Excel y preservación de importes.
