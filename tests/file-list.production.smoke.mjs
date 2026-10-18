@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import mysql from 'mysql2/promise';
 import { randomBytes } from 'node:crypto';
 import { hashPassword, hashSessionToken } from '../lib/password.mjs';
+import { propertyPanelContactId } from '../lib/property-panel-id.mjs';
 import { fileListType, fileListTypes } from '../lib/file-list.mjs';
 process.loadEnvFile('.env.local');
 const origin='https://intranet.inmobiliariaalbertoalfaro.com.pe';
@@ -19,9 +20,9 @@ try{
   const [admin,operator]=tokens;
   assert.equal((await request('/api/listado-archivos')).status,401);
   assert.equal((await request('/api/listado-archivos',operator)).status,403);
-  const [files]=await db.query("SELECT a.id,a.tipo_documento,i.operacion,z.nombre zona FROM inm_archivos a JOIN inm_inmuebles i ON i.id=a.inmueble_id JOIN inm_zonas z ON z.id=i.zona_id WHERE z.activo=1 AND a.almacenamiento='hosting' AND a.ruta_almacenamiento IS NOT NULL AND a.ruta_almacenamiento<>''");
+  const [files]=await db.query("SELECT a.id,a.tipo_documento,i.operacion,i.codigo,i.tipo,i.direccion,i.nombre_contacto,z.nombre zona FROM inm_archivos a JOIN inm_inmuebles i ON i.id=a.inmueble_id JOIN inm_zonas z ON z.id=i.zona_id WHERE z.activo=1 AND a.almacenamiento='hosting' AND a.ruta_almacenamiento IS NOT NULL AND a.ruta_almacenamiento<>''");
   const expected=files.filter(file=>fileListType(file.tipo_documento,file.operacion));
-  let response=await request('/api/listado-archivos',admin);assert.equal(response.status,200);let data=await response.json();assert.equal(data.paginacion.total,expected.length);
+  let response=await request('/api/listado-archivos',admin);assert.equal(response.status,200);let data=await response.json();assert.equal(data.paginacion.total,expected.length);for(const row of data.archivos)assert.equal(row.inmueble,propertyPanelContactId(expected.find(file=>Number(file.id)===Number(row.id))));
   for(const type of fileListTypes){response=await request('/api/listado-archivos?tipo='+type.key,admin);assert.equal(response.status,200);const result=await response.json();assert.equal(result.paginacion.total,expected.filter(file=>fileListType(file.tipo_documento,file.operacion).key===type.key).length);}
   const zonesResponse=await request('/api/zonas',admin),{zonas}=await zonesResponse.json();
   for(const zone of zonas){response=await request('/api/listado-archivos?'+new URLSearchParams({zona:zone.nombre}),admin);assert.equal(response.status,200);const result=await response.json();assert.equal(result.paginacion.total,expected.filter(file=>file.zona===zone.nombre).length);assert.ok(result.archivos.every(file=>file.zona===zone.nombre));}
@@ -33,6 +34,8 @@ try{
   const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'aa_session',value:admin,url:origin}]);const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(origin+'/listado-archivos');await page.getByRole('heading',{name:'Listado de archivos',exact:true}).waitFor({timeout:60000});await page.getByText(`${expected.length} archivo(s)`,{exact:true}).waitFor();
   assert.equal(await page.getByRole('button',{name:'Buscar',exact:true}).count(),0);
+  if(data.archivos.length)assert.equal((await page.locator('tbody tr').first().locator('td').nth(1).innerText()).trim(),data.archivos[0].tipo);
+  if(zonas.length){await page.getByRole('combobox',{name:'Zona',exact:true}).selectOption(zonas[0].nombre);const count=expected.filter(file=>file.zona===zonas[0].nombre).length;await page.getByText(`${count} archivo(s)`,{exact:true}).waitFor();assert.equal(await page.locator('tbody').getByText(zonas[0].nombre,{exact:true}).count(),0);await page.getByRole('combobox',{name:'Zona',exact:true}).selectOption('*');await page.getByText(`${expected.length} archivo(s)`,{exact:true}).waitFor();}
   assert.equal(await page.locator('nav').getByRole('link',{name:'Contratos de alquiler',exact:true}).count(),0);
   assert.equal(await page.getByText('Estadística',{exact:true}).count()>0,true);
   for(const type of fileListTypes){await page.getByRole('combobox',{name:'Tipo de archivo',exact:true}).selectOption(type.key);const count=expected.filter(file=>fileListType(file.tipo_documento,file.operacion).key===type.key).length;await page.getByText(`${count} archivo(s)`,{exact:true}).waitFor();}
@@ -41,8 +44,15 @@ try{
   fs.mkdirSync('output/file-list-production',{recursive:true,mode:0o700});await page.screenshot({path:'output/file-list-production/desktop.png',fullPage:true});
   await page.setViewportSize({width:375,height:850});await page.waitForFunction(()=>document.getElementById('navigation-panel').getBoundingClientRect().right<=1);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.ok(await page.locator('h1').evaluate(element=>element.getBoundingClientRect().top)>=64,'Mobile title is below the fixed header');await page.screenshot({path:'output/file-list-production/mobile.png',fullPage:true});
   if(zonas.length){await page.goto(origin+'/liberar-inmuebles?'+new URLSearchParams({zona:zonas[0].nombre}));await page.getByRole('heading',{name:'Liberar inmueble',exact:true}).waitFor();assert.equal(await page.getByText('Seguimiento',{exact:true}).count()>0,true);}
+  if(zonas.length){
+    const response=await request('/api/liberaciones?'+new URLSearchParams({zona:zonas[0].nombre}),admin), scoped=await response.json();
+    if(scoped.items.length){
+      const item=scoped.items[0];await page.goto(origin+'/cartera?'+new URLSearchParams({zona:zonas[0].nombre}));await page.getByRole('button',{name:`Ver detalle de ${item.propietario || 'Sin contacto'}, posición ${Number(item.posicion)}`,exact:true}).click();await page.getByText('ID del inmueble',{exact:true}).waitFor();await page.getByText(propertyPanelContactId(item),{exact:true}).waitFor();assert.equal(await page.getByText('Contacto',{exact:true}).count(),0);
+      await page.goto(origin+'/liberar-inmuebles?'+new URLSearchParams({zona:zonas[0].nombre}));await page.locator('summary').first().click();await page.getByRole('radio',{name:/Eliminar definitivamente/}).check();await page.getByRole('combobox',{name:/Motivo de eliminación/}).selectOption('desistimiento');await page.getByRole('button',{name:'Revisar eliminación'}).click();await page.getByRole('dialog',{name:'Eliminar inmueble',exact:true}).waitFor();await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+    }
+  }
   await page.goto(origin+'/liberar-inmuebles');await page.getByRole('heading',{name:'Selecciona una zona para trabajar'}).waitFor();
-  assert.deepEqual(errors,[]);console.log(`PASS producción: ${zonas.length} zonas activas, ${expected.length} archivos coincidentes; cuatro filtros, permisos, consulta privada, menú, zona obligatoria y navegador escritorio/móvil. Sin escrituras de negocio.`);
+  assert.deepEqual(errors,[]);console.log(`PASS producción: ${zonas.length} zonas activas, ${expected.length} archivos coincidentes; cuatro filtros, permisos, consulta privada, menú, zona obligatoria y navegador escritorio/móvil. ID con contacto, textos sin duplicar y cancelación del primer diálogo de eliminación. Sin escrituras de negocio.`);
 }finally{
   if(browser)await browser.close();
   for(const id of users){await db.query('DELETE FROM inm_sesiones WHERE usuario_id=?',[id]);await db.query('DELETE FROM inm_security_audit WHERE actor_id=?',[id]);await db.query('DELETE FROM inm_usuarios WHERE id=?',[id]);}

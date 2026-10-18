@@ -12,19 +12,14 @@ import {
   inmLiberaciones,
   inmPosiciones,
   inmTimeline,
+  inmEliminacionesPendientes,
 } from "@/db/schema";
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-const MOTIVOS = new Set([
-  "vendido",
-  "alquilado",
-  "cancelacion_propietario",
-  "cancelacion_externa",
-  "otro",
-]);
+const MOTIVOS = new Set(["vendido", "alquilado"]);
 
 
 export async function GET(request: Request) {
@@ -73,8 +68,10 @@ export async function GET(request: Request) {
       .where(and(eq(inmInmuebles.estado, "activo"),zoneCondition(request)))
      .orderBy(inmPosiciones.numero);
 
+    const pendientes = await db.select({ id: inmEliminacionesPendientes.id, creado: inmEliminacionesPendientes.creado }).from(inmEliminacionesPendientes).where(and(eq(inmEliminacionesPendientes.estado, 'archivos'), sql`${inmEliminacionesPendientes.zonaId}=(SELECT id FROM inm_zonas WHERE nombre=${selectedZone(request)} AND activo=1)`));
     return NextResponse.json({
       ok: true,
+      eliminacionesPendientes: pendientes,
       items: rows.map((row) => ({
         inmuebleId: row.inmuebleId,
         codigo: row.codigo,
@@ -142,7 +139,7 @@ export async function POST(request: Request) {
         {
           ok: false,
           error:
-            "El motivo de liberación no es válido.",
+            "Para conservar en histórico, selecciona vendido o alquilado. Para retirar por otro motivo utiliza Eliminar inmueble.",
         },
         { status: 400 }
       );

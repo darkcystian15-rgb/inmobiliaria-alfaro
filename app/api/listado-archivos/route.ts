@@ -4,7 +4,7 @@ import { authorizeApi } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { inmArchivos, inmInmuebles, inmZonas } from '@/db/schema';
 import { fileListFilters, fileListTypes } from '@/lib/file-list.mjs';
-import { propertyPanelId } from '@/lib/property-panel-id.mjs';
+import { propertyPanelContactId } from '@/lib/property-panel-id.mjs';
 
 export async function GET(request: Request) {
   const auth = await authorizeApi();
@@ -35,6 +35,7 @@ export async function GET(request: Request) {
     const rows = await db.select({
       id: inmArchivos.id, inmuebleId: inmInmuebles.id, codigo: inmInmuebles.codigo,
       operacion: inmInmuebles.operacion, tipo: inmInmuebles.tipo, direccion: inmInmuebles.direccion,
+      nombreContacto: inmInmuebles.nombreContacto,
       nombre: inmArchivos.nombre, tipoMime: inmArchivos.tipoMime, zona: inmZonas.nombre,
       grupo: categoryGroup,
       numero: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${inmInmuebles.id}, ${categoryGroup} ORDER BY ${inmArchivos.id})`,
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
     const total = Number(count.total);
     return NextResponse.json({
       archivos: rows.map(row => ({
-        id: row.id, inmuebleId: row.inmuebleId, inmueble: propertyPanelId(row), zona: row.zona,
+        id: row.id, inmuebleId: row.inmuebleId, inmueble: propertyPanelContactId(row), zona: row.zona,
         nombre: row.nombre, tipoMime: row.tipoMime, almacenamiento: 'hosting',
         tipo: `${fileListTypes.find(type => type.key === row.grupo)!.singular} ${Number(row.numero)}`,
         enlace: `/api/inmuebles/${row.inmuebleId}/archivos/${row.id}`,

@@ -2,6 +2,8 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
+Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md). Consultar su evidencia de publicación y respaldo.
+
 Última entrega: [Listado de archivos y navegación por zonas](docs/listado-archivos-2026-10-18.md), publicada y comprobada con sesión autenticada en producción. Incluye punto de respaldo privado.
 
 ## Repositorio

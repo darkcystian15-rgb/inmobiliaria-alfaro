@@ -12,7 +12,7 @@ import OperationSelect from "@/app/components/OperationSelect";
 import { priceLabel } from "@/lib/operation.mjs";
 
 import PropertyTypeSelect from "@/app/components/PropertyTypeSelect";
-import { propertyPanelId } from "@/lib/property-panel-id.mjs";
+import { propertyPanelId, propertyPanelContactId } from "@/lib/property-panel-id.mjs";
 
 import PageHeading from "@/app/components/PageHeading";
 import { ALL_ZONES, inZone } from "@/lib/property-zones";
@@ -804,24 +804,17 @@ export default function CarteraPage() {
                 if (updated) setSeleccionado(updated);
               }} />
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="mt-6 grid gap-3">
                 <div className="rounded-2xl bg-background p-4">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     ID del inmueble
                   </p>
                   <p className="mt-1 break-words font-mono text-sm font-semibold text-slate-700">
-                    {propertyPanelId(seleccionado)}
+                    {propertyPanelContactId(seleccionado)}
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Contacto
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-slate-700">
-                    {seleccionado.propietario}
-                  </p>
-                </div>
+
               </div>
 
               <div className="mt-4">

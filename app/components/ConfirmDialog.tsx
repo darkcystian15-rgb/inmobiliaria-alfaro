@@ -11,7 +11,7 @@ export default function ConfirmDialog({ title, children, confirmLabel, busy = fa
     element?.showModal();
     return () => element?.close();
   }, []);
-  return <dialog ref={dialog} aria-label={title} onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }} className="fixed inset-0 m-auto w-[calc(100%_-_2rem)] max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl backdrop:bg-slate-950/40">
+  return <dialog ref={dialog} aria-label={title} onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }} className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-md overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl backdrop:bg-slate-950/40">
     <h2 className="text-lg font-bold text-slate-900">{title}</h2>
     <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">{children}</div>
     <div className="mt-6 flex justify-end gap-3">

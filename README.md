@@ -4,6 +4,8 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
+- [ID con contacto y dos formas de liberar](docs/liberacion-definitiva-2026-10-18.md): cierre a Histórico o eliminación completa con dos confirmaciones; incluye cambio aditivo y punto de restauración de fuente, datos y archivos.
+
 - [Listado de archivos y navegación por zonas](docs/listado-archivos-2026-10-18.md): filtros automáticos, tipos documentales, Estadística y Liberar inmueble en Seguimiento; incluye respaldo y verificación de entrega.
 
 - [Identificación y descripción de Cartera](docs/identificacion-cartera-2026-10-18.md): criterio uniforme para pantallas y reportes, publicado el 18 de octubre.

@@ -316,3 +316,18 @@ export const inmUbicaciones = mysqlTable('inm_ubicaciones', {
  padreId: bigint('padre_id',{mode:'number',unsigned:true}),
  activo: boolean('activo').notNull().default(true),
 },t=>({parentIdx:index('idx_ubicaciones_padre').on(t.padreId),nameIdx:uniqueIndex('uq_ubicaciones_nombre').on(t.nivel,t.padreId,t.nombre)}));
+
+// Temporary confirmation/cleanup jobs. No FK: the property is physically deleted first.
+export const inmEliminacionesPendientes = mysqlTable('inm_eliminaciones_pendientes', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  inmuebleId: bigint('inmueble_id', { mode: 'number', unsigned: true }).notNull(),
+  zonaId: int('zona_id', { unsigned: true }).notNull(),
+  usuarioId: bigint('usuario_id', { mode: 'number', unsigned: true }).notNull(),
+  estado: varchar('estado', { length: 20 }).notNull(),
+  motivo: varchar('motivo', { length: 40 }).notNull().default(''),
+  detalle: varchar('detalle', { length: 500 }).notNull().default(''),
+  huella: varchar('huella', { length: 64 }).notNull(),
+  rutas: mediumtext('rutas').notNull(),
+  expira: datetime('expira', { mode: 'date' }).notNull(),
+  creado: timestamp('creado', { mode: 'date' }).defaultNow().notNull(),
+}, table => ({ zonaIdx: index('idx_eliminaciones_zona').on(table.zonaId, table.estado) }));

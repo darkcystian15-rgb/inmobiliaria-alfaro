@@ -1,3 +1,4 @@
+import { pruneDraft } from '@/lib/property-deletion-input.mjs';
 import { stripCoordinates } from "@/lib/retired-coordinates.mjs";
 import { NextResponse } from 'next/server';
 import { sql } from 'drizzle-orm';
@@ -15,7 +16,19 @@ export async function PUT(request:Request){
  let contenido;try{const text=await request.text();if(text.length>100000)throw new Error();const body=JSON.parse(text);contenido=stripCoordinates(body.contenido);if(contenido!==null&&(typeof contenido!=='object'||Array.isArray(contenido)||JSON.stringify(contenido).length>90000))throw new Error();}catch{return NextResponse.json({error:'Borrador no válido o demasiado grande.'},{status:400});}
  try{
   if(contenido===null)await db.execute(sql`DELETE FROM inm_borradores WHERE usuario_id=${auth.user.id} AND clave=${clave}`);
-  else await db.execute(sql`INSERT INTO inm_borradores(usuario_id,clave,contenido) VALUES(${auth.user.id},${clave},${JSON.stringify(contenido)}) ON DUPLICATE KEY UPDATE contenido=VALUES(contenido), actualizado=CURRENT_TIMESTAMP`);
+  else {
+    const result = await db.transaction(async tx => {
+      const [rows] = await tx.execute(sql`SELECT id FROM inm_inmuebles FOR SHARE`);
+      const allowed = new Set((rows as unknown as {id:number}[]).map(row => Number(row.id)));
+      const propertyId = clave.match(/^ficha:(?:simple-)?(\d+)$/)?.[1];
+      if (propertyId && !allowed.has(Number(propertyId))) return false;
+      if (clave.startsWith('ficha:') && contenido?.form?.id != null && !allowed.has(Number(contenido.form.id))) return false;
+      const safe = pruneDraft(clave, contenido, allowed);
+      await tx.execute(sql`INSERT INTO inm_borradores(usuario_id,clave,contenido) VALUES(${auth.user.id},${clave},${JSON.stringify(safe)}) ON DUPLICATE KEY UPDATE contenido=VALUES(contenido), actualizado=CURRENT_TIMESTAMP`);
+      return true;
+    });
+    if (!result) return NextResponse.json({error:'El inmueble ya no existe. No se guardó el borrador.'},{status:404});
+  }
   return NextResponse.json({ok:true});
  }catch{return NextResponse.json({error:'No se pudo guardar el borrador.'},{status:500});}
 }
