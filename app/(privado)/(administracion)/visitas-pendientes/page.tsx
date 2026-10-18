@@ -1,7 +1,9 @@
 "use client";
 import { zoneUrl } from "@/lib/zone-url";
 
-import { propertyPanelId } from "@/lib/property-panel-id.mjs";
+import PropertyTaskSearch from "@/app/components/PropertyTaskSearch";
+import { filterTaskProperties } from "@/lib/property-task-list.mjs";
+
 import PropertyListIdentity from "@/app/components/PropertyListIdentity";
 
 import ActiveFilters from "@/app/components/ActiveFilters";
@@ -78,12 +80,9 @@ function VisitInbox() {
   }
 
   const filtrados = useMemo(() => {
-    const texto = busqueda.toLowerCase().trim();
-    return itemsZona.filter((item) => {
-      const coincideTexto = !texto || propertyPanelId(item).includes(texto) || item.codigo.toLowerCase().includes(texto) || item.nombre.toLowerCase().includes(texto) || item.ubicacion.toLowerCase().includes(texto) || item.posicion.includes(texto) || item.propietario.toLowerCase().includes(texto);
-      const coincideFiltro = filtro === "Todas" || (filtro === "Hoy" && item.dias === 0) || (filtro === "1-2 días" && item.dias >= 1 && item.dias <= 2) || (filtro === "Más de 2 días" && item.dias > 2);
-      return coincideTexto && coincideFiltro;
-    });
+    return filterTaskProperties(itemsZona, busqueda).filter(item =>
+      filtro === "Todas" || (filtro === "Hoy" && item.dias === 0) || (filtro === "1-2 días" && item.dias >= 1 && item.dias <= 2) || (filtro === "Más de 2 días" && item.dias > 2)
+    );
   }, [busqueda, filtro, itemsZona]);
 
   return (
@@ -94,7 +93,7 @@ function VisitInbox() {
           <Link href="/registrar-visitas" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#c80000] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#a90000]">Registrar visita realizada →</Link>
         </header>
 
-        <section className="mt-6 aa-summary p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Primero atiende las visitas con mayor antigüedad.</p></div><span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900">{cargando ? "…" : vencidasZona} {vencidasZona === 1 ? "requiere" : "requieren"} atención</span></div></section>
+        <section className="mt-6 aa-summary p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Bandeja de trabajo</p><p className="mt-1 text-sm font-semibold">Inmuebles ordenados por posición. Puedes filtrar por contacto, dirección o antigüedad.</p></div><span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900">{cargando ? "…" : vencidasZona} {vencidasZona === 1 ? "requiere" : "requieren"} atención</span></div></section>
 
         {error && <Feedback tone="error" className="mt-6">{error}<button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button></Feedback>}
         <section className="mt-7 grid gap-4 sm:grid-cols-3">
@@ -128,7 +127,7 @@ function VisitInbox() {
           {zona !== ALL_ZONES && <button type="button" onClick={() => abrirZona(ALL_ZONES)} className="ml-auto min-h-11 text-sm font-semibold text-[#c80000]">Ver listado general →</button>}
         </nav>
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
-          <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between"><div><h2 className="font-bold text-slate-900">{zona === ALL_ZONES ? "Visitas pendientes" : `Visitas pendientes · ${zona}`}</h2><p className="mt-1 text-xs text-slate-500">{filtrados.length} resultado{filtrados.length === 1 ? "" : "s"}</p></div><div className="flex flex-col gap-2 sm:flex-row"><input aria-label="Buscar ubicación, contacto o posición" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar ubicación, contacto, posición..." className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-slate-400 focus:bg-white sm:w-64" /><select aria-label="Filtrar antigüedad de visitas" value={filtro} onChange={(e) => setFiltro(e.target.value)} className="h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none"><option>Todas</option><option>Hoy</option><option>1-2 días</option><option>Más de 2 días</option></select></div></div>
+          <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between"><div><h2 className="font-bold text-slate-900">{zona === ALL_ZONES ? "Visitas pendientes" : `Visitas pendientes · ${zona}`}</h2><p className="mt-1 text-xs text-slate-500">{filtrados.length} resultado{filtrados.length === 1 ? "" : "s"}</p></div><div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:w-2/3"><PropertyTaskSearch value={busqueda} onChange={setBusqueda} count={filtrados.length} total={itemsZona.length} disabled={cargando} /><select aria-label="Filtrar antigüedad de visitas" value={filtro} onChange={(e) => setFiltro(e.target.value)} className="h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none"><option>Todas</option><option>Hoy</option><option>1-2 días</option><option>Más de 2 días</option></select></div></div>
           <ActiveFilters labels={[busqueda.trim() && `Búsqueda: ${busqueda}`, filtro !== "Todas" && `Antigüedad: ${filtro}`]} onClear={() => { setBusqueda(""); setFiltro("Todas"); }} />
           {cargando ? <LoadingCards label="Cargando visitas pendientes…" /> : filtrados.length > 0 ? <div className="divide-y divide-slate-100">{filtrados.map((item) => <div key={item.id} className="flex flex-col gap-4 p-5 transition hover:bg-slate-50 hover:border-slate-300/70 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><PropertyListIdentity code={item.codigo} position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-sm font-bold text-amber-700" /><div className="ml-15">{item.fechaLimite && <p className="mt-2 text-xs text-slate-600">Fecha límite: {item.fechaLimite}</p>}<p className={item.dias > 2 ? "mt-2 text-xs font-semibold text-amber-600" : "mt-2 text-xs font-semibold text-amber-600"}>{item.dias === 0 ? "Registrado hoy" : "Pendiente desde hace " + item.dias + " día" + (item.dias === 1 ? "" : "s")}</p></div></div><Link href={`/registrar-visitas?inmueble=${item.id}`} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">Registrar visita</Link></div>)}</div> : <div className="px-5 py-12 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">✓</div><p className="mt-3 font-semibold text-slate-900">{error?"No se pudo consultar la bandeja":itemsZona.length?"No hay resultados con estos filtros":`No hay visitas pendientes${zona !== ALL_ZONES ? ` en ${zona}` : ""}`}</p><p className="mt-1 text-sm text-slate-500">{error?"Vuelve a cargar la pantalla para consultar las visitas.":itemsZona.length?"Prueba otra búsqueda o cambia el filtro.":"La bandeja está sincronizada con la base de datos."}</p></div>}
         </section>

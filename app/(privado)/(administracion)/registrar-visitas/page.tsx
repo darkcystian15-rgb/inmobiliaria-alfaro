@@ -1,5 +1,8 @@
 "use client";
 import { zoneUrl } from "@/lib/zone-url";
+import PropertyTaskSearch from "@/app/components/PropertyTaskSearch";
+import { filterTaskProperties } from "@/lib/property-task-list.mjs";
+
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -18,7 +21,7 @@ import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 import { ContextLink as Link } from "@/app/components/NavigationReturn";
 import { todayInPeru } from "@/lib/calendar.mjs";
 import PhotoUploader, { type UploadedPhoto } from "@/app/components/PhotoUploader";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Visita = {
   id: number;
@@ -35,6 +38,7 @@ type Visita = {
 
 export default function Page() {
   const [items, setItems] = useState<Visita[]>([]);
+  const [busqueda, setBusqueda] = useState("");
   const [fechas, setFechas] = useState<Record<number, string>>({});
   const [observaciones, setObservaciones] = useState<Record<number, string>>({});
   const [pendienteEvidencia, setPendienteEvidencia] = useState<Record<number, boolean>>({});
@@ -48,6 +52,7 @@ export default function Page() {
   const [errorCarga, setErrorCarga] = useState(false);
 
   const hoy = todayInPeru();
+  const filtrados = useMemo(() => filterTaskProperties(items, busqueda), [items, busqueda]);
 
   async function cargar() {
     setCargando(true);
@@ -295,11 +300,14 @@ export default function Page() {
             </span>
           </div>
 
+          <div className="aa-card mb-5 p-4"><PropertyTaskSearch value={busqueda} onChange={setBusqueda} count={filtrados.length} total={items.length} disabled={cargando} /></div>
           {cargando ? (
             <LoadingCards label="Cargando visitas pendientes…" />
+          ) : items.length > 0 && filtrados.length === 0 ? (
+            <div className="aa-card p-6 text-sm text-slate-600">No hay inmuebles que coincidan con la búsqueda. Prueba otro contacto, dirección, ID o posición.</div>
           ) : items.length > 0 ? (
             <div className="space-y-5">
-              {items.map((item) => (
+              {filtrados.map((item) => (
                 <article
                   key={item.id}
                   className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm"

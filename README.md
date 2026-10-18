@@ -4,6 +4,8 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
+- [Búsqueda automática y orden por posición](docs/busqueda-orden-seguimiento-2026-10-18.md): Registrar visitas, Visitas pendientes, Registrar tasaciones y Tasaciones y textos pendientes, con filtro por contacto/dirección al escribir.
+
 **Para retomar una sesión:** leer [Contexto vigente del 18 de octubre](docs/contexto-retomar-2026-10-18.md): cargas realizadas, casos pendientes, respaldos y comprobación de sincronización.
 
 - [Carga seleccionada de Nuevo Chimbote](docs/carga-nuevo-chimbote-2026-10-18.md): 68 inmuebles, 3 ventas y 65 alquileres, con 68 visitas pendientes. Las otras seis zonas se conservan. El documento detalla los casos que siguen pendientes.

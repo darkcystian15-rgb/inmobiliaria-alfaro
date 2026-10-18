@@ -1,6 +1,9 @@
 "use client";
 
 import { propertyPanelId } from "@/lib/property-panel-id.mjs";
+import PropertyTaskSearch from "@/app/components/PropertyTaskSearch";
+import { filterTaskProperties } from "@/lib/property-task-list.mjs";
+
 import PropertyListIdentity from "@/app/components/PropertyListIdentity";
 
 import DraftRecovery from "@/app/components/DraftRecovery";
@@ -65,6 +68,7 @@ export default function TasacionesTextosPendientesPage() {
 function TasacionesTextosContent() {
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("inmueble");
+  const [busqueda, setBusqueda] = useState(searchParams.get("buscar") || "");
   const [fragment, setFragment] = useState("");
   useEffect(() => {
     const sync = () => setFragment(window.location.hash);
@@ -78,6 +82,8 @@ function TasacionesTextosContent() {
     const url = new URL(window.location.href);
     if (value === null) url.searchParams.delete("zona"); else url.searchParams.set("zona", value);
     url.searchParams.delete("inmueble");
+    url.searchParams.delete("buscar");
+    setBusqueda("");
     url.hash = "";
     setFragment("");
     window.history.pushState(null, "", url.pathname + url.search);
@@ -342,11 +348,15 @@ function TasacionesTextosContent() {
   }, [pendientesTasacion, registradas, aprobadas, listos, publicadas]);
   const matches = (item: { inmuebleId: number; distrito?: string | null }) =>
     inZone(item, zone) && (!selectedId || String(item.inmuebleId) === selectedId);
-  const visiblesPendientes = pendientesTasacion.filter(matches);
-  const visiblesRegistradas = registradas.filter(matches);
-  const visiblesAprobadas = aprobadas.filter(matches);
-  const visiblesListos = listos.filter(matches);
-  const visiblesPublicadas = publicadas.filter(matches);
+  const visiblesPendientes = filterTaskProperties(pendientesTasacion.filter(matches), busqueda);
+  const visiblesRegistradas = filterTaskProperties(registradas.filter(matches), busqueda);
+  const visiblesAprobadas = filterTaskProperties(aprobadas.filter(matches), busqueda);
+  const visiblesListos = filterTaskProperties(listos.filter(matches), busqueda);
+  const visiblesPublicadas = filterTaskProperties(publicadas.filter(matches), busqueda);
+  const totalBusqueda = new Set([...pendientesTasacion, ...registradas, ...aprobadas, ...listos, ...publicadas].filter(matches).map(item => item.inmuebleId)).size;
+  const totalFiltrados = new Set([...visiblesPendientes, ...visiblesRegistradas, ...visiblesAprobadas, ...visiblesListos, ...visiblesPublicadas].map(item => item.inmuebleId)).size;
+  const returnParams = new URLSearchParams(searchParams.toString());
+  if (busqueda) returnParams.set("buscar", busqueda); else returnParams.delete("buscar");
   const scope = zone && zone !== ALL_ZONES ? `en ${zone}` : "en todas las zonas";
   const cards = [
     { id: "tasaciones", label: "Tasaciones pendientes", count: visiblesPendientes.length, note: "Registrar tasación", icon: "price", color: "border-violet-200 bg-violet-50/70 text-violet-950", accent: "text-violet-700", badge: "bg-violet-100" },
@@ -370,7 +380,7 @@ function TasacionesTextosContent() {
 
 
   return (
-    <NavigationReturnProvider href={`/tasaciones-textos-pendientes${searchParams.size ? `?${searchParams}` : ""}${fragment}`}><main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
+    <NavigationReturnProvider href={`/tasaciones-textos-pendientes${returnParams.size ? `?${returnParams}` : ""}${fragment}`}><main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1500px]">
       <DraftRecovery draftKey="textos:actual" data={{textos,textosListos}} dirty={Object.values(textos).some(Boolean)||[...listos,...publicadas].some(item=>textosListos[item.inmuebleId]!==undefined&&textosListos[item.inmuebleId]!==item.texto)} onRestore={draft=>{if(draft.textos)setTextos(draft.textos as Record<number,string>);if(draft.textosListos)setTextosListos(draft.textosListos as Record<number,string>);}}/>
         {/* ENCABEZADO */}
@@ -378,12 +388,12 @@ function TasacionesTextosContent() {
         <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <PageHeading href="/tasaciones-textos-pendientes" />
 
-          <a
+          <Link
             href="/registrar-tasaciones"
             className="inline-flex h-10 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800"
           >
             Registrar tasaciones
-          </a>
+          </Link>
         </div>
 
         {/* MENSAJES */}
@@ -411,6 +421,8 @@ function TasacionesTextosContent() {
           <ZoneContext name={zone === ALL_ZONES ? "Listado general" : zone} general={zone === ALL_ZONES} tone="violet" />
           {zone !== ALL_ZONES && <button type="button" onClick={() => abrirZona(ALL_ZONES)} className="ml-auto min-h-11 text-sm font-semibold text-violet-700">Ver listado general →</button>}
         </nav>}
+
+        {zone !== null && <section aria-label="Buscar inmuebles de la bandeja" className="aa-card mb-6 p-4"><PropertyTaskSearch value={busqueda} onChange={setBusqueda} count={totalFiltrados} total={totalBusqueda} disabled={cargando} />{busqueda.trim() && totalBusqueda > 0 && totalFiltrados === 0 && <p className="mt-3 text-sm text-slate-600">No hay inmuebles que coincidan con la búsqueda.</p>}</section>}
 
         {cargando ? (
             <LoadingCards label="Cargando inmuebles…" />

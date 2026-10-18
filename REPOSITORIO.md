@@ -2,6 +2,8 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
+Última mejora de interfaz: [Búsqueda automática y orden por posición](docs/busqueda-orden-seguimiento-2026-10-18.md) en los cuatro apartados de visitas y tasaciones. Orden numérico ascendente, contacto/dirección/ID/posición al escribir, limpieza y conservación de formularios.
+
 **Nueva sesión:** comenzar por [Contexto vigente para retomar](docs/contexto-retomar-2026-10-18.md), que resume las siete zonas, los casos aún no cargados y cómo comprobar las referencias y Production.
 
 Actualización de catálogo: [Tipos de inmueble](docs/tipos-inmueble.md), con Módulo, Condominio, Colegio y Almacén activos y comprobados en el selector. **Nuevo Chimbote ya tiene cargada su selección aprobada de 68 inmuebles**; quedan casos individuales pendientes, detallados en [su entrega](docs/carga-nuevo-chimbote-2026-10-18.md). La ampliación previa del catálogo no modificó fichas existentes.

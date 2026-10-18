@@ -1,5 +1,8 @@
 "use client";
 import { zoneUrl } from "@/lib/zone-url";
+import PropertyTaskSearch from "@/app/components/PropertyTaskSearch";
+import { filterTaskProperties } from "@/lib/property-task-list.mjs";
+
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -43,6 +46,7 @@ type Tasacion = {
 
 export default function Page() {
   const [items, setItems] = useState<Tasacion[]>([]);
+  const [busqueda, setBusqueda] = useState("");
   const [aprobadas, setAprobadas] = useState<Tasacion[]>([]);
   const [fechas, setFechas] = useState<Record<number, string>>({});
   const [valores, setValores] = useState<Record<number, string>>({});
@@ -58,6 +62,10 @@ export default function Page() {
   const [guardando, setGuardando] = useState<number | null>(null);
 
   const hoy = useMemo(() => todayInPeru(), []);
+  const filtrados = useMemo(() => filterTaskProperties(items, busqueda), [items, busqueda]);
+  const aprobadasFiltradas = useMemo(() => filterTaskProperties(aprobadas, busqueda), [aprobadas, busqueda]);
+  const totalBusqueda = new Set([...items, ...aprobadas].map(item => item.inmuebleId)).size;
+  const totalFiltrados = new Set([...filtrados, ...aprobadasFiltradas].map(item => item.inmuebleId)).size;
 
   const cargar = useCallback((signal?: AbortSignal) => {
     if (!signal?.aborted) { setCargando(true); setError(""); setErrorCarga(false); }
@@ -146,11 +154,14 @@ export default function Page() {
 
         <section className="mt-7">
           <div className="mb-3"><h2 className="font-bold text-slate-900">Tasaciones por registrar</h2><p className="mt-1 text-sm text-slate-500">Estos inmuebles están activos, tienen posición asignada y todavía no tienen tasación registrada.</p></div>
-          {cargando ? <LoadingCards label="Cargando inmuebles…" /> : items.length === 0 ? (
+          <div className="aa-card mb-4 p-4"><PropertyTaskSearch value={busqueda} onChange={setBusqueda} count={totalFiltrados} total={totalBusqueda} disabled={cargando} /></div>
+          {cargando ? <LoadingCards label="Cargando inmuebles…" /> : items.length > 0 && filtrados.length === 0 ? (
+            <div className="aa-card p-6 text-sm text-slate-600">No hay inmuebles que coincidan con la búsqueda. Prueba otro contacto, dirección, ID o posición.</div>
+          ) : items.length === 0 ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-6 py-12 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">{error ? "!" : "✓"}</div><h3 className="mt-4 font-bold text-emerald-950">{error ? "No se pudo consultar las tasaciones" : "No hay tasaciones pendientes"}</h3><p className="mt-1 text-sm text-emerald-800/80">{error ? "Pulsa Reintentar para consultar los inmuebles." : "Las visitas realizadas ya tienen tasación registrada o no existen inmuebles pendientes."}</p></div>
           ) : (
             <div className="space-y-4">
-              {items.map((item) => (
+              {filtrados.map((item) => (
                 <article key={item.inmuebleId} className="overflow-hidden rounded-2xl border border-violet-200 bg-white shadow-sm">
                   <div className="p-5 lg:p-6">
                     <div className="flex flex-col gap-5">
@@ -177,7 +188,7 @@ export default function Page() {
         <section className="mt-8 rounded-2xl border border-violet-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-900">Tasaciones negociadas registradas</h2><p className="mt-1 text-xs text-slate-500">El precio o renta mensual y la observación se pueden modificar desde la bandeja de seguimiento.</p></div>
           <div className="divide-y divide-slate-100">
-            {aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadas.map(item => (
+            {aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadasFiltradas.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones negociadas que coincidan con la búsqueda.</div> : aprobadasFiltradas.map(item => (
               <div key={item.inmuebleId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
                 <div><p className="font-semibold text-slate-900">{item.propietario || "Sin contacto"}</p><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)} · {operationLabel(item.operacion)} · posición {item.posicion} · {item.ubicacion}</p><p className="mt-1 text-xs text-slate-500">{referenceLabel(item.operacion)}: {item.valorReferencia ? `S/ ${item.valorReferencia}` : "sin valor"}{item.precioObjetivo ? ` · objetivo S/ ${item.precioObjetivo}` : ""}{item.precioVenta ? ` · ${priceLabel(item.operacion).toLowerCase()} S/ ${item.precioVenta}` : ""}</p></div>
                 <Link href={`/tasaciones-textos-pendientes?inmueble=${item.inmuebleId}#material`} className="rounded-xl bg-[#c80000] px-4 py-2.5 text-sm font-semibold text-white">Ver precios y preparar texto →</Link>

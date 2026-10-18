@@ -46,6 +46,8 @@ No volver a proponer migrar toda la zona desde cero: los 68 ya están cargados. 
 
 ## Catálogo, interfaz y validación
 
+- Última mejora: [búsqueda automática y orden numérico por posición](busqueda-orden-seguimiento-2026-10-18.md) en Registrar visitas, Visitas pendientes, Registrar tasaciones y Tasaciones y textos pendientes. Búsqueda al escribir por contacto/dirección/ID/posición, sin tildes y con equivalencia Meiggs/Meigss. Se conserva el contenido de los formularios al filtrar; no altera datos ni requiere cargas o migraciones. Consultar el documento para evidencia de publicación y comprobación.
+
 - Activos Módulo, Condominio, Colegio y Almacén, además de los tipos anteriores. [Catálogo y comprobación](tipos-inmueble.md).
 - Operación contiene Cartera de inmuebles. Seguimiento: Registrar inmueble, Liberar inmueble, Visitas pendientes, Registrar visitas, Tasaciones y textos pendientes, Registrar tasaciones. Opciones por zona y permisos vigentes. [Orden](orden-menu-seguimiento-2026-10-18.md).
 - Fichas de venta/alquiler, documentos en Inmueble, fotos en Visitas, seguimiento documental y cinco grupos específicos de alquiler. [Organización](ficha-ventas-alquileres-2026-10-18.md).
