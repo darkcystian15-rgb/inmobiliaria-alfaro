@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from "react";
 import ResponsiveFilters from "@/app/components/ResponsiveFilters";
 import { Feedback } from "@/app/components/InterfaceFeedback";
 import Image from "next/image";
-import { reportPDFLayout, reportText } from "@/lib/report-export";
+import { reportPDFLayout, reportText, reportCellValue } from "@/lib/report-export";
 
 type Reporte = {
   nombre: string;
@@ -381,7 +381,7 @@ export default function Page() {
     precioFinal: "Precio final (S/)",
     comision: "Comisión (S/)",
     expedientePendiente: "Expediente pendiente",
-    codigo: "Código",
+    codigo: "ID del inmueble",
     zona: "Zona",
     posicion: "Pos.",
     nombre: "Inmueble",
@@ -840,7 +840,7 @@ export default function Page() {
                               key={key}
                               className="px-4 py-3 text-xs text-slate-600"
                             >
-                              {key === "nombre" && typeof row.propietario === "string" ? <div className="min-w-48 max-w-md"><p className="break-words font-semibold text-slate-900">{row.propietario || "Sin contacto"}</p><p className="mt-1 break-words leading-5 text-slate-500"><PropertySummary operation={String(row.operacion || "venta")} type={String(row.tipo || "Tipo por completar")} location={typeof row.ubicacion === "string" ? row.ubicacion : null} /></p></div> : reportText(key, row[key])}
+                              {key === "nombre" && typeof row.propietario === "string" ? <div className="min-w-48 max-w-md"><p className="break-words font-semibold text-slate-900">{row.propietario || "Sin contacto"}</p><p className="mt-1 break-words leading-5 text-slate-500"><PropertySummary operation={String(row.operacion || "venta")} type={String(row.tipo || "Tipo por completar")} location={typeof row.ubicacion === "string" ? row.ubicacion : null} /></p></div> : reportText(key, reportCellValue(key, row))}
                             </td>
                           ),
                         )}

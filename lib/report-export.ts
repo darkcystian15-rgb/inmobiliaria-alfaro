@@ -1,3 +1,4 @@
+import { propertyPanelId } from "./property-panel-id.mjs";
 import type { ReportRow, ReportSummary, ReportValue } from "./report-types";
 
 export type ReportExport = {
@@ -15,7 +16,7 @@ const red = "C80000";
 
 export function reportPDFLayout(columns: string[]) {
   const weights = columns.map(key =>
-    ["posicion", "dias"].includes(key) ? 14 : key === "codigo" ? 22 :
+    ["posicion", "dias"].includes(key) ? 14 : key === "codigo" ? 40 :
       key.toLowerCase().includes("fecha") ? 24 :
         ["nombre", "propietario", "ubicacion", "situaciones", "motivoLiberacion"].includes(key) ? 40 : 28);
   const total = weights.reduce((sum, weight) => sum + weight, 0);
@@ -41,6 +42,12 @@ export function reportText(key: string, value: ReportValue): string {
   if (["tasacion", "precioFinal", "comision", "rentaMensual", "rentaMensualSolicitada", "garantia", "adelanto"].includes(key) && Number.isFinite(Number(value))) return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(Number(value));
   return String(value);
 }
+export function reportCellValue(key: string, row: ReportRow): ReportValue {
+  if (key === "codigo" && row.codigo) return propertyPanelId(row);
+  if (key === "nombre" && typeof row.propietario === "string") return row.propietario || "Sin contacto";
+  return row[key];
+}
+
 function stamp(date: Date) {
   return date.toLocaleString("es-PE", { timeZone: "America/Lima", dateStyle: "medium", timeStyle: "short" });
 }
@@ -101,7 +108,7 @@ export async function exportReportPDF(report: ReportExport) {
   autoTable(doc, {
     startY: y,
     columns: report.columns.map(key => ({ header: report.labels[key] ?? key, dataKey: key })),
-    body: report.rows.map(row => Object.fromEntries(report.columns.map(key => [key, reportText(key, row[key])]))),
+    body: report.rows.map(row => Object.fromEntries(report.columns.map(key => [key, reportText(key, reportCellValue(key, row))]))),
     theme: "striped",
     tableWidth: width - 28,
     columnStyles: layout.columnStyles,
@@ -148,7 +155,7 @@ export async function exportReportExcel(report: ReportExport) {
   const detail = workbook.addWorksheet("Detalle", { views: [{ state: "frozen", ySplit: 1, showGridLines: false }] });
   detail.columns = report.columns.map(key => ({ key, width: key === "nombre" || key === "ubicacion" || key === "situaciones" ? 38 : key.includes("fecha") ? 18 : 24 }));
   detail.addTable({ name: "DetalleReporte", ref: "A1", headerRow: true, style: { theme: "TableStyleMedium2", showRowStripes: true }, columns: report.columns.map(key => ({ name: report.labels[key] ?? key, filterButton: true })), rows: report.rows.map(row => report.columns.map(key => {
-    const value = row[key];
+    const value = reportCellValue(key, row);
     if (value == null || value === "") return null;
     if (key.toLowerCase().includes("fecha")) {
       const date = reportDate(value);
@@ -167,7 +174,7 @@ export async function exportReportExcel(report: ReportExport) {
     if (["tasacion", "precioFinal", "comision", "rentaMensual", "rentaMensualSolicitada", "garantia", "adelanto"].includes(key)) column.numFmt = '"S/ "#,##0.00';
     if (key === "posicion") column.numFmt = "00";
   });
-  detail.eachRow((row, index) => { if (index > 1) { row.height = Math.max(32, ...report.columns.map((key, columnIndex) => { const value = report.rows[index - 2]?.[key]; const text = Array.isArray(value) ? value.join(" · ") : String(value ?? ""); return (Math.ceil(text.length / Math.max(10, (detail.getColumn(columnIndex + 1).width ?? 24) - 3)) + text.split("\n").length - 1) * 15 + 12; })); row.eachCell(cell => { cell.alignment = { vertical: "middle", wrapText: true }; cell.font = { name: "Calibri", size: 11 }; if (cell.value === "Activo" || cell.value === "Disponible") cell.font.color = { argb: "15803D" }; if (cell.value === "Histórico") cell.font.color = { argb: "64748B" }; }); } });
+  detail.eachRow((row, index) => { if (index > 1) { row.height = Math.max(32, ...report.columns.map((key, columnIndex) => { const value = report.rows[index - 2] ? reportCellValue(key, report.rows[index - 2]) : null; const text = Array.isArray(value) ? value.join(" · ") : String(value ?? ""); return (Math.ceil(text.length / Math.max(10, (detail.getColumn(columnIndex + 1).width ?? 24) - 3)) + text.split("\n").length - 1) * 15 + 12; })); row.eachCell(cell => { cell.alignment = { vertical: "middle", wrapText: true }; cell.font = { name: "Calibri", size: 11 }; if (cell.value === "Activo" || cell.value === "Disponible") cell.font.color = { argb: "15803D" }; if (cell.value === "Histórico") cell.font.color = { argb: "64748B" }; }); } });
   for (const sheet of [summary, detail]) {
     sheet.pageSetup = { paperSize: 9, orientation: sheet === detail && report.columns.length > 6 ? "landscape" : "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0, printTitlesRow: sheet === detail ? "1:1" : undefined };
     sheet.headerFooter.oddHeader = `&L${brand}&R${report.title.replaceAll("&", "&&")}`;

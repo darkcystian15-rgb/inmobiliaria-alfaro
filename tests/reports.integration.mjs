@@ -17,9 +17,7 @@ let userId, server, browser;
 const request = (params = {}) => fetch(`${origin}/api/reportes?${new URLSearchParams(params)}`, {
   headers: { Cookie: `aa_session=${token}` }, signal: AbortSignal.timeout(30000),
 });
-const addressSql = `COALESCE(NULLIF(CONCAT_WS(', ',
-  NULLIF(TRIM(CONCAT_WS(' ',NULLIF(TRIM(i.direccion),''),NULLIF(TRIM(i.numero_direccion),''))),''),
-  NULLIF(TRIM(i.distrito),''),NULLIF(TRIM(i.provincia),''),NULLIF(TRIM(i.departamento),'')),''),'Ubicación por completar')`;
+const addressSql = `COALESCE(NULLIF(TRIM(CONCAT_WS(' ',NULLIF(TRIM(i.direccion),''),NULLIF(TRIM(i.numero_direccion),''))),''),'Ubicación por completar')`;
 async function check(label, params, predicate = "i.estado='activo'", values = []) {
   const [expected] = await db.execute(`SELECT i.id,i.estado,i.codigo,i.numero_orden,i.tipo,i.referencia,${addressSql} ubicacion FROM inm_inmuebles i WHERE ${predicate} ORDER BY i.fecha_registro,i.id`, values);
   for (const row of expected) assert.equal(row.codigo, propertyCode(Number(row.numero_orden), row.tipo, row.referencia), `${label}: código uniforme`);
@@ -34,7 +32,7 @@ async function check(label, params, predicate = "i.estado='activo'", values = []
   const page = Number(params.pagina || 1);
   const selected = params.todos === '1' ? expected : expected.slice((page - 1) * 50, page * 50);
   assert.deepEqual(result.rows.map(row => row.inmuebleId), selected.map(row => row.id), `${label}: inmuebles`);
-  for (const row of result.rows) assert.equal(row.ubicacion, expected.find(item => item.id === row.inmuebleId)?.ubicacion, `${label}: ubicación completa`);
+  for (const row of result.rows) assert.equal(row.ubicacion, expected.find(item => item.id === row.inmuebleId)?.ubicacion, `${label}: ubicación referencial`);
   console.log(`PASS ${label}: ${result.rows.length} filas / ${expected.length} resultados`);
   return result;
 }

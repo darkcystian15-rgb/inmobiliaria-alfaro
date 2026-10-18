@@ -431,6 +431,7 @@ export async function GET(request: NextRequest) {
         tipo: normalizarTipo(x.tipo),
         operacion: x.operacion === "alquiler" ? "Alquiler" : "Venta",
         rentaMensualSolicitada: x.operacion === "alquiler" ? tasacion?.precioVenta ?? null : null,
+        direccion: x.direccion,
         ubicacion: propertyAddress(x),
         propietario:
           [

@@ -45,6 +45,7 @@ export async function GET(request: Request) {
       .orderBy(sql`CASE WHEN ${inmInmuebles.estado} = 'activo' THEN 0 ELSE 1 END`, sql`${inmPosiciones.numero} IS NULL`, asc(inmPosiciones.numero), asc(inmInmuebles.referencia));
     return NextResponse.json({ inmuebles: rows.map(({ direccion, distrito, provincia, departamento, ...row }) => ({
       ...row,
+      direccion,
       estado: row.estado === "activo" ? "activo" : "historico",
       ubicacion: propertyAddress({direccion, distrito, provincia, departamento, zona: row.zona}),
       propietario: row.contacto || "Sin contacto",

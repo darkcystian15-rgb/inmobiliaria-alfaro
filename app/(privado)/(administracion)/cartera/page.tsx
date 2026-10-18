@@ -9,10 +9,10 @@ import PropertySummary from "@/app/components/PropertySummary";
 import PortfolioLabelRow from "@/app/components/PortfolioLabelRow";
 import ZoneContext from "@/app/components/ZoneContext";
 import OperationSelect from "@/app/components/OperationSelect";
-import { operationLabel, priceLabel } from "@/lib/operation.mjs";
+import { priceLabel } from "@/lib/operation.mjs";
 
 import PropertyTypeSelect from "@/app/components/PropertyTypeSelect";
-import { propertyDisplayId } from "@/lib/property-display-id";
+import { propertyPanelId } from "@/lib/property-panel-id.mjs";
 
 import PageHeading from "@/app/components/PageHeading";
 import { ALL_ZONES, inZone } from "@/lib/property-zones";
@@ -411,7 +411,7 @@ export default function CarteraPage() {
     return inmueblesZona.filter((x) => {
       const coincideTexto =
         !texto ||
-        `${x.nombre} ${x.propietario} ${x.direccion ?? ""} ${x.distrito ?? ""} ${x.ubicacion}`
+        `${propertyPanelId(x)} ${x.nombre} ${x.propietario} ${x.direccion ?? ""} ${x.distrito ?? ""} ${x.ubicacion}`
           .toLowerCase()
           .includes(texto);
 
@@ -641,8 +641,8 @@ export default function CarteraPage() {
                       {x && theme ? <>
                         <span className={`mt-3 inline-flex self-start rounded-lg px-2 py-1 text-xs font-semibold ring-1 ring-inset ${theme.badge}`}>{theme.label}</span>
                         <h3 className="mt-3 min-h-10 break-words text-sm font-bold leading-5 text-slate-900" title={x.propietario || "Sin contacto"}>{x.propietario || "Sin contacto"}</h3>
-                        <p className="mt-2 text-xs font-semibold text-slate-700"><PropertySummary operation={x.operacion} type={x.tipo} location={x.direccion || x.ubicacion} /></p>
-                        <p className="mt-1 break-words font-mono text-xs text-slate-500">{propertyDisplayId(x)}</p>
+                        <p className="mt-2 text-xs font-semibold text-slate-700"><PropertySummary operation={x.operacion} type={x.tipo} location={x.direccion} /></p>
+                        <p className="mt-1 break-words font-mono text-xs text-slate-500">{propertyPanelId(x)}</p>
                         <div className="mt-3 flex min-h-12 content-start flex-wrap gap-1.5">
                           {x.visitaPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-800">Visita pendiente</span>}
                           {x.tasacionPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Tasación pendiente</span>}
@@ -740,7 +740,7 @@ export default function CarteraPage() {
         </>}
 
         <dialog ref={galleryDialog} onCancel={event => { event.preventDefault(); setGaleria(null); }} aria-labelledby="property-gallery-title" className="fixed inset-0 m-auto max-h-[90vh] w-[calc(100%_-_2rem)] max-w-4xl overflow-auto rounded-3xl bg-white p-5 shadow-2xl backdrop:bg-slate-950/50 sm:p-6">
-          {galeria && <><div className="mb-5 flex items-start justify-between gap-3"><div className="min-w-0 break-words"><h2 id="property-gallery-title" className="text-lg font-bold text-slate-900">{galeria.nombre}</h2><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(galeria)} · {galeria.posicion ? `Posición ${galeria.posicion}` : 'Sin posición'}</p></div><button type="button" autoFocus onClick={() => setGaleria(null)} className="min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold">Cerrar</button></div><PhotoGallery key={galeria.inmuebleId} propertyId={galeria.inmuebleId} /></>}
+          {galeria && <><div className="mb-5 flex items-start justify-between gap-3"><div className="min-w-0 break-words"><h2 id="property-gallery-title" className="text-lg font-bold text-slate-900">{galeria.nombre}</h2><p className="mt-1 text-xs text-slate-500">{propertyPanelId(galeria)} · {galeria.posicion ? `Posición ${galeria.posicion}` : 'Sin posición'}</p></div><button type="button" autoFocus onClick={() => setGaleria(null)} className="min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold">Cerrar</button></div><PhotoGallery key={galeria.inmuebleId} propertyId={galeria.inmuebleId} /></>}
         </dialog>
         {/* MODAL */}
         {seleccionado && (
@@ -779,8 +779,7 @@ export default function CarteraPage() {
                   </h3>
 
                   <p className="mt-1 text-sm text-slate-500">
-                    {operationLabel(seleccionado.operacion)} · {seleccionado.tipo} ·{" "}
-                    {seleccionado.ubicacion}
+                    <PropertySummary operation={seleccionado.operacion} type={seleccionado.tipo} location={seleccionado.direccion} />
                   </p>
                 </div>
 
@@ -810,8 +809,8 @@ export default function CarteraPage() {
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     ID del inmueble
                   </p>
-                  <p className="mt-1 font-mono text-sm font-semibold text-slate-700">
-                    {propertyDisplayId(seleccionado)}
+                  <p className="mt-1 break-words font-mono text-sm font-semibold text-slate-700">
+                    {propertyPanelId(seleccionado)}
                   </p>
                 </div>
 

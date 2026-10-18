@@ -1,5 +1,6 @@
 "use client";
 
+import { propertyPanelId } from "@/lib/property-panel-id.mjs";
 import PropertyListIdentity from "@/app/components/PropertyListIdentity";
 
 import DraftRecovery from "@/app/components/DraftRecovery";
@@ -193,7 +194,7 @@ function TasacionesTextosContent() {
       }
 
       setMensaje(
-        `${item.codigo} quedó listo para publicar.`
+        `${propertyPanelId(item)} quedó listo para publicar.`
       );
 
       setTextos(current=>{const next={...current};delete next[item.inmuebleId];return next;});
@@ -256,7 +257,7 @@ function TasacionesTextosContent() {
       }
 
       setMensaje(
-        `${item.codigo} fue actualizado correctamente.`
+        `${propertyPanelId(item)} fue actualizado correctamente.`
       );
 
       setCargando(true);
@@ -313,7 +314,7 @@ function TasacionesTextosContent() {
       setConfirmarPublicacion(null);
 
       setMensaje(
-        `${item.codigo} fue marcado como publicado.`
+        `${propertyPanelId(item)} fue marcado como publicado.`
       );
 
       setCargando(true);
@@ -439,7 +440,7 @@ function TasacionesTextosContent() {
                 <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-800">{visiblesPendientes.length}</span>
               </div>
               {visiblesPendientes.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones por registrar{zone !== ALL_ZONES ? ` en ${zone}` : ""}.</div> : <div className="divide-y divide-slate-100">{visiblesPendientes.map(item => <article key={item.inmuebleId} className="flex flex-col gap-4 p-5 transition hover:bg-violet-50/40 sm:flex-row sm:items-center">
-                <div className="min-w-0 flex-1"><PropertyListIdentity position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-700" /><p className="ml-15 mt-2 text-xs font-semibold text-violet-700">Visita realizada · Tasación por registrar</p></div>
+                <div className="min-w-0 flex-1"><PropertyListIdentity code={item.codigo} position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-violet-700" /><p className="ml-15 mt-2 text-xs font-semibold text-violet-700">Visita realizada · Tasación por registrar</p></div>
                 <Link href={`/registrar-tasaciones?inmueble=${item.inmuebleId}`} className="self-start rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-100 sm:self-auto">Registrar tasación →</Link>
               </article>)}</div>}
             </section>
@@ -449,7 +450,7 @@ function TasacionesTextosContent() {
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200">{visiblesRegistradas.length}</span>
               </div>
               {visiblesRegistradas.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : <div className="space-y-3">{visiblesRegistradas.map(item => <article key={item.inmuebleId} className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:border-violet-200">
-                <PropertyListIdentity position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff1f1] text-sm font-bold text-[#c80000]" />
+                <PropertyListIdentity code={item.codigo} position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff1f1] text-sm font-bold text-[#c80000]" />
                 <SalePriceEditor item={item} onSaved={cargar} />
               </article>)}</div>}
             </section>
@@ -483,7 +484,7 @@ function TasacionesTextosContent() {
                       key={item.inmuebleId}
                       className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:border-violet-200"
                     >
-                      <div className="mb-4"><PropertyListIdentity position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-sm font-bold text-emerald-700" /></div>
+                      <div className="mb-4"><PropertyListIdentity code={item.codigo} position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-sm font-bold text-emerald-700" /></div>
 
                       <div className="grid gap-4 lg:grid-cols-2">
                         <div>
@@ -574,7 +575,7 @@ function TasacionesTextosContent() {
                         className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:border-violet-200"
                       >
                         <div className="mb-5 space-y-3">
-                          <PropertyListIdentity position={item.posicion} contact={item.nombreContacto} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff1f1] text-sm font-bold text-[#c80000]" />
+                          <PropertyListIdentity code={item.codigo} position={item.posicion} contact={item.nombreContacto} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff1f1] text-sm font-bold text-[#c80000]" />
                           <span className={`ml-15 inline-block rounded-full border px-2.5 py-1 text-xs font-bold ${item.expediente?.complete ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
                             {item.expediente?.complete ? "Listo para publicar" : "Expediente pendiente"}
                           </span>
@@ -698,7 +699,7 @@ function TasacionesTextosContent() {
           >
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0 flex-1">
-                <PropertyListIdentity position={item.posicion} contact={item.nombreContacto} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff1f1] text-sm font-bold text-[#c80000]" />
+                <PropertyListIdentity code={item.codigo} position={item.posicion} contact={item.nombreContacto} operation={item.operacion} type={item.tipo} location={item.direccion} positionClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff1f1] text-sm font-bold text-[#c80000]" />
                 <span className="ml-15 mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Publicado</span>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -833,12 +834,12 @@ function TasacionesTextosContent() {
                   </span>
 
                   <span className="text-xs font-semibold text-slate-500">
-                    {confirmarPublicacion.codigo}
+                    {propertyPanelId(confirmarPublicacion)}
                   </span>
                 </div>
 
                 <div className="mt-2 text-sm font-bold text-slate-900">
-                  {confirmarPublicacion.referencia}
+                  {confirmarPublicacion.nombreContacto || "Sin contacto"}
                 </div>
 
                 <div className="mt-1 text-xs text-slate-500">

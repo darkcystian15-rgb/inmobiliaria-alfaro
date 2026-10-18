@@ -29,6 +29,7 @@ type Tasacion = {
   posicion: string;
   nombre: string;
   ubicacion: string;
+  direccion: string | null;
   tipo: string;
   operacion: string;
   propietario: string;
@@ -154,7 +155,7 @@ export default function Page() {
                   <div className="p-5 lg:p-6">
                     <div className="flex flex-col gap-5">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="flex min-w-0 items-center gap-4"><div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-base font-bold text-violet-700">{item.posicion}</div><div className="min-w-0"><div className="flex min-w-0 flex-col items-start gap-2"><h3 className="font-semibold text-slate-900">{item.propietario || "Sin contacto"}</h3><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600"><PropertySummary operation={item.operacion} type={item.tipo} location={item.ubicacion} /></span></div><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)}</p></div></div>
+                        <div className="flex min-w-0 items-center gap-4"><div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-base font-bold text-violet-700">{item.posicion}</div><div className="min-w-0"><div className="flex min-w-0 flex-col items-start gap-2"><h3 className="font-semibold text-slate-900">{item.propietario || "Sin contacto"}</h3><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600"><PropertySummary operation={item.operacion} type={item.tipo} location={item.direccion} /></span></div><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)}</p></div></div>
                         <span className="self-start rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">Tasación pendiente</span>
                       </div>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -23,3 +23,10 @@ test("search accepts accents, owner names, locations, codes and padded positions
   assert.deepEqual(filterProperties(items, "02", "activo").map(item => item.id), ["INM-2"]);
   assert.deepEqual(filterProperties(items, "inexistente", "todos"), []);
 });
+
+
+test("the visible identifier can be searched while stored codes remain searchable", () => {
+  const property = { id: "012-LOCAL-LIDIA-CHAVARRIA", nombre: "Referencia anterior", operacion: "venta", tipo: "Local", direccion: "Av Meigss C3", estado: "activo" };
+  assert.equal(filterProperties([property], "012-venta-local-av meigss c3", "activo").length, 1);
+  assert.equal(filterProperties([property], "012-LOCAL-LIDIA-CHAVARRIA", "activo").length, 1);
+});

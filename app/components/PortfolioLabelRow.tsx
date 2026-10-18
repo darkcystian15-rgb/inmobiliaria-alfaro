@@ -45,7 +45,7 @@ export default function PortfolioLabelRow({ property: x, onOpen }: { property: P
     <span className="min-w-0">
       <span className="block break-words text-sm font-semibold leading-6 text-slate-900 group-hover:text-[#c80000] sm:text-base">{x.propietario || "Sin contacto"}</span>
       <span className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="min-w-0 break-words text-xs leading-5 text-slate-600 sm:text-sm"><PropertySummary operation={x.operacion} type={x.tipo} location={x.direccion || x.distrito} /></span>
+        <span className="min-w-0 break-words text-xs leading-5 text-slate-600 sm:text-sm"><PropertySummary operation={x.operacion} type={x.tipo} location={x.direccion} /></span>
         {states.map(state => <span key={state.label} className={`inline-flex min-w-0 max-w-full rounded-lg border px-2.5 py-1.5 text-xs font-semibold leading-5 sm:text-sm ${tones[state.tone]}`}><span className="break-words">{state.label}</span></span>)}
       </span>
     </span>

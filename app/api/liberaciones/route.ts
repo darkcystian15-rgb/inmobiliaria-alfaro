@@ -82,6 +82,7 @@ export async function GET(request: Request) {
           : "—",
         nombre: row.referencia,
         zona:row.zona,zonaId:row.zonaId,
+        direccion: row.direccion,
         ubicacion: propertyAddress(row),
         tipo: row.tipo,
     operacion: row.operacion,

@@ -65,7 +65,7 @@ export default function RegistrarInmueblePage() {
       const result = await requestJson<{ codigo: string; posicion: number; inmuebleId: number }>("/api/inmuebles", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, zonaId:zone?.id, posicion: Number(position) }),
       });
-      setMessage(`Inmueble ${propertyDisplayId({ codigo: result.codigo })} registrado en la posición ${String(result.posicion).padStart(2, "0")}. Ya aparece en Visitas pendientes.`);
+      setMessage(`Inmueble ${propertyDisplayId({ ...form, codigo: result.codigo })} registrado en la posición ${String(result.posicion).padStart(2, "0")}. Ya aparece en Visitas pendientes.`);
       setNext({ href: `/registrar-visitas?inmueble=${result.inmuebleId}`, label: "Registrar visita de este inmueble" });
       setForm(empty); setSelection(""); setRequested(null);
       await load();

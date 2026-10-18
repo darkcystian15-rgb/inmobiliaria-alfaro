@@ -26,6 +26,7 @@ type Visita = {
   posicion: string;
   nombre: string;
   ubicacion: string;
+  direccion: string | null;
   tipo: string; operacion: string;
   propietario: string;
   dias: number;
@@ -152,7 +153,7 @@ export default function Page() {
       setFechas(current=>{const next={...current};delete next[item.id];return next;});
       setObservaciones(current=>{const next={...current};delete next[item.id];return next;});
       setMensaje(
-        `“${item.nombre}”: ${body.message || "Visita registrada correctamente."}`
+        `“${propertyDisplayId(item)}”: ${body.message || "Visita registrada correctamente."}`
       );
       setSiguienteAccion(body.pendienteEvidencia
         ? { href: `/datos-inmuebles?codigo=${item.id}&pestana=visitas`, label: "Agregar fotos de esta visita" }
@@ -318,7 +319,7 @@ export default function Page() {
                             </h3>
 
                             <span className="break-words rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                              <PropertySummary operation={item.operacion} type={item.tipo} location={item.ubicacion} />
+                              <PropertySummary operation={item.operacion} type={item.tipo} location={item.direccion} />
                             </span>
                           </div>
 

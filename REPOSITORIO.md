@@ -2,6 +2,8 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
+Actualización de código posterior: [identificación y descripción de Cartera](docs/identificacion-cartera-2026-10-18.md). Corrige el ID visible y la geografía repetida. Este cambio requiere publicación; no forma parte de la entrega acreditada del 16 de octubre.
+
 ## Repositorio
 
 - GitHub: https://github.com/darkcystian15-rgb/inmobiliaria-alfaro
@@ -10,7 +12,7 @@ Referencia consolidada actualizada el 18 de octubre de 2026.
 - Rama principal integrada: `main`. La rama `feat/registro-simplificado` conserva la misma entrega.
 - Código de aplicación publicado según la evidencia del 16 de octubre: `f76b31c5e7401c0cd7994f91085fe63b8a5d3cdf`.
 - Commit de evidencia posterior: `b5380b2aea02cf26af8c4f43a3f77c6e6e07d323`.
-- Entre esos dos commits solo cambian la documentación del expediente y el selector de inmueble de su prueba de humo; el código de aplicación coincide.
+- Entre `f76b31c` y `b5380b2` solo cambian la documentación del expediente y el selector de inmueble de su prueba de humo; el código de aplicación coincide.
 - El 18 de octubre se actualizaron las referencias con `git fetch origin`: `main` estaba en `cf4f5f0` y la rama de entrega en `b5380b2`. Se integró la entrega y su documentación en `main` mediante fast-forward, sin conflictos ni reescritura de historial.
 
 ## Vercel
@@ -47,9 +49,9 @@ Los respaldos, capturas y secretos permanecen privados en las ubicaciones descri
 
 ## Validación de esta revisión
 
-- 24 archivos de pruebas unitarias correctos: `node --test tests/*.test.mjs`.
+- 25 archivos de pruebas unitarias correctos tras la uniformización: `node --test tests/*.test.mjs`.
 - ESLint sin errores ni advertencias: `npm run lint -- --max-warnings=0`.
-- Se comprobó que el código de aplicación local coincide con el commit publicado documentado.
+- Antes de la corrección de identificación del 18 de octubre se comprobó que el código local coincidía con el commit publicado documentado. La corrección posterior se detalla en su registro.
 - No se repitieron compilación, integración MySQL ni recorrido autenticado en producción; sus resultados del 16 de octubre constan en el documento del expediente.
 
 ## Lectura y precedencia
