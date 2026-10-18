@@ -1,3 +1,4 @@
+import { propertyLastPosition } from '@/lib/property-position';
 import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { nextPropertyOrder } from "@/lib/property-identity";
 import { propertyCode } from "@/lib/property-code.mjs";
@@ -12,7 +13,7 @@ import {assignedPropertyType} from '@/lib/property-types';
 export async function GET(request: Request){
  const auth=await authorizeApi();if(auth.response)return auth.response;
  try{
- const items=await db.select({id:inmLiberaciones.id,inmuebleId:inmInmuebles.id,codigo:inmInmuebles.codigo,nombre:inmInmuebles.referencia,zona:propertyZoneName,zonaId:inmInmuebles.zonaId,nombreContacto:inmInmuebles.nombreContacto,numeroOrden:inmInmuebles.numeroOrden,tipo:inmInmuebles.tipo,operacion:inmInmuebles.operacion,direccion:inmInmuebles.direccion,inicio:inmLiberaciones.fechaInicioAlquiler,fin:inmLiberaciones.fechaFinAlquiler,renta:inmLiberaciones.rentaMensual,reingresoId:sql<number|null>`(SELECT i.id FROM inm_inmuebles i WHERE i.inmueble_origen_id=${inmInmuebles.id} ORDER BY i.id DESC LIMIT 1)`}).from(inmLiberaciones).innerJoin(inmInmuebles,eq(inmInmuebles.id,inmLiberaciones.inmuebleId)).where(and(zoneCondition(request),eq(inmLiberaciones.motivo,'alquilado'),eq(inmLiberaciones.confirmado,true),eq(inmLiberaciones.anulada,false))).orderBy(inmLiberaciones.fechaFinAlquiler,inmLiberaciones.id);
+ const items=await db.select({id:inmLiberaciones.id,inmuebleId:inmInmuebles.id,codigo:inmInmuebles.codigo,nombre:inmInmuebles.referencia,zona:propertyZoneName,zonaId:inmInmuebles.zonaId,nombreContacto:inmInmuebles.nombreContacto,numeroOrden:inmInmuebles.numeroOrden,posicion:propertyLastPosition,tipo:inmInmuebles.tipo,operacion:inmInmuebles.operacion,direccion:inmInmuebles.direccion,inicio:inmLiberaciones.fechaInicioAlquiler,fin:inmLiberaciones.fechaFinAlquiler,renta:inmLiberaciones.rentaMensual,reingresoId:sql<number|null>`(SELECT i.id FROM inm_inmuebles i WHERE i.inmueble_origen_id=${inmInmuebles.id} ORDER BY i.id DESC LIMIT 1)`}).from(inmLiberaciones).innerJoin(inmInmuebles,eq(inmInmuebles.id,inmLiberaciones.inmuebleId)).where(and(zoneCondition(request),eq(inmLiberaciones.motivo,'alquilado'),eq(inmLiberaciones.confirmado,true),eq(inmLiberaciones.anulada,false))).orderBy(inmLiberaciones.fechaFinAlquiler,inmLiberaciones.id);
  return NextResponse.json({items:items.map(item=>({...item,estado:!item.fin?'Sin fecha de fin':item.fin<todayInPeru()?'Vencido':item.fin<=new Date(Date.now()+30*86400000).toISOString().slice(0,10)?'Vence en 30 días':'Vigente'}))});
  }catch{return NextResponse.json({error:'No se pudieron consultar los contratos.'},{status:500});}
 }

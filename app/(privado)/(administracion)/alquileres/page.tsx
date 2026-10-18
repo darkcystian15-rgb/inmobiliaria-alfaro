@@ -11,7 +11,7 @@ import PageHeading from '@/app/components/PageHeading';
 import {Feedback,LoadingCards} from '@/app/components/InterfaceFeedback';
 import ConfirmDialog from '@/app/components/ConfirmDialog';
 import {requestJson} from '@/lib/client-request';
-type Contract={id:number;inmuebleId:number;codigo:string;nombre:string;zonaId:number;zona:string;nombreContacto:string|null;numeroOrden:number|null;tipo:string;operacion:string;direccion:string|null;inicio:string|null;fin:string|null;renta:string|null;estado:string;reingresoId:number|null};
+type Contract={id:number;inmuebleId:number;codigo:string;nombre:string;zonaId:number;zona:string;nombreContacto:string|null;numeroOrden:number|null;posicion:number|null;tipo:string;operacion:string;direccion:string|null;inicio:string|null;fin:string|null;renta:string|null;estado:string;reingresoId:number|null};
 export default function RentalContracts(){
  const [filter,setFilter]=useState('Todos');const [search,setSearch]=useState('');
  const [items,setItems]=useState<Contract[]>([]);const [positions,setPositions]=useState<{numero:number;disponible:boolean;zonaId:number}[]>([]);const [dates,setDates]=useState<Record<number,string>>({});const [chosen,setChosen]=useState<Record<number,string>>({});const [error,setError]=useState('');const [message,setMessage]=useState('');const [busy,setBusy]=useState(false);const [loading,setLoading]=useState(true);const [confirmation,setConfirmation]=useState<{item:Contract;action:'renew'|'return'}|null>(null);

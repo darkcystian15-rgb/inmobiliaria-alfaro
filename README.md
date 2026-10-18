@@ -4,6 +4,8 @@ Sistema privado de gestión de inmuebles construido con Next.js, React, TypeScri
 
 ## Estado y avances
 
+Último ajuste: [ID visible por posición y filtros por contacto, dirección o ID completo](docs/id-posicion-filtros-2026-10-18.md). Este criterio sustituye el prefijo global y la búsqueda por campos adicionales descritos en entregas anteriores.
+
 - [Búsqueda automática y orden por posición](docs/busqueda-orden-seguimiento-2026-10-18.md): Registrar visitas, Visitas pendientes, Registrar tasaciones y Tasaciones y textos pendientes, con filtro por contacto/dirección al escribir.
 
 **Para retomar una sesión:** leer [Contexto vigente del 18 de octubre](docs/contexto-retomar-2026-10-18.md): cargas realizadas, casos pendientes, respaldos y comprobación de sincronización.

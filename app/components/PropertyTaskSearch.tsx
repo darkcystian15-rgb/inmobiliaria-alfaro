@@ -10,7 +10,7 @@ export default function PropertyTaskSearch({ value, onChange, count, total, disa
     <label htmlFor={id} className="text-xs font-semibold text-slate-700">Buscar inmueble</label>
     <div className="mt-2 flex min-w-0 gap-2">
       <input id={id} type="search" value={value} disabled={disabled} onChange={event => onChange(event.target.value)}
-        placeholder="Contacto, dirección, ID o posición…" aria-describedby={`${id}-results`}
+        placeholder="Contacto, dirección o ID completo…" aria-describedby={`${id}-results`}
         className="aa-input min-w-0 flex-1" />
       {value && <button type="button" onClick={() => onChange("")} className="aa-button aa-button-secondary shrink-0">Limpiar búsqueda</button>}
     </div>

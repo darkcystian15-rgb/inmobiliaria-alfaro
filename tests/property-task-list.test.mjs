@@ -20,10 +20,12 @@ test('typing finds contacts and reference addresses without accents, punctuation
   assert.deepEqual(filterTaskProperties(items,'no coincide'),[]);
   assert.equal(filterTaskProperties(items,'   ').length,5);
 });
-test('visible and stored IDs, padded positions and publication contact fields remain searchable',()=>{
-  assert.ok(taskPropertyMatches(items[0],'099 venta local av meiggs c 4'));
-  assert.ok(taskPropertyMatches(items[0],'099-LOCAL-ANTERIOR'));
-  assert.deepEqual(filterTaskProperties(items,'02').map(row=>row.id),[100]);
+test('only contacts, addresses and the visible full ID are searchable',()=>{
+  assert.ok(taskPropertyMatches(items[0],'010 venta local av meiggs c 4'));
+  assert.ok(taskPropertyMatches(items[0],'010-venta-local-av. meigss c. 4'));
+  for(const query of ['099-LOCAL-ANTERIOR','099','90','100','02','Chimbote','referencia privada']) {
+    assert.equal(taskPropertyMatches({...items[0],nombre:'referencia privada',referencia:'referencia privada'},query),false,query);
+  }
   assert.deepEqual(filterTaskProperties(items,'luis perez').map(row=>row.id),[2]);
 });
 test('equal positions use zone and identity for stable order, including unassigned positions',()=>{

@@ -1,5 +1,7 @@
 # Búsqueda automática y orden por posición — 18 de octubre de 2026
 
+Actualización posterior: [ID por posición y filtros limitados](id-posicion-filtros-2026-10-18.md). La descripción siguiente conserva evidencia histórica; el criterio vigente excluye código anterior, número interno, zona y posición independiente de los campos de búsqueda.
+
 ## Comportamiento
 
 Se unifica la búsqueda de inmuebles y el orden de las cuatro pantallas solicitadas: Registrar visitas, Visitas pendientes, Registrar tasaciones y Tasaciones y textos pendientes.

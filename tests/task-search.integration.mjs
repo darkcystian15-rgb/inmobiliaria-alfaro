@@ -14,7 +14,7 @@ const contacts=['María Campos','José Campos','Luis Pérez'];
 const locations=['Av. Meigss C. 4','Avenida Meiggs 320','Calle Las Palmeras'];
 function rows(stage=0,publication=false) {
   return [10,2,1].map((position,index)=>({
-    id:stage*100+index+1,inmuebleId:stage*100+index+1,codigo:`${String(stage*100+index+1).padStart(3,'0')}-LOCAL-LOCAL`,
+    id:stage*100+index+1,inmuebleId:stage*100+index+1,codigo:`${String(9000+stage*100+index+1).padStart(3,'0')}-LOCAL-LOCAL`,
     posicion:position+stage*10,zona:'Chimbote',distrito:'Chimbote',tipo:'Local',operacion:'venta',
     nombre:'Referencia local',referencia:'Referencia local',propietario:contacts[index],nombreContacto:contacts[index],
     direccion:locations[index],ubicacion:locations[index],dias:index===0?8:0,vencida:index===0,
@@ -61,6 +61,13 @@ try {
     for(const query of ['campos','AV MEIGGS','avenida meigss','campos meiggs']) {
       await search.fill(query);
       for(const list of lists) {await list.filter({hasText:'José Campos'}).waitFor();assert.deepEqual(await list.allTextContents(),['José Campos','María Campos'],query+' '+path);}
+    }
+    // A visible ID must use the position, even when the stored global code differs.
+    await search.fill('010-venta-local-av. meigss c. 4');
+    assert.deepEqual(await lists[0].allTextContents(),['María Campos']);
+    await page.getByText('010-venta-local-av. meigss c. 4',{exact:true}).first().waitFor();
+    for(const query of ['Referencia local','Chimbote','9001-LOCAL-LOCAL']) {
+      await search.fill(query);for(const list of lists)assert.equal(await list.count(),0,'Hidden fields must not match '+query);
     }
     await search.fill('jose campos');for(const list of lists)assert.deepEqual(await list.allTextContents(),['José Campos']);
     await search.fill('inexistente 999999');for(const list of lists)assert.equal(await list.count(),0);

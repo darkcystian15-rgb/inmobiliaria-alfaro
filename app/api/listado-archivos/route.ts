@@ -1,3 +1,4 @@
+import { propertyLastPosition } from '@/lib/property-position';
 import { NextResponse } from 'next/server';
 import { and, asc, eq, inArray, isNotNull, ne, or, sql } from 'drizzle-orm';
 import { authorizeApi } from '@/lib/auth';
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
     const rows = await db.select({
       id: inmArchivos.id, inmuebleId: inmInmuebles.id, codigo: inmInmuebles.codigo,
       operacion: inmInmuebles.operacion, tipo: inmInmuebles.tipo, direccion: inmInmuebles.direccion,
-      nombreContacto: inmInmuebles.nombreContacto,
+      nombreContacto: inmInmuebles.nombreContacto, posicion: propertyLastPosition,
       nombre: inmArchivos.nombre, tipoMime: inmArchivos.tipoMime, zona: inmZonas.nombre,
       grupo: categoryGroup,
       numero: sql<number>`ROW_NUMBER() OVER (PARTITION BY ${inmInmuebles.id}, ${categoryGroup} ORDER BY ${inmArchivos.id})`,

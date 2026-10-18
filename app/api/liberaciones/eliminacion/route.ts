@@ -22,7 +22,7 @@ async function operate(request: Request, mode: 'prepare' | 'delete' | 'retry') {
   try {
     if (mode === 'prepare') {
       const result = await prepareDeletion(connection, auth.user.id, zone, input!);
-      return NextResponse.json({ eliminacionId: result.eliminacionId, inmueble: propertyPanelContactId(result.property), archivos: result.archivos }, { headers: { 'Cache-Control': 'private, no-store' } });
+      return NextResponse.json({ eliminacionId: result.eliminacionId, inmueble: propertyPanelContactId({ ...result.property, posicion: result.posicion }), archivos: result.archivos }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
     if (mode === 'delete') await commitDeletion(connection, auth.user.id, zone, body.eliminacionId);
     const complete = await finishDeletion(connection, zone, body.eliminacionId, async (path: string) => { await hostingRequest('DELETE', path); });

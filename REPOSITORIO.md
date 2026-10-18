@@ -2,7 +2,9 @@
 
 Referencia consolidada actualizada el 18 de octubre de 2026.
 
-Última mejora de interfaz: [Búsqueda automática y orden por posición](docs/busqueda-orden-seguimiento-2026-10-18.md) en los cuatro apartados de visitas y tasaciones. Orden numérico ascendente, contacto/dirección/ID/posición al escribir, limpieza y conservación de formularios.
+Último ajuste: [ID visible por posición y filtros por contacto, dirección o ID completo](docs/id-posicion-filtros-2026-10-18.md). Este criterio sustituye el prefijo global y la búsqueda por campos adicionales descritos en entregas anteriores.
+
+Última mejora de interfaz: [Búsqueda automática y orden por posición](docs/busqueda-orden-seguimiento-2026-10-18.md) en los cuatro apartados de visitas y tasaciones. Orden numérico ascendente, contacto/dirección/ID visible al escribir, limpieza y conservación de formularios.
 
 **Nueva sesión:** comenzar por [Contexto vigente para retomar](docs/contexto-retomar-2026-10-18.md), que resume las siete zonas, los casos aún no cargados y cómo comprobar las referencias y Production.
 

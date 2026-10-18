@@ -2,6 +2,8 @@
 
 Leer primero este archivo y después [REPOSITORIO.md](../REPOSITORIO.md). Esta guía sustituye como punto de entrada al contexto del 15 de octubre; los documentos anteriores conservan sus evidencias históricas.
 
+Último ajuste: [ID por posición y filtros limitados](id-posicion-filtros-2026-10-18.md). El ID visible comienza por la posición de la zona; las claves internas no cambian. Los cuatro buscadores buscan solo contacto, dirección e ID visible. No repetir cargas ni reiniciar avances.
+
 ## Dónde trabajar y qué está sincronizado
 
 - Repositorio: https://github.com/darkcystian15-rgb/inmobiliaria-alfaro.
@@ -48,7 +50,7 @@ No volver a proponer migrar toda la zona desde cero: los 68 ya están cargados. 
 
 ## Catálogo, interfaz y validación
 
-- Última mejora: [búsqueda automática y orden numérico por posición](busqueda-orden-seguimiento-2026-10-18.md) en Registrar visitas, Visitas pendientes, Registrar tasaciones y Tasaciones y textos pendientes. Búsqueda al escribir por contacto/dirección/ID/posición, sin tildes y con equivalencia Meiggs/Meigss. Se conserva el contenido de los formularios al filtrar; no altera datos ni requiere cargas o migraciones. Consultar el documento para evidencia de publicación y comprobación.
+- Última mejora: [búsqueda automática y orden numérico por posición](busqueda-orden-seguimiento-2026-10-18.md) en Registrar visitas, Visitas pendientes, Registrar tasaciones y Tasaciones y textos pendientes. Búsqueda al escribir por contacto/dirección/ID visible, sin tildes y con equivalencia Meiggs/Meigss. Se conserva el contenido de los formularios al filtrar; no altera datos ni requiere cargas o migraciones. Consultar el documento para evidencia de publicación y comprobación.
 
 - Activos Módulo, Condominio, Colegio y Almacén, además de los tipos anteriores. [Catálogo y comprobación](tipos-inmueble.md).
 - Operación contiene Cartera de inmuebles. Seguimiento: Registrar inmueble, Liberar inmueble, Visitas pendientes, Registrar visitas, Tasaciones y textos pendientes, Registrar tasaciones. Opciones por zona y permisos vigentes. [Orden](orden-menu-seguimiento-2026-10-18.md).
