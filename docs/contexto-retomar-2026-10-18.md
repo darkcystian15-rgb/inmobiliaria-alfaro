@@ -25,7 +25,7 @@ Criterio de identificación vigente: [ID por posición y filtros limitados](id-p
 
 - Repositorio: https://github.com/darkcystian15-rgb/inmobiliaria-alfaro.
 - Carpeta de aplicación: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`. El padre es otro repositorio; ejecutar Git dentro de esta carpeta.
-- Ramas `main` y `feat/registro-simplificado` sincronizadas en Codespaces y GitHub; código operativo `fc56a7defe609e227eff1d090f8cff5be7e820d6`. El commit documental posterior solo registra evidencia.
+- Ramas `main` y `feat/registro-simplificado` sincronizadas en Codespaces y GitHub; código de ventas suspendidas `56872bb65462dbb0294466e518bd54a7acf7156c`, publicado el 19 de octubre. Production `7165093644` y Preview `7165102638`, ambos `success`. Los commits documentales posteriores registran evidencia. La auditoría `fc56a7d` corresponde a una versión anterior.
 - Base previa: `82e96b6`; entrega histórica de IDs `0ca5c6d`. No usar sus despliegues como constancia de la nueva auditoría.
 - Vercel: `puma19/inmobiliaria-alfarov2`. Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
 - Para `fc56a7d`, Production GitHub `7158854179` y Preview `7158848637`, ambos `success`, «Deployment has completed». Production confirmado el `2026-10-18T18:30:12Z`; versión https://inmobiliaria-alfarov2-8qfue7kgg-puma19.vercel.app.

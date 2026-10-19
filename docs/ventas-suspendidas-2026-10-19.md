@@ -36,4 +36,27 @@ Base anterior: `94d67e5cb7e6e162c2f35bbda7023b6f978f44a2`. Copia privada de fuen
 - Navegador local en escritorio y móvil de 375 px: cancelar retorno o suspensión conserva el estado; confirmar completa el cambio. Sin errores JavaScript ni desbordamiento horizontal. Capturas privadas en `output/venta-suspendida/`.
 - Las pruebas de suspensión/retorno usan exclusivamente datos ficticios locales. No se suspenden ni reactivan inmuebles reales para comprobar la entrega.
 
-La evidencia de publicación y el contraste de producción se añadirán tras confirmar Vercel.
+## Entrega publicada
+
+- Código: `56872bb65462dbb0294466e518bd54a7acf7156c`, sincronizado en `main` y `feat/registro-simplificado`, tanto en Codespaces como en GitHub mediante subida atómica.
+- Vercel Production GitHub `7165093644`: `success`, «Deployment has completed», el `2026-10-19T03:34:46Z`.
+- URL de versión: https://inmobiliaria-alfarov2-n5ja3ac8m-puma19.vercel.app.
+- [Despliegue Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/6pdZ29BZvwuPN2AQavGBNUcZQ3ys).
+- Vercel Preview GitHub `7165102638`: `success`, el `2026-10-19T03:35:34Z`.
+- Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
+- Contenedor y volumen de MySQL local de ensayo retirados después de aprobar la integración.
+- Los commits posteriores de documentación conservan el código de esta entrega.
+
+## Contraste autenticado de producción
+
+Verificado el `2026-10-19T03:37:17.588Z` en el dominio de la intranet:
+
+- En Chimbote, las 34 ventas activas consultadas muestran Suspender venta; los alquileres no muestran esa opción. Es el resultado de esa consulta, no un inventario fijo.
+- La API de Cartera expone tipo de Histórico y posibilidad de retorno; la navegación a Histórico conserva su filtro.
+- El formulario de suspensión presenta motivo y revisión, sin solicitar importes de una venta realizada.
+- Acceso anónimo rechazado y operador sin permiso para Liberar inmueble.
+- Escritorio y móvil de 375 px sin errores JavaScript ni desbordamiento horizontal.
+- Cero escrituras de negocio: el navegador bloqueó métodos de escritura y no se confirmaron suspensiones, retornos, cierres ni eliminaciones reales. El funcionamiento completo conserva la evidencia de integración local ficticia.
+- Cuentas y sesiones temporales eliminadas al terminar. El primer intento del comprobador falló por un selector demasiado estricto del filtro Estado; se corrigió el selector de prueba y la comprobación completa pasó sin cambiar el código desplegado.
+
+Evidencia privada excluida de Git/Vercel: `output/sale-suspension-production-smoke.mjs`, `output/venta-suspendida-production/result.json` y capturas de escritorio/móvil.

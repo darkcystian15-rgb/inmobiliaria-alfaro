@@ -41,11 +41,15 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - Copia local: `/workspaces/app-alfaro-git/inmobiliaria-alfaro`.
 - El directorio padre pertenece a otro repositorio, `Cystian/app-alfaro-git`. Ejecutar Git dentro de la carpeta de la aplicación.
 - `main` y `feat/registro-simplificado` contienen la misma entrega, integradas mediante fast-forward y sincronizadas con GitHub sin reescribir historial.
-- Código vigente de auditoría: `fc56a7defe609e227eff1d090f8cff5be7e820d6`.
-- Los commits documentales posteriores conservan ese código. Al retomar, consultar el HEAD remoto de ambas ramas y los estados de su SHA.
+- Código de la auditoría anterior: `fc56a7defe609e227eff1d090f8cff5be7e820d6`.
+- Código de ventas suspendidas: `56872bb65462dbb0294466e518bd54a7acf7156c`, publicado el 19 de octubre. Los commits posteriores de evidencia conservan ese código; comprobar las referencias remotas y estados de su SHA al retomar.
 - Base anterior a la auditoría: `82e96b6475ee21ce3886ece70e5c67687f5b8461`. Las referencias anteriores de IDs y cargas se conservan como evidencia histórica.
 
-## Producción
+## Producción vigente — 19 de octubre
+
+Ventas suspendidas y retorno publicados en `56872bb65462dbb0294466e518bd54a7acf7156c`. Production GitHub `7165093644` y Preview `7165102638`, ambos `success`. Production confirmado a las `2026-10-19T03:34:46Z`; versión https://inmobiliaria-alfarov2-n5ja3ac8m-puma19.vercel.app. Consultar [funcionamiento, pruebas y entrega](docs/ventas-suspendidas-2026-10-19.md). Esta entrega no modifica esquema ni datos de negocio al desplegar.
+
+## Evidencia histórica de producción — auditoría del 18 de octubre
 
 | Dato | Evidencia del 18 de octubre |
 | --- | --- |
