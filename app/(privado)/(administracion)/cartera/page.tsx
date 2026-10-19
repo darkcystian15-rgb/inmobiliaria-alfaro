@@ -1,4 +1,5 @@
 "use client";
+import ResumeSale from "@/app/components/ResumeSale";
 import ZoneFolderCard from "@/app/components/ZoneFolderCard";
 import { useZoneWorkspace } from "@/app/components/ZoneWorkspace";
 import { zoneHref } from "@/lib/zone-url";
@@ -72,6 +73,8 @@ type Inmueble = {
   zonaId: number;
   distrito: string | null;
   estado: Estado;
+  tipoHistorico?: string | null;
+  puedeRetomar?: boolean;
   propietario: string;
   precioVenta: string | null;
   actividades: Actividades;
@@ -766,7 +769,7 @@ export default function CarteraPage() {
                           : "bg-slate-100 text-slate-600"
                       }`}
                     >
-                      {seleccionado.estado}
+                      {seleccionado.tipoHistorico || seleccionado.estado}
                     </span>
                   </div>
 
@@ -791,6 +794,7 @@ export default function CarteraPage() {
                 </button>
               </div>
 
+              {seleccionado.puedeRetomar && <ResumeSale key={seleccionado.inmuebleId} propertyId={seleccionado.inmuebleId} zoneId={seleccionado.zonaId} zone={seleccionado.zona || ''} contact={seleccionado.propietario} positions={todasPosiciones} onSaved={async () => { await cargarDatos(); setSeleccionado(null); }} />}
               <PortfolioPropertyEditor key={seleccionado.inmuebleId} propertyId={seleccionado.inmuebleId} onSaved={async () => {
                 const response = await fetch(zoneUrl("/api/cartera"), { cache: "no-store" });
                 const data = await response.json();

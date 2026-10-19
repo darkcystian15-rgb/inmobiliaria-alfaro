@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
+  inmLiberaciones,
   inmArchivos,
   inmAsignacionesPosicion,
   inmInmuebles,
@@ -51,6 +52,7 @@ export async function GET(request: Request) {
         provincia: inmInmuebles.provincia,
         departamento: inmInmuebles.departamento,
         estado: inmInmuebles.estado,
+        ventaSuspendida: sql<number>`EXISTS(SELECT 1 FROM ${inmLiberaciones} l WHERE l.inmueble_id=${inmInmuebles.id} AND l.motivo='venta_suspendida' AND l.confirmado=1 AND l.anulada=0)`,
         fechaRegistro: inmInmuebles.fechaRegistro,
         fechaSalida: inmInmuebles.fechaSalida,
         posicion: inmPosiciones.numero,
@@ -324,6 +326,8 @@ const materialPendiente =
             ? "Activo"
             : "Histórico",
 
+        tipoHistorico: estadoNormalizado === 'activo' ? null : row.ventaSuspendida ? 'Venta suspendida' : 'Operación concluida',
+        puedeRetomar: estadoNormalizado !== 'activo' && row.operacion === 'venta' && Boolean(row.ventaSuspendida),
         propietario:
           [row.propietarioNombres, row.propietarioApellidos]
             .filter(Boolean)

@@ -1,0 +1,121 @@
+// Requires an EMPTY local database. Never reads production credentials.
+import assert from 'node:assert/strict';
+import { execFileSync, spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
+import mysql from 'mysql2/promise';
+import { mkdir } from 'node:fs/promises';
+import { todayInPeru } from '../lib/calendar.mjs';
+import { hashSessionToken } from '../lib/password.mjs';
+const uri = process.env.TEST_DATABASE_URL, location = new URL(uri || 'http://invalid');
+assert.ok(['127.0.0.1', 'localhost'].includes(location.hostname) && location.pathname === '/alfaro_sale_suspension_test');
+const db = await mysql.createConnection(uri), origin = 'http://127.0.0.1:3191';
+const admin = randomBytes(32).toString('hex'), operator = randomBytes(32).toString('hex');
+let app, browser, logs = '';
+async function req(path, method = 'GET', body, token = admin) {
+  const response = await fetch(origin + path, { method, headers: { Origin: origin, ...(token ? { Cookie: `aa_session=${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(60000) });
+  return { status: response.status, data: await response.json() };
+}
+const q = '?zona=Chimbote';
+async function suspend(id = 1) { return req('/api/liberaciones' + q, 'POST', { inmuebleId: id, motivo: 'venta_suspendida', detalleOtro: 'Propietario solicita pausa de tres meses' }); }
+async function resume(id = 1, posicionId = 3, suffix = q) { return req('/api/liberaciones/retomar' + suffix, 'POST', { inmuebleId: id, posicionId, confirmacion: 'RETOMAR' }); }
+try {
+  assert.equal((await db.query('SHOW TABLES'))[0].length, 0, 'Never clear an existing database');
+  const schema = execFileSync(process.execPath, ['node_modules/drizzle-kit/bin.cjs', 'export', '--dialect=mysql', '--schema=./db/schema.ts'], { encoding: 'utf8' });
+  for (const query of schema.slice(schema.indexOf('CREATE TABLE')).split(';').map(x => x.trim()).filter(Boolean)) await db.query(query);
+  await db.query("INSERT INTO inm_usuarios(id,nombre,email,rol) VALUES(1,'Administrador local','sale-admin@example.invalid','administrador'),(2,'Operador local','sale-user@example.invalid','usuario')");
+  for (const [token, id] of [[admin, 1], [operator, 2]]) await db.query('INSERT INTO inm_sesiones(token_hash,usuario_id,expira,last_seen,authenticated_at) VALUES(?,?,DATE_ADD(NOW(),INTERVAL 1 HOUR),NOW(),NOW())', [hashSessionToken(token), id]);
+  await db.query("INSERT INTO inm_zonas(id,clave,nombre,capacidad) VALUES(1,'chimbote','Chimbote',10),(2,'lima','Lima',10)");
+  await db.query('INSERT INTO inm_posiciones_zona(id,zona_id,numero) VALUES(1,1,1),(2,1,2),(3,1,3),(4,2,1),(5,1,101),(6,1,6)');
+  await db.query("INSERT INTO inm_inmuebles(id,codigo,numero_orden,tipo,operacion,referencia,direccion,nombre_contacto,zona_id) VALUES(1,'901-VENTA',901,'Casa','venta','Ensayo','Calle local','Venta local',1),(2,'902-ALQUILER',902,'Casa','alquiler','Ensayo alquiler','Calle alquiler','Alquiler local',1),(3,'903-VENTA',903,'Casa','venta','Otra venta','Calle otra','Segunda venta',1)");
+  await db.query('INSERT INTO inm_asignaciones_zona(inmueble_id,posicion_id) VALUES(1,1),(2,2),(3,6)');
+  await db.query("INSERT INTO inm_visitas(inmueble_id,fecha_visita,completada,usuario_id) VALUES(1,'2025-06-17',1,1)");
+  await db.query("INSERT INTO inm_archivos(inmueble_id,tipo_documento,nombre,enlace,usuario_id) VALUES(1,'TASACION','Documento local','https://example.invalid/test.pdf',1)");
+  await db.query("INSERT INTO inm_tasaciones(inmueble_id,fecha_tasacion,valor_referencia,precio_objetivo,precio_venta,situacion,usuario_id) VALUES(1,'2025-06-20',100000,110000,120000,'aprobado',1)");
+  app = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '-p', '3191', '-H', '127.0.0.1'], { env: { ...process.env, DATABASE_URL: uri, DATABASE_TLS_REQUIRED: '', DATABASE_SSL_CA: '', AUTH_LOGIN_MFA_REQUIRED: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  app.stdout.on('data', data => { logs += data; }); app.stderr.on('data', data => { logs += data; });
+  for (let attempt = 0; attempt < 80; attempt++) { try { if ((await fetch(origin + '/login')).ok) break; } catch {} await new Promise(resolve => setTimeout(resolve, 250)); }
+  const initial = (await db.query('SELECT * FROM inm_visitas WHERE inmueble_id=1'))[0];
+  const initialPrices = (await db.query('SELECT * FROM inm_tasaciones WHERE inmueble_id=1'))[0];
+  assert.equal((await req('/api/liberaciones' + q, 'POST', { inmuebleId: 1, motivo: 'venta_suspendida' })).status, 400);
+  assert.equal((await suspend(2)).status, 409, 'Cannot suspend rentals');
+  assert.equal((await req('/api/liberaciones' + q, 'POST', { inmuebleId: 1, motivo: 'venta_suspendida', detalleOtro: 'Pausa' }, operator)).status, 403);
+  assert.equal((await suspend()).status, 201);
+  assert.equal((await suspend()).status, 409, 'No double suspension');
+  let portfolio = (await req('/api/cartera' + q)).data.inmuebles;
+  let property = portfolio.find(x => x.inmuebleId === 1);
+  assert.equal(property.estado, 'Histórico'); assert.equal(property.tipoHistorico, 'Venta suspendida'); assert.equal(property.puedeRetomar, true);
+  assert.equal((await req('/api/posiciones' + q)).data.posiciones.find(p => p.id === 1).disponible, true);
+  assert.equal((await req('/api/seguimiento' + q)).data.items.some(x => x.id === 1), false);
+  const historical = await req('/api/reportes?reporte=Hist%C3%B3rico%20de%20inmuebles&zona=Chimbote');
+  assert.equal(historical.status, 200); assert.equal(historical.data.rows.find(x => x.inmuebleId === 1).motivoLiberacion, 'venta_suspendida');
+  assert.equal((await resume(1, 4)).status, 409, 'Cannot use another zone position');
+  assert.equal((await resume(1, 3, '?zona=Lima')).status, 409);
+  assert.equal((await resume(1, 2)).status, 409, 'Occupied position');
+  assert.equal((await req('/api/liberaciones/retomar', 'POST', { inmuebleId: 1, posicionId: 3, confirmacion: 'RETOMAR' })).status, 400);
+  for (const [token, status] of [[null, 401], [operator, 403]]) assert.equal((await req('/api/liberaciones/retomar' + q, 'POST', { inmuebleId: 1, posicionId: 3, confirmacion: 'RETOMAR' }, token)).status, status);
+  assert.equal((await req('/api/liberaciones/retomar' + q, 'POST', { inmuebleId: 1, posicionId: 3 })).status, 400);
+  const racing = await Promise.all([resume(), resume()]);
+  assert.deepEqual(racing.map(x => x.status).sort(), [200, 409], 'One activation only');
+  property = (await req('/api/cartera' + q)).data.inmuebles.find(x => x.inmuebleId === 1);
+  assert.equal(property.estado, 'Activo'); assert.equal(property.posicion, 3); assert.equal(property.puedeRetomar, false);
+  assert.deepEqual((await db.query('SELECT * FROM inm_visitas WHERE inmueble_id=1'))[0], initial);
+  assert.deepEqual((await db.query('SELECT * FROM inm_tasaciones WHERE inmueble_id=1'))[0], initialPrices);
+  assert.equal((await db.query('SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=1'))[0][0].n, 1);
+  assert.equal((await db.query('SELECT COUNT(*) n FROM inm_inmuebles'))[0][0].n, 3, 'No duplicate property');
+  assert.equal((await suspend()).status, 201, 'Can suspend again');
+  assert.equal((await resume(1, 5)).status, 200, 'Position above 90 supported');
+  assert.equal((await suspend()).status, 201);
+  assert.equal((await suspend(3)).status, 201);
+  const competing = await Promise.all([resume(1, 3), resume(3, 3)]);
+  assert.deepEqual(competing.map(x => x.status).sort(), [200, 409], 'One property per position');
+  const loser = competing[0].status === 409 ? 1 : 3;
+  assert.equal((await resume(loser, 5)).status, 200);
+  assert.equal((await req('/api/liberaciones' + q, 'POST', { inmuebleId: 1, motivo: 'vendido', fechaVenta: todayInPeru(), precioFinal: '100000', comision: '3000' })).status, 201, 'Sale can close after returning');
+  assert.equal((await resume()).status, 409, 'Closed sale cannot return');
+  assert.equal((await req('/api/cartera' + q)).data.inmuebles.find(x => x.inmuebleId === 1).tipoHistorico, 'Operación concluida');
+  assert.equal((await req('/api/liberaciones' + q, 'POST', { inmuebleId: 2, motivo: 'alquilado', fechaAlquiler: todayInPeru(), rentaMensual: '1000' })).status, 201, 'Rental closure unchanged');
+  assert.equal((await resume(2)).status, 409, 'Rental return unchanged');
+  assert.equal((await suspend(3)).status, 201);
+  if (process.env.PLAYWRIGHT_MODULE_PATH) {
+    const { chromium } = await import(process.env.PLAYWRIGHT_MODULE_PATH);
+    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+    await context.addCookies([{ name: 'aa_session', value: admin, url: origin }]);
+    const page = await context.newPage(), errors = []; page.on('pageerror', e => errors.push(e.message));
+    await page.goto(origin + '/cartera?zona=Chimbote&estado=Hist%C3%B3rico');
+    await page.getByText('Venta suspendida', { exact: true }).waitFor();
+    await page.getByRole('button', { name: /Segunda venta/ }).click();
+    await page.getByRole('button', { name: 'Retomar en cartera', exact: true }).waitFor();
+    await page.getByLabel('Nueva posición disponible').selectOption('3');
+    await mkdir('output/venta-suspendida', { recursive: true });
+    await page.screenshot({ path: 'output/venta-suspendida/desktop.png', fullPage: true });
+    await page.getByRole('button', { name: 'Retomar en cartera', exact: true }).click();
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    assert.equal((await db.query('SELECT estado FROM inm_inmuebles WHERE id=3'))[0][0].estado, 'inactivo');
+    await page.setViewportSize({ width: 375, height: 850 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await page.getByRole('button', { name: 'Retomar en cartera', exact: true }).click();
+    await page.getByRole('button', { name: 'Confirmar retorno a cartera', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Retomar venta en cartera activa', exact: true }).waitFor({ state: 'detached' });
+    assert.equal((await db.query('SELECT estado FROM inm_inmuebles WHERE id=3'))[0][0].estado, 'activo');
+    await page.goto(origin + '/liberar-inmuebles?zona=Chimbote');
+    await page.locator('summary').filter({ hasText: 'Segunda venta' }).click();
+    await page.getByRole('radio', { name: /Suspender venta y conservar en Histórico/ }).check();
+    await page.getByLabel('Motivo de suspensión').fill('Propietario pide pausa temporal desde el formulario');
+    await page.getByRole('button', { name: 'Revisar suspensión', exact: true }).click();
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    assert.equal((await db.query('SELECT estado FROM inm_inmuebles WHERE id=3'))[0][0].estado, 'activo');
+    await page.getByRole('button', { name: 'Revisar suspensión', exact: true }).click();
+    await page.getByRole('button', { name: 'Suspender y pasar a Histórico', exact: true }).click();
+    await page.getByText('Venta suspendida. La ficha queda en Histórico y puede retomarse con una nueva posición disponible.', { exact: true }).waitFor();
+    assert.equal((await db.query('SELECT estado FROM inm_inmuebles WHERE id=3'))[0][0].estado, 'inactivo');
+    await page.goto(origin + '/cartera?zona=Chimbote&estado=Hist%C3%B3rico');
+    await page.getByRole('button', { name: /Segunda venta/ }).click();
+    await page.getByRole('button', { name: 'Retomar en cartera', exact: true }).waitFor();
+    await page.screenshot({ path: 'output/venta-suspendida/mobile.png', fullPage: true });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    assert.deepEqual(errors, []);
+  }
+  console.log('PASS: suspension, history, slots, permissions, rental exclusion, preserved records, repeated cycles, concurrency, sale closure and optional desktop/mobile UI.');
+} catch (error) { console.error(logs.slice(-2500)); throw error; }
+finally { if (browser) await browser.close(); if (app) { app.kill('SIGTERM'); await new Promise(resolve => app.once('exit', resolve)); } await db.end(); }

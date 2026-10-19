@@ -19,7 +19,7 @@ function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-const MOTIVOS = new Set(["vendido", "alquilado"]);
+const MOTIVOS = new Set(["vendido", "alquilado", "venta_suspendida"]);
 
 
 export async function GET(request: Request) {
@@ -139,7 +139,7 @@ export async function POST(request: Request) {
         {
           ok: false,
           error:
-            "Para conservar en histórico, selecciona vendido o alquilado. Para retirar por otro motivo utiliza Eliminar inmueble.",
+            "Selecciona un cierre de operación o la suspensión temporal de una venta.",
         },
         { status: 400 }
       );
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
 
     if (detalleOtro.length > 500) return NextResponse.json({ error: "El detalle admite hasta 500 caracteres." }, { status: 400 });
 
-    if (motivo === "otro" && !detalleOtro) {
+    if (motivo === "venta_suspendida" && !detalleOtro) {
       return NextResponse.json(
         {
           ok: false,
@@ -179,6 +179,7 @@ export async function POST(request: Request) {
         throw new Error("El inmueble no existe.");
       }
 
+      if (motivo === 'venta_suspendida' && property.operacion !== 'venta') throw new Error('La suspensión no corresponde a un alquiler; solo se permite para ventas.');
       if ((motivo === 'vendido' && property.operacion !== 'venta') || (motivo === 'alquilado' && property.operacion !== 'alquiler')) throw new Error('El motivo de cierre no corresponde al tipo de operación del inmueble.');
       if (property.estado !== "activo") {
         throw new Error(
@@ -218,7 +219,7 @@ export async function POST(request: Request) {
         ...(venta ?? {}),
         ...(alquiler ?? {}),
         detalleOtro:
-          motivo === "otro" ? detalleOtro : null,
+          motivo === "venta_suspendida" ? detalleOtro : null,
         usuarioRegistroId: user.id,
         confirmado: true,
         fechaConfirmacion: ahora,
@@ -270,6 +271,7 @@ export async function POST(request: Request) {
         .where(and(eq(inmInmuebles.id, inmuebleId),zoneCondition(request)));
 
       const motivoLabel = {
+        venta_suspendida: "Venta suspendida por el propietario",
         vendido: "Vendido",
         alquilado: "Alquilado",
         cancelacion_propietario:
@@ -280,12 +282,12 @@ export async function POST(request: Request) {
 
       await tx.insert(inmTimeline).values({
         inmuebleId,
-        evento: "inmueble_liberado",
+        evento: motivo === "venta_suspendida" ? "venta_suspendida" : "inmueble_liberado",
         observacion:
           `Inmueble liberado. Motivo: ${motivoLabel}.` +
           (venta ? ` Fecha de venta: ${body.fechaVenta}; precio final: S/ ${venta.precioFinal}; comisión: S/ ${venta.comision}.` : "") +
           (alquiler ? ` Alquiler cerrado el ${alquiler.fechaAlquiler}; renta mensual: S/ ${alquiler.rentaMensual}; comisión: S/ ${alquiler.comision}.` : "") +
-          (motivo === "otro"
+          (motivo === "venta_suspendida"
             ? ` Detalle: ${detalleOtro}`
             : ""),
         usuarioId: user.id,

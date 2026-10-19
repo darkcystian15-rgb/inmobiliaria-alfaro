@@ -10,6 +10,7 @@ type Property = {
   propietario: string;
   distrito: string | null;
   estado: string;
+  tipoHistorico?: string | null;
   precioVenta: string | null;
   visitaPendiente: boolean;
   tasacionPendiente: boolean;
@@ -28,7 +29,7 @@ const tones = {
 
 export default function PortfolioLabelRow({ property: x, onOpen }: { property: Property; onOpen: () => void }) {
   const states: { label: string; tone: keyof typeof tones }[] = [];
-  if (x.estado === "Histórico") states.push({ label: "Histórico", tone: "neutral" });
+  if (x.estado === "Histórico") states.push({ label: x.tipoHistorico || "Histórico", tone: "neutral" });
   else {
     if (x.visitaPendiente) states.push({ label: "Visita pendiente", tone: "visit" });
     if (x.tasacionPendiente) states.push({ label: "Tasación pendiente", tone: "valuation" });

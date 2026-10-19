@@ -47,6 +47,7 @@ export function reportText(key: string, value: ReportValue): string {
 export function reportCellValue(key: string, row: ReportRow): ReportValue {
   if (key === "codigo" && row.codigo) return propertyPanelId(row);
   if (key === "nombre" && typeof row.propietario === "string") return row.propietario || "Sin contacto";
+  if (key === "motivoLiberacion" && row[key] === "venta_suspendida") return "Venta suspendida por el propietario";
   return row[key];
 }
 

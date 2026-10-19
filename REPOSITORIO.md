@@ -1,5 +1,7 @@
 # Repositorio y estado de entrega
 
+Actualización del 19 de octubre: [Ventas suspendidas y retorno a cartera](docs/ventas-suspendidas-2026-10-19.md). Solo ventas: suspensión en Histórico, liberación de posición y retorno de la misma ficha con una posición disponible. Alquileres conservan su flujo.
+
 Actualización: [Preparación para publicar](docs/preparacion-publicar-2026-10-18.md). Requisitos visuales como cuatro pasos, progreso y navegación directa al contenido registrado.
 
 Actualización: [Reportes alineados con el flujo actual](docs/revision-reportes-flujo-2026-10-18.md). Plazos particulares, alertas, columnas por actividad y exportaciones con zona.
@@ -10,7 +12,7 @@ Actualización: [Alertas y plazos particulares por inmueble](docs/alertas-plazos
 
 Ajuste posterior: [Prioridades sin etiqueta de origen y contraste de tasaciones con Drive](docs/fechas-prioridades-tasaciones-drive-2026-10-18.md). Se mantienen fechas y avances; los documentos detectados quedan como candidatos por verificar.
 
-**Última entrega publicada:** [Diseño, datos y continuidad](docs/auditoria-diseno-procesos-2026-10-18.md). Código `fc56a7d`, Production `7158854179` y Preview `7158848637`, ambos completados. Comprobación autenticada de siete zonas y 28 pantallas el `2026-10-18T18:34:11.657Z`, sin escrituras de negocio. El commit documental posterior conserva este código.
+**Auditoría previa publicada (18 de octubre, 18:30 UTC):** [Diseño, datos y continuidad](docs/auditoria-diseno-procesos-2026-10-18.md). Código `fc56a7d`, Production `7158854179` y Preview `7158848637`, ambos completados. Comprobación autenticada de siete zonas y 28 pantallas el `2026-10-18T18:34:11.657Z`, sin escrituras de negocio. El commit documental posterior conserva este código.
 
 Ajuste de título de Cartera: **CARTERA DE INMUEBLES CHIMBOTE** (con la zona seleccionada, texto en mayúsculas y sin paréntesis), tamaño 18 px en móvil y 20 px desde 640 px. En el listado general: **CARTERA DE INMUEBLES TODAS LAS ZONAS**. Histórico conserva su título. Cambio solo visual; no modifica datos ni filtros. ESLint del archivo sin advertencias. El título se conserva en la entrega de auditoría publicada; las entregas anteriores de IDs mantienen su evidencia histórica.
 

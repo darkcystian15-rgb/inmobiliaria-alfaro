@@ -40,6 +40,8 @@ const eventoMap: Record<string, string> = {
   publicado: "Publicado",
   liberacion_registrada: "Liberación registrada",
   inmueble_liberado: "Inmueble liberado",
+  venta_suspendida: "Venta suspendida por el propietario",
+  venta_retomada: "Venta retomada en cartera",
 };
 
 export async function GET() {
