@@ -38,6 +38,10 @@ test('only hosting credentials enable document storage', () => {
   assert.equal(storageConfigured({}), false);
   assert.equal(storageConfigured({ DOCUMENT_HOSTING_URL: 'https://files.example/documentos.php', DOCUMENT_HOSTING_TOKEN: 'secret' }), true);
   assert.equal(storageConfigured({ DOCUMENT_HOSTING_URL: 'https://files.example/documentos.php' }), false);
+  for (const url of ['not-a-url', '/documentos.php', 'http://files.example/documentos.php', 'file:///tmp/documentos.php', 'https://user:password@files.example/documentos.php']) {
+    assert.equal(storageConfigured({ DOCUMENT_HOSTING_URL: url, DOCUMENT_HOSTING_TOKEN: 'secret' }), false, 'Invalid hosting must not enable uploads');
+  }
+  assert.equal(storageConfigured({ DOCUMENT_HOSTING_URL: 'https://files.example/documentos.php', DOCUMENT_HOSTING_TOKEN: '  ' }), false);
 });
 
 test('property code and position appear in a safe folder with a unique filename', () => {

@@ -3,7 +3,7 @@ import { databaseInstant } from '@/lib/business-time';
 import { publicationReadiness } from "@/lib/publication-readiness";
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   inmAsignacionesPosicion,
@@ -60,9 +60,13 @@ export async function GET() {
       db
         .select({
           id: inmInmuebles.id,
-          hasPosition: sql<number>`EXISTS (SELECT 1 FROM inm_asignaciones_zona ap WHERE ap.inmueble_id = ${inmInmuebles.id} AND ap.activa = 1)`,
+          hasPosition: inmAsignacionesPosicion.id,
         })
         .from(inmInmuebles)
+        .leftJoin(inmAsignacionesPosicion, and(
+          eq(inmAsignacionesPosicion.inmuebleId, inmInmuebles.id),
+          eq(inmAsignacionesPosicion.activa, true),
+        ))
         .where(eq(inmInmuebles.estado,"activo")),
 
       db

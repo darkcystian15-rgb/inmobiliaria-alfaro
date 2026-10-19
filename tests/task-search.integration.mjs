@@ -41,7 +41,8 @@ try {
   const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
   await db.query("INSERT INTO inm_inmuebles(id,codigo,numero_orden,tipo,operacion,referencia,direccion,nombre_contacto,zona_id) VALUES(1,'901-CASA-LOCAL',901,'Casa','venta','Ensayo','Av. Local','Contacto local',1)");
   await db.query("INSERT INTO inm_posiciones_zona(id,zona_id,numero) VALUES(1,1,3)");
-  await db.query("INSERT INTO inm_asignaciones_zona(inmueble_id,posicion_id) VALUES(1,1)");
+  // Imported properties and their assignment IDs have independent sequences.
+  await db.query("INSERT INTO inm_asignaciones_zona(id,inmueble_id,posicion_id) VALUES(401,1,1)");
   await db.query("INSERT INTO inm_timeline(inmueble_id,evento,usuario_id) VALUES(1,'inmueble_registrado',1)");
 
   await db.query("INSERT INTO inm_visitas(inmueble_id,fecha_visita,completada,usuario_id) VALUES(1,'2026-01-01',1,1),(1,'2026-01-02',1,1)");
@@ -51,7 +52,7 @@ try {
   await db.query("INSERT INTO inm_liberaciones(inmueble_id,motivo,confirmado,usuario_registro_id,fecha_inicio_alquiler,fecha_fin_alquiler,renta_mensual) VALUES(2,'alquilado',1,1,'2020-01-01','2021-01-01','1500')");
   const real=await context.request.get(origin+'/api/tasaciones?zona=Chimbote');
   assert.equal(real.status(),200);assert.equal((await real.json()).pendientes.length,1,'Repeated completed visits produce one appraisal task');
-  const panel=await context.request.get(origin+'/api/dashboard');assert.equal((await panel.json()).resumen.tasacionesPendientes,1);
+  const panel=await context.request.get(origin+'/api/dashboard');assert.equal((await panel.json()).resumen.tasacionesPendientes,1,'Panel uses inmueble_id, not the unrelated assignment ID');
   const portfolio=await context.request.get(origin+'/api/cartera?zona=Chimbote');assert.equal((await portfolio.json()).resumen.tasacionesPendientes,1,'Portfolio, panel and inbox agree');
 
 
@@ -69,7 +70,7 @@ try {
   for(const path of ['/registrar-visitas','/visitas-pendientes','/registrar-tasaciones','/tasaciones-textos-pendientes']) {
     await page.goto(origin+path+'?zona=Chimbote');
     const search=page.getByRole('searchbox',{name:'Buscar inmueble',exact:true});await search.waitFor();await page.waitForFunction(()=>{const input=document.querySelector('input[type="search"]');return input&&!input.disabled;});
-    const lists=path==='/visitas-pendientes'?[page.locator('main h3')]:path==='/tasaciones-textos-pendientes'?['tasaciones','negociadas','material','listos','publicados'].map(id=>page.locator('#'+id+' h3')):[page.locator('article h3')];
+    const lists=path==='/visitas-pendientes'?[page.locator('main h3')]:path==='/tasaciones-textos-pendientes'?['tasaciones','negociadas','material','listos','publicados'].map(id=>page.locator('#'+id+' h3:not(section[aria-label="Preparación para publicar"] h3)')):[page.locator('article h3')];
     for(const list of lists)assert.deepEqual(await list.allTextContents(),expected,'Initial order '+path);
     let date,amount,text;
     if(path==='/registrar-visitas') {date=page.locator('article').first().locator('input[type="date"]');await date.fill('2026-01-02');}
@@ -79,7 +80,9 @@ try {
       await page.getByRole('button',{name:/Textos preparados/}).filter({hasText:'1 por completar · 2 listos para publicar'}).waitFor();
       const ready=page.locator('#listos > div.space-y-4 > div').filter({hasText:'Luis Pérez'});
       await ready.locator('textarea').fill('');
-      assert.match(await ready.getByRole('region',{name:'Documentos y material para publicar'}).innerText(),/Pendiente:.*Texto para publicar/s,'Checklist follows its visible textarea');
+      const checklist=ready.getByRole('region',{name:'Preparación para publicar',exact:true});
+      assert.equal(await checklist.getByRole('progressbar').getAttribute('aria-valuenow'),'3','Checklist follows its visible textarea');
+      await checklist.getByRole('listitem').filter({hasText:'Texto para publicar'}).getByRole('link',{name:'Completar',exact:false}).waitFor();
       assert.equal(await ready.getByRole('button',{name:'Marcar como publicado',exact:true}).isDisabled(),true);
       await ready.locator('textarea').fill('Texto local');
     }
@@ -129,6 +132,16 @@ try {
   await page.goto(origin+'/datos-inmuebles?codigo=1');
   const nextAction=page.getByRole('link',{name:'Registrar tasación →',exact:true}).first();await nextAction.waitFor();
   assert.equal(new URL(await nextAction.getAttribute('href'),origin).searchParams.get('zona'),'Chimbote','Ficha reached without zone resolves it from the actual property');
+  const picker=page.getByRole('complementary',{name:'Buscar y seleccionar inmueble',includeHidden:true});
+  assert.equal(await picker.isVisible(),false,'Direct ficha opens its content without the full selector above it');
+  await page.setViewportSize({width:375,height:850});
+  const sections=page.getByRole('navigation',{name:'Apartados de la ficha'});
+  const sectionBounds=await sections.boundingBox();assert.ok(sectionBounds.y<850,'Ficha sections are reachable in the first mobile screen');
+  await page.getByRole('button',{name:'← Volver a elegir inmueble',exact:true}).click();
+  await picker.waitFor({state:'visible'});
+  await picker.getByRole('button',{name:/Contacto local/}).click();
+  await sections.waitFor();assert.equal(await picker.isVisible(),false,'Choosing another property returns to the ficha');
+  await page.setViewportSize({width:1440,height:1000});
   await page.goto(origin+'/');await page.getByRole('region',{name:'Seguimiento de alquileres',exact:true}).getByText('07',{exact:true}).waitFor();
   await page.getByRole('link',{name:/^Ver historial de /}).first().click();
   await page.locator('#historial[open]').waitFor();

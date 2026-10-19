@@ -1,5 +1,7 @@
 # Inmobiliaria Alfaro — intranet
 
+Revisión local del 19 de octubre: [Auditoría general de funcionamiento, datos y diseño](docs/auditoria-general-2026-10-19.md), con conciliación de las 133 fichas, correcciones locales y límites de la verificación del hosting real. Pendiente de publicación.
+
 Actualización del 19 de octubre: [Ventas suspendidas y retorno a cartera](docs/ventas-suspendidas-2026-10-19.md). Solo ventas: suspensión en Histórico, liberación de posición y retorno de la misma ficha con una posición disponible. Alquileres conservan su flujo.
 
 Actualización: [Preparación para publicar](docs/preparacion-publicar-2026-10-18.md). Requisitos visuales como cuatro pasos, progreso y navegación directa al contenido registrado.

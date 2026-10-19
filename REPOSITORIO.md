@@ -1,5 +1,7 @@
 # Repositorio y estado de entrega
 
+Revisión local del 19 de octubre: [Auditoría general de funcionamiento, datos y diseño](docs/auditoria-general-2026-10-19.md). Detecta y corrige localmente el panel que mostraba cero pendientes, mejora la apertura directa de fichas y valida la configuración documental. Cambios pendientes de publicación; las evidencias de Production de abajo corresponden a la entrega anterior.
+
 Actualización del 19 de octubre: [Ventas suspendidas y retorno a cartera](docs/ventas-suspendidas-2026-10-19.md). Solo ventas: suspensión en Histórico, liberación de posición y retorno de la misma ficha con una posición disponible. Alquileres conservan su flujo.
 
 Actualización: [Preparación para publicar](docs/preparacion-publicar-2026-10-18.md). Requisitos visuales como cuatro pasos, progreso y navegación directa al contenido registrado.

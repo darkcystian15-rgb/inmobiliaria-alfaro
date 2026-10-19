@@ -171,7 +171,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
       </header>
 
       <div className="mt-7 grid items-start gap-5 2xl:grid-cols-[310px_minmax(0,1fr)]">
-        <aside aria-label="Buscar y seleccionar inmueble" className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.03)] 2xl:sticky 2xl:top-6">
+        <aside aria-label="Buscar y seleccionar inmueble" className={`${code ? "hidden 2xl:block " : ""}overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_4px_24px_rgba(15,23,42,0.03)] 2xl:sticky 2xl:top-6`}>
           <div className="border-b border-slate-100 p-5">
             <div className="flex items-center justify-between"><h2 className="text-sm font-bold text-slate-900">Tus inmuebles</h2><span className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">Por posición</span></div>
             <label className="mt-4 block text-xs font-semibold text-slate-600">Zona<select aria-label="Zona de inmuebles" value={zone} disabled={busy || dossierDirty || listLoading} onChange={event => changeZone(event.target.value)} className="aa-input mt-2 w-full"><option value="*">Todas las zonas</option>{zone !== "*" && !zones.includes(zone) && <option value={zone}>{zone}</option>}{zones.map(name => <option key={name} value={name}>{name}</option>)}</select></label>
@@ -192,7 +192,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
           <div className="border-t border-slate-100 px-5 py-3"><p className="text-xs leading-5 text-slate-500">{status === "todos" ? "Activos primero; cada grupo está ordenado por posición." : "Ordenados por posición. Los inmuebles sin posición aparecen al final."}</p></div>
         </aside>
 
-        <div ref={sheet} className="min-w-0 scroll-mt-5">
+        <div ref={sheet} className="min-w-0 scroll-mt-24 xl:scroll-mt-5">
           {code && <button type="button" disabled={busy} onClick={() => selectProperty("")} className="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-500 2xl:hidden">← Volver a elegir inmueble</button>}
           {error && <MobileFormFeedback value={error}><Feedback tone="error" className="mb-4">{error}{errorCarga && <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); void load(code); }} className="aa-button aa-button-secondary mt-3">{loading ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
           {message && <MobileFormFeedback value={message}><Feedback className="mb-4">{message}</Feedback></MobileFormFeedback>}

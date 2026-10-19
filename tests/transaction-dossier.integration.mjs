@@ -183,6 +183,7 @@ try {
   await page.screenshot({ path: 'output/dossier-local/mobile.png', fullPage: true });
   // Zone selector distinguishes equal positions and keeps one description per entry.
   await page.setViewportSize({width:1440,height:1000});
+  await page.getByRole('button',{name:'← Volver a elegir inmueble',exact:true}).click();
   await page.getByRole('combobox',{name:'Zona de inmuebles',exact:true}).selectOption('*');
   await page.getByRole('button',{name:/Contacto Lima/}).waitFor();
   assert.equal(await page.getByRole('complementary',{name:'Buscar y seleccionar inmueble'}).locator('button span[title]').filter({hasText:/^00/}).count(),0);
