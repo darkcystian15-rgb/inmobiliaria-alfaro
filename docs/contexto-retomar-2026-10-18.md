@@ -1,5 +1,7 @@
 # Contexto vigente para retomar — 18 de octubre de 2026
 
+Actualización publicada del 19 de octubre: [Auditoría general de funcionamiento, datos y diseño](auditoria-general-2026-10-19.md). Código `53fbef5`: contador del panel corregido, apertura directa de ficha y configuración documental validada. Production Vercel `dpl_9niDQryZAqUTxeTKui3uNr4cKAUN`, `READY`. Dominio comprobado a las `2026-10-19T22:17:30.668Z`: 133 fichas conciliadas, panel con 95 visitas y 36 tasaciones pendientes. Los commits documentales posteriores conservan ese código. Consultar las referencias remotas al retomar; las cifras son una instantánea y no se deben restaurar sobre avances posteriores.
+
 Actualización del 19 de octubre: [Ventas suspendidas y retorno a cartera](ventas-suspendidas-2026-10-19.md). Solo ventas: suspensión en Histórico, liberación de posición y retorno de la misma ficha con una posición disponible. Alquileres conservan su flujo.
 
 Actualización: [Preparación para publicar](preparacion-publicar-2026-10-18.md). Cuatro requisitos, progreso y enlaces al contenido registrado en los mismos apartados del inmueble.

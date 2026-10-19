@@ -1,6 +1,6 @@
 # Repositorio y estado de entrega
 
-Revisión local del 19 de octubre: [Auditoría general de funcionamiento, datos y diseño](docs/auditoria-general-2026-10-19.md). Detecta y corrige localmente el panel que mostraba cero pendientes, mejora la apertura directa de fichas y valida la configuración documental. Cambios pendientes de publicación; las evidencias de Production de abajo corresponden a la entrega anterior.
+Revisión del 19 de octubre publicada: [Auditoría general de funcionamiento, datos y diseño](docs/auditoria-general-2026-10-19.md). Corrige el panel que mostraba cero pendientes, mejora la apertura directa de fichas y valida la configuración documental. Código `53fbef5`, Production Vercel `dpl_9niDQryZAqUTxeTKui3uNr4cKAUN`, estado `READY`. Las entregas anteriores conservan sus evidencias históricas.
 
 Actualización del 19 de octubre: [Ventas suspendidas y retorno a cartera](docs/ventas-suspendidas-2026-10-19.md). Solo ventas: suspensión en Histórico, liberación de posición y retorno de la misma ficha con una posición disponible. Alquileres conservan su flujo.
 
@@ -47,7 +47,13 @@ Actualización posterior: [ID con contacto y dos formas de liberar](docs/liberac
 - Código de ventas suspendidas: `56872bb65462dbb0294466e518bd54a7acf7156c`, publicado el 19 de octubre. Los commits posteriores de evidencia conservan ese código; comprobar las referencias remotas y estados de su SHA al retomar.
 - Base anterior a la auditoría: `82e96b6475ee21ce3886ece70e5c67687f5b8461`. Las referencias anteriores de IDs y cargas se conservan como evidencia histórica.
 
-## Producción vigente — 19 de octubre
+## Producción de la auditoría general — 19 de octubre
+
+Código de corrección `53fbef544c2400418bb6e0d6037c83ead5452215`, subido de forma atómica a `main` y `feat/registro-simplificado`. Despliegue directo autorizado en el proyecto existente `puma19/inmobiliaria-alfarov2`: `dpl_9niDQryZAqUTxeTKui3uNr4cKAUN`, `READY`, entorno `production`. URL de versión: https://inmobiliaria-alfarov2-6qt60n7a7-puma19.vercel.app. Alias de la intranet confirmado. Los commits posteriores de evidencia mantienen el mismo código funcional. La integración GitHub no inició un despliegue automático durante esta publicación; la evidencia procede de Vercel CLI e `inspect`.
+
+Dominio comprobado el `2026-10-19T22:17:30.668Z`: 265 consultas, 133 fichas y 57 vistas/ancho, sin discrepancias. Panel, Cartera, reportes y SQL coinciden: 95 visitas y 36 tasaciones pendientes. Datos comerciales conservados y cuentas temporales eliminadas. El detalle y el límite de prueba del hosting constan en la entrega.
+
+## Entrega anterior de ventas suspendidas — 19 de octubre
 
 Ventas suspendidas y retorno publicados en `56872bb65462dbb0294466e518bd54a7acf7156c`. Production GitHub `7165093644` y Preview `7165102638`, ambos `success`. Production confirmado a las `2026-10-19T03:34:46Z`; versión https://inmobiliaria-alfarov2-n5ja3ac8m-puma19.vercel.app. Consultar [funcionamiento, pruebas y entrega](docs/ventas-suspendidas-2026-10-19.md). Esta entrega no modifica esquema ni datos de negocio al desplegar.
 

@@ -1,8 +1,8 @@
 # Auditoría general de funcionamiento, datos y diseño — 19 de octubre de 2026
 
-Revisión del código base `61d23c0`, del dominio de producción y de MySQL. Las correcciones descritas están en la copia local, pendientes de commit y publicación. No confundir las comprobaciones locales posteriores con una corrección ya instalada en Production.
+Revisión del código base `61d23c0`, del dominio de producción y de MySQL. Correcciones publicadas en el código `53fbef544c2400418bb6e0d6037c83ead5452215`, sincronizado en ambas ramas. Las comprobaciones anteriores a la publicación se identifican como locales; la entrega Vercel se documenta al final.
 
-## Hallazgos y correcciones locales
+## Hallazgos y correcciones
 
 | Prioridad | Hallazgo comprobado | Resultado local |
 | --- | --- | --- |
@@ -72,6 +72,19 @@ No hay registros documentales actuales desde los que comprobar una descarga real
 
 Evidencia privada, excluida de Git: `output/general-audit/db-result.json`, `business-snapshot.json`, `production-reconciliation-result.json`, `production-result.json`, `local/local-reconciliation-result.json`, registros de integraciones y capturas. Estos archivos no se publican porque pueden contener información operativa o imágenes de fichas.
 
-Esta revisión no cambia el esquema ni los datos comerciales. Las correcciones requieren publicar el código para que desaparezca la discrepancia del panel en el dominio real. La publicación anterior documentada en [ventas suspendidas](ventas-suspendidas-2026-10-19.md) conserva su evidencia histórica y no acredita el despliegue de estos cambios.
+Esta revisión no cambia el esquema ni los datos comerciales. La publicación anterior documentada en [ventas suspendidas](ventas-suspendidas-2026-10-19.md) conserva su evidencia histórica.
 
 El contenedor MySQL desechable y su volumen se eliminaron al terminar; el servidor local de auditoría quedó detenido. Las capturas y los informes privados se conservaron.
+
+## Publicación autorizada en Vercel
+
+- Código: `53fbef544c2400418bb6e0d6037c83ead5452215`. Subida atómica de `main` y `feat/registro-simplificado`; Codespaces conserva las mismas referencias.
+- Proyecto existente: `puma19/inmobiliaria-alfarov2`. La integración GitHub no inició el despliegue durante esta entrega; se publicó mediante la sesión disponible de Vercel CLI, sin crear otro proyecto.
+- Despliegue: `dpl_9niDQryZAqUTxeTKui3uNr4cKAUN`, entorno `production`, estado `READY`; compilación y TypeScript aprobados en Vercel.
+- [Versión publicada](https://inmobiliaria-alfarov2-6qt60n7a7-puma19.vercel.app) y [detalle Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/9niDQryZAqUTxeTKui3uNr4cKAUN).
+- `vercel inspect` confirmó los alias `inmobiliaria-alfarov2-umber.vercel.app` e `intranet.inmobiliariaalbertoalfaro.com.pe`.
+- Los commits posteriores de evidencia conservan el código funcional de esta entrega.
+
+Comprobación autenticada del dominio terminada el `2026-10-19T22:17:30.668Z`: 265 consultas HTTP, 133 fichas, siete zonas, 22 reportes y nueve APIs administrativas. Panel con 131 activos, 69 posiciones libres, 95 visitas pendientes y 36 tasaciones por registrar; coincide con SQL, Cartera y reportes. Las 57 combinaciones de vista/ancho adicionales pasaron sin errores JavaScript, respuestas HTTP fallidas ni desbordamiento horizontal. Ninguna escritura de negocio; huellas comerciales idénticas y cuentas/sesiones temporales eliminadas. Evidencia privada en `output/general-audit/deployed/production-result.json`.
+
+La API de archivos de Production informa `subidaHabilitada=true` con la validación nueva: la configuración desplegada satisface el formato HTTPS y token no vacío. Esto no sustituye la prueba autenticada completa de transferencia con el hosting real, cuyo límite se mantiene explicado arriba.
