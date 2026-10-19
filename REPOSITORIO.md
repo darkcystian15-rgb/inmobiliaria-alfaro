@@ -1,5 +1,7 @@
 # Repositorio y estado de entrega
 
+Ajuste de terminología del 19 de octubre: [Tasación en el resumen del inmueble](docs/tasacion-en-resumen-2026-10-19.md). La etapa «Precios acordados» se identifica como «Tasación» y conserva su acción y los datos registrados.
+
 Revisión del 19 de octubre publicada: [Auditoría general de funcionamiento, datos y diseño](docs/auditoria-general-2026-10-19.md). Corrige el panel que mostraba cero pendientes, mejora la apertura directa de fichas y valida la configuración documental. Código `53fbef5`, Production Vercel `dpl_9niDQryZAqUTxeTKui3uNr4cKAUN`, estado `READY`. Las entregas anteriores conservan sus evidencias históricas.
 
 Actualización del 19 de octubre: [Ventas suspendidas y retorno a cartera](docs/ventas-suspendidas-2026-10-19.md). Solo ventas: suspensión en Histórico, liberación de posición y retorno de la misma ficha con una posición disponible. Alquileres conservan su flujo.
