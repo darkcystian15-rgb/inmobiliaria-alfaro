@@ -56,5 +56,25 @@ así como la vinculación de fotografías a sus visitas.
   de la ejecución satisfactoria; no se modificó la interfaz para satisfacerlo.
 
 Las capturas privadas se guardan en `output/release-navigation/` y los registros
-de prueba permanecen fuera de Git. Publicación y contraste de producción pendientes
-de registrar tras el despliegue.
+de prueba permanecen fuera de Git.
+
+## Entrega GitHub y bloqueo de Vercel
+
+Código `a9096378c58bde89f4c4719509757e02940ae202`, subido de forma atómica a
+`main` y `feat/registro-simplificado`. Los commits documentales posteriores
+conservan ese código funcional.
+
+Intento autorizado de Production en el proyecto existente `puma19/inmobiliaria-alfarov2`:
+`dpl_8aYxqfUHEsxLGX28f2ai4tG16R3j`. Vercel informa **Blocked** porque el autor
+Git del commit no tiene permiso de despliegue en el proyecto. La identidad
+autenticada de GitHub se comprobó como `Cystian`; la sesión de Vercel es
+`darkcystian15-1398`. No se alteró la autoría para eludir el requisito de acceso.
+
+[Detalle del intento](https://vercel.com/puma19/inmobiliaria-alfarov2/8aYxqfUHEsxLGX28f2ai4tG16R3j).
+Este intento no acredita una publicación ni una comprobación del nuevo código
+en el dominio. La prueba autenticada de producción de esta entrega queda
+pendiente de resolver el acceso y desplegar correctamente.
+
+El contenedor y volumen MySQL desechables se eliminaron después de las pruebas.
+No se ejecutaron operaciones sobre inmuebles reales ni se modificó la BD de
+producción para validar estos cambios.
