@@ -1,6 +1,6 @@
 # Repositorio y estado de entrega
 
-Actualización del 20 de octubre: [Liberar inmueble desde el menú general, una zona y Cartera](docs/liberar-inmueble-accesos-2026-10-20.md), con selección directa de la ficha y pestaña Fotos en Información de inmuebles. Consultar la validación y publicación al final de esa entrega.
+Actualización del 20 de octubre publicada: [Liberar inmueble desde el menú general, una zona y Cartera](docs/liberar-inmueble-accesos-2026-10-20.md), con selección directa de la ficha y pestaña Fotos en Información de inmuebles. Código `a909637`, SHA desplegado `d69d1e7`, Production `dpl_3HBhdyNUnp8b3X4UuJnHaSLqmoNj`, **READY**. Dominio verificado en siete zonas y 23 vistas/casos sin escrituras de negocio. La entrega explica el rechazo inicial de CLI y su resolución con la integración Git, sin cambios de permisos.
 
 Ajuste de terminología del 19 de octubre: [Tasación en el resumen del inmueble](docs/tasacion-en-resumen-2026-10-19.md). La etapa «Precios acordados» se identifica como «Tasación» y conserva su acción y los datos registrados.
 

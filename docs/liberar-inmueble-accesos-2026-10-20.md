@@ -58,7 +58,7 @@ así como la vinculación de fotografías a sus visitas.
 Las capturas privadas se guardan en `output/release-navigation/` y los registros
 de prueba permanecen fuera de Git.
 
-## Entrega GitHub y bloqueo de Vercel
+## Entrega GitHub e incidencia inicial de Vercel
 
 Código `a9096378c58bde89f4c4719509757e02940ae202`, subido de forma atómica a
 `main` y `feat/registro-simplificado`. Los commits documentales posteriores
@@ -71,10 +71,42 @@ autenticada de GitHub se comprobó como `Cystian`; la sesión de Vercel es
 `darkcystian15-1398`. No se alteró la autoría para eludir el requisito de acceso.
 
 [Detalle del intento](https://vercel.com/puma19/inmobiliaria-alfarov2/8aYxqfUHEsxLGX28f2ai4tG16R3j).
-Este intento no acredita una publicación ni una comprobación del nuevo código
-en el dominio. La prueba autenticada de producción de esta entrega queda
-pendiente de resolver el acceso y desplegar correctamente.
+Este intento no acredita una publicación. Al comparar con el despliegue anterior
+`dpl_8UCMW5eczaqxBVfzYqM6NgugCtd8`, se comprobó que Vercel había aceptado el mismo
+autor y la misma cuenta. Por tanto, no se acreditó una pérdida de permisos y la
+indicación inicial de que era necesario cambiar el acceso fue prematura.
+
+Se solicitó después la publicación desde la integración Git existente mediante
+`gitSource`, conservando repositorio, SHA y autor reales. Vercel aceptó la solicitud
+sin cambiar permisos, cuentas, plan o autoría. La diferencia observada corresponde
+a subir la copia local mediante CLI frente a resolver el commit desde GitHub.
+
+## Publicación en Production
+
+- SHA publicado: `d69d1e7c0a8c0cec31db8a771f8bcb36d277d1dc`, con el código
+  funcional de `a909637` y su evidencia documental.
+- Proyecto existente: `puma19/inmobiliaria-alfarov2`.
+- Despliegue: `dpl_3HBhdyNUnp8b3X4UuJnHaSLqmoNj`, estado **READY**, Production.
+- [Versión publicada](https://inmobiliaria-alfarov2-1u6xj8r4p-puma19.vercel.app).
+- [Detalle Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/3HBhdyNUnp8b3X4UuJnHaSLqmoNj).
+- Alias `intranet.inmobiliariaalbertoalfaro.com.pe` y
+  `inmobiliaria-alfarov2-umber.vercel.app` confirmados mediante `inspect` y API.
+- Los commits documentales posteriores conservan el mismo código funcional.
+
+Comprobación autenticada del dominio terminada el `2026-10-20T02:14:08.201Z`:
+siete zonas contrastadas con SQL, permisos de administrador y rechazo de acceso
+anónimo/operador, 23 vistas/casos de navegación a 1440 y 375 px. Menú general,
+selector, aislamiento por zona, acceso desde tarjeta, formulario desplegado,
+regreso con búsqueda, ficha de zona ajena y pestaña Fotos correctos. Sin errores
+JavaScript, respuestas HTTP fallidas, desbordes ni intentos de escritura del
+navegador. No se confirmaron cierres, suspensiones ni eliminaciones reales.
+
+La primera ejecución del comprobador de producción comprobaba la URL antes de
+finalizar la navegación de regreso; se agregó la espera correspondiente y la
+ejecución completa pasó, sin cambios del código desplegado. Cuentas y sesiones
+temporales eliminadas en ambas ejecuciones. Evidencia privada en
+`output/release-navigation/production/result.json`, `deployment.json` y capturas.
 
 El contenedor y volumen MySQL desechables se eliminaron después de las pruebas.
-No se ejecutaron operaciones sobre inmuebles reales ni se modificó la BD de
-producción para validar estos cambios.
+No se modificaron inmuebles ni datos comerciales de producción. Las únicas
+altas de verificación fueron cuentas y sesiones temporales, eliminadas al terminar.
