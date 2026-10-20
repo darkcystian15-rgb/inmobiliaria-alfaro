@@ -794,6 +794,11 @@ export default function CarteraPage() {
                 </button>
               </div>
 
+              {seleccionado.estado === "Activo" && seleccionado.zona && <section className="mt-5 rounded-2xl border border-red-100 bg-red-50/40 p-4" aria-label="Liberar este inmueble">
+                <h4 className="text-sm font-bold text-slate-900">Liberar este inmueble</h4>
+                <p className="mt-2 text-xs leading-5 text-slate-600">{seleccionado.operacion === "venta" ? "Cerrar la operación, suspender la venta o eliminar la ficha." : "Cerrar el alquiler o eliminar la ficha."} Revisa la acción y confirma en el siguiente paso.</p>
+                <Link href={`/liberar-inmuebles?${new URLSearchParams({ zona: seleccionado.zona, inmueble: String(seleccionado.inmuebleId) })}`} className="aa-button aa-button-secondary mt-3">Liberar este inmueble →</Link>
+              </section>}
               {seleccionado.puedeRetomar && <ResumeSale key={seleccionado.inmuebleId} propertyId={seleccionado.inmuebleId} zoneId={seleccionado.zonaId} zone={seleccionado.zona || ''} contact={seleccionado.propietario} positions={todasPosiciones} onSaved={async () => { await cargarDatos(); setSeleccionado(null); }} />}
               <PortfolioPropertyEditor key={seleccionado.inmuebleId} propertyId={seleccionado.inmuebleId} onSaved={async () => {
                 const response = await fetch(zoneUrl("/api/cartera"), { cache: "no-store" });

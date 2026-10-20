@@ -1,5 +1,7 @@
 # Inmobiliaria Alfaro — intranet
 
+Actualización del 20 de octubre: [Tres accesos a Liberar inmueble y pestaña Fotos](docs/liberar-inmueble-accesos-2026-10-20.md).
+
 Revisión del 19 de octubre publicada: [Auditoría general de funcionamiento, datos y diseño](docs/auditoria-general-2026-10-19.md), con conciliación de las 133 fichas, corrección del panel, apertura directa de fichas y límites de la verificación del hosting real. Código de corrección `53fbef5`, publicado en Vercel Production.
 
 Actualización del 19 de octubre: [Ventas suspendidas y retorno a cartera](docs/ventas-suspendidas-2026-10-19.md). Solo ventas: suspensión en Histórico, liberación de posición y retorno de la misma ficha con una posición disponible. Alquileres conservan su flujo.

@@ -1,5 +1,5 @@
 const originRoutes = new Set(["/cartera", "/visitas-pendientes", "/tasaciones-textos-pendientes", "/datos-inmuebles"]);
-const destinationRoutes = new Set(["/registrar-inmueble", "/registrar-visitas", "/registrar-tasaciones", "/datos-inmuebles", "/tasaciones-textos-pendientes"]);
+const destinationRoutes = new Set(["/registrar-inmueble", "/registrar-visitas", "/registrar-tasaciones", "/datos-inmuebles", "/tasaciones-textos-pendientes", "/liberar-inmuebles"]);
 
 export function safeReturnHref(value: string | null | undefined): string | null {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return null;

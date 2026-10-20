@@ -34,6 +34,75 @@ try {
   app = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '-p', '3191', '-H', '127.0.0.1'], { env: { ...process.env, DATABASE_URL: uri, DATABASE_TLS_REQUIRED: '', DATABASE_SSL_CA: '', AUTH_LOGIN_MFA_REQUIRED: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
   app.stdout.on('data', data => { logs += data; }); app.stderr.on('data', data => { logs += data; });
   for (let attempt = 0; attempt < 80; attempt++) { try { if ((await fetch(origin + '/login')).ok) break; } catch {} await new Promise(resolve => setTimeout(resolve, 250)); }
+  // Navigation itself must never release, suspend or delete a property.
+  assert.equal((await req('/api/liberaciones')).status, 400, 'Writes and inventory still require an explicit zone');
+  assert.equal((await req('/api/liberaciones?zona=Lima')).data.items.length, 0);
+  if (process.env.PLAYWRIGHT_MODULE_PATH) {
+    const { chromium } = await import(process.env.PLAYWRIGHT_MODULE_PATH);
+    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
+    await context.addCookies([{ name: 'aa_session', value: admin, url: origin }]);
+    const page = await context.newPage(), issues = [], writes = [], unscoped = [];
+    page.on('pageerror', e => issues.push(e.message));
+    page.on('request', r => { if (new URL(r.url()).pathname === '/api/liberaciones' && !new URL(r.url()).searchParams.has('zona')) unscoped.push(r.url()); });
+    await context.route('**/api/**', async route => {
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(route.request().method())) { writes.push(route.request().method()); await route.abort(); }
+      else await route.continue();
+    });
+    await mkdir('output/release-navigation', { recursive: true });
+    for (const width of [1440, 375]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(origin + '/');
+      if (width === 375) await page.getByRole('button', { name: 'Abrir menú', exact: true }).click();
+      await page.getByRole('link', { name: 'Liberar inmueble', exact: true }).click();
+      const zones = page.getByLabel('Zona de cartera');
+      await zones.waitFor();
+      await zones.selectOption('Chimbote');
+      await page.locator('summary').filter({ hasText: 'Segunda venta' }).waitFor();
+      assert.equal(await page.locator('section[aria-label="Inmuebles de la zona"] details').count(), 3);
+      await zones.selectOption('Lima');
+      await page.getByText('No hay inmuebles activos que coincidan con esta búsqueda.', { exact: true }).waitFor();
+      assert.equal(await page.locator('section[aria-label="Inmuebles de la zona"] details').count(), 0);
+      await page.goto(origin + '/cartera?zona=*&buscar=Segunda');
+      await page.getByRole('button', { name: /Segunda venta/ }).click();
+      const action = page.getByRole('link', { name: 'Liberar este inmueble', exact: false });
+      const href = new URL(await action.getAttribute('href'), origin);
+      assert.equal(href.searchParams.get('zona'), 'Chimbote');
+      assert.equal(href.searchParams.get('inmueble'), '3');
+      assert.equal(new URL(href.searchParams.get('volver'), origin).searchParams.get('buscar'), 'Segunda');
+      await action.click();
+      await page.getByRole('radio', { name: /Suspender venta y conservar en Histórico/ }).waitFor();
+      assert.equal(await page.locator('section[aria-label="Inmuebles de la zona"] details').count(), 1);
+      assert.equal(await page.locator('section[aria-label="Inmuebles de la zona"] details').evaluate(e => e.open), true);
+      await page.getByRole('radio', { name: /Cerrar operación y conservar/ }).check();
+      await page.getByText('Precio final (S/) *', { exact: true }).waitFor();
+      await page.getByRole('radio', { name: /Eliminar definitivamente/ }).check();
+      await page.getByLabel('Motivo de eliminación').waitFor();
+      await page.screenshot({ path: `output/release-navigation/selected-${width}.png`, fullPage: true });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      await page.getByRole('link', { name: /Volver a cartera/ }).click();
+      await page.getByRole('button', { name: /Segunda venta/ }).waitFor();
+      assert.equal(await page.getByRole('textbox', { name: 'Buscar inmueble', exact: true }).inputValue(), 'Segunda');
+      await page.goto(origin + '/liberar-inmuebles?zona=Chimbote&inmueble=3');
+      await page.getByRole('button', { name: 'Ver todos los inmuebles de la zona', exact: true }).click();
+      await page.locator('summary').filter({ hasText: 'Venta local' }).waitFor();
+      assert.equal(await page.locator('section[aria-label="Inmuebles de la zona"] details').count(), 3);
+    }
+    await page.goto(origin + '/liberar-inmuebles?zona=Lima&inmueble=3');
+    await page.getByText(/El inmueble seleccionado ya no está activo o no pertenece a esta zona/).waitFor();
+    assert.equal(await page.getByRole('radio').count(), 0);
+    await page.goto(origin + '/liberar-inmuebles?zona=Chimbote&inmueble=999999');
+    await page.getByText(/El inmueble seleccionado ya no está activo o no pertenece a esta zona/).waitFor();
+    assert.equal(await page.getByRole('radio').count(), 0);
+    await page.goto(origin + '/datos-inmuebles?codigo=1&pestana=visitas');
+    await page.getByRole('button', { name: /^Fotos(?: \d+)?$/ }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Visitas', exact: true }).count(), 0);
+    assert.deepEqual(issues, []); assert.deepEqual(writes, []); assert.deepEqual(unscoped, []);
+    assert.equal((await db.query("SELECT COUNT(*) n FROM inm_inmuebles WHERE estado='activo'"))[0][0].n, 3);
+    assert.equal((await db.query('SELECT COUNT(*) n FROM inm_liberaciones'))[0][0].n, 0);
+    await browser.close(); browser = null;
+    console.log('PASS: general menu, zone selector, isolated zone, selected portfolio card, forms, return filters, invalid targets, Fotos tab and zero navigation writes at 1440/375px.');
+  }
   const initial = (await db.query('SELECT * FROM inm_visitas WHERE inmueble_id=1'))[0];
   const initialPrices = (await db.query('SELECT * FROM inm_tasaciones WHERE inmueble_id=1'))[0];
   assert.equal((await req('/api/liberaciones' + q, 'POST', { inmuebleId: 1, motivo: 'venta_suspendida' })).status, 400);
@@ -117,5 +186,5 @@ try {
     assert.deepEqual(errors, []);
   }
   console.log('PASS: suspension, history, slots, permissions, rental exclusion, preserved records, repeated cycles, concurrency, sale closure and optional desktop/mobile UI.');
-} catch (error) { console.error(logs.slice(-2500)); throw error; }
+} catch (error) { console.error(logs.slice(-2500)); if (browser) for (const context of browser.contexts()) for (const page of context.pages()) { console.error('Browser location:', page.url(), (await page.locator('body').innerText()).slice(-3500)); } throw error; }
 finally { if (browser) await browser.close(); if (app) { app.kill('SIGTERM'); await new Promise(resolve => app.once('exit', resolve)); } await db.end(); }

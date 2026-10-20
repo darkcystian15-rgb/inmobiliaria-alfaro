@@ -54,7 +54,7 @@ function MenuLink({ item, onNavigate }: { item: { href: string; label: string; i
 function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   const user = useSessionUser();
   const {zone} = useZoneWorkspace();
-  const hidden = new Set(["/registrar-inmueble","/liberar-inmuebles","/visitas-pendientes","/registrar-visitas","/tasaciones-textos-pendientes","/registrar-tasaciones"]);
+  const hidden = new Set(["/registrar-inmueble","/visitas-pendientes","/registrar-visitas","/tasaciones-textos-pendientes","/registrar-tasaciones"]);
   const groups=menuGroups.map(group=>({...group,items:group.items.filter(item=>!isAdministrator(user)?item.href==="/datos-inmuebles":zone||!hidden.has(item.href))})).filter(group=>group.items.length);
   return (
     <>

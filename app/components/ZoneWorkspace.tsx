@@ -28,7 +28,7 @@ export function ZoneWorkspaceProvider({children}:{children:ReactNode}) {
   return <Workspace.Provider value={{zones,zone,requested,loading,error,reload}}>{children}</Workspace.Provider>;
 }
 const required=new Set(['/registrar-inmueble','/visitas-pendientes','/registrar-visitas','/registrar-tasaciones','/tasaciones-textos-pendientes','/liberar-inmuebles']);
-const generalViews=new Set(['/visitas-pendientes','/tasaciones-textos-pendientes']);
+const generalViews=new Set(['/visitas-pendientes','/tasaciones-textos-pendientes','/liberar-inmuebles']);
 export function ZonePage({children}:{children:ReactNode}) {
   const {zone,requested,loading,error,reload}=useZoneWorkspace();const path=usePathname();const user=useSessionUser();
   if(!isAdministrator(user))return <>{children}</>;
