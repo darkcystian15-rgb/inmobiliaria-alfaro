@@ -52,4 +52,32 @@ credenciales, archivos guardados ni fichas al desplegar. No hay migraciones.
 
 Las capturas privadas están en `output/dossier-local/` y los registros del ensayo
 quedan fuera de Git. Los ensayos no usaron documentos ni inmuebles reales.
-La publicación y comprobación del dominio se registran después del despliegue.
+
+## Entrega y contraste de producción
+
+- Código: `d19abd2611aec69ed1f705531e9b48ac7b9fac3e`, subido de forma atómica
+  a `main` y `feat/registro-simplificado`.
+- Publicación desde la integración Git existente, conservando cuentas y permisos.
+- Proyecto Vercel: `puma19/inmobiliaria-alfarov2`.
+- Production: `dpl_3bd3UzHm5z2DnEKoRDLLJQS6VD8Z`, **READY**.
+- [Versión publicada](https://inmobiliaria-alfarov2-iihz6jf1n-puma19.vercel.app).
+- [Despliegue Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/3bd3UzHm5z2DnEKoRDLLJQS6VD8Z).
+- Alias confirmado: `intranet.inmobiliariaalbertoalfaro.com.pe`.
+- Los commits documentales posteriores conservan el mismo código funcional.
+
+Verificación autenticada del dominio terminada el `2026-10-20T02:33:35.767Z`:
+cuatro vistas de documentos y cuatro de fotos, cubriendo venta y alquiler a
+1440 y 375 px. Arrastre de documento a la selección, edición de su nombre,
+rechazo de formato inválido sin perder la selección anterior y disponibilidad
+del selector de fotos correctos. Sin errores JavaScript, respuestas HTTP
+fallidas, desbordes ni intentos de escritura del navegador.
+
+La comprobación de producción no envió archivos reales: el navegador bloqueó
+escrituras y solo se prepararon selecciones temporales o archivos rechazados.
+La transferencia completa, compresión y guardado conservan la evidencia del
+hosting HTTPS simulado local; este ensayo no acredita nuevas credenciales ni
+una transferencia contra el hosting real. La cuenta y sesión de verificación
+se eliminaron al terminar. Evidencia privada: `output/drop-upload-production/`.
+
+El contenedor y volumen MySQL desechables se eliminaron al finalizar los ensayos.
+No se modificaron inmuebles ni documentos reales.
