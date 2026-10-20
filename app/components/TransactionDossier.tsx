@@ -7,6 +7,7 @@ import { compressImage, isImageFile } from '@/lib/client-images';
 import FileViewer from './FileViewer';
 import ConfirmDialog from './ConfirmDialog';
 import WorkspaceFileIcon from './WorkspaceFileIcon';
+import FileDropZone from './FileDropZone';
 
 export type DossierFile = { id: number; nombre: string; tipoDocumento: string; almacenamiento: string; enlace: string; tipoMime: string | null; nombreOriginal: string | null; observacion: string | null; tamanoBytes: number | null };
 type Config = ReturnType<typeof dossierDefaults>;
@@ -141,7 +142,9 @@ export default function TransactionDossier({ propertyId, operation, view, files,
       {!uploadReady && <p role="status" className="text-sm text-amber-800">La subida no está disponible. Consulta al administrador.</p>}
       <fieldset disabled={busy || dirty || !uploadReady} className="space-y-4">
         <label className="block text-sm font-semibold">Categoría del archivo<select required value={available.some(item => item.key === category) ? category : ''} onChange={event => setCategory(event.target.value)} className={field}><option value="">Seleccionar categoría</option>{available.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}</select></label>
-        <label className="block text-sm font-semibold">Archivos<input ref={input} type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" onChange={event => setSelected(Array.from(event.target.files || []).map(file => ({ file, name: file.name.replace(/\.[^.]+$/, '').slice(0, 255) })))} className={field} /></label>
+        <FileDropZone label="Archivos" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" inputRef={input} disabled={busy || dirty || !uploadReady}
+          help="PDF, Word, Excel, JPG, PNG o WebP. Hasta 4 MB por archivo; las imágenes se comprimen."
+          onFiles={files => { setError(''); setMessage(''); setSelected(files.map(file => ({ file, name: file.name.replace(/\.[^.]+$/, '').slice(0, 255) }))); }} onRejected={setError} />
         {selected.map((entry, index) => <label key={`${entry.file.name}-${index}`} className="block text-sm font-semibold">Nombre del archivo {index + 1}<input required maxLength={255} value={entry.name} onChange={event => setSelected(old => old.map((value, i) => i === index ? { ...value, name: event.target.value } : value))} className={field} /><span className="mt-1 block break-words text-xs font-normal">{entry.file.name}</span></label>)}
         <label className="block text-sm font-semibold">Observación opcional<textarea maxLength={500} value={observation} onChange={event => setObservation(event.target.value)} className={field} /></label>
         <button type="submit" disabled={!selected.length || !available.some(item => item.key === category)} className="aa-button aa-button-primary">{busy ? 'Subiendo…' : 'Subir archivos'}</button>{selected.length > 0 && <button type="button" onClick={() => { setSelected([]); if (input.current) input.current.value = ''; }} className="aa-button aa-button-secondary ml-2">Quitar selección</button>}

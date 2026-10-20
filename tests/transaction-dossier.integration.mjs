@@ -148,6 +148,20 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   await context.addCookies([{ name: 'aa_session', value: admin, url: origin }]);
   page = await context.newPage(); const errors = []; page.on('pageerror', error => errors.push(error.message));
+  async function dropFiles(zone, files) {
+    const transfer = await page.evaluateHandle(entries => {
+      const data = new DataTransfer();
+      for (const entry of entries) data.items.add(new File([new Uint8Array(entry.bytes)], entry.name, { type: entry.type }));
+      return data;
+    }, files.map(file => ({ ...file, bytes: Array.from(file.bytes) })));
+    try {
+      await zone.dispatchEvent('dragenter', { dataTransfer: transfer });
+      if (await zone.getAttribute('aria-disabled') !== 'true') assert.equal(await zone.getAttribute('data-dragging'), 'true');
+      await zone.dispatchEvent('drop', { dataTransfer: transfer });
+      assert.equal(await zone.getAttribute('data-dragging'), 'false');
+    } finally { await transfer.dispose(); }
+  }
+
   await page.goto(`${origin}/datos-inmuebles?codigo=1&zona=Chimbote&pestana=estado`);
   await page.getByRole('heading', { name: 'Estado del expediente', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: /Contacto Lima/ }).count(), 0, 'Zone list must not contain Lima');
@@ -173,10 +187,55 @@ try {
   assert.equal(afterUi.config.compradorTipo, 'natural');
   assert.equal(afterUi.status.items.find(item => item.key === 'COMPRADOR_DNI').state, 'completo');
   assert.equal(afterUi.status.items.find(item => item.key === 'COMPRADOR_BUSQUEDA_NACIONAL').state, 'completo');
+  // Both picker and drop use the same selection, category and submission flow.
+  const documentDrop = page.getByRole('group', { name: 'Carga: Archivos', exact: true });
+  await page.getByRole('combobox', { name: /^Tipo de persona/ }).selectOption('juridica');
+  await dropFiles(documentDrop, [{ name: 'bloqueado.pdf', type: 'application/pdf', bytes: pdf }]);
+  assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo/ }).count(), 0, 'Dirty conditions block drops');
+  await page.getByRole('button', { name: 'Descartar cambios', exact: true }).click();
+  await dropFiles(documentDrop, [{ name: 'dni-arrastrado.pdf', type: 'application/pdf', bytes: pdf }, { name: 'imagen-arrastrada.png', type: 'image/png', bytes: image }]);
+  assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo/ }).count(), 2);
+  await page.getByRole('textbox', { name: /^Nombre del archivo 1/ }).fill('DNI comprador por arrastre');
+  await dropFiles(documentDrop, [{ name: 'no-permitido.exe', type: 'application/octet-stream', bytes: pdf }]);
+  await page.getByRole('alert').filter({ hasText: 'formato no permitido' }).waitFor();
+  assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo 1/ }).inputValue(), 'DNI comprador por arrastre', 'Rejected drop preserves prior selection and names');
+  let releaseUpload, firstUpload = true;
+  const pauseUpload = async route => {
+    if (route.request().method() === 'POST' && firstUpload) { firstUpload = false; await new Promise(resolve => { releaseUpload = resolve; }); }
+    await route.continue();
+  };
+  await page.route('**/api/inmuebles/1/archivos*', pauseUpload);
+  await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('[data-file-drop-zone]')?.getAttribute('aria-disabled') === 'true');
+  await dropFiles(documentDrop, [{ name: 'durante-subida.pdf', type: 'application/pdf', bytes: pdf }]);
+  assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo/ }).count(), 2, 'Busy drop does not replace the upload batch');
+  assert.ok(releaseUpload, 'Upload must be paused by the local browser route');
+  releaseUpload();
+  await page.getByText('2 archivos guardados.', { exact: true }).waitFor();
+  await page.unroute('**/api/inmuebles/1/archivos*', pauseUpload);
+  assert.equal((await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE nombre='durante-subida'"))[0][0].n, 0);
+  const [[droppedBuyer]] = await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=1 AND tipo_documento='COMPRADOR_DNI' AND nombre IN ('DNI comprador por arrastre','imagen-arrastrada')");
+  assert.equal(droppedBuyer.n, 2);
+  await dropFiles(documentDrop, [{ name: 'grande.pdf', type: 'application/pdf', bytes: Buffer.alloc(4 * 1024 * 1024 + 1) }]);
+  await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
+  await page.getByRole('alert').filter({ hasText: 'supera 4 MB' }).waitFor();
+  assert.equal((await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE nombre='grande'"))[0][0].n, 0);
+  await page.getByRole('button', { name: 'Quitar selección', exact: true }).click();
+  // A sale seller uses the same uploader and keeps its own document category.
+  await page.getByRole('navigation', { name: 'Apartados de la ficha' }).getByRole('button', { name: 'Vendedor', exact: true }).click();
+  await page.getByRole('heading', { name: 'Documentación del vendedor', exact: true }).waitFor();
+  const sellerCategory = page.getByRole('combobox', { name: /^Categoría del archivo/ });
+  const sellerKey = await sellerCategory.locator('option').evaluateAll(options => options.find(option => option.value)?.value);
+  await sellerCategory.selectOption(sellerKey);
+  await dropFiles(page.getByRole('group', { name: 'Carga: Archivos', exact: true }), [{ name: 'vendedor-arrastre.pdf', type: 'application/pdf', bytes: pdf }]);
+  await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
+  await page.getByText('1 archivo guardado.', { exact: true }).waitFor();
+  assert.equal((await db.query("SELECT tipo_documento FROM inm_archivos WHERE nombre='vendedor-arrastre'"))[0][0].tipo_documento, sellerKey);
+  console.log('PASS: drag-and-drop sale documents, multi-file names, picker compatibility, invalid formats, size limits and dirty-condition guard.');
   fs.mkdirSync('output/dossier-local', { recursive: true });
   await page.screenshot({ path: 'output/dossier-local/desktop.png', fullPage: true });
   await page.setViewportSize({ width: 375, height: 850 });
-  for (const name of ['Estado del expediente', 'Vendedor', 'Comprador', 'Inmueble', 'Visitas', 'Seguimiento']) {
+  for (const name of ['Estado del expediente', 'Vendedor', 'Comprador', 'Inmueble', 'Fotos', 'Seguimiento']) {
     await page.getByRole('navigation', { name: 'Apartados de la ficha' }).getByRole('button', { name: new RegExp(`^${name}`) }).click();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, name + ' horizontal overflow');
   }
@@ -191,24 +250,46 @@ try {
   assert.equal(await page.getByRole('button',{name:/Contacto Lima/}).count(),0);
   await page.getByRole('button',{name:/Contacto alquiler/}).click();
   const navigation=page.getByRole('navigation',{name:'Apartados de la ficha'});
-  assert.equal(await navigation.getByRole('button',{name:'Fotos',exact:true}).count(),0);
+  await navigation.getByRole('button',{name:/^Fotos/}).waitFor();
+  assert.equal(await navigation.getByRole('button',{name:/^Fotos/}).count(),1);
   assert.equal(await navigation.getByRole('button',{name:'Documentación',exact:true}).count(),0);
   await navigation.getByRole('button',{name:'Arrendador',exact:true}).click();
   await page.getByRole('heading',{name:'Documentación del arrendador',exact:true}).waitFor();
   assert.equal(await page.getByRole('combobox',{name:/Tipo de persona/}).count(),0);
+  for (const [tab, category, filename] of [['Arrendador','ARRENDADOR_DNI','arrendador-arrastre.pdf'],['Arrendatario','ARRENDATARIO_DNI','arrendatario-arrastre.pdf']]) {
+    await navigation.getByRole('button', { name: tab, exact: true }).click();
+    await page.getByRole('combobox', { name: /^Categoría del archivo/ }).selectOption(category);
+    await dropFiles(page.getByRole('group', { name: 'Carga: Archivos', exact: true }), [{ name: filename, type: 'application/pdf', bytes: pdf }]);
+    await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
+    await page.getByText('1 archivo guardado.', { exact: true }).waitFor();
+    assert.equal((await db.query('SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=3 AND tipo_documento=? AND nombre=?', [category, filename.replace('.pdf','')]))[0][0].n, 1);
+  }
+
   await navigation.getByRole('button',{name:'Arrendatario',exact:true}).click();
   await page.getByRole('heading',{name:'Documentación del arrendatario',exact:true}).waitFor();
   await navigation.getByRole('button',{name:/^Inmueble/}).click();
   assert.equal(await page.getByRole('textbox',{name:/Área de terreno/}).count(),0);
   await page.getByRole('heading',{name:'3. Contratos',exact:true}).waitFor();
   await page.getByText('Adenda personalizada',{exact:true}).waitFor();
-  await navigation.getByRole('button',{name:/^Visitas/}).click();await page.getByRole('region',{name:'Fotos de la visita',exact:true}).getByRole('button',{name:'Ampliar Evidencia de visita',exact:true}).waitFor();await page.getByRole('region',{name:'Fotos anteriores sin visita',exact:true}).getByRole('button',{name:'Ampliar Foto antigua sin visita',exact:true}).waitFor();
+  await navigation.getByRole('button',{name:/^Fotos/}).click();await page.getByRole('region',{name:'Fotos de la visita',exact:true}).getByRole('button',{name:'Ampliar Evidencia de visita',exact:true}).waitFor();await page.getByRole('region',{name:'Fotos anteriores sin visita',exact:true}).getByRole('button',{name:'Ampliar Foto antigua sin visita',exact:true}).waitFor();
+  const photoDrop = page.getByRole('group', { name: 'Carga: Agregar fotografías', exact: true }).first();
+  const beforePhotos = (await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=3 AND tipo_documento='FOTO_INMUEBLE'"))[0][0].n;
+  await dropFiles(photoDrop, [{ name: 'documento.pdf', type: 'application/pdf', bytes: pdf }]);
+  await page.getByRole('alert').filter({ hasText: 'formato no permitido' }).waitFor();
+  await dropFiles(photoDrop, Array.from({ length: 21 }, (_, i) => ({ name: `limite-${i}.png`, type: 'image/png', bytes: image })));
+  await page.getByRole('alert').filter({ hasText: 'hasta 20 fotos' }).waitFor();
+  assert.equal((await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=3 AND tipo_documento='FOTO_INMUEBLE'"))[0][0].n, beforePhotos);
+  await dropFiles(photoDrop, [{ name: 'foto-arrastre.png', type: 'image/png', bytes: image }, { name: 'foto-arrastre-dos.png', type: 'image/png', bytes: image }]);
+  await page.getByText('Fotos guardadas correctamente.', { exact: true }).waitFor();
+  const [photoRows] = await db.query("SELECT visita_id,tipo_mime FROM inm_archivos WHERE inmueble_id=3 AND nombre IN ('foto-arrastre','foto-arrastre-dos')");
+  assert.equal(photoRows.length, 2); assert.ok(photoRows.every(file => file.visita_id === 1 && file.tipo_mime === 'image/webp'));
+  console.log('PASS: rental landlord/tenant document drops and photo drops with compression, visit association, invalid-file and batch-limit rejection.');
   await navigation.getByRole('button',{name:'Seguimiento',exact:true}).click();
   await page.getByRole('heading',{name:'Seguimiento de alquiler',exact:true}).waitFor();
   await page.getByRole('heading',{name:'Plazos de este inmueble',exact:true}).waitFor();
   await page.getByRole('group',{name:/Expediente documental de la operación/}).waitFor();
   await page.setViewportSize({width:375,height:850});
-  for (const name of ['Arrendador','Arrendatario','Inmueble','Visitas','Seguimiento']) {
+  for (const name of ['Arrendador','Arrendatario','Inmueble','Fotos','Seguimiento']) {
     await navigation.getByRole('button',{name:new RegExp(`^${name}`)}).click();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,name);
   }

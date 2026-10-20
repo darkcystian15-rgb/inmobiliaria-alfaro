@@ -1,5 +1,7 @@
 # Inmobiliaria Alfaro — intranet
 
+Actualización del 20 de octubre: [Carga por arrastre en documentos y fotos de venta/alquiler](docs/carga-por-arrastre-2026-10-20.md).
+
 Actualización del 20 de octubre: [Tres accesos a Liberar inmueble y pestaña Fotos](docs/liberar-inmueble-accesos-2026-10-20.md).
 
 Revisión del 19 de octubre publicada: [Auditoría general de funcionamiento, datos y diseño](docs/auditoria-general-2026-10-19.md), con conciliación de las 133 fichas, corrección del panel, apertura directa de fichas y límites de la verificación del hosting real. Código de corrección `53fbef5`, publicado en Vercel Production.
