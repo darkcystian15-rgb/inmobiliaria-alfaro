@@ -1,4 +1,5 @@
 import 'server-only';
+import {enrichWebExtras} from './portal-web-extras';
 import {createHash,timingSafeEqual} from 'node:crypto';
 import type {PoolConnection,RowDataPacket} from 'mysql2/promise';
 import {pool} from '@/lib/db';
@@ -42,17 +43,17 @@ export async function webSources(id?:number,db:Executor=pool,lock=false):Promise
 export async function webRecord(source:WebSource,db:Executor=pool):Promise<WebRecord>{
  const saved=await readPortalValue<{draft:WebDraft;sourceRevision:string}>(`draft:${source.id}`,db);
  const live=await readPortalValue<WebPublication>(`live:${source.id}`,db);
- return assembleWebRecord(source,saved,live);
+ return enrichWebExtras(assembleWebRecord(source,saved,live));
 }
 function assembleWebRecord(source:WebSource,saved:Stored<{draft:WebDraft;sourceRevision:string}>|null,live:Stored<WebPublication>|null):WebRecord{
- const draft=saved?.payload.draft||(initialWebDraft(source) as WebDraft);
+ const draft={...initialWebDraft(source),...saved?.payload.draft} as WebDraft;
  const unchanged=!saved||saved.payload.sourceRevision===source.revision;
  return {source,draft,version:saved?.version||0,savedSourceRevision:saved?.payload.sourceRevision||source.revision,checklist:webPublicationChecklist(source,draft,unchanged),publication:live?.payload||null,pendingChanges:Boolean(live&&(live.payload.draftVersion!==(saved?.version||0)||live.payload.sourceRevision!==source.revision))};
 }
 export async function listWebRecords(zone?:string|null){
  const [sources,[rows]]=await Promise.all([webSources(),pool.query<RowDataPacket[]>("SELECT clave,contenido,version FROM inm_portal_web WHERE clave LIKE 'draft:%' OR clave LIKE 'live:%'")]);
  const values=new Map(rows.map(row=>[String(row.clave),{payload:decode(row.contenido),version:Number(row.version)}]));
- return sources.filter(source=>!zone||zone==='*'||source.zone===zone).map(source=>assembleWebRecord(source,values.get(`draft:${source.id}`) as Stored<{draft:WebDraft;sourceRevision:string}>||null,values.get(`live:${source.id}`) as Stored<WebPublication>||null));
+ return Promise.all(sources.filter(source=>!zone||zone==='*'||source.zone===zone).map(source=>enrichWebExtras(assembleWebRecord(source,values.get(`draft:${source.id}`) as Stored<{draft:WebDraft;sourceRevision:string}>||null,values.get(`live:${source.id}`) as Stored<WebPublication>||null))));
 }
 export async function saveWebDraft(id:number,input:unknown,expected:number,sourceRevision:string,user:number){
  const draft=normalizeWebDraft(input) as unknown as WebDraft;

@@ -221,3 +221,10 @@ Prueba de producción: únicamente lectura de inmuebles/anuncios, sin republicar
 clientes para demostrar el flujo. La evidencia actual se entrega en
 `docs/evidencia-portal-web/INTEGRACION.json` y en el documento específico de esta
 corrección: [catálogo anterior](portal-web-catalogo-anterior-2026-10-21.md). Revisión independiente pendiente.
+
+## Información adicional y mapas públicos
+
+La actualización del 21 de octubre incorpora bloques editables/ordenables y mapa
+exacto, aproximado, oculto o conservado, sin volverlos obligatorios. También conserva
+coordenadas e información al vincular un anuncio anterior. Consultar
+[uso, condiciones, privacidad y pruebas](portal-web-informacion-mapas.md).

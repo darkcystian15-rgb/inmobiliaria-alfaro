@@ -38,3 +38,15 @@ test('La portada exige imagen registrada, autorización y un enlace interno segu
  assert.equal(webPublicationChecklist({...legacy,origin:undefined},existing).complete,false);
  for(const patch of [{title:''},{description:''},{photos:[]},{dataAuthorized:false},{publicLocation:''}])assert.equal(webPublicationChecklist(legacy,{...existing,...patch}).complete,false);
  });
+
+test('Bloques y mapa son opcionales; solo los apartados activados e incompletos bloquean',async()=>{
+ const {coordinatesFromText,validCoordinates,snapshotPublicSettings}=await import('../lib/portal-web-settings.mjs');
+ assert.equal(webPublicationChecklist(source,{...draft(),additionalInfoMode:'replace',additionalInfo:[],map:{mode:'none'}}).complete,true);
+ for(const patch of [{additionalInfoMode:'replace',additionalInfo:[{title:'',content:'Texto'}]},{map:{mode:'exact',latitude:'91',longitude:'-78'}},{map:{mode:'approximate',latitude:'',longitude:''}}])assert.equal(webPublicationChecklist(source,{...draft(),...patch}).complete,false);
+ assert.equal(validCoordinates(0,-78),true);assert.equal(validCoordinates(0,0),false);
+ assert.deepEqual(coordinatesFromText('https://www.google.com/maps/@-9.123456,-78.54321,16z'),{latitude:'-9.123456',longitude:'-78.54321'});
+ assert.deepEqual(coordinatesFromText('https://www.google.com/maps/place/casa/@-9,-78,16z/data=!3d-9.12!4d-78.54'),{latitude:'-9.12',longitude:'-78.54'});assert.equal(coordinatesFromText('https://www.google.com/maps/%ZZ'),null);
+ assert.equal(coordinatesFromText('https://evil.invalid/?q=-9,-78'),null);assert.equal(coordinatesFromText('https://maps.app.goo.gl/abc'),null);
+ const snapshot=snapshotPublicSettings({map:{mode:'approximate',latitude:'-9.123456',longitude:'-78.543210'}});assert.equal(snapshot.map.latitude,-9.12);assert.ok(!JSON.stringify(snapshot).includes('-9.123456'));
+ assert.equal(snapshotPublicSettings({map:{mode:'none',latitude:'-9.123456',longitude:'-78.543210'}}).map.latitude,null);
+});
