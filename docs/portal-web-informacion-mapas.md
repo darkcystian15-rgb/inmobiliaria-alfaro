@@ -95,3 +95,19 @@ Se consultaron las fichas e información adicional de los 64 anuncios: 134 bloqu
 39 mapas visibles; todos coinciden con sus datos previos. Hash de las revisiones
 sin cambios antes/después de la lectura, cero escrituras de negocio. Evidencia:
 [portal publicado](evidencia-portal-web/INFORMACION-MAPAS-PORTAL.json).
+
+## Verificación de intranet publicada
+
+21/10/2026, 23:48 UTC: intranet e231eb3, despliegue
+ dpl_Fnb2aCsBF9AWvtossd9qwHJ4vyMS, Production READY. GitHub, Codespaces y el alias
+intranet.inmobiliariaalbertoalfaro.com.pe coinciden con ese commit funcional.
+La entrega documental posterior conserva el mismo código y se contrasta nuevamente
+con Vercel antes de cerrar la tarea.
+
+Comprobación autenticada: pestañas Información adicional y Ubicación y mapa,
+vista previa exacta/aproximada (solo punto redondeado) y ocultación del mapa al
+seleccionar Sin mapa. Tres pantallas en escritorio y móvil sin errores de ejecución.
+Se conservaron 133 fichas y 64 anuncios; 63 listos y uno con descripción faltante,
+sin añadir requisitos obligatorios a los apartados opcionales. Cero solicitudes de
+escritura del navegador sobre Portal web. Cuenta/sesiones temporales eliminadas.
+Evidencia: [intranet publicada](evidencia-portal-web/INFORMACION-MAPAS-PRODUCCION.json).
