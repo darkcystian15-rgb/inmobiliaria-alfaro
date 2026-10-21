@@ -20,6 +20,14 @@ export const menuGroups = [
     ],
   },
   {
+    label: "Portal web",
+    items: [
+      { href: "/portal-web/por-publicar", label: "Inmuebles por publicar", icon: "clipboard" },
+      { href: "/portal-web/activas", label: "Publicaciones activas", icon: "home" },
+      { href: "/portal-web/portada", label: "Portada del sitio", icon: "image" },
+    ],
+  },
+  {
     label: "Estadística",
     items: [
       { href: "/listado-archivos", label: "Listado de archivos", icon: "clipboard" },

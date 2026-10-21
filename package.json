@@ -20,7 +20,10 @@
     "test:zones:integration": "node tests/zones.integration.mjs",
     "db:transaction-dossier": "node scripts/install-transaction-dossier.mjs",
     "test:dossier": "node --test tests/transaction-dossier.test.mjs",
-    "test:dossier:integration": "node tests/transaction-dossier.integration.mjs"
+    "test:dossier:integration": "node tests/transaction-dossier.integration.mjs",
+    "test:portal-web": "node --test tests/portal-web.test.mjs",
+    "test:portal-web:integration": "node tests/portal-web.integration.mjs",
+    "db:portal-web": "node scripts/install-portal-web.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

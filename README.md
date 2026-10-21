@@ -1,3 +1,7 @@
+# Portal web desde la intranet
+
+Nueva entrega: [Publicación web, condiciones, portada y pruebas de fase 4](docs/portal-web-fase4.md).
+
 # Inmobiliaria Alfaro — intranet
 
 Actualización del 20 de octubre: [Carga por arrastre en documentos y fotos de venta/alquiler](docs/carga-por-arrastre-2026-10-20.md).

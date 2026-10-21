@@ -16,7 +16,7 @@ export function proxy(request: NextRequest) {
     return response;
   };
   const path = request.nextUrl.pathname;
-  if (path === "/login" || path === "/apple-icon.png" || path.startsWith("/api/auth/")) return next();
+  if (path === "/login" || path === "/apple-icon.png" || path.startsWith("/api/auth/") || path === "/api/portal-web/bridge") return next();
   if (!request.cookies.get("aa_session")?.value) {
     if (path.startsWith("/api/")) {
       return NextResponse.json({ error: "Inicia sesión para continuar." }, { status: 401 });
