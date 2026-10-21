@@ -220,4 +220,4 @@ innecesaria, mismo ID, edición, suspensión, reactivación, autorización y con
 Prueba de producción: únicamente lectura de inmuebles/anuncios, sin republicar
 clientes para demostrar el flujo. La evidencia actual se entrega en
 `docs/evidencia-portal-web/INTEGRACION.json` y en el documento específico de esta
-corrección una vez comprobado el despliegue. Revisión independiente pendiente.
+corrección: [catálogo anterior](portal-web-catalogo-anterior-2026-10-21.md). Revisión independiente pendiente.

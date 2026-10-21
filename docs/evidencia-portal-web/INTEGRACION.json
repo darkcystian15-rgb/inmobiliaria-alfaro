@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-21T23:08:07.042Z",
+  "date": "2026-10-21T23:14:22.949Z",
   "isolated": true,
   "fictitiousData": true,
   "authentication": true,
@@ -14,6 +14,7 @@
   "legacyWithoutInternalRecord": true,
   "legacyUpdateSuspendRepublish": true,
   "legacyPublicConditions": true,
+  "legacyCoverPreservesPhoto": true,
   "noFalseConnectionWarning": true,
   "consultPrice": true,
   "privateDocumentsExcluded": true,

@@ -53,8 +53,8 @@ export async function changeLegacy(id:number,action:string,version:number,user:n
   const draft=action==='publish'?(saved?.payload.draft||record.draft):record.draft;
   if(action==='publish'&&!webPublicationChecklist(record.source,draft,(!saved||saved.payload.sourceRevision===record.source.revision)).complete)throw new PortalError('Completa las condiciones de la ficha pública.',409);
   const revision=(current?.version||0)+1,status=action==='publish'?'published':action==='suspend'?'suspended':'withdrawn';
-  const snapshot=publicWebSnapshot(record.source,draft),body={kind:'legacy',portalId:id,revision,expectedSourceRevision:record.source.revision,status,snapshot};
-  const payload:Delivery={status,snapshot,draftVersion:saved?.version||0,sourceRevision:record.source.revision,approvedBy:user,approvedAt:new Date().toISOString(),syncState:'pending',portalId:id,portalUrl:record.publication!.portalUrl,body};
+  const snapshot=action==='publish'?publicWebSnapshot(record.source,draft):record.publication!.snapshot,body={kind:'legacy',portalId:id,revision,expectedSourceRevision:record.source.revision,status,snapshot};
+  const payload:Delivery={status,snapshot,draftVersion:action==='publish'?(saved?.version||0):(current?.payload.draftVersion||0),sourceRevision:record.source.revision,approvedBy:user,approvedAt:new Date().toISOString(),syncState:'pending',portalId:id,portalUrl:record.publication!.portalUrl,body};
   await writeValue(db,`legacy-live:${id}`,payload,revision,user);await event(db,`legacy-live:${id}`,action,user,revision,reason);return {version:revision,body};
  });return deliver(`legacy-live:${id}`,delivery.version,delivery.body);
 }
