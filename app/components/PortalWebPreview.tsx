@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import type {WebSnapshot} from '@/lib/portal-web-types';
-export default function PortalWebPreview({snapshot}:{snapshot:WebSnapshot}){
+export default function PortalWebPreview({snapshot,legacy=false}:{snapshot:WebSnapshot;legacy?:boolean}){
  const cover=snapshot.photos.find(photo=>photo.id===snapshot.coverPhotoId);
- const image=(id:number)=>`/api/inmuebles/${snapshot.sourceId}/archivos/${id}`;
+ const image=(id:number)=>legacy?`/api/portal-web/existentes/${snapshot.sourceId}/foto?foto=${id}`:`/api/inmuebles/${snapshot.sourceId}/archivos/${id}`;
  const price=snapshot.price==null?'Precio a consultar':`${snapshot.currency==='USD'?'US$':'S/'} ${new Intl.NumberFormat('es-PE').format(snapshot.price)}${snapshot.priceBasis==='mensual'?' / mes':snapshot.priceBasis==='por_unidad'?' c/u':''}`;
  return <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
   {cover?<img src={image(cover.id)} alt={cover.caption||snapshot.title} className="aspect-[16/9] w-full object-cover"/>:<div className="flex aspect-[16/9] items-center justify-center bg-slate-100 text-sm text-slate-500">Selecciona una foto de portada</div>}

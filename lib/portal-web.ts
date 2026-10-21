@@ -13,11 +13,11 @@ export async function readPortalValue<T>(key:string,db:Executor=pool,lock=false)
  const [rows]=await db.query<RowDataPacket[]>(`SELECT contenido,version FROM inm_portal_web WHERE clave=?${lock?' FOR UPDATE':''}`,[key]);
  return rows[0]?{payload:decode<T>(rows[0].contenido),version:Number(rows[0].version)}:null;
 }
-async function writeValue(db:Executor,key:string,payload:unknown,version:number,userId:number){
+export async function writeValue(db:Executor,key:string,payload:unknown,version:number,userId:number){
  await db.query('INSERT INTO inm_portal_web(clave,contenido,version,usuario_id) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE contenido=VALUES(contenido),version=VALUES(version),usuario_id=VALUES(usuario_id)',[key,JSON.stringify(payload),version,userId]);
 }
-async function event(db:Executor,key:string,action:string,user:number,version:number,reason:string){await db.query('INSERT INTO inm_portal_web_eventos(clave,accion,usuario_id,version,motivo) VALUES(?,?,?,?,?)',[key,action,user,version,reason.slice(0,500)]);}
-async function transaction<T>(action:(db:PoolConnection)=>Promise<T>){const db=await pool.getConnection();try{await db.beginTransaction();const result=await action(db);await db.commit();return result;}catch(error){await db.rollback();throw error;}finally{db.release();}}
+export async function event(db:Executor,key:string,action:string,user:number,version:number,reason:string){await db.query('INSERT INTO inm_portal_web_eventos(clave,accion,usuario_id,version,motivo) VALUES(?,?,?,?,?)',[key,action,user,version,reason.slice(0,500)]);}
+export async function transaction<T>(action:(db:PoolConnection)=>Promise<T>){const db=await pool.getConnection();try{await db.beginTransaction();const result=await action(db);await db.commit();return result;}catch(error){await db.rollback();throw error;}finally{db.release();}}
 export function bridgeConfigured(){return Boolean(process.env.PORTAL_WEB_SYNC_URL&&process.env.PORTAL_WEB_SYNC_TOKEN&&process.env.PORTAL_WEB_ORIGIN);}
 export function bridgeAuthorized(request:Request){const secret=process.env.PORTAL_WEB_SYNC_TOKEN;if(!secret||secret.length<32)return false;const supplied=Buffer.from(request.headers.get('authorization')||'');const expected=Buffer.from(`Bearer ${secret}`);return supplied.length===expected.length&&timingSafeEqual(supplied,expected);}
 
@@ -42,12 +42,18 @@ export async function webSources(id?:number,db:Executor=pool,lock=false):Promise
 export async function webRecord(source:WebSource,db:Executor=pool):Promise<WebRecord>{
  const saved=await readPortalValue<{draft:WebDraft;sourceRevision:string}>(`draft:${source.id}`,db);
  const live=await readPortalValue<WebPublication>(`live:${source.id}`,db);
+ return assembleWebRecord(source,saved,live);
+}
+function assembleWebRecord(source:WebSource,saved:Stored<{draft:WebDraft;sourceRevision:string}>|null,live:Stored<WebPublication>|null):WebRecord{
  const draft=saved?.payload.draft||(initialWebDraft(source) as WebDraft);
  const unchanged=!saved||saved.payload.sourceRevision===source.revision;
  return {source,draft,version:saved?.version||0,savedSourceRevision:saved?.payload.sourceRevision||source.revision,checklist:webPublicationChecklist(source,draft,unchanged),publication:live?.payload||null,pendingChanges:Boolean(live&&(live.payload.draftVersion!==(saved?.version||0)||live.payload.sourceRevision!==source.revision))};
 }
-export async function listWebRecords(zone?:string|null){const sources=await webSources();return Promise.all(sources.filter(source=>!zone||zone==='*'||source.zone===zone).map(source=>webRecord(source)));}
-
+export async function listWebRecords(zone?:string|null){
+ const [sources,[rows]]=await Promise.all([webSources(),pool.query<RowDataPacket[]>("SELECT clave,contenido,version FROM inm_portal_web WHERE clave LIKE 'draft:%' OR clave LIKE 'live:%'")]);
+ const values=new Map(rows.map(row=>[String(row.clave),{payload:decode(row.contenido),version:Number(row.version)}]));
+ return sources.filter(source=>!zone||zone==='*'||source.zone===zone).map(source=>assembleWebRecord(source,values.get(`draft:${source.id}`) as Stored<{draft:WebDraft;sourceRevision:string}>||null,values.get(`live:${source.id}`) as Stored<WebPublication>||null));
+}
 export async function saveWebDraft(id:number,input:unknown,expected:number,sourceRevision:string,user:number){
  const draft=normalizeWebDraft(input) as unknown as WebDraft;
  return transaction(async db=>{
@@ -61,14 +67,14 @@ export async function saveWebDraft(id:number,input:unknown,expected:number,sourc
 }
 
 // La revisión de entrega es monotónica. Si falla la red se conserva para reintentar.
-async function deliver(key:string,version:number,body:unknown){
+export async function deliver(key:string,version:number,body:unknown){
  let response:{portalId?:number;portalUrl?:string}={};let error='';
  try{
   if(!bridgeConfigured())throw new Error('connection');
   const endpoint=new URL(process.env.PORTAL_WEB_SYNC_URL!);const localTest=['127.0.0.1','localhost'].includes(endpoint.hostname)&&['127.0.0.1','localhost'].includes(new URL(process.env.DATABASE_URL!).hostname);if(endpoint.protocol!=='https:'&&!localTest)throw new Error('protocol');
   const result=await fetch(endpoint,{method:'POST',headers:{Authorization:`Bearer ${process.env.PORTAL_WEB_SYNC_TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store',redirect:'error',signal:AbortSignal.timeout(25000)});
   if(!result.ok)throw new Error('remote');response=await result.json();
-  if((body as {kind:string}).kind==='property'){
+  if(['property','legacy'].includes((body as {kind:string}).kind)){
    if(!Number.isSafeInteger(response.portalId)||!response.portalUrl||new URL(response.portalUrl).origin!==new URL(process.env.PORTAL_WEB_ORIGIN!).origin)throw new Error('confirmation');
   }else if(!(response as {ok?:boolean}).ok)throw new Error('confirmation');
  }catch{error='El portal no confirmó el cambio. Reintenta la sincronización.';}

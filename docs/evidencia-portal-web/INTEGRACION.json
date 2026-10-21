@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-21T22:46:43.727Z",
+  "date": "2026-10-21T23:08:07.042Z",
   "isolated": true,
   "fictitiousData": true,
   "authentication": true,
@@ -11,6 +11,10 @@
   "saleAndRentalPublished": true,
   "stablePortalId": true,
   "explicitLegacyLink": true,
+  "legacyWithoutInternalRecord": true,
+  "legacyUpdateSuspendRepublish": true,
+  "legacyPublicConditions": true,
+  "noFalseConnectionWarning": true,
   "consultPrice": true,
   "privateDocumentsExcluded": true,
   "suspensionHidesPhoto": true,

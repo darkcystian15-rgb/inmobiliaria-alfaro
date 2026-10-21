@@ -29,3 +29,12 @@ test('La portada exige imagen registrada, autorización y un enlace interno segu
  assert.equal(bannerChecklist([],[]).complete,false);assert.throws(()=>normalizeBanners([item,item]));
  assert.equal(normalizeWebDraft({...draft(),dataAuthorized:'true'}).dataAuthorized,false);
 });
+
+ test('Los anuncios anteriores usan data web y no exigen documentos ni alta interna retroactiva',()=>{
+ const legacy={...source,origin:'portal',state:'historico',valuationApproved:false,identityDocument:false,valuationFile:false,completedVisitPhotos:false,baseText:'',photos:[{id:0}]};
+ const existing={...draft(),listingMode:'',type:'',title:'Casa',description:'Ficha existente',landArea:'',photos:[{id:0,caption:'Portada actual'}],coverPhotoId:0};
+ const result=webPublicationChecklist(legacy,existing);
+ assert.equal(result.complete,true);assert.equal(result.total,13);
+ assert.equal(webPublicationChecklist({...legacy,origin:undefined},existing).complete,false);
+ for(const patch of [{title:''},{description:''},{photos:[]},{dataAuthorized:false},{publicLocation:''}])assert.equal(webPublicationChecklist(legacy,{...existing,...patch}).complete,false);
+ });

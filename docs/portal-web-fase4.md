@@ -74,10 +74,17 @@ canales conserva su significado independiente.
 
 La relación usa el ID interno estable del inmueble, nunca su posición reutilizable
 en una zona. Un nuevo envío del mismo inmueble actualiza el mismo ID del portal.
-Para anuncios anteriores se selecciona «Vincular un anuncio existente» y se introduce
-su ID público. El receptor verifica que exista, proceda del catálogo heredado y no
-esté vinculado a otro inmueble; conserva su enlace. Esta vinculación es una decisión
-del administrador: no se deduce por contacto, foto, posición o parecido del título.
+Los anuncios anteriores se consultan directamente en «Publicaciones activas» mediante
+el receptor autenticado del portal. Pueden editarse, actualizarse, suspenderse y
+republicarse con sus datos y fotos existentes, sin ficha interna ni documentos
+retroactivos. Se conservan ID, enlace y origen legado. Tienen 13 condiciones de
+contenido público; los inmuebles nuevos de intranet conservan las 21 condiciones.
+Las superficies desconocidas no se inventan ni bloquean el anuncio anterior.
+
+La opción «Vincular un anuncio existente» sigue disponible al preparar una ficha
+interna, como asociación voluntaria. No es un requisito para gestionar un anuncio
+anterior. El receptor comprueba su origen y evita una segunda asociación. No se
+deduce una relación por contacto, foto, posición o parecido del título.
 
 Los 64 anuncios previos permanecen intactos al instalar el receptor. No se vinculan
 masivamente con las 133 fichas que se observaron en la intranet durante la consulta
@@ -179,7 +186,7 @@ reintentos en segundo plano. El estado pendiente se recupera mediante la acción
 
 La integración se verificó con datos ficticios de extremo a extremo. La comprobación
 en producción conserva el contenido real: no se publica una ficha de cliente para
-demostrar el envío. Los anuncios anteriores requieren revisión y vinculación explícita.
+demostrar el envío. Los anuncios anteriores se gestionan directamente con su data web; vincularlos a una ficha interna es opcional.
 
 La revisión independiente de Claude no está disponible en este entorno. Se deja la
 entrega y la evidencia listas para revisión, sin atribuir una revisión no recibida.
@@ -192,3 +199,25 @@ suspender o retirar desde la versión que tenga el módulo operativo antes de re
 el código. No eliminar tablas con borradores, vínculos o eventos sin extraerlos y
 revisarlos. Retirar solo las variables nuevas si se deshabilita la integración completa;
 no cambiar las conexiones MySQL o el hosting privado del resto de la intranet.
+
+## Corrección del catálogo anterior — 21 de octubre de 2026
+
+El listado anterior solo consultaba envíos creados por este módulo, por lo que
+omitía el catálogo previo. Además, el estado inicial de conexión era falso y se
+mostraba una advertencia antes de recibir respuesta. Se usa ahora un estado inicial
+sin resolver y un error de consulta separado; se cargan publicaciones nativas y
+anteriores con claves de selección distintas aunque sus IDs coincidan.
+
+Los anuncios anteriores llevan el rótulo «Portal web»: no se inventa una zona de
+cartera y se muestran aunque haya una zona interna seleccionada. Sus borradores y
+eventos usan claves legacy-draft/legacy-live en el almacén ya instalado; no se crean
+inmuebles internos. El receptor solo actualiza anuncios legados aprobados existentes,
+resuelve las fotos por ID en servidor y rechaza versiones remotas desactualizadas.
+Los reintentos de la misma entrega son idempotentes. No hay migraciones nuevas.
+
+Prueba de escritura: integración aislada con anuncios ficticios; alta interna
+innecesaria, mismo ID, edición, suspensión, reactivación, autorización y conflictos.
+Prueba de producción: únicamente lectura de inmuebles/anuncios, sin republicar
+clientes para demostrar el flujo. La evidencia actual se entrega en
+`docs/evidencia-portal-web/INTEGRACION.json` y en el documento específico de esta
+corrección una vez comprobado el despliegue. Revisión independiente pendiente.
