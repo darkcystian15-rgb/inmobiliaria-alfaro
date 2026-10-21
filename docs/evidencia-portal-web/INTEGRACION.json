@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-21T22:37:31.122Z",
+  "date": "2026-10-21T22:46:43.727Z",
   "isolated": true,
   "fictitiousData": true,
   "authentication": true,
@@ -15,6 +15,7 @@
   "privateDocumentsExcluded": true,
   "suspensionHidesPhoto": true,
   "retryAfterFailure": true,
+  "retryWithReorderedJson": true,
   "inactivePropertyBlocked": true,
   "bannerConditions": true,
   "bannerAndPhotoDelivery": true,

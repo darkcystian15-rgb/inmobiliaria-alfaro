@@ -16,7 +16,7 @@ const dbUrl=process.env.TEST_DATABASE_URL,portalDbUrl=process.env.TEST_PORTAL_DA
 for(const [value,name]of [[dbUrl,'alfaro_web_test'],[portalDbUrl,'alfaro_web_portal_test']]){const u=new URL(value||'http://invalid');assert.ok(['127.0.0.1','localhost'].includes(u.hostname)&&new RegExp(`^/${name}(?:_[a-z0-9]+)?$`).test(u.pathname),'Se requieren bases locales de ensayo');}
 const db=await mysql.createConnection(dbUrl),portal=await mysql.createPool(portalDbUrl);
 const portalRepo=path.resolve(process.env.PORTAL_REPO_PATH||'../portal-dark');
-const {createIntranetSyncHandler}=await import(pathToFileURL(path.join(portalRepo,'server/intranet-sync.mjs')));
+const {createIntranetSyncHandler}=await import(pathToFileURL(path.join(portalRepo,'server/intranet-sync.js')));
 const {installIntranetSchema}=await import(pathToFileURL(path.join(portalRepo,'server/intranet-schema.mjs')));
 const secret=randomBytes(32).toString('hex'),origin='http://127.0.0.1:3164',webOrigin='http://127.0.0.1:3166';
 const stored=new Map(),work=fs.mkdtempSync(path.join(os.tmpdir(),'alfaro-web-'));
@@ -65,7 +65,7 @@ try{
  assert.equal((await request('/api/portal-web/1','PUT',{draft,version:0,sourceRevision:first.source.revision})).status,409);
  saved=await request('/api/portal-web/1','PUT',{draft,version:1,sourceRevision:first.source.revision});assert.equal(saved.status,200);assert.equal(saved.data.checklist.complete,true);
  let result=await request('/api/portal-web/1','POST',{action:'publish',version:2,reason:'Ensayo de publicación autorizada'});assert.equal(result.status,200,JSON.stringify(result.data));assert.equal(result.data.synced,true);
- const portalId=result.data.portalId;assert.ok(portalId);const [[publicRow]]=await portal.query('SELECT * FROM public_properties WHERE id=?',[portalId]);assert.equal(publicRow.price,null);
+ const portalId=result.data.portalId;assert.ok(portalId);const [[received]]=await portal.query("SELECT contenido FROM portal_intranet_sync WHERE clave='property:1'");const reordered=typeof received.contenido==='string'?JSON.parse(received.contenido):received.contenido;assert.equal((await fetch(webOrigin+'/api/intranet-sync',{method:'POST',headers:{Authorization:`Bearer ${secret}`,'Content-Type':'application/json'},body:JSON.stringify(reordered)})).status,200,'Reintento con claves JSON reordenadas');const [[publicRow]]=await portal.query('SELECT * FROM public_properties WHERE id=?',[portalId]);assert.equal(publicRow.price,null);
  const photoUrl=webOrigin+`/api/intranet-sync?media=photo&property=1&id=${first.source.photos[0].id}`;assert.equal((await fetch(photoUrl)).status,200);
  assert.equal((await fetch(webOrigin+'/api/intranet-sync?media=photo&property=1&id=1')).status,404,'El DNI no se entrega como foto');
  assert.equal((await request('/api/portal-web/1','POST',{action:'publish',version:2,reason:'Segundo envío'})).data.portalId,portalId);assert.equal(Number((await portal.query('SELECT COUNT(*) n FROM properties'))[0][0].n),1);
@@ -91,7 +91,7 @@ try{
  await page.goto(origin+'/portal-web/portada');await page.getByRole('button',{name:'Actualizar portada en la web'}).waitFor();await page.screenshot({path:'output/portal-web/portada-escritorio.png',fullPage:true});
  await page.setViewportSize({width:375,height:850});for(const route of ['por-publicar','activas','portada']){await page.goto(origin+'/portal-web/'+route);await page.waitForLoadState('networkidle');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),route+' tiene desborde móvil');await page.screenshot({path:`output/portal-web/${route}-movil.png`,fullPage:true});}
  assert.deepEqual(errors,[]);
- const report={date:new Date().toISOString(),isolated:true,fictitiousData:true,authentication:true,operatorDenied:true,sameOriginRequired:true,missingFieldsBlockedServer:true,buttonDisabled:true,optimisticLock:true,saleAndRentalPublished:true,stablePortalId:true,explicitLegacyLink:true,consultPrice:true,privateDocumentsExcluded:true,suspensionHidesPhoto:true,retryAfterFailure:true,inactivePropertyBlocked:true,bannerConditions:true,bannerAndPhotoDelivery:true,mobileOverflow:false,runtimeErrors:errors,realBusinessRowsChanged:0};
+ const report={date:new Date().toISOString(),isolated:true,fictitiousData:true,authentication:true,operatorDenied:true,sameOriginRequired:true,missingFieldsBlockedServer:true,buttonDisabled:true,optimisticLock:true,saleAndRentalPublished:true,stablePortalId:true,explicitLegacyLink:true,consultPrice:true,privateDocumentsExcluded:true,suspensionHidesPhoto:true,retryAfterFailure:true,retryWithReorderedJson:true,inactivePropertyBlocked:true,bannerConditions:true,bannerAndPhotoDelivery:true,mobileOverflow:false,runtimeErrors:errors,realBusinessRowsChanged:0};
  fs.mkdirSync('docs/evidencia-portal-web',{recursive:true});fs.writeFileSync('docs/evidencia-portal-web/INTEGRACION.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
 }catch(error){console.error('Integración detenida:',error.code||error.message);fs.mkdirSync('output/portal-web',{recursive:true});fs.writeFileSync('output/portal-web/server.log',logs,{mode:0o600});process.exitCode=1;}
 finally{await browser?.close();app?.kill('SIGTERM');await new Promise(resolve=>web?web.close(resolve):resolve());await new Promise(resolve=>storage?storage.close(resolve):resolve());await db.end();await portal.end();}

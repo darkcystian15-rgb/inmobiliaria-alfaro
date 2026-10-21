@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-21T22:46:57.706Z",
+  "intranet": "https://intranet.inmobiliariaalbertoalfaro.com.pe",
+  "portal": "https://app-alfaro-git-smoky.vercel.app",
+  "authenticatedPages": 3,
+  "mobileViews": 3,
+  "properties": 133,
+  "publicCatalog": 64,
+  "requirementsPerProperty": 21,
+  "bridgeAuthentication": true,
+  "receiverAuthentication": true,
+  "publishButtonBlocked": true,
+  "bannerButtonBlocked": true,
+  "existingHomepagePreserved": true,
+  "businessRowsUnchanged": true,
+  "runtimeErrors": [],
+  "temporaryVerificationAccountRemoved": true
+}

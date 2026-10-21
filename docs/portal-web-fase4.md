@@ -143,7 +143,30 @@ previa se conservó privadamente; no se publican secretos ni respaldos en Git.
 - Portal: pruebas existentes, fase 3 y nuevas pruebas de autorización, enlaces de
   portada y acceso a imágenes para tarjetas sociales aprobadas; build Vite correcto.
 - Instaladores aplicados sin modificar fichas comerciales ni enviar anuncios reales.
-  La comprobación de despliegues y dominios se registra en la entrega de publicación.
+  [Comprobación real de producción](evidencia-portal-web/PRODUCCION.json): los tres
+  apartados autenticados y sus vistas móviles funcionan, con 21 requisitos por ficha,
+  publicación y portada bloqueadas por faltantes, secreto de conexión comprobado y
+  ningún cambio de datos comerciales. La cuenta/sesión temporal se eliminó al terminar.
+
+## Publicación comprobada
+
+- Intranet: código funcional `1392d1acd9eced194abcf11478261b0d1a1dc5f1`, despliegue
+  `dpl_46x3Hf1CX8p4JucpE4NzFZT5a7xb`, Production `READY` y dominio
+  https://intranet.inmobiliariaalbertoalfaro.com.pe.
+- Portal: código funcional final `a4fdfd28dfe9d71589546556e558c027d7d6acfd`, despliegue
+  `dpl_7qGPdEkaY85U3zuSkj8KNsG6pVHW`, Production `READY` y dominio
+  https://app-alfaro-git-smoky.vercel.app.
+- Verificación autenticada del 21 de octubre a las 22:46 UTC: 133 fichas internas,
+  64 anuncios públicos y contenido de inicio conservados. La publicación de anuncios
+  y el cambio de carrusel se ensayaron con datos ficticios en MySQL local, no con clientes.
+- El primer receptor desplegado tuvo un error de carga ESM/CommonJS específico de
+  Vercel; se corrigió usando el formato del resto de sus módulos de servidor y se
+  verificó el arranque real. También se comprobó idempotencia después de que MySQL
+  reordena las claves JSON, para tolerar reintentos tras una respuesta perdida.
+- Esta evidencia se incorpora en un commit posterior al código funcional; después
+  se vuelve a contrastar GitHub, Codespaces y el despliegue final. Los SHA anteriores
+  identifican el código funcional sobre el que se realizó la comprobación, no el
+  commit documental que contiene el resultado de esa misma comprobación.
 
 ## Operación y límites
 
