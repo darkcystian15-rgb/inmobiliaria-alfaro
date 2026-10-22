@@ -35,4 +35,12 @@ Navegador autenticado contra la compilación local: 40 vistas con administrador/
 
 El escenario MySQL desechable existente se adaptó a las fases y a los permisos de fotos, pero no se ejecutó en esta entrega por no disponer de un servidor MySQL local aislado. Los ensayos de interfaz usan respuestas ficticias para las escrituras; los ensayos HTTP comprueban denegación y validación sin modificar inmuebles reales.
 
-Evidencia agregada: [LOCAL.json](evidencia-informacion-fases/LOCAL.json). Publicación y comprobación final de producción en curso.
+Evidencia agregada: [LOCAL.json](evidencia-informacion-fases/LOCAL.json) y [PRODUCCION.json](evidencia-informacion-fases/PRODUCCION.json).
+
+## Publicación comprobada
+
+Código funcional: `01c64040950d097f0033e09541891708ca84c959`. Vercel `dpl_GXr22GCxTpU1Qa6drREaNaiehDS3`: **READY**, alias `intranet.inmobiliariaalbertoalfaro.com.pe` confirmado.
+
+Comprobación autenticada en producción el 22/10/2026 a las **22:28:03 UTC**: 20 vistas con administrador y operador a 1440/375 px; dos fases visibles, numeración y orden conservados, consulta de Fase 1 para operador, acceso documental de Fase 2 conservado y siete denegaciones de modificación de Fase 1 con HTTP 403. Sin errores de ejecución, desbordes ni escrituras de negocio. Las dos cuentas y sesiones técnicas se eliminaron al terminar. Los guardados de precio/texto se simularon solo en la comprobación local; no se modificaron datos de clientes en producción.
+
+La fuente de aplicación permanece idéntica en la publicación posterior de esta evidencia documental. Revisión independiente pendiente.

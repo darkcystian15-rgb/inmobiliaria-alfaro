@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-22T22:28:03.812Z",
+  "production": true,
+  "liveOnly": true,
+  "views": 20,
+  "roles": 2,
+  "phaseSeparationVerified": true,
+  "operatorReadOnlyPhaseOne": true,
+  "operatorDocumentaryAccessPreserved": true,
+  "numberedFoldersFirst": true,
+  "unnumberedFoldersLast": true,
+  "deniedPhaseOneRequests": 7,
+  "simulatedSaves": 0,
+  "browserBusinessWrites": 0,
+  "browserErrors": 0,
+  "functionalCommit": "01c64040950d097f0033e09541891708ca84c959",
+  "deployment": "dpl_GXr22GCxTpU1Qa6drREaNaiehDS3",
+  "deploymentState": "READY",
+  "domainConfirmed": true
+}
