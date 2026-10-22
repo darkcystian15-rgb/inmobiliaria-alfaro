@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { dossierDefaults, dossierStatus, dossierDocumentType } from '@/lib/transaction-dossier.mjs';
 import { requestJson } from '@/lib/client-request';
 import { compressImage, isImageFile } from '@/lib/client-images';
@@ -35,7 +35,6 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
   const [selected, setSelected] = useState<{ file: File; name: string }[]>([]);
   const [category, setCategory] = useState('');
   const [observation, setObservation] = useState('');
-  const input = useRef<HTMLInputElement>(null);
   const dirty = !!record && JSON.stringify(config) !== JSON.stringify(record.config);
   const pending = dirty || selected.length > 0 || editing !== null;
   useEffect(() => { onDirtyChange(pending); }, [pending, onDirtyChange]);
@@ -79,7 +78,6 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     } catch (e) { setError(`${e instanceof Error ? e.message : 'No se pudo subir.'}${uploaded ? ` ${uploaded} archivo(s) ya se guardaron; solo quedan los pendientes.` : ''}`); }
     finally {
       setSelected(previous => previous.slice(uploaded));
-      if (input.current) input.current.value = '';
       if (uploaded) await onChanged();
       working(false);
     }
@@ -109,9 +107,7 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
   const rental = operation === 'alquiler';
   const party = view === 'vendedor' ? rental ? 'arrendador' : 'vendedor' : view === 'comprador' ? rental ? 'arrendatario' : 'comprador' : null;
   const visible = status.items.filter(item => view === 'carpeta' ? item.section === section : view === 'estado' || (view === 'inmueble' ? item.party === 'inmueble' : item.party === party));
-  const applicable = visible.filter(item => item.applies);
   const unknown = files.filter(file => !status.items.some(def => def.key === dossierDocumentType(file.tipoDocumento, operation)));
-  const available = applicable.filter(item => item.applies);
   if (loading) return <p role="status" className="p-4">Consultando expediente…</p>;
   if (!record) return <div role="alert"><p>{error}</p><button type="button" onClick={() => void load()} className="aa-button aa-button-secondary mt-3">Reintentar</button></div>;
   return <div className="space-y-5">
@@ -123,7 +119,7 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
       <div className="grid gap-3 sm:grid-cols-2">{status.sections.map(section => <div key={section.key} className="rounded-xl border border-slate-200 p-4"><h4 className="font-semibold">{section.label}</h4><p className="mt-2 text-sm">{section.total ? `${section.completed} de ${section.total} completos · ${section.pending} pendientes` : 'Sin requisitos obligatorios aplicables'}</p></div>)}</div>
       <section><h4 className="font-bold">Documentos obligatorios pendientes</h4><ul className="mt-3 space-y-2">{status.items.filter(item => item.state === 'pendiente').map(item => <li key={item.key} className="rounded-lg bg-amber-50 p-3 text-sm"><span className="font-semibold capitalize">{item.party}</span> · {item.label}</li>)}</ul>{!status.items.some(item => item.state === 'pendiente') && <p className="mt-2 text-sm">No hay archivos obligatorios pendientes para las condiciones seleccionadas.</p>}</section>
     </>}
-    {!rental && (party ? [party] : view === 'carpeta' && section === 'identificacion' ? ['vendedor', 'comprador'] : view === 'carpeta' && section === 'impuestos' ? ['vendedor'] : []).map(party => <fieldset key={party} disabled={busy} className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    {!rental && (party ? [party] : view === 'carpeta' && section === 'identificacion' ? ['vendedor', 'comprador'] : view === 'carpeta' && section === 'impuestos' ? ['vendedor'] : []).map(party => <fieldset key={party} disabled={busy || selected.length > 0 || editing !== null} className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <legend className="px-2 font-bold">Condiciones del {party}</legend>
       {party === 'comprador' && section !== 'impuestos' && <label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={config.compradorAsignado} onChange={event => setConfig(old => ({ ...old, compradorAsignado: event.target.checked }))} className="mt-1 h-4 w-4" /><span>Asignar comprador: la operación ya está cerrada.<span className="mt-1 block text-xs text-slate-600">Activa su expediente y adjunta sus documentos. Solo se registra un comprador.</span></span></label>}
       {section !== 'impuestos' && (party === 'vendedor' || config.compradorAsignado) && <label className="block text-sm font-semibold">Tipo de persona<select value={party === 'vendedor' ? config.vendedorTipo : config.compradorTipo} onChange={event => setConfig(old => ({ ...old, [`${party}Tipo`]: event.target.value }))} className={field}><option value="">Seleccionar</option><option value="natural">Persona natural</option><option value="juridica">Persona jurídica</option></select></label>}
@@ -131,25 +127,25 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
       {party === 'vendedor' && (view !== 'carpeta' || section === 'impuestos') && <label className="block text-sm font-semibold">Impuesto a la renta<select value={config.renta} onChange={event => setConfig(old => ({ ...old, renta: event.target.value }))} className={field}><option value="pendiente">Pendiente de definir</option><option value="afecto">Corresponde pagar</option><option value="exonerado">Exonerado del pago</option></select></label>}
       <button type="button" disabled={busy || !dirty} onClick={() => void saveConfig()} className="aa-button aa-button-primary">{busy ? 'Guardando…' : 'Guardar condiciones'}</button>
     </fieldset>)}
-    {(view === 'inmueble' || (view === 'carpeta' && section === 'cargas')) && !rental && <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm"><input type="checkbox" disabled={busy} checked={config.cargas} onChange={event => setConfig(old => ({ ...old, cargas: event.target.checked }))} className="mt-1 h-4 w-4" /><span>Incluir levantamiento de cargas<span className="mt-1 block text-xs text-slate-600">Sección opcional. Al activarla puedes subir varios archivos con nombres individuales.</span></span></label>}
+    {(view === 'inmueble' || (view === 'carpeta' && section === 'cargas')) && !rental && <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm"><input type="checkbox" disabled={busy || selected.length > 0 || editing !== null} checked={config.cargas} onChange={event => setConfig(old => ({ ...old, cargas: event.target.checked }))} className="mt-1 h-4 w-4" /><span>Incluir levantamiento de cargas<span className="mt-1 block text-xs text-slate-600">Sección opcional. Al activarla puedes subir varios archivos con nombres individuales.</span></span></label>}
     {view !== 'estado' && status.sections.map(({key: section, label}) => {
       const items = visible.filter(item => item.section === section && (item.applies || item.documents.length));
       if (!items.length) return null;
-      return <section key={section} className="space-y-3"><h4 className="font-bold">{label}</h4>{items.map(item => <div key={item.key} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"><div className="flex flex-wrap items-start justify-between gap-2"><h5 className="font-semibold">{item.label}{item.party !== 'inmueble' && <span className="ml-2 text-sm font-normal capitalize text-slate-500">· {item.party}</span>}</h5><span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.state === 'pendiente' ? 'bg-amber-100 text-amber-900' : item.state === 'completo' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>{stateLabels[item.state as keyof typeof stateLabels]}</span></div>{item.key === 'COPIA_LITERAL_CRI' && <p className="mt-2 text-xs text-slate-600">Basta con uno de los dos documentos.</p>}{item.note && <p className="mt-2 whitespace-pre-wrap text-sm">Nota: {item.note}</p>}{item.documents.map(file => renderFile(file as DossierFile))}{item.applies && view === 'carpeta' && <div className="mt-3"><FileDropZone label={`Archivos: ${item.party === 'inmueble' ? '' : item.party + ' · '}${item.label}`} accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" help="Hasta 4 MB por archivo; revisa los nombres y confirma la subida." inputRef={{ current: null }} disabled={busy || dirty || !uploadReady || selected.length > 0 || editing !== null} onFiles={files => { setError(''); setMessage(''); setCategory(item.key); setSelected(files.map(file => ({ file, name: file.name.replace(/\.[^.]+$/, '').slice(0, 255) }))); document.getElementById(`dossier-upload-${propertyId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} onRejected={setError} /></div>}{item.applies && view !== 'carpeta' && <button type="button" disabled={busy || dirty} onClick={() => { setCategory(item.key); document.getElementById(`dossier-upload-${propertyId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }} className="aa-button aa-button-secondary mt-3">Agregar archivo</button>}</div>)}</section>;
+      return <section key={section} className="space-y-3"><h4 className="font-bold">{label}</h4>{items.map(item => <div key={item.key} data-document-type={item.key} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"><div className="flex flex-wrap items-start justify-between gap-2"><h5 className="font-semibold">{item.label}{item.party !== 'inmueble' && <span className="ml-2 text-sm font-normal capitalize text-slate-500">· {item.party}</span>}</h5><span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.state === 'pendiente' ? 'bg-amber-100 text-amber-900' : item.state === 'completo' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>{stateLabels[item.state as keyof typeof stateLabels]}</span></div>{item.key === 'COPIA_LITERAL_CRI' && <p className="mt-2 text-xs text-slate-600">Basta con uno de los dos documentos.</p>}{item.note && <p className="mt-2 whitespace-pre-wrap text-sm">Nota: {item.note}</p>}{item.documents.map(file => renderFile(file as DossierFile))}{item.applies && <div className="mt-3 space-y-3">
+        {!uploadReady && <p role="status" className="text-sm text-amber-800">La subida no está disponible. Consulta al administrador.</p>}
+        <FileDropZone label={`Archivos: ${item.party === 'inmueble' ? '' : item.party + ' · '}${item.label}`} accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" help="PDF, Word, Excel, JPG, PNG o WebP. Hasta 4 MB por archivo; las imágenes se comprimen."
+          inputRef={{ current: null }} disabled={busy || dirty || !uploadReady || (selected.length > 0 && category !== item.key) || editing !== null}
+          onFiles={files => { setError(''); setMessage(''); setCategory(item.key); setSelected(files.map(file => ({ file, name: file.name.replace(/\.[^.]+$/, '').slice(0, 255) }))); }} onRejected={setError} />
+        {category === item.key && selected.length > 0 && <form aria-label={`Subir archivos: ${item.party === 'inmueble' ? '' : item.party + ' · '}${item.label}`} onSubmit={event => void upload(event)} className="space-y-3 rounded-xl border border-red-200 bg-white p-4">
+          <h6 className="text-sm font-bold">Confirmar archivos de {item.label.toLowerCase()}</h6>
+          <fieldset disabled={busy || dirty || !uploadReady} className="space-y-3">
+            {selected.map((entry, index) => <label key={`${entry.file.name}-${index}`} className="block text-sm font-semibold">Nombre del archivo {index + 1}<input required maxLength={255} value={entry.name} onChange={event => setSelected(old => old.map((value, i) => i === index ? { ...value, name: event.target.value } : value))} className={field} /><span className="mt-1 block break-words text-xs font-normal">{entry.file.name}</span></label>)}
+            <label className="block text-sm font-semibold">Observación opcional<textarea maxLength={500} value={observation} onChange={event => setObservation(event.target.value)} className={field} /></label>
+            <div className="flex flex-wrap gap-2"><button type="submit" className="aa-button aa-button-primary">{busy ? 'Subiendo…' : 'Subir archivos'}</button><button type="button" onClick={() => { setSelected([]); setCategory(''); setObservation(''); }} className="aa-button aa-button-secondary">Quitar selección</button></div>
+          </fieldset>
+        </form>}
+      </div>}</div>)}</section>;
     })}
-    {view !== 'estado' && available.length > 0 && <form id={`dossier-upload-${propertyId}`} onSubmit={event => void upload(event)} className="space-y-4 rounded-2xl border border-slate-300 bg-slate-50 p-4 sm:p-5">
-      <h4 className="font-bold">Subir archivos al expediente</h4><p className="text-xs text-slate-600">PDF, Word, Excel, JPG, PNG o WebP. Hasta 4 MB por archivo; las imágenes se comprimen. Puedes seleccionar varios y dar un nombre a cada uno.</p>
-      {!uploadReady && <p role="status" className="text-sm text-amber-800">La subida no está disponible. Consulta al administrador.</p>}
-      <fieldset disabled={busy || dirty || !uploadReady} className="space-y-4">
-        <label className="block text-sm font-semibold">Categoría del archivo<select required value={available.some(item => item.key === category) ? category : ''} onChange={event => setCategory(event.target.value)} className={field}><option value="">Seleccionar categoría</option>{available.map(item => <option key={item.key} value={item.key}>{item.party === 'inmueble' ? item.label : `${item.party} · ${item.label}`}</option>)}</select></label>
-        <FileDropZone label="Archivos" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" inputRef={input} disabled={busy || dirty || !uploadReady}
-          help="PDF, Word, Excel, JPG, PNG o WebP. Hasta 4 MB por archivo; las imágenes se comprimen."
-          onFiles={files => { setError(''); setMessage(''); setSelected(files.map(file => ({ file, name: file.name.replace(/\.[^.]+$/, '').slice(0, 255) }))); }} onRejected={setError} />
-        {selected.map((entry, index) => <label key={`${entry.file.name}-${index}`} className="block text-sm font-semibold">Nombre del archivo {index + 1}<input required maxLength={255} value={entry.name} onChange={event => setSelected(old => old.map((value, i) => i === index ? { ...value, name: event.target.value } : value))} className={field} /><span className="mt-1 block break-words text-xs font-normal">{entry.file.name}</span></label>)}
-        <label className="block text-sm font-semibold">Observación opcional<textarea maxLength={500} value={observation} onChange={event => setObservation(event.target.value)} className={field} /></label>
-        <button type="submit" disabled={!selected.length || !available.some(item => item.key === category)} className="aa-button aa-button-primary">{busy ? 'Subiendo…' : 'Subir archivos'}</button>{selected.length > 0 && <button type="button" onClick={() => { setSelected([]); if (input.current) input.current.value = ''; }} className="aa-button aa-button-secondary ml-2">Quitar selección</button>}
-      </fieldset>
-    </form>}
     {(view === 'estado' || view === 'inmueble' || (view === 'carpeta' && section === 'otros')) && unknown.length > 0 && <section className="rounded-xl border border-amber-200 p-4"><h4 className="font-bold">Otros archivos conservados</h4><p className="mt-2 text-sm">Estos archivos no pertenecen a los requisitos actuales de esta operación. Puedes consultarlos y, si corresponde, asignarles una categoría vigente.</p>{unknown.map(renderFile)}</section>}
     {view === 'carpeta' && section === 'otros' && unknown.length === 0 && <p className="rounded-xl bg-slate-50 p-5 text-sm text-slate-500">No hay otros archivos por clasificar.</p>}
     {view === 'carpeta' && section === 'cargas' && !config.cargas && <p className="text-sm text-slate-600">Esta carpeta no tiene requisitos obligatorios mientras no se declaren cargas. Los archivos existentes se conservan.</p>}

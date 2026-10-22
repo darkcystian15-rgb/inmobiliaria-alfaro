@@ -215,6 +215,14 @@ try {
   await page.getByRole('button', { name: 'Cerrar vista previa', exact: true }).click();
   assert.equal(businessWrites, 0, 'Folder traversal never writes or moves business records');
   assert.deepEqual(await currentRecords(), beforeNavigation, 'All existing file metadata and storage paths are preserved');
+  const literalItem = page.locator('[data-document-type=COPIA_LITERAL_CRI]');
+  await literalItem.getByLabel('Archivos: Copia literal o CRI-PU', { exact: true }).setInputFiles({ name: 'literal-inline.pdf', mimeType: 'application/pdf', buffer: pdf });
+  const literalForm = literalItem.getByRole('form', { name: 'Subir archivos: Copia literal o CRI-PU', exact: true });
+  await literalForm.getByRole('textbox', { name: /^Nombre del archivo 1/ }).fill('Copia literal dentro del ítem');
+  await literalForm.getByRole('textbox', { name: 'Observación opcional', exact: true }).fill('Observación del ítem');
+  await literalForm.getByRole('button', { name: 'Subir archivos', exact: true }).click();
+  await page.getByText('1 archivo guardado.', { exact: true }).waitFor();
+  assert.equal((await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE tipo_documento='COPIA_LITERAL_CRI' AND nombre='Copia literal dentro del ítem' AND observacion='Observación del ítem'"))[0][0].n, 1);
   // DNI folder keeps seller and buyer conditions and text alternative.
   await openFolder('1. DNI y poderes');
   const buyerConditions = page.getByRole('group', { name: 'Condiciones del comprador', exact: true });
@@ -225,10 +233,11 @@ try {
   await page.getByText('Condiciones del expediente guardadas.', { exact: true }).waitFor();
   const directBuyerDrop = page.getByRole('group', { name: 'Carga: Archivos: comprador · DNI', exact: true });
   await dropFiles(directBuyerDrop, [{ name: 'dni-arrastrado.pdf', type: 'application/pdf', bytes: pdf }, { name: 'imagen-arrastrada.png', type: 'image/png', bytes: image }]);
-  assert.equal(await page.getByRole('combobox', { name: /^Categoría del archivo/ }).inputValue(), 'COMPRADOR_DNI');
+  await page.locator('[data-document-type=COMPRADOR_DNI]').getByRole('form', { name: 'Subir archivos: comprador · DNI', exact: true }).waitFor();
+  assert.equal(await page.getByRole('combobox', { name: /^Categoría del archivo/ }).count(), 0, 'No common category selector at the bottom');
   assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo/ }).count(), 2);
   await page.getByRole('textbox', { name: /^Nombre del archivo 1/ }).fill('DNI comprador desde carpeta');
-  const sharedDrop = page.getByRole('group', { name: 'Carga: Archivos', exact: true });
+  const sharedDrop = directBuyerDrop;
   await dropFiles(sharedDrop, [{ name: 'no-permitido.exe', type: 'application/octet-stream', bytes: pdf }]);
   await page.getByRole('alert').filter({ hasText: 'formato no permitido' }).waitFor();
   assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo 1/ }).inputValue(), 'DNI comprador desde carpeta');
@@ -242,7 +251,7 @@ try {
   await page.getByRole('button', { name: 'Quitar selección', exact: true }).click();
   // A condition can deactivate a previous document without hiding or deleting it.
   await buyerConditions.getByRole('combobox', { name: /^Tipo de persona/ }).selectOption('juridica');
-  await dropFiles(sharedDrop, [{ name: 'bloqueado.pdf', type: 'application/pdf', bytes: pdf }]);
+  await dropFiles(page.getByRole('group', { name: 'Carga: Archivos: comprador · Ficha RUC', exact: true }), [{ name: 'bloqueado.pdf', type: 'application/pdf', bytes: pdf }]);
   assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo/ }).count(), 0);
   await buyerConditions.getByRole('button', { name: 'Guardar condiciones', exact: true }).click();
   await page.getByText('Condiciones del expediente guardadas.', { exact: true }).waitFor();
@@ -273,7 +282,8 @@ try {
   assert.equal(await page.getByRole('combobox', { name: /^Tipo de persona/ }).count(), 0);
   for (const [party, category] of [['arrendador','ARRENDADOR_DNI'], ['arrendatario','ARRENDATARIO_DNI']]) {
     await dropFiles(page.getByRole('group', { name: `Carga: Archivos: ${party} · DNI`, exact: true }), [{ name: `${party}-carpeta.pdf`, type: 'application/pdf', bytes: pdf }]);
-    assert.equal(await page.getByRole('combobox', { name: /^Categoría del archivo/ }).inputValue(), category);
+    await page.locator(`[data-document-type=${category}]`).getByRole('form', { name: `Subir archivos: ${party} · DNI`, exact: true }).waitFor();
+    assert.equal(await page.getByRole('combobox', { name: /^Categoría del archivo/ }).count(), 0);
     await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
     await page.getByText('1 archivo guardado.', { exact: true }).waitFor();
     assert.equal((await db.query('SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=3 AND tipo_documento=? AND nombre=?', [category, `${party}-carpeta`]))[0][0].n, 1);
@@ -301,7 +311,7 @@ try {
   assert.deepEqual(errors, []);
   console.log('PASS: explorador zonas/inmuebles/carpetas, filtros, venta/alquiler, documentos conservados, arrastre con categoría directa, textos, límites, vistas previas, enlaces anteriores, permisos y escritorio/móvil.');
   assert.equal((await request(`/api/inmuebles/1/archivos?archivoId=${pdfId}`, admin, 'DELETE')).response.status, 200);
-  assert.equal((await request(url, admin)).data.status.items.find(item => item.key === 'COPIA_LITERAL_CRI').state, 'pendiente');
+  assert.equal((await request(url, admin)).data.status.items.find(item => item.key === 'COPIA_LITERAL_CRI').state, 'completo');
   const deleted=(await db.query("SELECT observacion FROM inm_timeline WHERE inmueble_id=1 AND evento='archivo_eliminado'"))[0];
   assert.equal(deleted.length,1);assert.equal(JSON.parse(deleted[0].observacion).archivo.nombre,'CRI-PU revisado');
   assert.equal((await db.query("SELECT COUNT(*) total FROM inm_timeline WHERE evento='archivo_subido' AND JSON_UNQUOTE(JSON_EXTRACT(observacion,'$.archivo.nombre'))='No corresponde'"))[0][0].total,0);
