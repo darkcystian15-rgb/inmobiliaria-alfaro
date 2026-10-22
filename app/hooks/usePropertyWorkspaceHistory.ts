@@ -18,29 +18,34 @@ export default function usePropertyWorkspaceHistory({ dirty, busy, onRestore }: 
   useLayoutEffect(() => { latest.current = { dirty, busy, onRestore }; }, [dirty, busy, onRestore]);
 
   useEffect(() => {
-    const url = new URL(location.href);
-    const existing = history.state?.[marker] as Entry | undefined;
-    if (existing) current.current = existing;
-    else {
-      const workspace = crypto.randomUUID();
-      const parents: URL[] = [];
-      if (url.searchParams.get('codigo') || (url.searchParams.get('zona') && url.searchParams.get('zona') !== '*')) {
-        const root = new URL(url); ['codigo', 'carpeta', 'pestana'].forEach(key => root.searchParams.delete(key)); root.searchParams.set('zona', '*'); parents.push(root);
-      }
-      if (url.searchParams.get('codigo')) {
-        const zone = new URL(url); ['codigo', 'carpeta', 'pestana'].forEach(key => zone.searchParams.delete(key));
-        if (zone.searchParams.get('zona') && zone.searchParams.get('zona') !== '*') parents.push(zone);
-        if (url.searchParams.get('carpeta') || url.searchParams.get('pestana')) {
-          const property = new URL(url); ['carpeta', 'pestana'].forEach(key => property.searchParams.delete(key)); parents.push(property);
+    let disposed = false;
+    // Let the router install its native-history integration before seeding parents.
+    queueMicrotask(() => {
+      if (disposed) return;
+      const url = new URL(location.href);
+      const existing = history.state?.[marker] as Entry | undefined;
+      if (existing) current.current = existing;
+      else {
+        const workspace = crypto.randomUUID();
+        const parents: URL[] = [];
+        if (url.searchParams.get('codigo') || (url.searchParams.get('zona') && url.searchParams.get('zona') !== '*')) {
+          const root = new URL(url); ['codigo', 'carpeta', 'pestana'].forEach(key => root.searchParams.delete(key)); root.searchParams.set('zona', '*'); parents.push(root);
         }
+        if (url.searchParams.get('codigo')) {
+          const zone = new URL(url); ['codigo', 'carpeta', 'pestana'].forEach(key => zone.searchParams.delete(key));
+          if (zone.searchParams.get('zona') && zone.searchParams.get('zona') !== '*') parents.push(zone);
+          if (url.searchParams.get('carpeta') || url.searchParams.get('pestana')) {
+            const property = new URL(url); ['carpeta', 'pestana'].forEach(key => property.searchParams.delete(key)); parents.push(property);
+          }
+        }
+        const entries = [...parents, url];
+        entries.forEach((entry, index) => {
+          const state = { [marker]: { workspace, index } };
+          if (index === 0) history.replaceState(state, '', entry); else history.pushState(state, '', entry);
+        });
+        current.current = { workspace, index: entries.length - 1 };
       }
-      const entries = [...parents, url];
-      entries.forEach((entry, index) => {
-        const state = { ...history.state, [marker]: { workspace, index } };
-        if (index === 0) history.replaceState(state, '', entry); else history.pushState(state, '', entry);
-      });
-      current.current = { workspace, index: entries.length - 1 };
-    }
+    });
     const pop = (event: PopStateEvent) => {
       if (restoring.current) { restoring.current = false; event.stopImmediatePropagation(); return; }
       const target = event.state?.[marker] as Entry | undefined;
@@ -73,7 +78,7 @@ export default function usePropertyWorkspaceHistory({ dirty, busy, onRestore }: 
     window.addEventListener('popstate', pop, true);
     window.addEventListener('beforeunload', before);
     document.addEventListener('click', click, true);
-    return () => { window.removeEventListener('popstate', pop, true); window.removeEventListener('beforeunload', before); document.removeEventListener('click', click, true); };
+    return () => { disposed = true; window.removeEventListener('popstate', pop, true); window.removeEventListener('beforeunload', before); document.removeEventListener('click', click, true); };
   }, []);
 
   const push = useCallback((url: URL) => {
@@ -81,7 +86,8 @@ export default function usePropertyWorkspaceHistory({ dirty, busy, onRestore }: 
     const entry = current.current;
     if (!entry) return;
     current.current = { ...entry, index: entry.index + 1 };
-    history.pushState({ ...history.state, [marker]: current.current }, '', url);
+    // Next copies its own state; passing __NA back would skip URL subscriptions.
+    history.pushState({ [marker]: current.current }, '', url);
   }, []);
   const cancel = () => { pending.current = null; setConfirmLeave(false); };
   const discard = () => { const action = pending.current; pending.current = null; setConfirmLeave(false); action?.(); };
