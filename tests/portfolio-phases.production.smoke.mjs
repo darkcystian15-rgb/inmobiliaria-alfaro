@@ -47,7 +47,7 @@ try {
         assert.equal(url.searchParams.get('codigo'), String(property.inmuebleId));
         assert.equal(url.searchParams.get('zona'), property.zona);
         await page.goto(link.href);
-        await page.getByRole('heading', { name: link.label, exact: true }).waitFor({ timeout: 60000 });
+        await page.getByRole('heading', { name: link.label, exact: true }).first().waitFor({ timeout: 60000 });
         await page.getByRole('button', { name: '← Carpetas del inmueble', exact: true }).waitFor();
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
         views++;

@@ -38,5 +38,15 @@ anterior basta revertir el cambio de interfaz y desplegar, sin restaurar la BD.
 - ESLint sin advertencias aprobado para la implementación.
 - Compilación Webpack y TypeScript aprobados. El primer intento restringido falló al leer la configuración de TypeScript; la compilación fuera del sandbox aprobó.
 - Navegador contra compilación local: 24 aperturas correctas a 1440/375 px, siete carpetas de venta y cinco de alquiler, fases visibles, zona e ID conservados, cero errores y cero escrituras de negocio del navegador. Sesión y cuenta temporal eliminadas.
-- Despliegue y comprobación del dominio: en curso.
+- Código funcional: `2aff508ebca1e4cbcc3d94e091ead02fe025bdcc`, publicado en main.
+- Vercel Production: success, deployment GitHub `7251882230`.
+  Versión: https://inmobiliaria-alfarov2-8cejwijms-puma19.vercel.app.
+- Comprobación autenticada en el dominio terminada a las **12:17:33 UTC**:
+  24 aperturas correctas (venta/alquiler, 1440/375 px), fases visibles, zona e ID
+  conservados, cero errores JavaScript y cero escrituras de negocio del navegador.
+  Cuenta y sesión temporales eliminadas. El primer ensayo detectó un selector
+  ambiguo por títulos repetidos; se ajustó la prueba y la repetición aprobó.
+- El commit posterior de evidencia conserva el mismo código de aplicación.
 - Revisión independiente pendiente; no se atribuye una revisión a otro asistente.
+
+[Evidencia agregada de producción](evidencia-cartera-fases/PRODUCCION.json).
