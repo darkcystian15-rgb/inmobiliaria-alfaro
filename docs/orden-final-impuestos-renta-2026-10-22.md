@@ -46,4 +46,8 @@ Respaldo privado de fuente y referencia Git: restore-points/renta-final-20261022
 
 ## Publicación y pendiente externo
 
-La publicación de esta versión y la comprobación del dominio están en curso. La copia literal de 50 MB de la entrega anterior sigue pendiente de instalar y verificar documentos.php en cPanel; Vercel por sí solo no activa esa ampliación. No se modifica ni se da por completado ese pendiente en esta entrega.
+Código funcional publicado: `95d40c12ad2c788320873996a5cb3a6603d75fc9`. Vercel `dpl_5MZTBXWCp3qYrJcyxAKsWEphr6d7`: **READY**, dominio `intranet.inmobiliariaalbertoalfaro.com.pe` confirmado.
+
+Comprobación autenticada de producción el 22/10/2026 a las 21:44:56 UTC: dos vistas a 1440/375 px, orden 7/3, categoría genérica retirada, selector dentro de Exoneración y condición guardada respetada. Cero errores de ejecución, desbordes y escrituras de negocio del navegador; cuenta y sesión temporales eliminadas. Los escenarios de edición se comprobaron con datos ficticios en local, sin guardar ni subir documentos de clientes en producción.
+
+Evidencia agregada: [LOCAL.json](evidencia-renta-final/LOCAL.json) y [PRODUCCION.json](evidencia-renta-final/PRODUCCION.json). La copia literal de 50 MB de la entrega anterior sigue pendiente de instalar y verificar documentos.php en cPanel; Vercel por sí solo no activa esa ampliación. No se modifica ni se da por completado ese pendiente en esta entrega.

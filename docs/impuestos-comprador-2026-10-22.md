@@ -1,5 +1,7 @@
 # Impuestos y revisión del comprador — 22 de octubre de 2026
 
+> Entrega inicial. El orden, los tres apartados definitivos del comprador y las condiciones de renta vigentes están en [Orden final de impuestos y renta](orden-final-impuestos-renta-2026-10-22.md). El apartado genérico Alcabala descrito aquí fue retirado por indicación posterior del usuario.
+
 Base: ecbbe5b. Publicación en Vercel autorizada por el usuario; verificación de producción pendiente.
 
 - VENDEDOR_PAGO_MUNICIPAL conserva su clave y archivos; el rótulo pasa a Voucher de Pago de Impuestos Municipales, autovalúo y arbitrios.

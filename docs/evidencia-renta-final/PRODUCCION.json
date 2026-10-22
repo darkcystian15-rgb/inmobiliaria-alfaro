@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-10-22T21:44:56.803Z",
+  "production": true,
+  "views": 2,
+  "sellerItems": 7,
+  "buyerCatalogItems": 3,
+  "standaloneAlcabalaRemoved": true,
+  "selectorInsideExemption": true,
+  "storedConditionRespected": true,
+  "browserBusinessWrites": 0,
+  "browserErrors": 0,
+  "functionalCommit": "95d40c12ad2c788320873996a5cb3a6603d75fc9",
+  "deployment": "dpl_5MZTBXWCp3qYrJcyxAKsWEphr6d7",
+  "deploymentState": "READY",
+  "domainConfirmed": true
+}
