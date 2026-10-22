@@ -18,8 +18,8 @@ const field = 'mt-2 w-full min-w-0 rounded-xl border border-slate-300 bg-white p
 const stateLabels = { completo: 'Completo', pendiente: 'Pendiente obligatorio', opcional: 'Opcional', no_aplica: 'No aplica' };
 
 
-export default function TransactionDossier({ propertyId, operation, view, section, files, uploadReady, administrator, onChanged, onBusyChange, onDirtyChange }: {
-  propertyId: number; operation: string; view: View; section?: string; files: DossierFile[]; uploadReady: boolean; administrator: boolean;
+export default function TransactionDossier({ propertyId, operation, view, section, showHeading = true, files, uploadReady, administrator, onChanged, onBusyChange, onDirtyChange }: {
+  propertyId: number; operation: string; view: View; section?: string; showHeading?: boolean; files: DossierFile[]; uploadReady: boolean; administrator: boolean;
   onChanged: () => Promise<void>; onBusyChange: (value: boolean) => void; onDirtyChange: (value: boolean) => void;
 }) {
   const [record, setRecord] = useState<RecordData | null>(null);
@@ -153,7 +153,7 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
   if (loading) return <p role="status" className="p-4">Consultando expediente…</p>;
   if (!record) return <div role="alert"><p>{error}</p><button type="button" onClick={() => void load()} className="aa-button aa-button-secondary mt-3">Reintentar</button></div>;
   return <div className="space-y-5">
-    <div><h3 className="text-lg font-bold">{view === 'carpeta' ? status.sections.find(item => item.key === section)?.label || 'Otros archivos conservados' : view === 'estado' ? 'Estado del expediente' : party ? `Documentación del ${party}` : 'Documentación del inmueble'}</h3><p className="mt-2 text-sm text-slate-600">{rental ? 'Expediente de alquiler: arrendador, arrendatario, inmueble, contratos, servicios y tasaciones.' : 'Expediente de venta: vendedor, comprador, inmueble, contratos e impuestos.'} Los pendientes se muestran en el seguimiento de esta operación.</p></div>
+    <div>{showHeading && <h3 className="text-lg font-bold">{view === 'carpeta' ? status.sections.find(item => item.key === section)?.label || 'Otros archivos conservados' : view === 'estado' ? 'Estado del expediente' : party ? `Documentación del ${party}` : 'Documentación del inmueble'}</h3>}<p className="mt-2 text-sm text-slate-600">{rental ? 'Expediente de alquiler: arrendador, arrendatario, inmueble, contratos, servicios y tasaciones.' : 'Expediente de venta: vendedor, comprador, inmueble, contratos e impuestos.'} Los pendientes se muestran en el seguimiento de esta operación.</p></div>
     {error && <p role="alert" className="whitespace-pre-wrap rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>}{message && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">{message}</p>}
     {dirty && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><p>Condiciones sin guardar. Guarda antes de subir o reclasificar archivos.</p><button type="button" disabled={busy} onClick={() => void saveConfig()} className="aa-button aa-button-primary mt-3">{busy ? 'Guardando…' : 'Guardar condiciones'}</button><button type="button" disabled={busy} onClick={() => setConfig(record.config)} className="aa-button aa-button-secondary ml-2 mt-3">Descartar cambios</button></div>}
     {view === 'estado' && <>
@@ -174,7 +174,7 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     {view !== 'estado' && status.sections.map(({key: section, label}) => {
       const items = visible.filter(item => item.section === section && (item.applies || item.documents.length || (section === 'impuestos' && item.party === 'vendedor')) && !(section === 'impuestos' && item.key === 'VENDEDOR_BUSQUEDA_NACIONAL'));
       if (!items.length) return null;
-      return <section key={section} className="space-y-4"><h4 className="font-bold">{label}</h4>{section === 'impuestos' ? ['vendedor','comprador'].map(party => {
+      return <section key={section} className="space-y-4">{view !== 'carpeta' && <h4 className="font-bold">{label}</h4>}{section === 'impuestos' ? ['vendedor','comprador'].map(party => {
         const partyItems = items.filter(item => item.party === party);
         if (!partyItems.length) return null;
         return <section key={party} aria-label={`Impuestos y constancias del ${party}`} className="space-y-3"><h4 className="border-b border-slate-200 pb-2 text-sm font-bold uppercase text-slate-700">Impuestos y constancias del {party}</h4>{partyItems.map(renderDocumentItem)}</section>;
