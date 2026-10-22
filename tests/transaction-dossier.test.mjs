@@ -88,3 +88,61 @@ test('file categories are restricted by operation for upload and reclassificatio
   assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'VENDEDOR_FORMULARIO_RENTA'), natural(), 'alquiler'), false);
   assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'ARRENDATARIO_PODER'), dossierDefaults(), 'alquiler'), true);
 });
+
+test('municipal voucher preserves existing uploads and adds a separate no-debt certificate', () => {
+  const status = dossierStatus(natural(), [file('VENDEDOR_PAGO_MUNICIPAL')]);
+  const voucher = status.items.find(item => item.key === 'VENDEDOR_PAGO_MUNICIPAL');
+  assert.equal(voucher.label, 'Voucher de Pago de Impuestos Municipales, autovalúo y arbitrios');
+  assert.equal(voucher.state, 'completo');
+  const certificate = status.items.find(item => item.key === 'VENDEDOR_CONSTANCIA_NO_ADEUDO_MUNICIPAL');
+  assert.equal(certificate.section, 'impuestos');
+  assert.equal(certificate.party, 'vendedor');
+  assert.equal(certificate.state, 'pendiente');
+  assert.ok(DOCUMENT_TYPES.has(certificate.key));
+  assert.equal(dossierStatus(natural(), [file(certificate.key)]).items.find(item => item.key === certificate.key).state, 'completo');
+});
+test('assigning the buyer in identification activates taxes for both person types and preserves files when unassigned', () => {
+  for (const compradorTipo of ['natural', 'juridica']) {
+    const assigned = dossierInput({ ...natural(), compradorTipo });
+    const status = dossierStatus(assigned);
+    assert.deepEqual(status.items.filter(item => item.party === 'comprador' && item.applies).map(item => item.section).filter((value, index, all) => all.indexOf(value) === index), ['identificacion', 'impuestos']);
+    for (const key of ['COMPRADOR_LIQUIDACION', 'COMPRADOR_ALCABALA_DOCUMENTO', 'COMPRADOR_FORMULARIO_ALCABALA', 'COMPRADOR_ALCABALA']) {
+      assert.equal(status.items.find(item => item.key === key).state, 'pendiente');
+      const saved = [file(key)];
+      const inactive = dossierStatus({ ...assigned, compradorAsignado: false }, saved).items.find(item => item.key === key);
+      assert.equal(inactive.applies, false);
+      assert.equal(inactive.documents.length, 1);
+      assert.equal(dossierStatus(assigned, saved).items.find(item => item.key === key).state, 'completo');
+    }
+  }
+});
+
+test('buyer assignment preserves shared documents and seller requirements across all seven folders', () => {
+  const before = dossierStatus({ ...natural(), compradorAsignado: false });
+  const after = dossierStatus(natural());
+  assert.equal(after.sections.length, 7);
+  for (const item of before.items.filter(item => item.party !== 'comprador')) {
+    assert.deepEqual(after.items.find(next => next.key === item.key), item);
+  }
+  for (const key of ['PROMESA_ARRAS', 'MINUTA_COMPRAVENTA', 'ESCRITURA_PUBLICA']) {
+    const item = after.items.find(item => item.key === key);
+    assert.equal(item.party, 'inmueble');
+    assert.equal(item.applies, true);
+    assert.equal(dossierStatus(natural(), [file(key)]).items.find(item => item.key === key).state, 'completo');
+  }
+});
+
+test('buyer alcabala document, form and payment receipt are independent upload categories', () => {
+  const config = natural();
+  const keys = ['COMPRADOR_ALCABALA_DOCUMENTO', 'COMPRADOR_FORMULARIO_ALCABALA', 'COMPRADOR_ALCABALA'];
+  const status = dossierStatus(config, [file('COMPRADOR_ALCABALA')]);
+  for (const key of keys) {
+    const item = status.items.find(item => item.key === key);
+    assert.equal(item.section, 'impuestos');
+    assert.equal(item.party, 'comprador');
+    assert.ok(DOCUMENT_TYPES.has(key));
+    assert.equal(item.state, key === 'COMPRADOR_ALCABALA' ? 'completo' : 'pendiente');
+  }
+  const completed = dossierStatus(config, keys.map(file));
+  assert.ok(completed.items.filter(item => keys.includes(item.key)).every(item => item.state === 'completo'));
+});
