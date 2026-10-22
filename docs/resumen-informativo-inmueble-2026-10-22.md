@@ -56,6 +56,34 @@ la base ni volver a importar documentos para deshacer un cambio de presentación
 - En el primer ensayo la segunda carga de alquiler se intentó mientras todavía
   se refrescaba la primera; se ajustó la espera de habilitación del selector
   en la prueba y la repetición completa aprobó. Sin cambio de reglas de carga.
-- Publicación y comprobación autenticada del dominio: pendientes.
+- Publicación y comprobación autenticada del dominio: aprobadas; detalle abajo.
 
 Revisión independiente pendiente. Respaldos, capturas y datos privados quedan fuera de Git.
+
+## Publicación y comprobación real
+
+Código funcional: `6d12c5319341a6d5e762600a7d03707e9410af56`, enviado a main.
+Vercel Production: `dpl_A1CJQP1Z447qsSMkyYqBA9A3oQqx`, despliegue completado.
+[Versión funcional](https://inmobiliaria-alfarov2-dpftn073g-puma19.vercel.app).
+Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
+
+Consulta de clasificación actualizada a las **06:13:23 UTC**: ocho documentos,
+cero archivos sin clasificar y cero inmuebles con contenido en Otros archivos.
+
+Verificación autenticada terminada el **22/10/2026 a las 06:14:19 UTC**:
+
+- Cuatro vistas: venta y alquiler, a 1440 y 375 px.
+- Resumen antes de las carpetas, sin enlaces, botones ni campos de gestión.
+- Sin carpeta Resumen ni carpeta Otros archivos vacía; los enlaces antiguos a
+  Resumen abren la información inicial. La conservación de documentos desconocidos
+  se ensayó en MySQL aislado con un archivo ficticio.
+- Selección temporal, nombre, observación y confirmación de subida disponibles
+  dentro del ítem, sin formulario común al final. Cancelación correcta.
+- Ocho documentos conservaron sus metadatos y su contenido SHA-256.
+- Cero archivos enviados, escrituras de negocio del navegador o errores JavaScript.
+  La cuenta y sesión de verificación se eliminaron al terminar.
+- MySQL local de ensayo detenido.
+
+[Evidencia agregada de producción](evidencia-resumen-informativo/PRODUCCION.json).
+Capturas privadas en `output/inline-upload-production/overview-*.png`, fuera de Git.
+El commit posterior de documentación conserva el mismo código de aplicación.

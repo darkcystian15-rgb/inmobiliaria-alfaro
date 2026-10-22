@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-22T06:14:19.458Z",
+  "views": 4,
+  "operations": [
+    "venta",
+    "alquiler"
+  ],
+  "summaryInformationOnly": true,
+  "summaryAboveFolders": true,
+  "legacySummaryLink": true,
+  "conditionalOtherFiles": true,
+  "desktopWidth": 1440,
+  "mobileWidth": 375,
+  "documentsPreserved": 8,
+  "byteDigestsPreserved": 8,
+  "concurrentNewDocuments": 0,
+  "browserBusinessWrites": 0,
+  "browserErrors": 0
+}
