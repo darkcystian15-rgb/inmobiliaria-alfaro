@@ -190,7 +190,12 @@ try {
   await page.getByRole('searchbox', { name: 'Buscar inmueble', exact: true }).fill('Dirección de ensayo');
   await page.getByRole('region', { name: 'Inmuebles de la zona', exact: true }).getByRole('button', { name: /^Contacto Venta/ }).click();
   await folders().waitFor();
-  const saleFolderNames = ['1. DNI y poderes','2. Documentos del inmueble','3. Contratos','4. Impuestos y constancias','5. Recibos y pagos de servicios','6. Levantamiento de cargas','7. Tasaciones','Resumen del inmueble','Estado del expediente','Visitas y fotos','Valores de tasación','Publicación','Seguimiento e historial','Otros archivos conservados'];
+  const overview = page.getByRole('region', { name: 'Resumen del inmueble', exact: true });
+  await overview.waitFor();
+  assert.equal(await overview.locator('a,button,input,select,textarea').count(), 0, 'Summary contains information only');
+  assert.equal(await folders().getByRole('button', { name: /Resumen del inmueble/ }).count(), 0);
+  assert.equal(await overview.evaluate(node => node.compareDocumentPosition(document.querySelector('[aria-label="Carpetas del inmueble"]')) & Node.DOCUMENT_POSITION_FOLLOWING), 4, 'Summary precedes folders');
+  const saleFolderNames = ['1. DNI y poderes','2. Documentos del inmueble','3. Contratos','4. Impuestos y constancias','5. Recibos y pagos de servicios','6. Levantamiento de cargas','7. Tasaciones','Estado del expediente','Visitas y fotos','Valores de tasación','Publicación','Seguimiento e historial','Otros archivos conservados'];
   fs.mkdirSync('output/dossier-local', { recursive: true, mode: 0o700 });
   for (const width of [1440,375]) {
     await page.setViewportSize({ width, height: 900 });
@@ -267,8 +272,9 @@ try {
   await page.getByRole('searchbox', { name: 'Buscar inmueble', exact: true }).fill('');
   await page.getByRole('button', { name: /Contacto alquiler/ }).click();
   await folders().waitFor();
-  assert.equal(await folders().getByRole('button', { name: /Impuestos y constancias|Levantamiento de cargas/ }).count(), 0);
-  const rentalFolders = ['1. DNI y poderes','2. Documentos del inmueble','3. Contratos','4. Recibos y pagos de servicios','5. Tasaciones','Resumen del inmueble','Estado del expediente','Visitas y fotos','Valores de tasación','Publicación','Seguimiento e historial','Otros archivos conservados'];
+  assert.equal(await folders().getByRole('button', { name: /Impuestos y constancias|Levantamiento de cargas|Otros archivos conservados|Resumen del inmueble/ }).count(), 0);
+  await page.getByRole('region', { name: 'Resumen del inmueble', exact: true }).waitFor();
+  const rentalFolders = ['1. DNI y poderes','2. Documentos del inmueble','3. Contratos','4. Recibos y pagos de servicios','5. Tasaciones','Estado del expediente','Visitas y fotos','Valores de tasación','Publicación','Seguimiento e historial'];
   for (const width of [1440,375]) {
     await page.setViewportSize({ width, height: 900 });
     for (const name of rentalFolders) {
@@ -281,7 +287,9 @@ try {
   await openFolder('1. DNI y poderes');
   assert.equal(await page.getByRole('combobox', { name: /^Tipo de persona/ }).count(), 0);
   for (const [party, category] of [['arrendador','ARRENDADOR_DNI'], ['arrendatario','ARRENDATARIO_DNI']]) {
-    await dropFiles(page.getByRole('group', { name: `Carga: Archivos: ${party} · DNI`, exact: true }), [{ name: `${party}-carpeta.pdf`, type: 'application/pdf', bytes: pdf }]);
+    const partyDrop = page.getByRole('group', { name: `Carga: Archivos: ${party} · DNI`, exact: true });
+    await partyDrop.locator('input[type=file]:enabled').waitFor();
+    await dropFiles(partyDrop, [{ name: `${party}-carpeta.pdf`, type: 'application/pdf', bytes: pdf }]);
     await page.locator(`[data-document-type=${category}]`).getByRole('form', { name: `Subir archivos: ${party} · DNI`, exact: true }).waitFor();
     assert.equal(await page.getByRole('combobox', { name: /^Categoría del archivo/ }).count(), 0);
     await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
@@ -296,6 +304,9 @@ try {
   await dropFiles(page.getByRole('group', { name: 'Carga: Agregar fotografías', exact: true }).first(), [{ name: 'foto-carpeta.png', type: 'image/png', bytes: image }]);
   await page.getByText('Fotos guardadas correctamente.', { exact: true }).waitFor();
   assert.equal((await db.query("SELECT visita_id FROM inm_archivos WHERE nombre='foto-carpeta'"))[0][0].visita_id, 1);
+  await page.goto(`${origin}/datos-inmuebles?codigo=3&carpeta=resumen`);
+  await page.getByRole('region', { name: 'Resumen del inmueble', exact: true }).waitFor();
+  await folders().waitFor();
   // Old links continue opening their existing functions.
   for (const [legacy, heading] of [['vendedor','Documentación del arrendador'], ['comprador','Documentación del arrendatario'], ['estado','Estado del expediente']]) {
     await page.goto(`${origin}/datos-inmuebles?codigo=3&pestana=${legacy}`);

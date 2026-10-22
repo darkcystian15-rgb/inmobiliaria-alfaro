@@ -4,6 +4,8 @@ Nueva entrega del 22 de octubre: [Explorador de zonas, inmuebles y carpetas; con
 
 Ajuste posterior: [Carga completa dentro de cada ítem, para venta y alquiler](docs/carga-directa-por-item-2026-10-22.md).
 
+Actualización: [Resumen informativo sobre las carpetas y visibilidad de Otros archivos](docs/resumen-informativo-inmueble-2026-10-22.md).
+
 # Portal web desde la intranet
 
 Nueva entrega: [Publicación web, condiciones, portada y pruebas de fase 4](docs/portal-web-fase4.md).

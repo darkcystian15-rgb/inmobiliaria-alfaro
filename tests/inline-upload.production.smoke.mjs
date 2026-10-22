@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash, randomBytes } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import { dossierStatus } from '../lib/transaction-dossier.mjs';
+import { filesByInformationFolder } from '../lib/property-folders.mjs';
 import { hashPassword, hashSessionToken } from '../lib/password.mjs';
 process.loadEnvFile('.env.local');
 const origin = 'https://intranet.inmobiliariaalbertoalfaro.com.pe';
@@ -40,6 +42,18 @@ try {
     assert.ok(property);
     for (const width of [1440,375]) {
       await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${origin}/datos-inmuebles?codigo=${property.id}${width === 375 ? '&carpeta=resumen' : ''}`);
+      const overview = page.getByRole('region', { name: 'Resumen del inmueble', exact: true });
+      const folders = page.getByRole('region', { name: 'Carpetas del inmueble', exact: true });
+      await overview.waitFor({ timeout: 60000 }); await folders.waitFor();
+      assert.equal(await overview.locator('a,button,input,select,textarea').count(), 0, 'Information-only overview');
+      assert.equal(await folders.getByRole('button', { name: /Resumen del inmueble/ }).count(), 0);
+      assert.equal(await overview.evaluate(node => Boolean(node.compareDocumentPosition(document.querySelector('[aria-label="Carpetas del inmueble"]')) & Node.DOCUMENT_POSITION_FOLLOWING)), true, 'Overview above folders');
+      const propertyFiles = before.filter(file => file.inmueble_id === property.id).map(file => ({ tipoDocumento: file.tipo_documento }));
+      const otherCount = filesByInformationFolder(propertyFiles, dossierStatus({}, [], operation), operation).otros.length;
+      assert.equal(await folders.getByRole('button', { name: /^Otros archivos conservados/ }).count(), otherCount > 0 ? 1 : 0);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      await page.screenshot({ path: `output/inline-upload-production/overview-${operation}-${width}.png`, fullPage: true });
       await page.goto(`${origin}/datos-inmuebles?codigo=${property.id}&carpeta=inmueble`);
       const item = page.locator('[data-document-type=COPIA_LITERAL_CRI]');
       await item.waitFor({ timeout: 60000 });
@@ -64,7 +78,7 @@ try {
   for (const file of before) assert.deepEqual(after.find(row => row.id === file.id), file, 'Existing document metadata preserved');
   for (const file of before.filter(file => digests.has(file.id))) assert.equal(await bytesOf(file), digests.get(file.id), 'Document bytes preserved');
   assert.deepEqual(writes, []); assert.deepEqual(errors, []);
-  const summary = { checkedAt: new Date().toISOString(), views, operations: ['venta','alquiler'], desktopWidth: 1440, mobileWidth: 375, documentsPreserved: before.length, byteDigestsPreserved: digests.size, concurrentNewDocuments: after.length - before.length, browserBusinessWrites: writes.length, browserErrors: errors.length };
+  const summary = { checkedAt: new Date().toISOString(), views, operations: ['venta','alquiler'], summaryInformationOnly: true, summaryAboveFolders: true, legacySummaryLink: true, conditionalOtherFiles: true, desktopWidth: 1440, mobileWidth: 375, documentsPreserved: before.length, byteDigestsPreserved: digests.size, concurrentNewDocuments: after.length - before.length, browserBusinessWrites: writes.length, browserErrors: errors.length };
   fs.writeFileSync('output/inline-upload-production/summary.json', JSON.stringify(summary, null, 2) + '\n'); console.log(JSON.stringify(summary));
 } finally {
   if (browser) await browser.close();

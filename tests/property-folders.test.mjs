@@ -32,5 +32,8 @@ assert.deepEqual(files, original, 'No record, category, name or storage link cha
 assert.ok(Object.values(sale).flat().every(file => files.includes(file)), 'Keep the same record objects');
 assert.equal(informationFolders('venta', false).some(item => item.key === 'seguimiento'), false);
 assert.equal(informationFolders('alquiler', true).some(item => item.key === 'impuestos' || item.key === 'cargas'), false);
-for (const legacy of ['Resumen', 'Estado del expediente', 'Vendedor', 'Comprador', 'Inmueble', 'Visitas', 'Tasación', 'Publicación', 'Seguimiento']) assert.ok(folderForLegacyTab(legacy));
+assert.equal(folderForLegacyTab('Resumen'), '');
+assert.equal(informationFolders('venta', true).some(item => item.key === 'resumen' || item.key === 'otros'), false);
+assert.equal(informationFolders('venta', true, sale.otros.length).some(item => item.key === 'otros'), true);
+for (const legacy of [ 'Estado del expediente', 'Vendedor', 'Comprador', 'Inmueble', 'Visitas', 'Tasación', 'Publicación', 'Seguimiento']) assert.ok(folderForLegacyTab(legacy));
 console.log('PASS: archivos conservados una sola vez, categorías anteriores, condiciones no aplicables, venta/alquiler y permisos.');
