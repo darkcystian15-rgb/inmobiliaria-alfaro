@@ -19,14 +19,17 @@ const db = await mysql.createConnection({ uri: process.env.DATABASE_URL, dateStr
 const token = randomBytes(32).toString('hex'), suffix = randomBytes(6).toString('hex');
 let userId, browser;
 const canonical = rows => JSON.stringify(rows.map(row => Object.fromEntries(Object.entries(row).sort(([a],[b]) => a.localeCompare(b)))).sort((a,b) => JSON.stringify(a).localeCompare(JSON.stringify(b))));
-async function verifyRecords() {
+let baseline;
+async function readRecords() {
   await db.query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
   try {
-    for (const [name, rows] of Object.entries(backup.tables)) {
+    const tables = {};
+    for (const name of Object.keys(backup.tables)) {
       assert.match(name, /^inm_[a-z0-9_]+$/);
       const [current] = await db.query(`SELECT * FROM \`${name}\``);
-      assert.equal(sha(canonical(current)), sha(canonical(rows)), `${name}: business records must match the pre-change backup`);
+      tables[name] = current;
     }
+    return tables;
   } finally { await db.rollback(); }
 }
 async function json(path) {
@@ -35,14 +38,20 @@ async function json(path) {
   return response.json();
 }
 try {
-  await verifyRecords();
+  baseline = await readRecords();
+  assert.equal(sha(canonical(baseline.inm_archivos)), sha(canonical(backup.tables.inm_archivos)), 'Existing document records must match the original backup');
+  const businessChangesSinceBackup = Object.keys(baseline).filter(name => sha(canonical(baseline[name])) !== sha(canonical(backup.tables[name]))).map(name => ({ table: name, beforeRows: backup.tables[name].length, currentRows: baseline[name].length }));
+  fs.mkdirSync('output/property-folders-production', { recursive: true, mode: 0o700 });
+  fs.writeFileSync('output/property-folders-production/before-verification.json', JSON.stringify({ checkedAt: new Date().toISOString(), tables: baseline }), { mode: 0o600 });
   const [created] = await db.query('INSERT INTO inm_usuarios(nombre,email,usuario,password_hash,rol,activo,mfa_secret) VALUES(?,?,?,?,?,1,?)', ['Verificación carpetas', `folders-${suffix}@example.invalid`, `folders_${suffix}`, await hashPassword(randomBytes(32).toString('hex')), 'administrador', randomBytes(48).toString('base64')]);
   userId = created.insertId;
   await db.query('INSERT INTO inm_sesiones(token_hash,usuario_id,expira,last_seen,authenticated_at) VALUES(?,?,?,?,?)', [hashSessionToken(token), userId, new Date(Date.now() + 1200000), new Date(), new Date()]);
   const list = await json('/api/inmuebles?zona=*');
-  assert.equal(list.inmuebles.length, backup.tables.inm_inmuebles.length);
+  assert.equal(list.inmuebles.length, baseline.inm_inmuebles.length);
   let documentaryRecords = 0;
-  for (const property of backup.tables.inm_inmuebles) {
+  const parents = new Set(backup.tables.inm_archivos.map(file => file.inmueble_id));
+  const representatives = ['venta', 'alquiler'].map(operation => baseline.inm_inmuebles.find(item => item.operacion === operation)?.id);
+  for (const property of baseline.inm_inmuebles.filter(item => parents.has(item.id) || representatives.includes(item.id))) {
     const files = (await json(`/api/inmuebles/${property.id}/archivos`)).archivos;
     const original = backup.tables.inm_archivos.filter(file => file.inmueble_id === property.id);
     assert.deepEqual(files.map(file => String(file.id)).sort(), original.map(file => String(file.id)).sort());
@@ -80,7 +89,7 @@ try {
   }
   let views = 0;
   for (const operation of ['venta', 'alquiler']) {
-    const property = backup.tables.inm_inmuebles.find(item => item.operacion === operation && backup.tables.inm_archivos.some(file => file.inmueble_id === item.id)) || backup.tables.inm_inmuebles.find(item => item.operacion === operation);
+    const property = baseline.inm_inmuebles.find(item => item.operacion === operation && backup.tables.inm_archivos.some(file => file.inmueble_id === item.id)) || baseline.inm_inmuebles.find(item => item.operacion === operation);
     assert.ok(property);
     await page.goto(`${origin}/datos-inmuebles?codigo=${property.id}`);
     const root = page.getByRole('region', { name: 'Carpetas del inmueble', exact: true });
@@ -98,8 +107,13 @@ try {
     }
   }
   assert.deepEqual(writes, []); assert.deepEqual(errors, []); assert.deepEqual(failures, []);
-  await verifyRecords();
-  const evidence = { checkedAt: new Date().toISOString(), properties: list.inmuebles.length, zones: list.zonas.length, documentaryRecords, verifiedFileCopies: backup.files.length, tablesUnchanged: Object.keys(backup.tables).length, folderViews: views, browserBusinessWrites: writes.length, browserErrors: errors.length, failedApiResponses: failures.length, desktopWidth: 1440, mobileWidth: 375 };
+  const after = await readRecords();
+  assert.equal(sha(canonical(after.inm_archivos)), sha(canonical(backup.tables.inm_archivos)), 'All original document records remain unchanged');
+  const businessChangesDuringVerification = Object.keys(baseline).filter(name => sha(canonical(after[name])) !== sha(canonical(baseline[name]))).map(name => ({ table: name, beforeRows: baseline[name].length, afterRows: after[name].length }));
+  const [[verificationActivity]] = await db.query('SELECT COUNT(*) total FROM inm_timeline WHERE usuario_id=?', [userId]);
+  assert.equal(Number(verificationActivity.total), 0, 'The verifier performs no business operations');
+  fs.writeFileSync('output/property-folders-production/after-verification.json', JSON.stringify({ checkedAt: new Date().toISOString(), tables: after }), { mode: 0o600 });
+  const evidence = { checkedAt: new Date().toISOString(), properties: list.inmuebles.length, zones: list.zonas.length, documentaryRecords, verifiedFileCopies: backup.files.length, tablesUnchangedDuringVerification: Object.keys(baseline).length - businessChangesDuringVerification.length, businessChangesSinceBackup, businessChangesDuringVerification, verifierBusinessEvents: Number(verificationActivity.total), documentRecordsMatchBackup: true, folderViews: views, browserBusinessWrites: writes.length, browserErrors: errors.length, failedApiResponses: failures.length, desktopWidth: 1440, mobileWidth: 375 };
   fs.writeFileSync('output/property-folders-production/summary.json', JSON.stringify(evidence, null, 2) + '\n', { mode: 0o600 });
   console.log(JSON.stringify(evidence));
 } finally {

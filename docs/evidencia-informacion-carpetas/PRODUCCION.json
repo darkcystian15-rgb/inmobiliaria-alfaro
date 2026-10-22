@@ -1,0 +1,60 @@
+{
+  "checkedAt": "2026-10-22T05:23:09.771Z",
+  "properties": 131,
+  "zones": 7,
+  "documentaryRecords": 8,
+  "verifiedFileCopies": 8,
+  "tablesUnchangedDuringVerification": 25,
+  "businessChangesSinceBackup": [
+    {
+      "table": "inm_asignaciones_zona",
+      "beforeRows": 133,
+      "currentRows": 131
+    },
+    {
+      "table": "inm_inmuebles",
+      "beforeRows": 133,
+      "currentRows": 131
+    },
+    {
+      "table": "inm_liberaciones",
+      "beforeRows": 3,
+      "currentRows": 6
+    },
+    {
+      "table": "inm_tasaciones",
+      "beforeRows": 4,
+      "currentRows": 23
+    },
+    {
+      "table": "inm_timeline",
+      "beforeRows": 295,
+      "currentRows": 316
+    },
+    {
+      "table": "inm_visitas",
+      "beforeRows": 37,
+      "currentRows": 39
+    }
+  ],
+  "businessChangesDuringVerification": [
+    {
+      "table": "inm_tasaciones",
+      "beforeRows": 23,
+      "afterRows": 24
+    },
+    {
+      "table": "inm_timeline",
+      "beforeRows": 316,
+      "afterRows": 317
+    }
+  ],
+  "verifierBusinessEvents": 0,
+  "documentRecordsMatchBackup": true,
+  "folderViews": 52,
+  "browserBusinessWrites": 0,
+  "browserErrors": 0,
+  "failedApiResponses": 0,
+  "desktopWidth": 1440,
+  "mobileWidth": 375
+}

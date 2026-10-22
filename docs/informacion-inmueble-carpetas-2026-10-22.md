@@ -101,8 +101,60 @@ de datos es una operación independiente que debe planificarse si llegara a ser 
 - Últimos ajustes de revisión: etiquetas de categoría con la parte correspondiente,
   retorno bloqueado con cambios pendientes y recarga de enlaces de vendedor/comprador.
   Compilación final aprobada.
-- Publicación y comprobación autenticada de producción: pendientes.
+- Publicación y comprobación autenticada de producción: aprobadas; detalle abajo.
 
 Las capturas y respaldos con documentos o datos de clientes permanecen fuera de Git.
 La revisión por una persona/asistente independiente está pendiente; no se atribuye
 revisión a Claude. Se preservan los cambios locales previos de coordinación.
+
+## Publicación y comprobación real
+
+Código funcional: `85f6930767efa8d0182bdf214350715018a0edcd`, enviado a `main`.
+Referencia de recuperación publicada en GitHub:
+`recovery/antes-informacion-carpetas-20261022` → `bd79e97`.
+
+- Proyecto: `puma19/inmobiliaria-alfarov2`.
+- Despliegue funcional: `dpl_3KqB4sAZjVgSf52jkhvpus1xtpAT`, Production **Ready**.
+- [Versión funcional](https://inmobiliaria-alfarov2-466tarr5o-puma19.vercel.app).
+- Alias de producción comprobado:
+  https://intranet.inmobiliariaalbertoalfaro.com.pe.
+- GitHub registró Production `7244428378` para el SHA funcional.
+
+Comprobación autenticada terminada el **22/10/2026 a las 05:23:09 UTC**:
+
+- Siete carpetas de zonas y 131 fichas en el selector de producción.
+- 52 vistas de carpetas de venta/alquiler entre escritorio de 1440 px y móvil
+  de 375 px, sin errores JavaScript, respuestas API fallidas ni desbordes.
+- Ocho registros documentales existentes accesibles y asignados a sus carpetas;
+  la tabla completa de archivos coincide con la instantánea original.
+- Ocho archivos descargados por las rutas privadas con SHA-256 idéntico al respaldo.
+- Cero solicitudes de escritura de negocio del navegador y cero eventos de negocio
+  de la cuenta de comprobación. La cuenta/sesión temporal fue eliminada al terminar.
+
+### Actividad concurrente de negocio
+
+El respaldo de negocio terminó a las 02:37:48 UTC con 133 fichas. Durante el trabajo
+la intranet siguió utilizándose: se registraron tasaciones, visitas, una venta
+suspendida y dos liberaciones. Las visitas y liberaciones consultadas son previas
+al despliegue funcional iniciado a las 05:18:31 UTC; las tasaciones continuaron
+antes y después. No se restauraron registros para forzar el conteo histórico.
+
+La verificación final comenzó con 131 fichas y 23 tasaciones; mientras recorría
+las carpetas apareció otra tasación y su evento de historial. Por ello se registran
+los cambios concurrentes en lugar de afirmar que toda la base permaneció congelada:
+25 de 27 tablas coincidieron entre inicio y final de la comprobación; las otras dos
+son tasaciones e historial. Los ocho registros y bytes documentales sí permanecieron
+idénticos al respaldo original durante toda la comprobación.
+
+La primera comparación global con el respaldo detectó esta actividad y se detuvo
+antes de crear la cuenta temporal. El ensayo se adaptó para registrar diferencias
+operativas y exigir estrictamente la conservación documental, manteniendo el bloqueo
+de escrituras del navegador. La fuente de esta entrega no cambia endpoints de
+escritura, reglas ni esquema de negocio.
+
+[Evidencia agregada de producción](evidencia-informacion-carpetas/PRODUCCION.json).
+Las instantáneas comparadas, copias de archivos y capturas están en los directorios
+privados de respaldo y `output/property-folders-production/`, fuera de Git.
+
+El commit posterior de documentación y del verificador conserva exactamente el
+mismo código de aplicación. Su despliegue final se comprueba tras enviarlo.
