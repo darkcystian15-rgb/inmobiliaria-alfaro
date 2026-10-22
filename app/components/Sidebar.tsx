@@ -57,21 +57,31 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   const {zone} = useZoneWorkspace();
   const hidden = new Set(["/registrar-inmueble","/visitas-pendientes","/registrar-visitas","/tasaciones-textos-pendientes","/registrar-tasaciones"]);
   const groups=menuGroups.map(group=>({...group,items:group.items.filter(item=>!isAdministrator(user)?item.href==="/datos-inmuebles":zone||!hidden.has(item.href))})).filter(group=>group.items.length);
+  const phaseOne = groups.filter(group => !group.items.some(item => item.href === "/datos-inmuebles"));
+  const phaseTwo = groups.filter(group => group.items.some(item => item.href === "/datos-inmuebles"));
+  const renderGroups = (items: typeof groups) => items.map(group => <div key={group.label}>
+    <div className="mb-2 mt-6 px-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{group.label}</div>
+    <div className="space-y-1">
+      {group.items.map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate} />)}
+    </div>
+  </div>);
   return (
     <>
-      {isAdministrator(user) && <>
+      {isAdministrator(user) && <section aria-labelledby="navigation-phase-one">
+        <h2 id="navigation-phase-one" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 1</h2>
         <div className="mb-1">
           <MenuLink item={dashboardMenuItem} onNavigate={onNavigate} />
         </div>
-      </>}
-      {zone && <Link href="/cartera" onClick={onNavigate} className="aa-button aa-button-secondary mb-3 w-full">← Todas las zonas</Link>}
-      {zone && <p className="px-3 text-sm font-bold text-slate-900">Zona: {zone.nombre}</p>}
-      {groups.map(group => <div key={group.label}>
-        <div className="mb-2 mt-6 px-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{group.label}</div>
-        <div className="space-y-1">
-          {group.items.map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate} />)}
-        </div>
-      </div>)}
+        {zone && <Link href="/cartera" onClick={onNavigate} className="aa-button aa-button-secondary mb-3 w-full">← Todas las zonas</Link>}
+        {zone && <p className="px-3 text-sm font-bold text-slate-900">Zona: {zone.nombre}</p>}
+        {renderGroups(phaseOne)}
+      </section>}
+      {phaseTwo.length > 0 && <section aria-labelledby="navigation-phase-two" className={isAdministrator(user) ? "mt-7 border-t border-slate-200 pt-5" : ""}>
+        <h2 id="navigation-phase-two" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 2</h2>
+        {!isAdministrator(user) && zone && <Link href="/cartera" onClick={onNavigate} className="aa-button aa-button-secondary mb-3 w-full">← Todas las zonas</Link>}
+        {!isAdministrator(user) && zone && <p className="px-3 text-sm font-bold text-slate-900">Zona: {zone.nombre}</p>}
+        {renderGroups(phaseTwo)}
+      </section>}
     </>
   );
 }
