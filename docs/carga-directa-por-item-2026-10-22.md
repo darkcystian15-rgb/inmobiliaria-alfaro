@@ -44,6 +44,27 @@ La base continúa en uso; no se confunden sus conteos históricos con datos actu
   categoría correcta, DNI de comprador y arrendador/arrendatario, condiciones,
   formatos rechazados, límite de tamaño y conservación de documentos.
 - Venta y alquiler comprobados a 1440 y 375 px, sin errores ni desbordes.
-- Despliegue y verificación autenticada de producción: pendientes.
+- Despliegue y verificación autenticada de producción: aprobados; detalle abajo.
 
 Revisión independiente pendiente; no se atribuye una revisión externa.
+
+## Producción comprobada
+
+Código funcional: `e3e2f377d4fc4ba3c3383ef1670ae8ec4cf736ff`, publicado en main.
+Vercel Production: `dpl_CCgsbudUXduwXLcWZJKc8F3LdUaW`, despliegue completado.
+Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
+
+Verificación autenticada terminada el **22/10/2026 a las 05:48:07 UTC**:
+
+- Venta y alquiler, cada uno a 1440 y 375 px: cuatro vistas correctas.
+- Selección temporal, nombre, observación, botón de subida habilitado y cancelación
+  dentro del mismo ítem. Sin formulario común ni selector de categoría al final.
+- Sin errores JavaScript ni desbordes. Navegación protegida mientras hay selección.
+- Ocho documentos existentes conservaron todos sus metadatos y su contenido SHA-256.
+- Cero archivos enviados y cero escrituras de negocio del navegador. La transferencia
+  completa se comprobó únicamente en el entorno MySQL/HTTPS aislado.
+- Cuenta y sesión temporales eliminadas al terminar; MySQL de ensayo detenido.
+
+[Evidencia agregada de producción](evidencia-carga-por-item/PRODUCCION.json).
+Capturas privadas en `output/inline-upload-production/`, excluidas de Git.
+El commit documental posterior conserva el mismo código de aplicación.
