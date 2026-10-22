@@ -9,3 +9,13 @@ La vista Lista pasa de tarjetas verticales a filas dentro de un solo contenedor,
 Sin cambios de datos, permisos, selección de zona, filtros, orden ni rutas.
 
 35 archivos unitarios aprobados, ESLint sin advertencias y compilación de producción Webpack/TypeScript correcta. Navegador contra compilación local, 1440 y 375 px: buscador de zonas ausente, filas menores que las tarjetas, sin desbordes y seis vistas de lista/carpetas; cero errores JavaScript y escrituras de negocio. Cuenta temporal eliminada. Revisión independiente pendiente.
+
+## Producción comprobada
+
+Código funcional: 3cfcf4638fe12a0dc820136eddf4b830283bda7f (incluye impuestos de 8a6d7d1). Vercel dpl_egLz3mdYQ4fW6LLURaMe81SBaTMC: READY, alias intranet.inmobiliariaalbertoalfaro.com.pe confirmado.
+
+Verificación autenticada: 22/10/2026, 21:28:15 UTC. Seis vistas escritorio/móvil (1440/375 px), categorías nuevas presentes en la API, activación según configuración guardada, notas visibles, buscador de zonas ausente y filas compactas sin desbordes. Cero errores de ejecución y escrituras de negocio del navegador. Cuenta temporal y sesión eliminadas.
+
+La consulta de autorización para archivos grandes, sin subir ni registrar archivos, confirmó que los 50 MB todavía no están activos en el servicio de producción. Se entrega hosting/documentos.php preparado; queda pendiente instalarlo en cPanel y comprobar la configuración y el flujo real.
+
+Evidencia agregada sin datos personales: [PRODUCCION.json](evidencia-impuestos-comprador/PRODUCCION.json).

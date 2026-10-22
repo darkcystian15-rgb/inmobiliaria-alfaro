@@ -27,3 +27,13 @@ Ampliación solicitada: Alcabala y Formulario de Pago Alcabala son dos categorí
 ## Publicación
 
 Se publica por la integración Git existente de Vercel. Respaldo privado previo de fuente y referencia Git en restore-points/impuestos-comprador-20261022/. Sin migraciones, reclasificación de archivos ni cambios de negocio. El tamaño máximo de copia literal se mantiene en 4 MB por archivo.
+
+## Producción comprobada
+
+Código funcional: 3cfcf4638fe12a0dc820136eddf4b830283bda7f (incluye impuestos de 8a6d7d1). Vercel dpl_egLz3mdYQ4fW6LLURaMe81SBaTMC: READY, alias intranet.inmobiliariaalbertoalfaro.com.pe confirmado.
+
+Verificación autenticada: 22/10/2026, 21:28:15 UTC. Seis vistas escritorio/móvil (1440/375 px), categorías nuevas presentes en la API, activación según configuración guardada, notas visibles, buscador de zonas ausente y filas compactas sin desbordes. Cero errores de ejecución y escrituras de negocio del navegador. Cuenta temporal y sesión eliminadas.
+
+La consulta de autorización para archivos grandes, sin subir ni registrar archivos, confirmó que los 50 MB todavía no están activos en el servicio de producción. Se entrega hosting/documentos.php preparado; queda pendiente instalarlo en cPanel y comprobar la configuración y el flujo real.
+
+Evidencia agregada sin datos personales: [PRODUCCION.json](evidencia-impuestos-comprador/PRODUCCION.json).
