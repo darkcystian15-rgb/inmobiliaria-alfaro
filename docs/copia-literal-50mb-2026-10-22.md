@@ -14,7 +14,7 @@ No se permite reclasificar un archivo mayor de 4 MB a otra categoría; se valida
 
 **La ampliación no queda activa con Vercel solamente.** Reemplazar el documentos.php de la raíz web del servicio por hosting/documentos.php de esta entrega. Conservar documentos-config.php y su secreto. La ruta de configuración privada existente permanece igual. El origen permitido por defecto es https://intranet.inmobiliariaalbertoalfaro.com.pe; puede definirse upload_origin en la configuración privada si cambia.
 
-No se encontró acceso de despliegue a cPanel en el entorno. Se solicitó al usuario habilitarlo o instalar el archivo preparado. Hasta actualizar PHP, las subidas de más de 4 MB mostrarán un aviso explícito; las menores mantienen su funcionamiento.
+La instalación en cPanel fue realizada por el usuario y verificada en producción a las 21:51:48 UTC; la copia literal de hasta 50 MB está habilitada. El código de la intranet no requiere cambios adicionales.
 
 ## Validación
 
@@ -24,7 +24,7 @@ Referencia de límite de Vercel: https://vercel.com/docs/functions/limitations .
 
 35 archivos unitarios, ESLint y compilación Webpack/TypeScript aprobados.
 
-Pendiente: instalar PHP y comprobar el flujo completo real de un archivo ficticio grande; revisión independiente pendiente.
+PHP instalado por el usuario y subida real de 50 MB verificada sin registrar archivos en inmuebles; revisión independiente pendiente.
 
 ## Producción comprobada
 
@@ -32,6 +32,14 @@ Código funcional: 3cfcf4638fe12a0dc820136eddf4b830283bda7f (incluye impuestos d
 
 Verificación autenticada: 22/10/2026, 21:28:15 UTC. Seis vistas escritorio/móvil (1440/375 px), categorías nuevas presentes en la API, activación según configuración guardada, notas visibles, buscador de zonas ausente y filas compactas sin desbordes. Cero errores de ejecución y escrituras de negocio del navegador. Cuenta temporal y sesión eliminadas.
 
-La consulta de autorización para archivos grandes, sin subir ni registrar archivos, confirmó que los 50 MB todavía no están activos en el servicio de producción. Se entrega hosting/documentos.php preparado; queda pendiente instalarlo en cPanel y comprobar la configuración y el flujo real.
+En la comprobación inicial de las 21:28 UTC el hosting aún no estaba actualizado. Ese pendiente se resolvió mediante la instalación del usuario y la prueba real de 50 MB descrita al final de este documento.
 
 Evidencia agregada sin datos personales: [PRODUCCION.json](evidencia-impuestos-comprador/PRODUCCION.json).
+
+## Instalación de cPanel verificada — 21:51:48 UTC
+
+El usuario confirmó la sustitución de documentos.php. La comprobación autenticada en producción del 22/10/2026 obtuvo autorización HTTP 200 y subió un archivo PDF técnico ficticio de **52 428 800 bytes (50 MB)** al servicio real, que respondió HTTP 201. CORS y el origen de intranet correctos. La lectura anónima y la lectura con el permiso exclusivo de subida se rechazaron con HTTP 401.
+
+La API canceló la subida y eliminó el archivo temporal. No se confirmó ni registró el archivo en ningún inmueble, no se modificaron expedientes y la cuenta/sesión técnicas se eliminaron al terminar. Esta prueba verifica autorización, transferencia completa de 50 MB, privacidad y cancelación; no introduce documentos de clientes para ensayar la confirmación registral. El límite de las demás categorías sigue siendo 4 MB según las reglas de aplicación y hosting comprobadas en la integración aislada.
+
+El pendiente de instalación y activación del hosting queda resuelto. Evidencia agregada: [LITERAL-50MB-PRODUCCION.json](evidencia-impuestos-comprador/LITERAL-50MB-PRODUCCION.json). No se requirieron cambios de código ni variables de Vercel.
