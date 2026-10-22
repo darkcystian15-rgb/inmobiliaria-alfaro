@@ -23,7 +23,8 @@ import { ALL_ZONES, inZone } from "@/lib/property-zones";
 import { useEffect, useMemo, useState } from "react";
 import { ContextLink as Link, NavigationReturnProvider } from "@/app/components/NavigationReturn";
 import { useRef } from "react";
-import PublicationChecklist, { type Checklist } from "@/app/components/PublicationChecklist";
+import type { Checklist } from "@/app/components/PublicationChecklist";
+import PortfolioDocumentChecklist from "@/app/components/PortfolioDocumentChecklist";
 import StatusBadge from "@/app/components/StatusBadge";
 import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 import PhotoGallery from "@/app/components/PhotoGallery";
@@ -780,6 +781,7 @@ export default function CarteraPage() {
                   <p className="mt-1 text-sm text-slate-500">
                     <PropertySummary operation={seleccionado.operacion} type={seleccionado.tipo} location={seleccionado.direccion} />
                   </p>
+                  <h3 className="mt-5 text-2xl font-extrabold tracking-wide text-slate-900 sm:text-3xl">FASE 1</h3>
                 </div>
 
                 <button
@@ -921,7 +923,8 @@ export default function CarteraPage() {
                   </div>
 
                   <div className="sm:col-span-2">
-                    <PublicationChecklist data={seleccionado.expediente} code={seleccionado.id} />
+                    <h3 className="mt-6 text-2xl font-extrabold tracking-wide text-slate-900 sm:text-3xl">FASE 2</h3>
+                    <PortfolioDocumentChecklist key={`${seleccionado.inmuebleId}:${seleccionado.operacion}`} propertyId={seleccionado.inmuebleId} operation={seleccionado.operacion} zone={seleccionado.zona} />
                   </div>
                 </div>
               </div>
