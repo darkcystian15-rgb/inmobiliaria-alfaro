@@ -43,7 +43,8 @@ export async function GET(request: Request) {
       .leftJoin(inmPosiciones, eq(inmPosiciones.id, inmAsignacionesPosicion.posicionId))
       .where(zoneCondition(request))
       .orderBy(sql`CASE WHEN ${inmInmuebles.estado} = 'activo' THEN 0 ELSE 1 END`, sql`${inmPosiciones.numero} IS NULL`, asc(inmPosiciones.numero), asc(inmInmuebles.referencia));
-    return NextResponse.json({ inmuebles: rows.map(({ direccion, distrito, provincia, departamento, ...row }) => ({
+    const zonas = await db.select({ nombre: inmZonas.nombre }).from(inmZonas).where(eq(inmZonas.activo, true)).orderBy(asc(inmZonas.nombre));
+    return NextResponse.json({ zonas: zonas.map(zona => zona.nombre), inmuebles: rows.map(({ direccion, distrito, provincia, departamento, ...row }) => ({
       ...row,
       direccion,
       estado: row.estado === "activo" ? "activo" : "historico",

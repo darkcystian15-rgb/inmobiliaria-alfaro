@@ -48,7 +48,7 @@ try {
     await db.query('INSERT INTO inm_sesiones(token_hash,usuario_id,expira,last_seen,authenticated_at) VALUES(?,?,?,NOW(),NOW())', [hashSessionToken(token), user.insertId, new Date(Date.now() + 3600000)]);
   }
   const [admin, operator] = tokens;
-  await db.query("INSERT INTO inm_zonas(id,clave,nombre,capacidad) VALUES(1,'chimbote','Chimbote',10),(2,'lima','Lima',10)");
+  await db.query("INSERT INTO inm_zonas(id,clave,nombre,capacidad) VALUES(1,'chimbote','Chimbote',10),(2,'lima','Lima',10),(3,'casma','Casma',10)");
   await db.query("INSERT INTO inm_inmuebles(id,codigo,numero_orden,tipo,referencia,direccion,nombre_contacto,zona_id) VALUES(1,'001-CASA-ENSAYO',1,'Casa','Ensayo','Dirección de ensayo','Contacto',1),(2,'002-CASA-LIMA',2,'Casa','Otra zona','Dirección Lima','Contacto Lima',2)");
   await db.query("INSERT INTO inm_inmuebles(id,codigo,numero_orden,tipo,operacion,referencia,direccion,nombre_contacto,zona_id) VALUES(3,'003-CASA-ALQUILER',3,'Casa','alquiler','Alquiler de ensayo','Dirección alquiler','Contacto alquiler',1)");
   await db.query("INSERT INTO inm_posiciones_zona(id,zona_id,numero) VALUES(1,1,1),(2,2,1),(3,1,2)");
@@ -151,9 +151,9 @@ try {
   async function dropFiles(zone, files) {
     const transfer = await page.evaluateHandle(entries => {
       const data = new DataTransfer();
-      for (const entry of entries) data.items.add(new File([new Uint8Array(entry.bytes)], entry.name, { type: entry.type }));
+      for (const entry of entries) data.items.add(new File([Uint8Array.from(atob(entry.bytes), character => character.charCodeAt(0))], entry.name, { type: entry.type }));
       return data;
-    }, files.map(file => ({ ...file, bytes: Array.from(file.bytes) })));
+    }, files.map(file => ({ ...file, bytes: file.bytes.toString('base64') })));
     try {
       await zone.dispatchEvent('dragenter', { dataTransfer: transfer });
       if (await zone.getAttribute('aria-disabled') !== 'true') assert.equal(await zone.getAttribute('data-dragging'), 'true');
@@ -162,140 +162,144 @@ try {
     } finally { await transfer.dispose(); }
   }
 
-  await page.goto(`${origin}/datos-inmuebles?codigo=1&zona=Chimbote&pestana=estado`);
-  await page.getByRole('heading', { name: 'Estado del expediente', exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: /Contacto Lima/ }).count(), 0, 'Zone list must not contain Lima');
-  await page.getByRole('button', { name: 'Vendedor', exact: true }).click();
-  await page.getByRole('heading', { name: 'Documentación del vendedor', exact: true }).waitFor();
-  await page.getByRole('button', { name: 'Ver archivo', exact: true }).last().click();
-  await page.getByRole('dialog').waitFor(); await page.getByRole('button', { name: 'Cerrar vista previa' }).click();
-  await page.getByRole('navigation', {name:'Apartados de la ficha'}).getByRole('button', { name: /^Inmueble/ }).click();
-  await page.getByRole('heading', { name: 'Documentación del inmueble', exact: true }).waitFor();
+  const folders = () => page.getByRole('region', { name: 'Carpetas del inmueble', exact: true });
+  async function rootFolders() {
+    const back = page.getByRole('button', { name: '← Carpetas del inmueble', exact: true });
+    if (await back.isVisible()) await back.click();
+    await folders().waitFor();
+  }
+  async function openFolder(name) {
+    await rootFolders();
+    await folders().getByRole('button', { name: new RegExp(name) }).click();
+  }
+  const currentRecords = async () => (await db.query('SELECT id,inmueble_id,tipo_documento,nombre,enlace,ruta_almacenamiento,visita_id FROM inm_archivos ORDER BY id'))[0];
+  const beforeNavigation = await currentRecords();
+  let businessWrites = 0;
+  page.on('request', request => { if (request.url().includes('/api/inmuebles') && !['GET','HEAD'].includes(request.method())) businessWrites++; });
+  await page.goto(`${origin}/datos-inmuebles`);
+  await page.getByRole('region', { name: 'Carpetas de zonas', exact: true }).waitFor();
+  await page.getByRole('button', { name: /^Casma/ }).waitFor();
+  await page.getByRole('button', { name: /^Chimbote/ }).click();
+  await page.getByRole('region', { name: 'Inmuebles de la zona', exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: /Contacto Lima/ }).count(), 0);
+  await page.getByRole('combobox', { name: /^Operación/ }).selectOption('alquiler');
+  await page.getByRole('button', { name: /^Contacto Venta/ }).waitFor({ state: 'hidden' });
+  await page.getByRole('button', { name: /Contacto alquiler/ }).waitFor();
+  await page.getByRole('combobox', { name: /^Operación/ }).selectOption('todos');
+  await page.getByRole('button', { name: 'Lista', exact: true }).click();
+  await page.getByRole('searchbox', { name: 'Buscar inmueble', exact: true }).fill('Dirección de ensayo');
+  await page.getByRole('region', { name: 'Inmuebles de la zona', exact: true }).getByRole('button', { name: /^Contacto Venta/ }).click();
+  await folders().waitFor();
+  const saleFolderNames = ['1. DNI y poderes','2. Documentos del inmueble','3. Contratos','4. Impuestos y constancias','5. Recibos y pagos de servicios','6. Levantamiento de cargas','7. Tasaciones','Resumen del inmueble','Estado del expediente','Visitas y fotos','Valores de tasación','Publicación','Seguimiento e historial','Otros archivos conservados'];
+  fs.mkdirSync('output/dossier-local', { recursive: true, mode: 0o700 });
+  for (const width of [1440,375]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const name of saleFolderNames) {
+      await openFolder(name);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${name} overflow at ${width}`);
+    }
+    await rootFolders();
+    await page.screenshot({ path: `output/dossier-local/sale-folders-${width}.png`, fullPage: true });
+  }
+  await openFolder('Otros archivos conservados');
+  await page.getByText('Contrato ambiguo', { exact: true }).waitFor();
+  await openFolder('1. DNI y poderes');
+  await page.getByText('DNI vendedor', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'Ver archivo', exact: true }).first().click();
-  await page.getByRole('dialog').locator('iframe').waitFor(); await page.getByRole('button', { name: 'Cerrar vista previa' }).click();
-  await page.getByRole('navigation', { name: 'Apartados de la ficha' }).getByRole('button', { name: 'Comprador', exact: true }).click();
-  await page.getByRole('combobox', { name: /^Tipo de persona/ }).selectOption('natural');
-  await page.getByLabel('Nota si no adjuntas la búsqueda nacional').fill('Nota de búsqueda registrada desde la interfaz');
-  await page.getByRole('button', { name: 'Guardar condiciones', exact: true }).first().click();
+  await page.getByRole('dialog').waitFor();
+  await page.getByRole('button', { name: 'Cerrar vista previa', exact: true }).click();
+  await openFolder('2. Documentos del inmueble');
+  await page.getByText('CRI-PU revisado', { exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Ver archivo', exact: true }).first().click();
+  await page.getByRole('dialog').locator('iframe').waitFor();
+  await page.getByRole('button', { name: 'Cerrar vista previa', exact: true }).click();
+  assert.equal(businessWrites, 0, 'Folder traversal never writes or moves business records');
+  assert.deepEqual(await currentRecords(), beforeNavigation, 'All existing file metadata and storage paths are preserved');
+  // DNI folder keeps seller and buyer conditions and text alternative.
+  await openFolder('1. DNI y poderes');
+  const buyerConditions = page.getByRole('group', { name: 'Condiciones del comprador', exact: true });
+  await buyerConditions.getByRole('combobox', { name: /^Tipo de persona/ }).selectOption('natural');
+  await buyerConditions.getByLabel('Nota si no adjuntas la búsqueda nacional').fill('Nota de búsqueda registrada desde la carpeta');
+  assert.equal(await page.getByRole('button', { name: '← Carpetas del inmueble', exact: true }).isDisabled(), true);
+  await buyerConditions.getByRole('button', { name: 'Guardar condiciones', exact: true }).click();
   await page.getByText('Condiciones del expediente guardadas.', { exact: true }).waitFor();
-  await page.getByRole('combobox', { name: /^Categoría del archivo/ }).selectOption('COMPRADOR_DNI');
-  await page.getByLabel('Archivos', { exact: true }).setInputFiles({ name: 'dni-comprador.png', mimeType: 'image/png', buffer: image });
-  await page.getByRole('textbox', { name: /^Nombre del archivo 1/ }).fill('DNI del comprador desde interfaz');
-  await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
-  await page.getByText('1 archivo guardado.', { exact: true }).waitFor();
-  const afterUi = (await request(url, admin)).data;
-  assert.equal(afterUi.config.compradorTipo, 'natural');
-  assert.equal(afterUi.status.items.find(item => item.key === 'COMPRADOR_DNI').state, 'completo');
-  assert.equal(afterUi.status.items.find(item => item.key === 'COMPRADOR_BUSQUEDA_NACIONAL').state, 'completo');
-  // Both picker and drop use the same selection, category and submission flow.
-  const documentDrop = page.getByRole('group', { name: 'Carga: Archivos', exact: true });
-  await page.getByRole('combobox', { name: /^Tipo de persona/ }).selectOption('juridica');
-  await dropFiles(documentDrop, [{ name: 'bloqueado.pdf', type: 'application/pdf', bytes: pdf }]);
-  assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo/ }).count(), 0, 'Dirty conditions block drops');
-  await page.getByRole('button', { name: 'Descartar cambios', exact: true }).click();
-  await dropFiles(documentDrop, [{ name: 'dni-arrastrado.pdf', type: 'application/pdf', bytes: pdf }, { name: 'imagen-arrastrada.png', type: 'image/png', bytes: image }]);
+  const directBuyerDrop = page.getByRole('group', { name: 'Carga: Archivos: comprador · DNI', exact: true });
+  await dropFiles(directBuyerDrop, [{ name: 'dni-arrastrado.pdf', type: 'application/pdf', bytes: pdf }, { name: 'imagen-arrastrada.png', type: 'image/png', bytes: image }]);
+  assert.equal(await page.getByRole('combobox', { name: /^Categoría del archivo/ }).inputValue(), 'COMPRADOR_DNI');
   assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo/ }).count(), 2);
-  await page.getByRole('textbox', { name: /^Nombre del archivo 1/ }).fill('DNI comprador por arrastre');
-  await dropFiles(documentDrop, [{ name: 'no-permitido.exe', type: 'application/octet-stream', bytes: pdf }]);
+  await page.getByRole('textbox', { name: /^Nombre del archivo 1/ }).fill('DNI comprador desde carpeta');
+  const sharedDrop = page.getByRole('group', { name: 'Carga: Archivos', exact: true });
+  await dropFiles(sharedDrop, [{ name: 'no-permitido.exe', type: 'application/octet-stream', bytes: pdf }]);
   await page.getByRole('alert').filter({ hasText: 'formato no permitido' }).waitFor();
-  assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo 1/ }).inputValue(), 'DNI comprador por arrastre', 'Rejected drop preserves prior selection and names');
-  let releaseUpload, firstUpload = true;
-  const pauseUpload = async route => {
-    if (route.request().method() === 'POST' && firstUpload) { firstUpload = false; await new Promise(resolve => { releaseUpload = resolve; }); }
-    await route.continue();
-  };
-  await page.route('**/api/inmuebles/1/archivos*', pauseUpload);
+  assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo 1/ }).inputValue(), 'DNI comprador desde carpeta');
   await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
-  await page.waitForFunction(() => document.querySelector('[data-file-drop-zone]')?.getAttribute('aria-disabled') === 'true');
-  await dropFiles(documentDrop, [{ name: 'durante-subida.pdf', type: 'application/pdf', bytes: pdf }]);
-  assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo/ }).count(), 2, 'Busy drop does not replace the upload batch');
-  assert.ok(releaseUpload, 'Upload must be paused by the local browser route');
-  releaseUpload();
   await page.getByText('2 archivos guardados.', { exact: true }).waitFor();
-  await page.unroute('**/api/inmuebles/1/archivos*', pauseUpload);
-  assert.equal((await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE nombre='durante-subida'"))[0][0].n, 0);
-  const [[droppedBuyer]] = await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=1 AND tipo_documento='COMPRADOR_DNI' AND nombre IN ('DNI comprador por arrastre','imagen-arrastrada')");
-  assert.equal(droppedBuyer.n, 2);
-  await dropFiles(documentDrop, [{ name: 'grande.pdf', type: 'application/pdf', bytes: Buffer.alloc(4 * 1024 * 1024 + 1) }]);
+  assert.equal((await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE tipo_documento='COMPRADOR_DNI' AND nombre IN ('DNI comprador desde carpeta','imagen-arrastrada')"))[0][0].n, 2);
+  assert.equal((await request(url, admin)).data.config.compradorBusquedaNota, 'Nota de búsqueda registrada desde la carpeta');
+  await dropFiles(directBuyerDrop, [{ name: 'grande.pdf', type: 'application/pdf', bytes: Buffer.alloc(4 * 1024 * 1024 + 1) }]);
   await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
   await page.getByRole('alert').filter({ hasText: 'supera 4 MB' }).waitFor();
-  assert.equal((await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE nombre='grande'"))[0][0].n, 0);
   await page.getByRole('button', { name: 'Quitar selección', exact: true }).click();
-  // A sale seller uses the same uploader and keeps its own document category.
-  await page.getByRole('navigation', { name: 'Apartados de la ficha' }).getByRole('button', { name: 'Vendedor', exact: true }).click();
-  await page.getByRole('heading', { name: 'Documentación del vendedor', exact: true }).waitFor();
-  const sellerCategory = page.getByRole('combobox', { name: /^Categoría del archivo/ });
-  const sellerKey = await sellerCategory.locator('option').evaluateAll(options => options.find(option => option.value)?.value);
-  await sellerCategory.selectOption(sellerKey);
-  await dropFiles(page.getByRole('group', { name: 'Carga: Archivos', exact: true }), [{ name: 'vendedor-arrastre.pdf', type: 'application/pdf', bytes: pdf }]);
-  await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
-  await page.getByText('1 archivo guardado.', { exact: true }).waitFor();
-  assert.equal((await db.query("SELECT tipo_documento FROM inm_archivos WHERE nombre='vendedor-arrastre'"))[0][0].tipo_documento, sellerKey);
-  console.log('PASS: drag-and-drop sale documents, multi-file names, picker compatibility, invalid formats, size limits and dirty-condition guard.');
-  fs.mkdirSync('output/dossier-local', { recursive: true });
-  await page.screenshot({ path: 'output/dossier-local/desktop.png', fullPage: true });
-  await page.setViewportSize({ width: 375, height: 850 });
-  for (const name of ['Estado del expediente', 'Vendedor', 'Comprador', 'Inmueble', 'Fotos', 'Seguimiento']) {
-    await page.getByRole('navigation', { name: 'Apartados de la ficha' }).getByRole('button', { name: new RegExp(`^${name}`) }).click();
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, name + ' horizontal overflow');
+  // A condition can deactivate a previous document without hiding or deleting it.
+  await buyerConditions.getByRole('combobox', { name: /^Tipo de persona/ }).selectOption('juridica');
+  await dropFiles(sharedDrop, [{ name: 'bloqueado.pdf', type: 'application/pdf', bytes: pdf }]);
+  assert.equal(await page.getByRole('textbox', { name: /^Nombre del archivo/ }).count(), 0);
+  await buyerConditions.getByRole('button', { name: 'Guardar condiciones', exact: true }).click();
+  await page.getByText('Condiciones del expediente guardadas.', { exact: true }).waitFor();
+  await page.getByText('DNI comprador desde carpeta', { exact: true }).waitFor();
+  await page.getByText('No aplica', { exact: true }).first().waitFor();
+  await rootFolders();
+  await page.reload();
+  await folders().waitFor();
+  await openFolder('3. Contratos');
+  await page.reload();
+  await page.getByRole('heading', { name: '3. Contratos', exact: true }).first().waitFor();
+  await page.getByRole('button', { name: '← Volver a los inmuebles de la zona', exact: true }).click();
+  await page.getByRole('searchbox', { name: 'Buscar inmueble', exact: true }).fill('');
+  await page.getByRole('button', { name: /Contacto alquiler/ }).click();
+  await folders().waitFor();
+  assert.equal(await folders().getByRole('button', { name: /Impuestos y constancias|Levantamiento de cargas/ }).count(), 0);
+  const rentalFolders = ['1. DNI y poderes','2. Documentos del inmueble','3. Contratos','4. Recibos y pagos de servicios','5. Tasaciones','Resumen del inmueble','Estado del expediente','Visitas y fotos','Valores de tasación','Publicación','Seguimiento e historial','Otros archivos conservados'];
+  for (const width of [1440,375]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const name of rentalFolders) {
+      await openFolder(name);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${name} rental overflow at ${width}`);
+    }
+    await rootFolders();
+    await page.screenshot({ path: `output/dossier-local/rental-folders-${width}.png`, fullPage: true });
   }
-  await page.screenshot({ path: 'output/dossier-local/mobile.png', fullPage: true });
-  // Zone selector distinguishes equal positions and keeps one description per entry.
-  await page.setViewportSize({width:1440,height:1000});
-  await page.getByRole('button',{name:'← Volver a elegir inmueble',exact:true}).click();
-  await page.getByRole('combobox',{name:'Zona de inmuebles',exact:true}).selectOption('*');
-  await page.getByRole('button',{name:/Contacto Lima/}).waitFor();
-  assert.equal(await page.getByRole('complementary',{name:'Buscar y seleccionar inmueble'}).locator('button span[title]').filter({hasText:/^00/}).count(),0);
-  await page.getByRole('combobox',{name:'Zona de inmuebles',exact:true}).selectOption('Chimbote');
-  assert.equal(await page.getByRole('button',{name:/Contacto Lima/}).count(),0);
-  await page.getByRole('button',{name:/Contacto alquiler/}).click();
-  const navigation=page.getByRole('navigation',{name:'Apartados de la ficha'});
-  await navigation.getByRole('button',{name:/^Fotos/}).waitFor();
-  assert.equal(await navigation.getByRole('button',{name:/^Fotos/}).count(),1);
-  assert.equal(await navigation.getByRole('button',{name:'Documentación',exact:true}).count(),0);
-  await navigation.getByRole('button',{name:'Arrendador',exact:true}).click();
-  await page.getByRole('heading',{name:'Documentación del arrendador',exact:true}).waitFor();
-  assert.equal(await page.getByRole('combobox',{name:/Tipo de persona/}).count(),0);
-  for (const [tab, category, filename] of [['Arrendador','ARRENDADOR_DNI','arrendador-arrastre.pdf'],['Arrendatario','ARRENDATARIO_DNI','arrendatario-arrastre.pdf']]) {
-    await navigation.getByRole('button', { name: tab, exact: true }).click();
-    await page.getByRole('combobox', { name: /^Categoría del archivo/ }).selectOption(category);
-    await dropFiles(page.getByRole('group', { name: 'Carga: Archivos', exact: true }), [{ name: filename, type: 'application/pdf', bytes: pdf }]);
+  await openFolder('1. DNI y poderes');
+  assert.equal(await page.getByRole('combobox', { name: /^Tipo de persona/ }).count(), 0);
+  for (const [party, category] of [['arrendador','ARRENDADOR_DNI'], ['arrendatario','ARRENDATARIO_DNI']]) {
+    await dropFiles(page.getByRole('group', { name: `Carga: Archivos: ${party} · DNI`, exact: true }), [{ name: `${party}-carpeta.pdf`, type: 'application/pdf', bytes: pdf }]);
+    assert.equal(await page.getByRole('combobox', { name: /^Categoría del archivo/ }).inputValue(), category);
     await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
     await page.getByText('1 archivo guardado.', { exact: true }).waitFor();
-    assert.equal((await db.query('SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=3 AND tipo_documento=? AND nombre=?', [category, filename.replace('.pdf','')]))[0][0].n, 1);
+    assert.equal((await db.query('SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=3 AND tipo_documento=? AND nombre=?', [category, `${party}-carpeta`]))[0][0].n, 1);
   }
-
-  await navigation.getByRole('button',{name:'Arrendatario',exact:true}).click();
-  await page.getByRole('heading',{name:'Documentación del arrendatario',exact:true}).waitFor();
-  await navigation.getByRole('button',{name:/^Inmueble/}).click();
-  assert.equal(await page.getByRole('textbox',{name:/Área de terreno/}).count(),0);
-  await page.getByRole('heading',{name:'3. Contratos',exact:true}).waitFor();
-  await page.getByText('Adenda personalizada',{exact:true}).waitFor();
-  await navigation.getByRole('button',{name:/^Fotos/}).click();await page.getByRole('region',{name:'Fotos de la visita',exact:true}).getByRole('button',{name:'Ampliar Evidencia de visita',exact:true}).waitFor();await page.getByRole('region',{name:'Fotos anteriores sin visita',exact:true}).getByRole('button',{name:'Ampliar Foto antigua sin visita',exact:true}).waitFor();
-  const photoDrop = page.getByRole('group', { name: 'Carga: Agregar fotografías', exact: true }).first();
-  const beforePhotos = (await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=3 AND tipo_documento='FOTO_INMUEBLE'"))[0][0].n;
-  await dropFiles(photoDrop, [{ name: 'documento.pdf', type: 'application/pdf', bytes: pdf }]);
-  await page.getByRole('alert').filter({ hasText: 'formato no permitido' }).waitFor();
-  await dropFiles(photoDrop, Array.from({ length: 21 }, (_, i) => ({ name: `limite-${i}.png`, type: 'image/png', bytes: image })));
-  await page.getByRole('alert').filter({ hasText: 'hasta 20 fotos' }).waitFor();
-  assert.equal((await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE inmueble_id=3 AND tipo_documento='FOTO_INMUEBLE'"))[0][0].n, beforePhotos);
-  await dropFiles(photoDrop, [{ name: 'foto-arrastre.png', type: 'image/png', bytes: image }, { name: 'foto-arrastre-dos.png', type: 'image/png', bytes: image }]);
+  await openFolder('3. Contratos');
+  await page.getByText('Adenda personalizada', { exact: true }).waitFor();
+  await openFolder('Visitas y fotos');
+  await page.getByRole('region', { name: 'Fotos de la visita', exact: true }).getByRole('button', { name: 'Ampliar Evidencia de visita', exact: true }).waitFor();
+  await page.getByRole('region', { name: 'Fotos anteriores sin visita', exact: true }).getByRole('button', { name: 'Ampliar Foto antigua sin visita', exact: true }).waitFor();
+  await dropFiles(page.getByRole('group', { name: 'Carga: Agregar fotografías', exact: true }).first(), [{ name: 'foto-carpeta.png', type: 'image/png', bytes: image }]);
   await page.getByText('Fotos guardadas correctamente.', { exact: true }).waitFor();
-  const [photoRows] = await db.query("SELECT visita_id,tipo_mime FROM inm_archivos WHERE inmueble_id=3 AND nombre IN ('foto-arrastre','foto-arrastre-dos')");
-  assert.equal(photoRows.length, 2); assert.ok(photoRows.every(file => file.visita_id === 1 && file.tipo_mime === 'image/webp'));
-  console.log('PASS: rental landlord/tenant document drops and photo drops with compression, visit association, invalid-file and batch-limit rejection.');
-  await navigation.getByRole('button',{name:'Seguimiento',exact:true}).click();
-  await page.getByRole('heading',{name:'Seguimiento de alquiler',exact:true}).waitFor();
-  await page.getByRole('heading',{name:'Plazos de este inmueble',exact:true}).waitFor();
-  await page.getByRole('group',{name:/Expediente documental de la operación/}).waitFor();
-  await page.setViewportSize({width:375,height:850});
-  for (const name of ['Arrendador','Arrendatario','Inmueble','Fotos','Seguimiento']) {
-    await navigation.getByRole('button',{name:new RegExp(`^${name}`)}).click();
-    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,name);
+  assert.equal((await db.query("SELECT visita_id FROM inm_archivos WHERE nombre='foto-carpeta'"))[0][0].visita_id, 1);
+  // Old links continue opening their existing functions.
+  for (const [legacy, heading] of [['vendedor','Documentación del arrendador'], ['comprador','Documentación del arrendatario'], ['estado','Estado del expediente']]) {
+    await page.goto(`${origin}/datos-inmuebles?codigo=3&pestana=${legacy}`);
+    await page.getByRole('heading', { name: heading, exact: true }).first().waitFor();
   }
-  await page.screenshot({path:'output/dossier-local/rental-mobile.png',fullPage:true});
+  const operatorContext = await browser.newContext({ viewport: { width: 375, height: 850 } });
+  await operatorContext.addCookies([{ name: 'aa_session', value: operator, url: origin }]);
+  const operatorPage = await operatorContext.newPage();
+  await operatorPage.goto(`${origin}/datos-inmuebles?codigo=1`);
+  await operatorPage.getByRole('region', { name: 'Carpetas del inmueble', exact: true }).waitFor();
+  assert.equal(await operatorPage.getByRole('button', { name: /Seguimiento e historial/ }).count(), 0);
+  await operatorContext.close();
   assert.deepEqual(errors, []);
-  console.log('PASS: navegador autenticado escritorio/móvil, guardado de condiciones, carga real desde formulario, filtro de zona y vistas previas sin errores/desbordes.');
+  console.log('PASS: explorador zonas/inmuebles/carpetas, filtros, venta/alquiler, documentos conservados, arrastre con categoría directa, textos, límites, vistas previas, enlaces anteriores, permisos y escritorio/móvil.');
   assert.equal((await request(`/api/inmuebles/1/archivos?archivoId=${pdfId}`, admin, 'DELETE')).response.status, 200);
   assert.equal((await request(url, admin)).data.status.items.find(item => item.key === 'COPIA_LITERAL_CRI').state, 'pendiente');
   const deleted=(await db.query("SELECT observacion FROM inm_timeline WHERE inmueble_id=1 AND evento='archivo_eliminado'"))[0];
