@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { dossierDefaults, dossierInput, dossierDocuments, dossierStatus, documentApplies } from '../lib/transaction-dossier.mjs';
 import { DOCUMENT_TYPES } from '../lib/document-files.mjs';
 
-const natural = () => ({ ...dossierDefaults(), vendedorTipo: 'natural', compradorAsignado: true, compradorTipo: 'natural', renta: 'afecto' });
+const natural = () => ({ ...dossierDefaults(), vendedorTipo: 'natural', compradorAsignado: true, compradorTipo: 'natural', renta: 'afecto', rentaObservacion: 'Sustento de prueba del pago de renta.' });
 const file = tipoDocumento => ({ tipoDocumento, almacenamiento: 'hosting' });
 test('seller and buyer independently change identification by person type', () => {
   const result = dossierStatus({ ...natural(), compradorTipo: 'juridica' });
@@ -106,7 +106,7 @@ test('assigning the buyer in identification activates taxes for both person type
     const assigned = dossierInput({ ...natural(), compradorTipo });
     const status = dossierStatus(assigned);
     assert.deepEqual(status.items.filter(item => item.party === 'comprador' && item.applies).map(item => item.section).filter((value, index, all) => all.indexOf(value) === index), ['identificacion', 'impuestos']);
-    for (const key of ['COMPRADOR_LIQUIDACION', 'COMPRADOR_ALCABALA_DOCUMENTO', 'COMPRADOR_FORMULARIO_ALCABALA', 'COMPRADOR_ALCABALA']) {
+    for (const key of ['COMPRADOR_LIQUIDACION', 'COMPRADOR_FORMULARIO_ALCABALA', 'COMPRADOR_ALCABALA']) {
       assert.equal(status.items.find(item => item.key === key).state, 'pendiente');
       const saved = [file(key)];
       const inactive = dossierStatus({ ...assigned, compradorAsignado: false }, saved).items.find(item => item.key === key);
@@ -132,9 +132,9 @@ test('buyer assignment preserves shared documents and seller requirements across
   }
 });
 
-test('buyer alcabala document, form and payment receipt are independent upload categories', () => {
+test('buyer liquidation, payment receipt and cancellation form are independent upload categories', () => {
   const config = natural();
-  const keys = ['COMPRADOR_ALCABALA_DOCUMENTO', 'COMPRADOR_FORMULARIO_ALCABALA', 'COMPRADOR_ALCABALA'];
+  const keys = ['COMPRADOR_LIQUIDACION', 'COMPRADOR_ALCABALA', 'COMPRADOR_FORMULARIO_ALCABALA'];
   const status = dossierStatus(config, [file('COMPRADOR_ALCABALA')]);
   for (const key of keys) {
     const item = status.items.find(item => item.key === key);
@@ -145,4 +145,56 @@ test('buyer alcabala document, form and payment receipt are independent upload c
   }
   const completed = dossierStatus(config, keys.map(file));
   assert.ok(completed.items.filter(item => keys.includes(item.key)).every(item => item.state === 'completo'));
+});
+
+test('no payment requires the uploaded national search in taxes for natural and legal sellers, never a note or external link', () => {
+  for (const vendedorTipo of ['natural', 'juridica']) {
+    const config = { ...natural(), vendedorTipo, renta: 'exonerado', vendedorBusquedaNota: 'Una nota anterior' };
+    const find = files => dossierStatus(config, files).items.find(item => item.key === 'VENDEDOR_BUSQUEDA_NACIONAL');
+    assert.equal(find([]).section, 'impuestos');
+    assert.equal(find([]).state, 'pendiente');
+    assert.equal(find([{tipoDocumento: 'VENDEDOR_BUSQUEDA_NACIONAL', almacenamiento: 'enlace'}]).state, 'pendiente');
+    assert.equal(find([file('VENDEDOR_BUSQUEDA_NACIONAL')]).state, 'completo');
+    assert.equal(find([file('VENDEDOR_BUSQUEDA_NACIONAL')]).documents.length, 1);
+    for (const key of ['VENDEDOR_FORMULARIO_RENTA','VENDEDOR_VOUCHER_RENTA']) assert.equal(dossierStatus(config).items.find(item => item.key === key).applies, false);
+  }
+});
+test('payment requires a nonempty explanation validated by server and reflected in old dossier alerts', () => {
+  for (const rentaObservacion of ['', '   ', 7, 'a'.repeat(2001)]) assert.throws(() => dossierInput({...natural(), rentaObservacion}));
+  assert.equal(dossierInput({...natural(), rentaObservacion:'  Motivo registrado  '}).rentaObservacion, 'Motivo registrado');
+  const old = {...natural()}; delete old.rentaObservacion;
+  assert.ok(dossierStatus(old).alerts.some(text=>text.includes('observación')));
+  assert.equal(dossierStatus(old).complete,false);
+  assert.equal(dossierInput({...old,renta:'exonerado'}).rentaObservacion,'');
+});
+test('changing rent decision keeps the same national search and previous payment files without rewriting', () => {
+  const files = [file('VENDEDOR_BUSQUEDA_NACIONAL'),file('VENDEDOR_VOUCHER_RENTA')];
+  const copy = structuredClone(files);
+  const noPay = dossierStatus({...natural(),renta:'exonerado'}, files);
+  const pay = dossierStatus(natural(),files);
+  assert.equal(noPay.items.find(item=>item.key==='VENDEDOR_BUSQUEDA_NACIONAL').section,'impuestos');
+  assert.equal(pay.items.find(item=>item.key==='VENDEDOR_BUSQUEDA_NACIONAL').section,'identificacion');
+  assert.equal(pay.items.find(item=>item.key==='VENDEDOR_BUSQUEDA_NACIONAL').state,'completo');
+  assert.equal(noPay.items.find(item=>item.key==='VENDEDOR_VOUCHER_RENTA').documents.length,1);
+  assert.deepEqual(files,copy);
+});
+
+test('tax catalog follows the seven seller and three buyer items and removes standalone Alcabala', () => {
+  const status = dossierStatus(natural());
+  assert.deepEqual(status.items.filter(item=>item.section==='impuestos' && item.party==='vendedor').map(item=>item.key), ['VENDEDOR_LIQUIDACION','VENDEDOR_FORMULARIO_RENTA','VENDEDOR_VOUCHER_RENTA','VENDEDOR_EXONERACION_RENTA','VENDEDOR_LIQUIDACION_MUNICIPAL','VENDEDOR_PAGO_MUNICIPAL','VENDEDOR_CONSTANCIA_NO_ADEUDO_MUNICIPAL']);
+  assert.deepEqual(status.items.filter(item=>item.section==='impuestos' && item.party==='comprador').map(item=>item.label), ['Liquidación de alcabala','Voucher de pago de alcabala','Formulario de cancelación de alcabala']);
+  assert.ok(!status.items.some(item=>item.key==='COMPRADOR_ALCABALA_DOCUMENTO'));
+  assert.equal(DOCUMENT_TYPES.has('COMPRADOR_ALCABALA_DOCUMENTO'),false);
+  assert.equal(status.items.find(item=>item.key==='VENDEDOR_EXONERACION_RENTA').applies,false);
+});
+test('no payment needs separate exemption and national-search uploads; neither completes the other', () => {
+  const config = {...natural(),renta:'exonerado'};
+  const find = (files,key) => dossierStatus(config,files).items.find(item=>item.key===key);
+  const exemption = 'VENDEDOR_EXONERACION_RENTA', search = 'VENDEDOR_BUSQUEDA_NACIONAL';
+  assert.equal(find([file(search)],exemption).state,'pendiente');
+  assert.equal(find([file(exemption)],search).state,'pendiente');
+  assert.equal(find([file(search),file(exemption)],search).state,'completo');
+  assert.equal(find([file(search),file(exemption)],exemption).state,'completo');
+  assert.ok(DOCUMENT_TYPES.has(exemption));
+  assert.equal(documentApplies(dossierDocuments.find(item=>item.key===exemption),natural()),false);
 });

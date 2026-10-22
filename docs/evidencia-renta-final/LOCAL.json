@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-10-22T21:42:15.162Z",
+  "originIsProduction": false,
+  "liveTaxOrderVerified": true,
+  "sellerItems": 7,
+  "buyerItems": 3,
+  "standaloneAlcabalaRemoved": true,
+  "uiFixtureViews": 8,
+  "simulatedSaves": 8,
+  "rejectedEmptyExplanation": 4,
+  "exemptionAndSearchSeparate": true,
+  "conditionsInline": true,
+  "browserBusinessWrites": 0,
+  "browserErrors": 0
+}

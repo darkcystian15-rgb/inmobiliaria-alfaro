@@ -37,3 +37,10 @@ assert.equal(informationFolders('venta', true).some(item => item.key === 'resume
 assert.equal(informationFolders('venta', true, sale.otros.length).some(item => item.key === 'otros'), true);
 for (const legacy of [ 'Estado del expediente', 'Vendedor', 'Comprador', 'Inmueble', 'Visitas', 'Tasación', 'Publicación', 'Seguimiento']) assert.ok(folderForLegacyTab(legacy));
 console.log('PASS: archivos conservados una sola vez, categorías anteriores, condiciones no aplicables, venta/alquiler y permisos.');
+
+const searchFile = {id:99,tipoDocumento:'VENDEDOR_BUSQUEDA_NACIONAL',almacenamiento:'hosting'};
+for (const renta of ['afecto','exonerado']) {
+  const grouped = filesByInformationFolder([searchFile],dossierStatus({...dossierDefaults(),vendedorTipo:'natural',renta},[searchFile]),'venta');
+  assert.equal(grouped[renta==='exonerado'?'impuestos':'identificacion'][0],searchFile);
+  assert.equal(Object.values(grouped).flat().length,1,'Same search file is presented exactly once');
+}
