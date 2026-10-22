@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { dossierDefaults, dossierStatus, dossierDocumentType } from '@/lib/transaction-dossier.mjs';
+import { documentByteLimit, MAX_DOCUMENT_BYTES } from '@/lib/document-limits.mjs';
 import { requestJson } from '@/lib/client-request';
 import { compressImage, isImageFile } from '@/lib/client-images';
 import FileViewer from './FileViewer';
@@ -69,7 +70,22 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     try {
       for (const entry of selected) {
         const file = isImageFile(entry.file) ? await compressImage(entry.file) : entry.file;
-        if (file.size > 4 * 1024 * 1024) throw Error(`${entry.name}: el archivo supera 4 MB.`);
+        const limit = documentByteLimit(category);
+        if (file.size > limit) throw Error(`${entry.name}: el archivo supera ${limit / 1048576} MB.`);
+        if (category === 'COPIA_LITERAL_CRI' && file.size > MAX_DOCUMENT_BYTES) {
+          const endpoint = `${fileUrl}/copia-literal`;
+          const authorization = await requestJson<{token: string; uploadUrl: string}>(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'prepare', filename: file.name, size: file.size, nombre: entry.name.trim(), observacion: observation }) });
+          try {
+            const response = await fetch(authorization.uploadUrl, { method: 'PUT', headers: { Authorization: `Bearer ${authorization.token}`, 'Content-Type': 'application/octet-stream' }, body: file, credentials: 'omit', redirect: 'error', signal: AbortSignal.timeout(25 * 60000) });
+            if (!response.ok && response.status !== 409) throw Error('No se pudo subir la copia literal al hosting.');
+            await requestJson(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'complete', token: authorization.token }) });
+            uploaded++;
+          } catch (error) {
+            await requestJson(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel', token: authorization.token }) }).catch(() => undefined);
+            throw error;
+          }
+          continue;
+        }
         const body = new FormData();
         body.set('archivo', file); body.set('nombre', entry.name.trim()); body.set('tipoDocumento', category); body.set('observacion', observation);
         await requestJson(fileUrl, { method: 'POST', body }); uploaded++;
@@ -134,7 +150,7 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
       if (!items.length) return null;
       return <section key={section} className="space-y-3"><h4 className="font-bold">{label}</h4>{items.map(item => <div key={item.key} data-document-type={item.key} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"><div className="flex flex-wrap items-start justify-between gap-2"><h5 className="font-semibold">{item.label}{item.party !== 'inmueble' && <span className="ml-2 text-sm font-normal capitalize text-slate-500">· {item.party}</span>}</h5><span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.state === 'pendiente' ? 'bg-amber-100 text-amber-900' : item.state === 'completo' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>{stateLabels[item.state as keyof typeof stateLabels]}</span></div>{item.key === 'COPIA_LITERAL_CRI' && <p className="mt-2 text-xs text-slate-600">Basta con uno de los dos documentos.</p>}{item.note && <p className="mt-2 whitespace-pre-wrap text-sm">Nota: {item.note}</p>}{item.documents.map(file => renderFile(file as DossierFile))}{item.applies && <div className="mt-3 space-y-3">
         {!uploadReady && <p role="status" className="text-sm text-amber-800">La subida no está disponible. Consulta al administrador.</p>}
-        <FileDropZone label={`Archivos: ${item.party === 'inmueble' ? '' : item.party + ' · '}${item.label}`} accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" help="PDF, Word, Excel, JPG, PNG o WebP. Hasta 4 MB por archivo; las imágenes se comprimen."
+        <FileDropZone label={`Archivos: ${item.party === 'inmueble' ? '' : item.party + ' · '}${item.label}`} accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" help={`PDF, Word, Excel, JPG, PNG o WebP. Hasta ${documentByteLimit(item.key) / 1048576} MB por archivo; las imágenes se comprimen.`}
           inputRef={{ current: null }} disabled={busy || dirty || !uploadReady || (selected.length > 0 && category !== item.key) || editing !== null}
           onFiles={files => { setError(''); setMessage(''); setCategory(item.key); setSelected(files.map(file => ({ file, name: file.name.replace(/\.[^.]+$/, '').slice(0, 255) }))); }} onRejected={setError} />
         {category === item.key && selected.length > 0 && <form aria-label={`Subir archivos: ${item.party === 'inmueble' ? '' : item.party + ' · '}${item.label}`} onSubmit={event => void upload(event)} className="space-y-3 rounded-xl border border-red-200 bg-white p-4">
@@ -152,6 +168,6 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     {view === 'carpeta' && section === 'cargas' && !config.cargas && <p className="text-sm text-slate-600">Esta carpeta no tiene requisitos obligatorios mientras no se declaren cargas. Los archivos existentes se conservan.</p>}
     {viewer && <FileViewer file={viewer} onClose={() => setViewer(null)} />}
     {deleting && <ConfirmDialog title="Eliminar archivo" confirmLabel="Eliminar" busy={busy} onCancel={() => setDeleting(null)} onConfirm={() => void remove()}><p>Se eliminará «{deleting.nombre}». Esta acción no se puede deshacer y el requisito volverá a figurar pendiente si no hay otro archivo.</p>{error && <p role="alert" className="mt-3 text-red-700">{error}</p>}</ConfirmDialog>}
-    {editing && <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4"><form onSubmit={event => void rename(event)} className="space-y-3"><h4 className="font-bold">Editar documento: {editing.nombre}</h4><label className="block text-sm">Nombre<input required maxLength={255} value={editName} disabled={busy} onChange={event => setEditName(event.target.value)} className={field} /></label><label className="block text-sm">Categoría<select required disabled={busy || dirty} value={editType} onChange={event => setEditType(event.target.value)} className={field}><option value="">Seleccionar</option>{status.items.filter(item => item.applies).map(item => <option key={item.key} value={item.key}>{item.party} · {item.label}</option>)}</select></label><button disabled={busy || dirty} className="aa-button aa-button-primary">Guardar documento</button><button type="button" disabled={busy} onClick={() => setEditing(null)} className="aa-button aa-button-secondary ml-2">Cancelar edición</button></form></div>}
+    {editing && <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4"><form onSubmit={event => void rename(event)} className="space-y-3"><h4 className="font-bold">Editar documento: {editing.nombre}</h4><label className="block text-sm">Nombre<input required maxLength={255} value={editName} disabled={busy} onChange={event => setEditName(event.target.value)} className={field} /></label><label className="block text-sm">Categoría<select required disabled={busy || dirty} value={editType} onChange={event => setEditType(event.target.value)} className={field}><option value="">Seleccionar</option>{status.items.filter(item => item.applies && (!editing.tamanoBytes || editing.tamanoBytes <= documentByteLimit(item.key))).map(item => <option key={item.key} value={item.key}>{item.party} · {item.label}</option>)}</select></label><button disabled={busy || dirty} className="aa-button aa-button-primary">Guardar documento</button><button type="button" disabled={busy} onClick={() => setEditing(null)} className="aa-button aa-button-secondary ml-2">Cancelar edición</button></form></div>}
   </div>;
 }

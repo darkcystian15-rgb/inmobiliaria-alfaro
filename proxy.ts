@@ -5,7 +5,12 @@ import { NextRequest, NextResponse } from "next/server";
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const documentPreview = /^\/api\/inmuebles\/[^/]+\/archivos\/\d+$/.test(request.nextUrl.pathname);
-  const csp = `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'self'${request.nextUrl.pathname.startsWith('/portal-web/')?" https://maps.google.com https://www.google.com":''}; frame-ancestors ${documentPreview ? "'self'" : "'none'"}; object-src 'none'; base-uri 'self'; form-action 'self'`;
+  let uploadOrigin = '';
+  try {
+    const endpoint = new URL(process.env.DOCUMENT_HOSTING_URL || '');
+    if (request.nextUrl.pathname === '/datos-inmuebles' && endpoint.protocol === 'https:' && !endpoint.username && !endpoint.password) uploadOrigin = ` ${endpoint.origin}`;
+  } catch {}
+  const csp = `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'${uploadOrigin}; frame-src 'self'${request.nextUrl.pathname.startsWith('/portal-web/')?" https://maps.google.com https://www.google.com":''}; frame-ancestors ${documentPreview ? "'self'" : "'none'"}; object-src 'none'; base-uri 'self'; form-action 'self'`;
   const headers = new Headers(request.headers);
   headers.set('Content-Security-Policy', csp);
   headers.set('x-nonce', nonce);

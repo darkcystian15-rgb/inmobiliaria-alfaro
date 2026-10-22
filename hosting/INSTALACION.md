@@ -31,3 +31,7 @@ Las nuevas carpetas usan el código real del inmueble y su posición al subir el
 Reemplaza `public_html/documentos.php` por la versión que acepta imágenes JPG, PNG y WebP. Conserva tu clave y configuración. Ejecuta `node scripts/install-documents.mjs` antes de desplegar para agregar `visita_id`, `es_portada` y la referencia a visitas de forma idempotente. La migración Drizzle 0005 representa esos mismos cambios: usa el instalador o la migración, sin aplicarlos dos veces.
 
 Para registrar una visita se requieren entre 1 y 20 fotos recién adjuntadas por el usuario. Las mismas fotos se consultan en la ficha y en la galería de cartera. El sistema permite agregar fotos, editar nombre/descripción, elegir portada y eliminar fotos. Las imágenes de otras categorías, como un DNI, no se muestran en la galería del inmueble. Las imágenes se validan y se guardan como WebP con un máximo de 1920 píxeles de lado.
+
+## Copia literal de 50 MB
+
+Para archivos grandes, reemplaza documentos.php por la versión de esta entrega. Mantén la configuración y la clave privada. La intranet autoriza una subida directa temporal solo para copia literal/CRI; las demás categorías siguen en 4 MB. La confirmación valida formato y tamaño en servidor antes de registrar el documento. Consulta docs/copia-literal-50mb-2026-10-22.md para alcance y comprobaciones. Sin esta actualización, la aplicación avisará que falta instalar el servicio para archivos de más de 4 MB.

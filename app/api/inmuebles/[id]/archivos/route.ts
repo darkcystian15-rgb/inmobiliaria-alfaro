@@ -10,6 +10,7 @@ import { IMAGE_EXTENSIONS, prepareImage } from '@/lib/image-files.mjs';
 import { db } from '@/lib/db';
 import { inmArchivos, inmInmuebles, inmAsignacionesPosicion, inmPosiciones, inmVisitas, inmTimeline, securityAudit } from '@/db/schema';
 import { DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, documentPath, storageConfigured, storeDocument, validateDocument } from '@/lib/document-files.mjs';
+import { documentByteLimit } from '@/lib/document-limits.mjs';
 import { readDossier } from '@/lib/dossier-record';
 import { dossierDocuments, documentApplies, dossierDocumentType } from '@/lib/transaction-dossier.mjs';
 
@@ -167,13 +168,14 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         const condition = and(eq(inmArchivos.id, archivoId), eq(inmArchivos.inmuebleId, inmueble.id));
         const [file] = await tx.select().from(inmArchivos).where(condition).limit(1).for('update');
         if (!file || file.tipoDocumento === 'FOTO_INMUEBLE') return 'missing';
+        if (file.tamanoBytes && file.tamanoBytes > documentByteLimit(definition.key)) return 'size';
         if(file.nombre===nombre&&(file.observacion||null)===(observacion||null)&&file.tipoDocumento===definition.key)return 'ok';
         await tx.update(inmArchivos).set({ nombre, observacion: observacion || null, tipoDocumento: definition.key }).where(condition);
         await tx.insert(securityAudit).values(auditValues(auth.user.id, 'dossier.file.update', `file:${archivoId}`));
         await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId:auth.user.id,evento:'archivo_actualizado',observacion:JSON.stringify({anterior:fileActivitySnapshot(file,inmueble.operacion),nuevo:fileActivitySnapshot({...file,nombre,observacion:observacion||null,tipoDocumento:definition.key},inmueble.operacion)})});
         return 'ok';
       });
-      if (result !== 'ok') return NextResponse.json({ error: result === 'missing' ? 'Documento no encontrado.' : 'Guarda primero las condiciones de esta categoría.' }, { status: result === 'missing' ? 404 : 409 });
+      if (result !== 'ok') return NextResponse.json({ error: result === 'missing' ? 'Documento no encontrado.' : result === 'size' ? 'Los documentos de más de 4 MB solo pueden permanecer en Copia literal o CRI.' : 'Guarda primero las condiciones de esta categoría.' }, { status: result === 'missing' ? 404 : 409 });
       return NextResponse.json({ ok: true });
     }
     const found = await db.transaction(async tx => {
