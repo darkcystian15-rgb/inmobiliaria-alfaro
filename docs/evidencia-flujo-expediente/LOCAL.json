@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-22T23:19:41.656Z",
+  "production": false,
+  "views": 44,
+  "roles": 2,
+  "singleConditionSave": true,
+  "uploadsEnabledAfterSave": true,
+  "backForwardHierarchy": true,
+  "pendingFileAndConditionProtection": true,
+  "busyBackBlocked": true,
+  "simulatedSaves": 16,
+  "businessWrites": 0,
+  "browserErrors": 0
+}

@@ -13,6 +13,8 @@ import { sectionsForOperation, dossierStatus } from "@/lib/transaction-dossier.m
 import { informationFolders, folderForLegacyTab, filesByInformationFolder } from "@/lib/property-folders.mjs";
 import TransactionDossier from "./TransactionDossier";
 
+import usePropertyWorkspaceHistory from "@/app/hooks/usePropertyWorkspaceHistory";
+
 import { useSearchParams } from "next/navigation";
 
 
@@ -25,7 +27,7 @@ import PageHeading from "@/app/components/PageHeading";
 
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ContextLink as Link, NavigationReturnProvider, useReturnHref, ReturnLink } from "@/app/components/NavigationReturn";
+import { ContextLink as Link, NavigationReturnProvider, useReturnHref } from "@/app/components/NavigationReturn";
 import type { Checklist } from "./PublicationChecklist";
 import { Feedback } from "./InterfaceFeedback";
 import type { PropertyProgressData } from "@/lib/property-progress";
@@ -92,6 +94,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const [documents, setDocuments] = useState<Document[]>([]);
   const documentFiles = documents.filter(document => document.tipoDocumento !== "FOTO_INMUEBLE");
   const photoCount = documents.filter(document => document.tipoDocumento === "FOTO_INMUEBLE" && document.tipoMime?.startsWith("image/")).length;
+  const [editorRevision, setEditorRevision] = useState(0);
   const [dossierDirty, setDossierDirty] = useState(false);
   const [phaseOneDirty, setPhaseOneDirty] = useState(false);
   const [uploadReady, setUploadReady] = useState(false);
@@ -117,22 +120,24 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     const count = groupedFiles[item.key]?.length || 0;
     return <button key={item.key} type="button" onClick={() => openFolder(item.key)} disabled={busy || dirty} className="flex min-h-28 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/40 p-4 text-left transition hover:border-amber-300 hover:bg-amber-50/50 focus-visible:outline-2 focus-visible:outline-red-700 disabled:opacity-50"><FolderIcon className="h-9 w-9 shrink-0 text-amber-500" /><span className="min-w-0"><span className="block break-words text-sm font-bold text-slate-800">{item.label}</span><span className="mt-1 block text-xs leading-5 text-slate-500">{item.description}</span>{(section || item.key === "otros") && <span className="mt-2 block text-xs text-slate-600">{count} archivo{count === 1 ? "" : "s"}{section && ` · ${section.completed}/${section.total} requisitos`}</span>}{section && <span className={`mt-2 inline-block rounded-full px-2 py-1 text-xs font-semibold ${section.pending ? "bg-amber-100 text-amber-900" : section.total ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{section.pending ? `${section.pending} pendiente${section.pending === 1 ? "" : "s"}` : section.total ? "Completo" : "Opcional / según condiciones"}</span>}{item.key === "visitas" && <span className="mt-2 block text-xs text-slate-600">{photoCount} fotos</span>}</span></button>;
   }
+  const restoreWorkspace = useCallback((url: URL) => {
+    const nextCode = url.searchParams.get("codigo") || "";
+    const legacy = ({ visitas: "visitas", fotos: "visitas", tasacion: "precios", publicacion: "publicacion", estado: "estado", seguimiento: "seguimiento", vendedor: "vendedor", comprador: "comprador", inmueble: "inmueble" } as Record<string, string>)[url.searchParams.get("pestana") || ""] || "";
+    const requested = url.searchParams.get("carpeta") || legacy;
+    const nextFolder = informationFolders("venta", admin).some(item => item.key === requested) || ["vendedor", "comprador", "otros"].includes(requested) ? requested : "";
+    ++loadRequest.current;
+    setCode(nextCode); setFolder(nextFolder); setTab("Resumen"); setError(""); setMessage("");
+    setDossierDirty(false); setPhaseOneDirty(false); setEditorRevision(value => value + 1);
+    setDetails(null); setDocuments([]); setDossier(null); setLoading(Boolean(nextCode));
+  }, [admin]);
+  const workspaceHistory = usePropertyWorkspaceHistory({ dirty, busy, onRestore: restoreWorkspace });
   function changeZone(value: string) {
     if (busy || dirty) return;
     const url = new URL(window.location.href);
     url.searchParams.set("zona", value);
-    url.searchParams.delete("codigo");
-    url.searchParams.delete("pestana");
-    url.searchParams.delete("carpeta");
-    selectProperty("");
-    window.history.replaceState(null, "", url.pathname + url.search);
+    ["codigo", "pestana", "carpeta"].forEach(key => url.searchParams.delete(key));
+    workspaceHistory.push(url); restoreWorkspace(url);
   }
-  useEffect(() => {
-    if (!dirty) return;
-    const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
-  }, [dirty]);
 
   const load = useCallback((key: string, signal?: AbortSignal) => {
     const id = ++loadRequest.current;
@@ -165,7 +170,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     const controller = new AbortController();
     const timer = window.setTimeout(() => { if (!controller.signal.aborted) void load(code, controller.signal); }, 0);
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [code, load]);
+  }, [code, load, editorRevision]);
 
   function selectProperty(key: string, discard = false) {
     if (busy || key === code) return;
@@ -175,8 +180,8 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     const url = new URL(window.location.href);
     if (key) url.searchParams.set("codigo", key); else url.searchParams.delete("codigo");
     url.searchParams.delete("pestana"); url.searchParams.delete("carpeta");
-    window.history.replaceState(null, "", url.pathname + url.search);
-    setCode(key); setFolder(""); setTab("Resumen"); setError(""); setMessage(""); setDossierDirty(false);
+    workspaceHistory.push(url);
+    setCode(key); setFolder(""); setTab("Resumen"); setError(""); setMessage(""); setDossierDirty(false); setPhaseOneDirty(false);
     setDetails(null); setDocuments([]); setDossier(null); setLoading(Boolean(key));
     if (key && window.innerWidth < 1536) window.requestAnimationFrame(() => sheet.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));
   }
@@ -187,7 +192,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     const url = new URL(window.location.href);
     if (key) url.searchParams.set("carpeta", key); else url.searchParams.delete("carpeta");
     url.searchParams.delete("pestana");
-    window.history.replaceState(null, "", url.pathname + url.search);
+    workspaceHistory.push(url);
     const destination = informationFolders(details?.inmueble.operacion || "venta", admin).find(item => item.key === key);
     if (destination?.tab) setTab(destination.tab as Tab);
   }
@@ -196,11 +201,12 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     openFolder(folderForLegacyTab(value)); setTab(value);
   }
   return <NavigationReturnProvider href={originHref} zone={details?.inmueble.zona}><main className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+    {workspaceHistory.confirmLeave && <ConfirmDialog title="Cambios sin guardar" confirmLabel="Descartar y continuar" onCancel={workspaceHistory.cancel} onConfirm={workspaceHistory.discard}><p>Tienes condiciones, archivos seleccionados o una edición pendientes. Puedes cancelar para seguir trabajando o descartarlos para continuar. Los archivos ya guardados se conservan.</p></ConfirmDialog>}
     {pendingProperty !== null && <ConfirmDialog title="Cambios sin guardar" confirmLabel="Descartar cambios" onCancel={() => setPendingProperty(null)} onConfirm={() => selectProperty(pendingProperty, true)}><p>Tienes cambios pendientes en esta ficha. Si cambias de inmueble, se descartarán.</p></ConfirmDialog>}
     <div className="mx-auto max-w-[1500px]">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <PageHeading href="/datos-inmuebles" />
-        {admin && <ReturnLink />}
+
       </header>
 
       {(zone !== "*" || Boolean(code)) && <nav aria-label="Ruta de carpetas" className="mt-6 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
@@ -213,7 +219,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
         <div hidden={Boolean(code)}><PropertyFolderBrowser items={items} zoneNames={zoneNames} zone={zone} loading={listLoading} error={listError} onZone={changeZone} onOpen={selectProperty} onRetry={() => { setListLoading(true); setListError(""); setListReload(value => value + 1); }} /></div>
 
         <div ref={sheet} hidden={!code} className="min-w-0 scroll-mt-24 xl:scroll-mt-5">
-          {code && <button type="button" disabled={busy || dirty} onClick={() => changeZone(details?.inmueble.zona || zone)} className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-600">← Volver a los inmuebles de la zona</button>}
+          {code && !folder && <button type="button" disabled={busy || dirty} onClick={() => changeZone(details?.inmueble.zona || zone)} className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-600">← Volver a los inmuebles de la zona</button>}
           {error && <MobileFormFeedback value={error}><Feedback tone="error" className="mb-4">{error}{errorCarga && <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); void load(code); }} className="aa-button aa-button-secondary mt-3">{loading ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
           {message && <MobileFormFeedback value={message}><Feedback className="mb-4">{message}</Feedback></MobileFormFeedback>}
           {loading && !details ? <div role="status" className="space-y-5 rounded-3xl border border-slate-200 bg-white p-8"><p className="text-sm text-slate-500">Cargando ficha del inmueble…</p><div className="h-28 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" /><div className="h-64 animate-pulse rounded-2xl bg-slate-50 motion-reduce:animate-none" /></div> : !details ? <div className="flex min-h-[480px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center"><div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-red-100 bg-[#fff5f4] text-[#c80000]"><Icon name="home" className="h-9 w-9" /></div><p className="mt-6 text-lg font-bold text-slate-900">La ficha de tu inmueble, en un solo lugar</p><p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">Selecciona un inmueble de la lista para consultar sus datos, completar la información y organizar sus documentos.</p><div className="mt-7 flex flex-wrap justify-center gap-2">{["Contacto", "Expediente", "Visitas y seguimiento"].map(label => <span key={label} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500">{label}</span>)}</div></div> : <>
@@ -243,12 +249,12 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
                 <section aria-label="Carpetas del inmueble" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h4 className="text-base font-bold">Carpetas del inmueble</h4><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize">{rental ? "Alquiler" : "Venta"}</span></div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{folders.filter(item => item.phase === 2).map(renderFolder)}</div></section>
               </section>
             </>}
-            {folder && <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><button type="button" disabled={busy || dirty} onClick={() => openFolder("")} className="aa-button aa-button-secondary">← Carpetas del inmueble</button><div><p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">FASE {informationFolderPhase(folder)}</p><h3 className="text-lg font-bold">{activeFolder?.label || "Información del inmueble"}</h3></div></div>}
-            {dirty && <p role="status" className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Guarda o descarta los cambios y la selección de archivos antes de salir de esta sección.</p>}
+            {folder && <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><div><p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">FASE {informationFolderPhase(folder)}</p><h3 className="text-lg font-bold">{activeFolder?.label || "Información del inmueble"}</h3></div><button type="button" disabled={busy || dirty} onClick={() => openFolder("")} className="aa-button aa-button-secondary">← Carpetas del inmueble</button></div>}
+            {busy && <p role="status" className="mt-4 text-sm text-slate-600">Espera a que termine la operación para cambiar de pantalla.</p>}
             <section hidden={!folder} aria-label={activeFolder?.label || tab} className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_4px_24px_rgba(15,23,42,0.03)] sm:p-6">
               {folder && informationFolderPhase(folder) === 1 && !admin && <p className="mb-5 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">FASE 1 · Solo consulta para el operador.</p>}
               <div hidden={!documentSection && !["estado", "vendedor", "comprador"].includes(folder)}>
-                <TransactionDossier showHeading={false} key={details.inmueble.id} propertyId={details.inmueble.id} operation={details.inmueble.operacion} section={documentSection ? folder : undefined} view={documentSection ? "carpeta" : folder === "vendedor" ? "vendedor" : folder === "comprador" ? "comprador" : "estado"} files={documentFiles} uploadReady={uploadReady} administrator={admin} onChanged={() => load(code)} onBusyChange={setBusy} onDirtyChange={setDossierDirty} />
+                <TransactionDossier showHeading={false} key={`${details.inmueble.id}-${editorRevision}`} propertyId={details.inmueble.id} operation={details.inmueble.operacion} section={documentSection ? folder : undefined} view={documentSection ? "carpeta" : folder === "vendedor" ? "vendedor" : folder === "comprador" ? "comprador" : "estado"} files={documentFiles} uploadReady={uploadReady} administrator={admin} onChanged={() => load(code)} onBusyChange={setBusy} onDirtyChange={setDossierDirty} />
               </div>
 
               {admin && folder === "seguimiento" && <div className="space-y-5"><h3 className="text-lg font-bold">Seguimiento de {rental ? "alquiler" : "venta"}</h3><p className="text-sm text-slate-600">Plazos particulares e historial de la operación. Los pendientes documentales se consultan en Estado del expediente.</p><button className="aa-button aa-button-secondary" onClick={() => openTab("Estado del expediente")}>Ver pendientes documentales ({details.documentacion?.completed ?? 0}/{details.documentacion?.total ?? 0})</button><OperationalTracking key={`tracking-${code}`} propertyId={details.inmueble.id} administrator={admin} onChanged={()=>void load(code)} onBusyChange={setBusy} progress={details.progreso} documentaryComplete={details.documentacion?.complete ?? false}/><PropertyHistory events={details.historial??[]}/></div>}
