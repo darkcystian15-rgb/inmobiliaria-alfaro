@@ -4,7 +4,7 @@ import { zoneUrl } from "@/lib/zone-url";
 import { priceLabel, referenceLabel, targetLabel } from "@/lib/operation.mjs";
 import FieldGuidance from "./FieldGuidance";
 import { Feedback } from "./InterfaceFeedback";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type PropertyPrices = {
   inmuebleId: number;
@@ -17,7 +17,7 @@ export type PropertyPrices = {
 
 const money = (value?: string | null) => value ? `S/ ${Number(value).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—";
 
-export default function SalePriceEditor({ item, onSaved }: { item: PropertyPrices; onSaved: () => Promise<void> }) {
+export default function SalePriceEditor({ item, onSaved, onBusyChange, onDirtyChange }: { item: PropertyPrices; onSaved: () => Promise<void>; onBusyChange?: (value: boolean) => void; onDirtyChange?: (value: boolean) => void }) {
   const label = priceLabel(item.operacion);
   const [editing, setEditing] = useState(false);
   const [price, setPrice] = useState(item.precioVenta ?? "");
@@ -25,6 +25,8 @@ export default function SalePriceEditor({ item, onSaved }: { item: PropertyPrice
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  useEffect(() => { onDirtyChange?.(editing); return () => onDirtyChange?.(false); }, [editing, onDirtyChange]);
+  useEffect(() => { onBusyChange?.(pending); return () => onBusyChange?.(false); }, [pending, onBusyChange]);
   const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700";
 
   async function save(event: React.FormEvent<HTMLFormElement>) {

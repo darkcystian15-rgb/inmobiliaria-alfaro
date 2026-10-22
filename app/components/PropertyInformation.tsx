@@ -1,5 +1,8 @@
 "use client";
 
+import SalePriceEditor from "./SalePriceEditor";
+import PropertyPublicationEditor from "./PropertyPublicationEditor";
+import { informationFolderPhase } from "@/lib/property-folders.mjs";
 import PropertySummary from "@/app/components/PropertySummary";
 
 import { propertyAddress } from "@/lib/property-address.mjs";
@@ -91,6 +94,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const documentFiles = documents.filter(document => document.tipoDocumento !== "FOTO_INMUEBLE");
   const photoCount = documents.filter(document => document.tipoDocumento === "FOTO_INMUEBLE" && document.tipoMime?.startsWith("image/")).length;
   const [dossierDirty, setDossierDirty] = useState(false);
+  const [phaseOneDirty, setPhaseOneDirty] = useState(false);
   const [uploadReady, setUploadReady] = useState(false);
   const originHref = useReturnHref(`/datos-inmuebles?zona=${encodeURIComponent(zone)}&codigo=${encodeURIComponent(code)}&carpeta=${encodeURIComponent(folder)}&pestana=${encodeURIComponent(tab.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}`);
   const [listLoading, setListLoading] = useState(true);
@@ -103,14 +107,19 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
   const [message, setMessage] = useState("");
   const loadRequest = useRef(0);
   const sheet = useRef<HTMLDivElement>(null);
-  const dirty = dossierDirty;
+  const dirty = dossierDirty || phaseOneDirty;
   const groupedFiles = filesByInformationFolder(documentFiles, dossier, details?.inmueble.operacion || "venta");
   const folders = informationFolders(details?.inmueble.operacion || "venta", admin, groupedFiles.otros.length);
   const activeFolder = folders.find(item => item.key === folder) || (folder === "otros" ? { label: "Otros archivos conservados" } : folder === "vendedor" ? { label: details?.inmueble.operacion === "alquiler" ? "Arrendador" : "Vendedor" } : folder === "comprador" ? { label: details?.inmueble.operacion === "alquiler" ? "Arrendatario" : "Comprador" } : undefined);
   const documentSection = sectionsForOperation(details?.inmueble.operacion || "venta").some(([key]) => key === folder) || folder === "otros";
   const rental = details?.inmueble.operacion === "alquiler";
+  function renderFolder(item: ReturnType<typeof informationFolders>[number]) {
+    const section = dossier?.sections.find(section => section.key === item.key);
+    const count = groupedFiles[item.key]?.length || 0;
+    return <button key={item.key} type="button" onClick={() => openFolder(item.key)} disabled={busy || dirty} className="flex min-h-28 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/40 p-4 text-left transition hover:border-amber-300 hover:bg-amber-50/50 focus-visible:outline-2 focus-visible:outline-red-700 disabled:opacity-50"><FolderIcon className="h-9 w-9 shrink-0 text-amber-500" /><span className="min-w-0"><span className="block break-words text-sm font-bold text-slate-800">{item.label}</span><span className="mt-1 block text-xs leading-5 text-slate-500">{item.description}</span>{(section || item.key === "otros") && <span className="mt-2 block text-xs text-slate-600">{count} archivo{count === 1 ? "" : "s"}{section && ` · ${section.completed}/${section.total} requisitos`}</span>}{section && <span className={`mt-2 inline-block rounded-full px-2 py-1 text-xs font-semibold ${section.pending ? "bg-amber-100 text-amber-900" : section.total ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{section.pending ? `${section.pending} pendiente${section.pending === 1 ? "" : "s"}` : section.total ? "Completo" : "Opcional / según condiciones"}</span>}{item.key === "visitas" && <span className="mt-2 block text-xs text-slate-600">{photoCount} fotos</span>}</span></button>;
+  }
   function changeZone(value: string) {
-    if (busy || dossierDirty) return;
+    if (busy || dirty) return;
     const url = new URL(window.location.href);
     url.searchParams.set("zona", value);
     url.searchParams.delete("codigo");
@@ -120,11 +129,11 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     window.history.replaceState(null, "", url.pathname + url.search);
   }
   useEffect(() => {
-    if (!dirty && !dossierDirty) return;
+    if (!dirty) return;
     const handler = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [dirty, dossierDirty]);
+  }, [dirty]);
 
   const load = useCallback((key: string, signal?: AbortSignal) => {
     const id = ++loadRequest.current;
@@ -161,7 +170,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
 
   function selectProperty(key: string, discard = false) {
     if (busy || key === code) return;
-    if (!discard && (dirty || dossierDirty)) { setPendingProperty(key); return; }
+    if (!discard && (dirty)) { setPendingProperty(key); return; }
     setPendingProperty(null);
     ++loadRequest.current;
     const url = new URL(window.location.href);
@@ -173,7 +182,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     if (key && window.innerWidth < 1536) window.requestAnimationFrame(() => sheet.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" }));
   }
   function openFolder(key: string) {
-    if (busy || dossierDirty) return;
+    if (busy || dirty) return;
     key = key === "resumen" ? "" : key;
     setFolder(key);
     const url = new URL(window.location.href);
@@ -184,7 +193,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     if (destination?.tab) setTab(destination.tab as Tab);
   }
   function openTab(value: Tab) {
-    if (busy || dossierDirty) return;
+    if (busy || dirty) return;
     openFolder(folderForLegacyTab(value)); setTab(value);
   }
   return <NavigationReturnProvider href={originHref} zone={details?.inmueble.zona}><main className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -196,16 +205,16 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
       </header>
 
       <nav aria-label="Ruta de carpetas" className="mt-6 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-        <button type="button" disabled={busy || dossierDirty} onClick={() => changeZone("*")} className="font-semibold text-red-700 disabled:opacity-50">Zonas</button>
-        {(zone !== "*" || details) && <><span aria-hidden="true">/</span><button type="button" disabled={busy || dossierDirty} onClick={() => code ? changeZone(details?.inmueble.zona || zone) : undefined} className="break-words font-semibold">{details?.inmueble.zona || zone}</button></>}
-        {details && <><span aria-hidden="true">/</span><button type="button" disabled={busy || dossierDirty} onClick={() => openFolder("")} className="min-w-0 break-words font-semibold">{positionLabel(details.inmueble.posicion)} · {details.inmueble.nombreContacto || "Sin contacto"}</button></>}
+        <button type="button" disabled={busy || dirty} onClick={() => changeZone("*")} className="font-semibold text-red-700 disabled:opacity-50">Zonas</button>
+        {(zone !== "*" || details) && <><span aria-hidden="true">/</span><button type="button" disabled={busy || dirty} onClick={() => code ? changeZone(details?.inmueble.zona || zone) : undefined} className="break-words font-semibold">{details?.inmueble.zona || zone}</button></>}
+        {details && <><span aria-hidden="true">/</span><button type="button" disabled={busy || dirty} onClick={() => openFolder("")} className="min-w-0 break-words font-semibold">{positionLabel(details.inmueble.posicion)} · {details.inmueble.nombreContacto || "Sin contacto"}</button></>}
         {activeFolder && <><span aria-hidden="true">/</span><span aria-current="page" className="break-words text-slate-500">{activeFolder.label}</span></>}
       </nav>
       <div className="mt-6 space-y-5">
         <div hidden={Boolean(code)}><PropertyFolderBrowser items={items} zoneNames={zoneNames} zone={zone} loading={listLoading} error={listError} onZone={changeZone} onOpen={selectProperty} onRetry={() => { setListLoading(true); setListError(""); setListReload(value => value + 1); }} /></div>
 
         <div ref={sheet} hidden={!code} className="min-w-0 scroll-mt-24 xl:scroll-mt-5">
-          {code && <button type="button" disabled={busy || dossierDirty} onClick={() => changeZone(details?.inmueble.zona || zone)} className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-600">← Volver a los inmuebles de la zona</button>}
+          {code && <button type="button" disabled={busy || dirty} onClick={() => changeZone(details?.inmueble.zona || zone)} className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-600">← Volver a los inmuebles de la zona</button>}
           {error && <MobileFormFeedback value={error}><Feedback tone="error" className="mb-4">{error}{errorCarga && <button type="button" disabled={loading || busy} onClick={() => { setLoading(true); void load(code); }} className="aa-button aa-button-secondary mt-3">{loading ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
           {message && <MobileFormFeedback value={message}><Feedback className="mb-4">{message}</Feedback></MobileFormFeedback>}
           {loading && !details ? <div role="status" className="space-y-5 rounded-3xl border border-slate-200 bg-white p-8"><p className="text-sm text-slate-500">Cargando ficha del inmueble…</p><div className="h-28 animate-pulse rounded-2xl bg-slate-100 motion-reduce:animate-none" /><div className="h-64 animate-pulse rounded-2xl bg-slate-50 motion-reduce:animate-none" /></div> : !details ? <div className="flex min-h-[480px] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center"><div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-red-100 bg-[#fff5f4] text-[#c80000]"><Icon name="home" className="h-9 w-9" /></div><p className="mt-6 text-lg font-bold text-slate-900">La ficha de tu inmueble, en un solo lugar</p><p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">Selecciona un inmueble de la lista para consultar sus datos, completar la información y organizar sus documentos.</p><div className="mt-7 flex flex-wrap justify-center gap-2">{["Contacto", "Expediente", "Visitas y seguimiento"].map(label => <span key={label} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500">{label}</span>)}</div></div> : <>
@@ -219,40 +228,36 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
             </section>
 
 
-            {!folder && <section aria-label="Resumen del inmueble" className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h3 className="text-base font-bold text-slate-900">Resumen del inmueble</h3><p className="text-xs text-slate-500">Registro: {formatDate(details.inmueble.fechaRegistro)}</p></div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <Stat label="Documentación" value={`${documentFiles.length} documento${documentFiles.length === 1 ? "" : "s"}`} icon="document" />
-                <Stat label="Fotografías" value={`${photoCount} foto${photoCount === 1 ? "" : "s"}`} icon="image" />
-                <Stat label="Estado documental" value={details.documentacion ? `${details.documentacion.completed}/${details.documentacion.total} requisitos · ${details.documentacion.complete ? "Completo" : "Con pendientes"}` : "Por completar"} icon="check" />
-                <Stat label="Publicación" value={details.publicacion?.publicado ? "Publicado" : details.publicacion ? details.expediente?.complete ? "Lista para publicar" : "Con requisitos pendientes" : "Sin publicación"} icon="publish" />
-              </div>
-              <dl className="mt-4 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2"><div><dt className="text-xs font-semibold text-slate-500">{referenceLabel(details.inmueble.operacion)}</dt><dd className="mt-1 text-sm font-bold text-slate-800">{money(details.tasacion?.valorReferencia)}</dd></div><div><dt className="text-xs font-semibold text-slate-500">{targetLabel(details.inmueble.operacion)}</dt><dd className="mt-1 text-sm font-bold text-slate-800">{money(details.tasacion?.precioObjetivo)}</dd></div></dl>
+            {!folder && <>
+              <section aria-labelledby="information-phase-one" className="mt-6 space-y-4">
+                <header className="flex flex-wrap items-start justify-between gap-3 border-l-4 border-[#c80000] pl-4"><div><h3 id="information-phase-one" className="text-2xl font-extrabold tracking-wide text-slate-900 sm:text-3xl">FASE 1</h3><p className="mt-1 text-sm text-slate-600">Preparación del inmueble</p></div><span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">{admin ? 'Edición de administrador' : 'Solo consulta'}</span></header>
+                <section aria-label="Resumen de FASE 1" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><h4 className="mb-4 text-base font-bold">Resumen de preparación</h4><div className="grid gap-3 sm:grid-cols-2"><Stat label="Fotografías" value={`${photoCount} foto${photoCount === 1 ? "" : "s"}`} icon="image" /><Stat label="Publicación" value={details.publicacion?.publicado ? "Publicado" : details.publicacion ? details.expediente?.complete ? "Lista para publicar" : "Con requisitos pendientes" : "Sin publicación"} icon="publish" /></div><dl className="mt-4 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2"><div><dt className="text-xs font-semibold text-slate-500">{referenceLabel(details.inmueble.operacion)}</dt><dd className="mt-1 text-sm font-bold text-slate-800">{money(details.tasacion?.valorReferencia)}</dd></div><div><dt className="text-xs font-semibold text-slate-500">{targetLabel(details.inmueble.operacion)}</dt><dd className="mt-1 text-sm font-bold text-slate-800">{money(details.tasacion?.precioObjetivo)}</dd></div></dl></section>
+                <section aria-label="Accesos de FASE 1" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><h4 className="mb-4 text-base font-bold">Preparación del inmueble</h4><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{folders.filter(item => item.phase === 1).map(renderFolder)}</div></section>
+              </section>
+              <section aria-labelledby="information-phase-two" className="mt-8 space-y-4">
+                <header className="border-l-4 border-[#c80000] pl-4"><h3 id="information-phase-two" className="text-2xl font-extrabold tracking-wide text-slate-900 sm:text-3xl">FASE 2</h3><p className="mt-1 text-sm text-slate-600">Expediente documental de la operación</p></header>
+                <section aria-label="Resumen de FASE 2" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h4 className="text-base font-bold">Resumen documental</h4><p className="text-xs text-slate-500">Registro: {formatDate(details.inmueble.fechaRegistro)}</p></div><div className="grid gap-3 sm:grid-cols-2"><Stat label="Documentación" value={`${documentFiles.length} documento${documentFiles.length === 1 ? "" : "s"}`} icon="document" /><Stat label="Estado documental" value={details.documentacion ? `${details.documentacion.completed}/${details.documentacion.total} requisitos · ${details.documentacion.complete ? "Completo" : "Con pendientes"}` : "Por completar"} icon="check" /></div>
               {details.inmueble.inmuebleOrigenId && <p className="mt-3 text-xs text-slate-500">Captación anterior: {details.inmueble.inmuebleOrigenId}</p>}
               {details.venta && <div className="mt-4 border-t border-slate-100 pt-4"><h4 className="mb-3 text-sm font-bold">Resultado de la venta</h4><div className="grid gap-3 sm:grid-cols-3"><Stat label="Fecha de venta" value={formatDate(details.venta.fechaVenta)} icon="chart" /><Stat label="Precio final" value={money(details.venta.precioFinal)} icon="chart" /><Stat label="Comisión" value={money(details.venta.comision)} icon="chart" /></div></div>}
               {details.alquiler && <div className="mt-4 border-t border-slate-100 pt-4"><h4 className="text-sm font-bold">Alquiler registrado</h4><p className="mt-1 text-xs text-slate-500">Cierre: {formatDate(details.alquiler.fechaAlquiler)} · Inicio: {formatDate(details.alquiler.fechaInicioAlquiler)} · Fin: {formatDate(details.alquiler.fechaFinAlquiler)}</p><div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><Stat label="Renta mensual acordada" value={money(details.alquiler.rentaMensual)} icon="chart" /><Stat label="Comisión" value={money(details.alquiler.comision)} icon="chart" /><Stat label="Garantía" value={money(details.alquiler.garantia)} icon="chart" /><Stat label="Adelanto" value={money(details.alquiler.adelanto)} icon="chart" /></div></div>}
-            </section>}
-
-            {!folder && <section aria-label="Carpetas del inmueble" className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-              <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-lg font-bold text-slate-900">Carpetas del inmueble</h3><p className="mt-1 text-sm text-slate-500">Abre una carpeta para consultar o completar su información.</p></div><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize">{rental ? "Alquiler" : "Venta"}</span></div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{folders.map(item => {
-                const section = dossier?.sections.find(section => section.key === item.key);
-                const count = groupedFiles[item.key]?.length || 0;
-                return <button key={item.key} type="button" onClick={() => openFolder(item.key)} disabled={busy || dossierDirty} className="flex min-h-28 items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/40 p-4 text-left transition hover:border-amber-300 hover:bg-amber-50/50 focus-visible:outline-2 focus-visible:outline-red-700 disabled:opacity-50"><FolderIcon className="h-9 w-9 shrink-0 text-amber-500" /><span className="min-w-0"><span className="block break-words text-sm font-bold text-slate-800">{item.label}</span><span className="mt-1 block text-xs leading-5 text-slate-500">{item.description}</span>{(section || item.key === "otros") && <span className="mt-2 block text-xs text-slate-600">{count} archivo{count === 1 ? "" : "s"}{section && ` · ${section.completed}/${section.total} requisitos`}</span>}{section && <span className={`mt-2 inline-block rounded-full px-2 py-1 text-xs font-semibold ${section.pending ? "bg-amber-100 text-amber-900" : section.total ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{section.pending ? `${section.pending} pendiente${section.pending === 1 ? "" : "s"}` : section.total ? "Completo" : "Opcional / según condiciones"}</span>}{item.key === "visitas" && <span className="mt-2 block text-xs text-slate-600">{photoCount} fotos</span>}</span></button>;
-              })}</div>
-            </section>}
-            {folder && <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><button type="button" disabled={busy || dossierDirty} onClick={() => openFolder("")} className="aa-button aa-button-secondary">← Carpetas del inmueble</button><h3 className="text-lg font-bold">{activeFolder?.label || "Información del inmueble"}</h3></div>}
-            {dossierDirty && <p role="status" className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Guarda o descarta los cambios y la selección de archivos antes de salir de esta carpeta.</p>}
+                </section>
+                <section aria-label="Carpetas del inmueble" className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h4 className="text-base font-bold">Carpetas del inmueble</h4><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize">{rental ? "Alquiler" : "Venta"}</span></div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{folders.filter(item => item.phase === 2).map(renderFolder)}</div></section>
+              </section>
+            </>}
+            {folder && <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><button type="button" disabled={busy || dirty} onClick={() => openFolder("")} className="aa-button aa-button-secondary">← Carpetas del inmueble</button><div><p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">FASE {informationFolderPhase(folder)}</p><h3 className="text-lg font-bold">{activeFolder?.label || "Información del inmueble"}</h3></div></div>}
+            {dirty && <p role="status" className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Guarda o descarta los cambios y la selección de archivos antes de salir de esta sección.</p>}
             <section hidden={!folder} aria-label={activeFolder?.label || tab} className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_4px_24px_rgba(15,23,42,0.03)] sm:p-6">
+              {folder && informationFolderPhase(folder) === 1 && !admin && <p className="mb-5 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">FASE 1 · Solo consulta para el operador.</p>}
               <div hidden={!documentSection && !["estado", "vendedor", "comprador"].includes(folder)}>
                 <TransactionDossier showHeading={false} key={details.inmueble.id} propertyId={details.inmueble.id} operation={details.inmueble.operacion} section={documentSection ? folder : undefined} view={documentSection ? "carpeta" : folder === "vendedor" ? "vendedor" : folder === "comprador" ? "comprador" : "estado"} files={documentFiles} uploadReady={uploadReady} administrator={admin} onChanged={() => load(code)} onBusyChange={setBusy} onDirtyChange={setDossierDirty} />
               </div>
 
               {admin && folder === "seguimiento" && <div className="space-y-5"><h3 className="text-lg font-bold">Seguimiento de {rental ? "alquiler" : "venta"}</h3><p className="text-sm text-slate-600">Plazos particulares e historial de la operación. Los pendientes documentales se consultan en Estado del expediente.</p><button className="aa-button aa-button-secondary" onClick={() => openTab("Estado del expediente")}>Ver pendientes documentales ({details.documentacion?.completed ?? 0}/{details.documentacion?.total ?? 0})</button><OperationalTracking key={`tracking-${code}`} propertyId={details.inmueble.id} administrator={admin} onChanged={()=>void load(code)} onBusyChange={setBusy} progress={details.progreso} documentaryComplete={details.documentacion?.complete ?? false}/><PropertyHistory events={details.historial??[]}/></div>}
-              {folder === "visitas" && <div className="space-y-6"><PropertyVisits key={code} propertyId={details.inmueble.id} onBusyChange={setBusy} onChanged={() => { void load(code); }} /><PhotoGallery key={`photos-${code}-${photoCount}`} propertyId={details.inmueble.id} visitaId={null} editable allowUpload={false} onBusyChange={setBusy} onChanged={() => { void load(code); }} /></div>}
-              {folder === "precios" && (details.tasacion ? <div className="space-y-6"><Block title="Tasación registrada" description={`Fecha de tasación: ${formatDate(details.tasacion.fechaTasacion)}`}><div className="grid gap-3 sm:grid-cols-3"><Stat label={referenceLabel(details.inmueble.operacion)} value={money(details.tasacion.valorReferencia)} icon="chart" /><Stat label={targetLabel(details.inmueble.operacion)} value={money(details.tasacion.precioObjetivo)} icon="chart" /><Stat label={priceLabel(details.inmueble.operacion)} value={money(details.tasacion.precioVenta)} icon="chart" /></div></Block><Block title="Observación"><p className="whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">{details.tasacion.observacion || "Sin observaciones registradas."}</p></Block>{admin && <Link href={`/tasaciones-textos-pendientes?inmueble=${details.inmueble.id}#material`} className="inline-flex items-center gap-2 text-xs font-semibold text-[#c80000]">Gestionar {priceLabel(details.inmueble.operacion).toLowerCase()} <Icon name="arrow" /></Link>}</div> : <div className="rounded-2xl bg-slate-50 p-6"><p className="text-sm text-slate-500">Todavía no hay una tasación registrada.</p>{admin && <Link href={`/registrar-tasaciones?inmueble=${details.inmueble.id}`} className="mt-3 inline-flex text-xs font-semibold text-[#c80000]">Registrar tasación →</Link>}</div>)}
+              {folder === "visitas" && <div className="space-y-6"><PropertyVisits editable={admin} key={code} propertyId={details.inmueble.id} onBusyChange={setBusy} onChanged={() => { void load(code); }} /><PhotoGallery key={`photos-${code}-${photoCount}`} propertyId={details.inmueble.id} visitaId={null} editable={admin} allowUpload={admin} onBusyChange={setBusy} onChanged={() => { void load(code); }} /></div>}
+              {folder === "precios" && (details.tasacion ? <div className="space-y-6">{admin && details.inmueble.estado === "activo" ? <SalePriceEditor item={{inmuebleId: details.inmueble.id, operacion: details.inmueble.operacion, ...details.tasacion}} onSaved={() => load(code)} onBusyChange={setBusy} onDirtyChange={setPhaseOneDirty} /> : <><Block title="Tasación registrada" description={`Fecha de tasación: ${formatDate(details.tasacion.fechaTasacion)}`}><div className="grid gap-3 sm:grid-cols-3"><Stat label={referenceLabel(details.inmueble.operacion)} value={money(details.tasacion.valorReferencia)} icon="chart" /><Stat label={targetLabel(details.inmueble.operacion)} value={money(details.tasacion.precioObjetivo)} icon="chart" /><Stat label={priceLabel(details.inmueble.operacion)} value={money(details.tasacion.precioVenta)} icon="chart" /></div></Block><Block title="Observación"><p className="whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">{details.tasacion.observacion || "Sin observaciones registradas."}</p></Block></>}{admin && <Link href={`/tasaciones-textos-pendientes?inmueble=${details.inmueble.id}#material`} className="inline-flex items-center gap-2 text-xs font-semibold text-[#c80000]">Gestionar {priceLabel(details.inmueble.operacion).toLowerCase()} <Icon name="arrow" /></Link>}</div> : <div className="rounded-2xl bg-slate-50 p-6"><p className="text-sm text-slate-500">Todavía no hay una tasación registrada.</p>{admin && <Link href={`/registrar-tasaciones?inmueble=${details.inmueble.id}`} className="mt-3 inline-flex text-xs font-semibold text-[#c80000]">Registrar tasación →</Link>}</div>)}
 
               {folder === "publicacion" && (details.publicacion ? <div className="space-y-5"><Block title="Publicación del inmueble" description={details.publicacion.publicado ? `Publicada el ${formatDate(details.publicacion.fechaPublicacion)}` : details.expediente?.complete ? "Texto y material listos para publicar." : "La publicación preparada tiene requisitos pendientes."}><p className="whitespace-pre-wrap rounded-2xl bg-slate-50 p-5 text-sm leading-7 text-slate-700">{details.publicacion.texto}</p></Block><button type="button" onClick={() => openTab("Visitas")} className="rounded-xl border border-slate-200 px-4 py-3 text-xs font-semibold text-red-700">Ver fotos de la publicación →</button></div> : <div className="rounded-2xl bg-slate-50 p-6"><p className="text-sm text-slate-500">Todavía no hay una publicación registrada.</p>{admin && <Link href={`/tasaciones-textos-pendientes?inmueble=${details.inmueble.id}#material`} className="mt-3 inline-flex text-xs font-semibold text-[#c80000]">Preparar texto y material →</Link>}</div>)}
+              {folder === "publicacion" && admin && details.inmueble.estado === "activo" && details.tasacion && <PropertyPublicationEditor key={`text-${code}`} propertyId={details.inmueble.id} text={details.publicacion?.texto || ""} exists={Boolean(details.publicacion)} onSaved={() => load(code)} onBusyChange={setBusy} onDirtyChange={setPhaseOneDirty} />}
               {folder === "publicacion" && <ExternalAnnouncements key={code} propertyId={details.inmueble.id} editable={admin&&details.inmueble.estado==='activo'} price={details.tasacion?.precioVenta??null}/>}
             </section>
           </>}

@@ -7,10 +7,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import PhotoUploader, { type UploadedPhoto } from './PhotoUploader';
 
 export type PropertyPhoto = UploadedPhoto & { tipoDocumento: string; tipoMime: string | null; almacenamiento: string; observacion: string | null; esPortada: boolean; visitaId: number | null; fechaRegistro: string };
-export default function PhotoGallery({ propertyId, editable = false, onChanged, onBusyChange, visitaId, allowUpload = true }: {
+export default function PhotoGallery({ propertyId, editable: requestedEditable = false, onChanged, onBusyChange, visitaId, allowUpload = true }: {
   visitaId?: number | null; allowUpload?: boolean; propertyId: number | string; editable?: boolean; onChanged?: () => void; onBusyChange?: (busy: boolean) => void;
 }) {
   const canDelete = isAdministrator(useSessionUser());
+  const editable = requestedEditable && canDelete;
   const [photos, setPhotos] = useState<PropertyPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

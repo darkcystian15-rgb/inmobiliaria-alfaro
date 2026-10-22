@@ -1,3 +1,5 @@
+import { canWritePropertyFile } from '@/lib/phase-one-access.mjs';
+import { isAdministrator } from '@/lib/access.mjs';
 import { fileActivitySnapshot } from '@/lib/file-activity.mjs';
 import { propertyIdentifierCondition } from "@/lib/property-identity";
 import { auditValues } from "@/lib/security-audit";
@@ -56,6 +58,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const requestedType = String(body.tipoDocumento ?? '').trim();
     const tipoDocumento = dossierDocumentType(requestedType, inmueble.operacion), nombre = String(body.nombre ?? '').trim(), observacion = String(body.observacion ?? '').trim();
     if (!DOCUMENT_TYPES.has(tipoDocumento) || !nombre || nombre.length > 255 || observacion.length > 500) return NextResponse.json({ error: 'Revisa el tipo, nombre (máximo 255 caracteres) y observación (máximo 500).' }, { status: 400 });
+    if (!canWritePropertyFile(auth.user, tipoDocumento)) return NextResponse.json({ error: 'La FASE 1 es de solo consulta para el operador.' }, { status: 403 });
     const definition = dossierDocuments.find(item => item.key === tipoDocumento);
     if (definition && !documentApplies(definition, (await readDossier(inmueble.id)).config, inmueble.operacion)) return NextResponse.json({ error: 'Guarda primero el tipo de persona y las condiciones de esta sección del expediente.' }, { status: 409 });
     const visitaId = body.visitaId === undefined ? null : Number(body.visitaId);
@@ -168,6 +171,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         const condition = and(eq(inmArchivos.id, archivoId), eq(inmArchivos.inmuebleId, inmueble.id));
         const [file] = await tx.select().from(inmArchivos).where(condition).limit(1).for('update');
         if (!file || file.tipoDocumento === 'FOTO_INMUEBLE') return 'missing';
+        if (!canWritePropertyFile(auth.user, file.tipoDocumento)) return 'forbidden';
         if (file.tamanoBytes && file.tamanoBytes > documentByteLimit(definition.key)) return 'size';
         if(file.nombre===nombre&&(file.observacion||null)===(observacion||null)&&file.tipoDocumento===definition.key)return 'ok';
         await tx.update(inmArchivos).set({ nombre, observacion: observacion || null, tipoDocumento: definition.key }).where(condition);
@@ -175,9 +179,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId:auth.user.id,evento:'archivo_actualizado',observacion:JSON.stringify({anterior:fileActivitySnapshot(file,inmueble.operacion),nuevo:fileActivitySnapshot({...file,nombre,observacion:observacion||null,tipoDocumento:definition.key},inmueble.operacion)})});
         return 'ok';
       });
-      if (result !== 'ok') return NextResponse.json({ error: result === 'missing' ? 'Documento no encontrado.' : result === 'size' ? 'Los documentos de más de 4 MB solo pueden permanecer en Copia literal o CRI.' : 'Guarda primero las condiciones de esta categoría.' }, { status: result === 'missing' ? 404 : 409 });
+      if (result !== 'ok') return NextResponse.json({ error: result === 'forbidden' ? 'La FASE 1 es de solo consulta para el operador.' : result === 'missing' ? 'Documento no encontrado.' : result === 'size' ? 'Los documentos de más de 4 MB solo pueden permanecer en Copia literal o CRI.' : 'Guarda primero las condiciones de esta categoría.' }, { status: result === 'forbidden' ? 403 : result === 'missing' ? 404 : 409 });
       return NextResponse.json({ ok: true });
     }
+    if (!isAdministrator(auth.user)) return NextResponse.json({ error: 'La FASE 1 es de solo consulta para el operador.' }, { status: 403 });
     const found = await db.transaction(async tx => {
       // Lock the property so simultaneous cover changes keep a single cover.
       await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, inmueble.id)).for('update');

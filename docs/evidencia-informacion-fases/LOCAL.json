@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-10-22T22:23:49.259Z",
+  "production": false,
+  "liveOnly": false,
+  "views": 40,
+  "roles": 2,
+  "phaseSeparationVerified": true,
+  "operatorReadOnlyPhaseOne": true,
+  "operatorDocumentaryAccessPreserved": true,
+  "numberedFoldersFirst": true,
+  "unnumberedFoldersLast": true,
+  "deniedPhaseOneRequests": 7,
+  "simulatedSaves": 2,
+  "browserBusinessWrites": 0,
+  "browserErrors": 0
+}

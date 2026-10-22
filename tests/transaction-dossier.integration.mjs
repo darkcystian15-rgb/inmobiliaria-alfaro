@@ -136,11 +136,13 @@ try {
   assert.equal((await request('/api/inmuebles/3/seguimiento', admin, 'PUT', {actividad:'documentacion',responsableId:1,fechaLimite:'2027-01-01',observacion:'Expediente de alquiler'})).response.status, 200);
   await db.query("INSERT INTO inm_visitas(id,inmueble_id,fecha_visita,completada,observaciones,usuario_id) VALUES(1,3,'2026-10-18',1,'Visita de ensayo',1)");
   const photoBody = new FormData();photoBody.set('tipoDocumento','FOTO_INMUEBLE');photoBody.set('nombre','Evidencia de visita');photoBody.set('visitaId','1');photoBody.set('archivo',new File([image],'visita.png'));
-  const photoResult=await request('/api/inmuebles/3/archivos',operator,'POST',photoBody);assert.equal(photoResult.response.status,201);
-  assert.equal((await request('/api/inmuebles/3/archivos',operator,'PATCH',{archivoId:photoResult.data.id,nombre:'Evidencia de visita',observacion:'',esPortada:true})).response.status,200);
+  assert.equal((await request('/api/inmuebles/3/archivos',operator,'POST',photoBody)).response.status,403);
+  const photoResult=await request('/api/inmuebles/3/archivos',admin,'POST',photoBody);assert.equal(photoResult.response.status,201);
+  assert.equal((await request('/api/inmuebles/3/archivos',operator,'PATCH',{archivoId:photoResult.data.id,nombre:'Evidencia de visita',observacion:'',esPortada:true})).response.status,403);
+  assert.equal((await request('/api/inmuebles/3/archivos',admin,'PATCH',{archivoId:photoResult.data.id,nombre:'Evidencia de visita',observacion:'',esPortada:true})).response.status,200);
   const photoChange=JSON.parse((await db.query("SELECT observacion FROM inm_timeline WHERE inmueble_id=3 AND evento='archivo_actualizado' ORDER BY id DESC LIMIT 1"))[0][0].observacion);
   assert.equal(photoChange.nuevo.portada,true);assert.equal(photoChange.nuevo.visitaId,1);assert.equal(photoChange.nuevo.seccion,'Visitas');
-  assert.equal((await upload('FOTO_INMUEBLE','Foto antigua sin visita',image,operator,'png',3)).response.status,201);
+  assert.equal((await upload('FOTO_INMUEBLE','Foto antigua sin visita',image,admin,'png',3)).response.status,201);
   console.log('PASS: permisos, conflictos de edición, condiciones, carga PDF/imagen/Word/Excel, varios archivos, acceso privado y reclasificación.');
 
   const { chromium } = await import(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
@@ -170,7 +172,7 @@ try {
   }
   async function openFolder(name) {
     await rootFolders();
-    await folders().getByRole('button', { name: new RegExp(name) }).click();
+    await page.locator('main').getByRole('button', { name: new RegExp(name) }).click();
   }
   const currentRecords = async () => (await db.query('SELECT id,inmueble_id,tipo_documento,nombre,enlace,ruta_almacenamiento,visita_id FROM inm_archivos ORDER BY id'))[0];
   const beforeNavigation = await currentRecords();
@@ -190,7 +192,7 @@ try {
   await page.getByRole('searchbox', { name: 'Buscar inmueble', exact: true }).fill('Dirección de ensayo');
   await page.getByRole('region', { name: 'Inmuebles de la zona', exact: true }).getByRole('button', { name: /^Contacto Venta/ }).click();
   await folders().waitFor();
-  const overview = page.getByRole('region', { name: 'Resumen del inmueble', exact: true });
+  const overview = page.getByRole('region', { name: 'Resumen de FASE 1', exact: true });
   await overview.waitFor();
   assert.equal(await overview.locator('a,button,input,select,textarea').count(), 0, 'Summary contains information only');
   assert.equal(await folders().getByRole('button', { name: /Resumen del inmueble/ }).count(), 0);
@@ -273,7 +275,7 @@ try {
   await page.getByRole('button', { name: /Contacto alquiler/ }).click();
   await folders().waitFor();
   assert.equal(await folders().getByRole('button', { name: /Impuestos y constancias|Levantamiento de cargas|Otros archivos conservados|Resumen del inmueble/ }).count(), 0);
-  await page.getByRole('region', { name: 'Resumen del inmueble', exact: true }).waitFor();
+  await page.getByRole('region', { name: 'Resumen de FASE 1', exact: true }).waitFor();
   const rentalFolders = ['1. DNI y poderes','2. Documentos del inmueble','3. Contratos','4. Recibos y pagos de servicios','5. Tasaciones','Estado del expediente','Visitas y fotos','Valores de tasación','Publicación','Seguimiento e historial'];
   for (const width of [1440,375]) {
     await page.setViewportSize({ width, height: 900 });
@@ -305,10 +307,10 @@ try {
   await page.getByText('Fotos guardadas correctamente.', { exact: true }).waitFor();
   assert.equal((await db.query("SELECT visita_id FROM inm_archivos WHERE nombre='foto-carpeta'"))[0][0].visita_id, 1);
   await page.goto(`${origin}/datos-inmuebles?codigo=3&carpeta=resumen`);
-  await page.getByRole('region', { name: 'Resumen del inmueble', exact: true }).waitFor();
+  await page.getByRole('region', { name: 'Resumen de FASE 1', exact: true }).waitFor();
   await folders().waitFor();
   // Old links continue opening their existing functions.
-  for (const [legacy, heading] of [['vendedor','Documentación del arrendador'], ['comprador','Documentación del arrendatario'], ['estado','Estado del expediente']]) {
+  for (const [legacy, heading] of [['vendedor','Arrendador'], ['comprador','Arrendatario'], ['estado','Estado del expediente']]) {
     await page.goto(`${origin}/datos-inmuebles?codigo=3&pestana=${legacy}`);
     await page.getByRole('heading', { name: heading, exact: true }).first().waitFor();
   }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { dossierDefaults, dossierStatus } from '../lib/transaction-dossier.mjs';
-import { filesByInformationFolder, informationFolders, folderForLegacyTab } from '../lib/property-folders.mjs';
+import { filesByInformationFolder, informationFolders, informationFolderPhase, folderForLegacyTab } from '../lib/property-folders.mjs';
 
 // A presentation change must keep the original records, including non-applicable
 // files, old category aliases and records from a previous operation.
@@ -43,4 +43,19 @@ for (const renta of ['afecto','exonerado']) {
   const grouped = filesByInformationFolder([searchFile],dossierStatus({...dossierDefaults(),vendedorTipo:'natural',renta},[searchFile]),'venta');
   assert.equal(grouped[renta==='exonerado'?'impuestos':'identificacion'][0],searchFile);
   assert.equal(Object.values(grouped).flat().length,1,'Same search file is presented exactly once');
+}
+
+for(const operation of ['venta','alquiler']) {
+  for(const administrator of [false,true]) {
+    const folders=informationFolders(operation,administrator,1);
+    assert.deepEqual(folders.filter(item=>item.phase===1).map(item=>item.key),['visitas','precios','publicacion']);
+    const phaseTwo=folders.filter(item=>item.phase===2);
+    const numbered=phaseTwo.filter(item=>/^\d+\./.test(item.label));
+    assert.equal(numbered.length,operation==='venta'?7:5);
+    assert.deepEqual(phaseTwo.slice(numbered.length).map(item=>item.key),administrator?['estado','seguimiento','otros']:['estado','otros']);
+    assert.ok(phaseTwo.slice(numbered.length).every(item=>!/^\d+\./.test(item.label)));
+    assert.equal(new Set(folders.map(item=>item.key)).size,folders.length);
+    assert.equal(informationFolderPhase('estado'),2);
+    assert.equal(informationFolderPhase('seguimiento'),2);
+  }
 }
