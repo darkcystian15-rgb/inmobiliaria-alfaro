@@ -1,6 +1,6 @@
 # Tasaciones con moneda por monto
 
-Publicación del 23 de octubre: [Nuevos nombres, soles/dólares, edición compartida y despliegue](docs/tasaciones-nombres-monedas-2026-10-23.md). Código `2ca2369`, Production GitHub `7290300509` **success**. La revisión de observaciones reales en dólares sigue pendiente del acceso privado a datos.
+Publicación del 23 de octubre: [Nuevos nombres, soles/dólares, edición compartida y despliegue](docs/tasaciones-nombres-monedas-2026-10-23.md). Código `2ca2369`, Production GitHub `7290300509` **success**. Revisión posterior de observaciones reales completada: 17 coincidencias y 15 monedas de cierre corregidas a USD, con importes intactos; dos notas generales pendientes de aclaración.
 
 # Repositorio y estado de entrega
 

@@ -30,7 +30,7 @@ scripts/install-appraisal-currencies.mjs comprueba columnas por defecto; --apply
 
 Solicitud adicional: buscar observaciones que indiquen dólares americanos y corregir la moneda cuando corresponda. scripts/review-appraisal-currencies.mjs revisa notas de tasación y observaciones del inmueble; detecta dólares/dolares, USD y US$. Es de solo lectura por defecto y guarda candidatos únicamente en un archivo privado mediante --output. Las sugerencias de campos son pistas para revisión, nunca se aplican automáticamente. --apply-plan requiere actorId de administrador activo y un plan revisado y verifica que la nota y monedas no hayan cambiado; modifica solo la moneda a USD y registra historial.
 
-La consulta y corrección de datos reales está pendiente: esta sesión no dispone de DATABASE_URL local ni de una sesión autenticada de producción. No se afirma que no haya candidatos y no se han cambiado monedas de clientes por inferencia.
+La revisión real quedó completada mediante la autorización posterior de Vercel. Su alcance, las 15 correcciones y los dos casos pendientes se detallan al final. La conexión protegida no se descargó a Codespaces.
 
 ## Verificación
 
@@ -48,8 +48,29 @@ La consulta y corrección de datos reales está pendiente: esta sesión no dispo
 - Production GitHub: `7290300509`, **success**, `2026-10-23T22:40:17Z`, para el mismo SHA.
 - URL de versión: https://inmobiliaria-alfarov2-dnmz68isn-puma19.vercel.app.
 - Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe. Comprobación pública posterior: ruta de registro redirige a /login (307), login responde 200.
-- El comando de build configurado ejecuta la preparación aditiva de columnas antes de compilar; la entrega completada implica que esa comprobación/preparación y la compilación terminaron sin errores. No se consultaron filas de clientes desde esta sesión.
+- El comando de build configurado ejecuta la preparación aditiva de columnas antes de compilar; la entrega completada implica que esa comprobación/preparación y la compilación terminaron sin errores. La publicación inicial no consultó filas de clientes. La revisión posterior autorizada se detalla al final.
 - Sin prueba autenticada de pantallas en producción: no se dispone de credenciales ni sesión en este entorno. Las verificaciones de guardado se realizaron en MySQL local aislado, cuyas cuentas, datos y contenedor se retiraron al terminar.
-- La búsqueda/corrección de observaciones reales en dólares permanece pendiente del acceso privado. No se cambiaron monedas de clientes por inferencia.
+- La búsqueda posterior de observaciones reales y la corrección de monedas explícitas se completaron según el apartado siguiente; dos notas generales siguen pendientes de aclaración.
 
 Este cierre documental mantiene el código funcional publicado. La comprobación pública del login no sustituye una prueba autenticada de las pantallas ni la revisión de observaciones reales.
+
+
+## Revisión real y corrección de observaciones — 23 de octubre
+
+El usuario autorizó Vercel mediante su flujo de dispositivo. DATABASE_URL está protegida y no admite descarga; se ejecutaron tareas temporales con la configuración privada de producción y `--skip-domain`, sin sustituir el dominio publicado. El primer intento temporal ejecutó el build habitual porque el archivo de configuración alternativo externo no sustituyó al vercel.json del proyecto; no realizó la búsqueda ni correcciones. Se ajustó la configuración del paquete temporal y se restauró la original local al terminar cada subida.
+
+La lectura de `2026-10-23T22:55:55.901Z` consultó **131 inmuebles, 29 tasaciones y las observaciones de visitas**. Encontró **17 fichas con menciones a dólares**. En **15** la nota identifica expresamente el precio de cierre; las otras **dos** son notas generales o incluyen una negociación propuesta. No se extrapoló la moneda a los tres importes de la ficha.
+
+- Se corrigió únicamente `precio_objetivo_moneda`, de PEN a USD, en las 15 fichas identificadas: **15 monedas corregidas**.
+- Se conservaron los tres importes numéricos, las notas y las monedas de tasación/salida. No se aplicó tipo de cambio ni se aceptaron propuestas de importes contenidas en las observaciones.
+- Las dos notas generales permanecen pendientes de aclaración sobre a qué montos aplican. La selección de los tres montos en dólares no se presume a partir de silencio del usuario.
+- La consulta posterior verificó que las 17 coincidencias mantienen todos sus importes, notas y demás monedas. La misma transacción comprobó que el resto de columnas de cada tasación se mantiene, salvo su fecha técnica de actualización.
+- Cada corrección registra `moneda_tasacion_revisada` en el historial con origen técnico explícito, responsable administrador y copia anterior/posterior completa de la tasación. El script no cambia la etapa, las publicaciones ni los anuncios externos.
+
+Ejecución: `scripts/scan-appraisal-observations.mjs` para lectura y `scripts/apply-reviewed-appraisal-currencies.mjs` con un plan privado explícito para corrección. El plan no forma parte del repositorio ni del build habitual. La transacción bloquea inmueble y tasación, comprueba que importes/notas/monedas coincidan con la lectura revisada y revierte todos los cambios ante una discrepancia. Un reintento con un plan anterior detecta las monedas modificadas y no repite la operación.
+
+Prueba MySQL local desechable aprobada: corrección limitada al campo indicado, importes/notas intactos, historial anterior/posterior y rollback completo cuando la segunda fila no coincide. ESLint de los scripts y prueba sin advertencias. Los datos ficticios se retiraron con su contenedor.
+
+Evidencias privadas excluidas de Git: `restore-points/monedas-20261023/antes.json`, `plan.json`, `despues.json` y logs de lectura/aplicación. Contienen las identidades y notas revisadas; no se publican aquí.
+
+Tarea de lectura: `dpl_3rwjMEKAW1knBwQLuQSS154DeMrx`. Tarea de corrección: `dpl_H5iVxagPCYKTUgfiMRZnmgX6eiTt`, versión `https://inmobiliaria-alfarov2-lmmhxzmkx-puma19.vercel.app`, con confirmación de transacción a las **2026-10-23T22:58:47.546Z**. La lectura posterior corresponde a **2026-10-23T22:58:47.821Z**. Ambas usan la base real, sin publicar las configuraciones temporales en el dominio. El dominio conserva el flujo normal y muestra la moneda guardada al volver a cargar.
