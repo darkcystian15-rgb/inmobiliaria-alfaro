@@ -3,8 +3,52 @@ import assert from 'node:assert/strict';
 import { dossierDefaults, dossierInput, dossierDocuments, dossierStatus, documentApplies } from '../lib/transaction-dossier.mjs';
 import { DOCUMENT_TYPES } from '../lib/document-files.mjs';
 
-const natural = () => ({ ...dossierDefaults(), vendedorTipo: 'natural', compradorAsignado: true, compradorTipo: 'natural', renta: 'afecto', rentaObservacion: 'Sustento de prueba del pago de renta.' });
+const natural = () => ({ ...dossierDefaults(), vendedorTipo: 'natural', vendedorPropietarios: 'matrimonio', vendedorRegimen: 'comunes', vendedorRepresentante: 'no', compradorAsignado: true, compradorTipo: 'natural', renta: 'afecto', rentaObservacion: 'Sustento de prueba del pago de renta.' });
 const file = tipoDocumento => ({ tipoDocumento, almacenamiento: 'hosting' });
+test('seller ownership and representation independently gate uploads and retain existing files', () => {
+  const definition = key => dossierDocuments.find(item => item.key === key);
+  for (const owners of ['pendiente', 'uno', 'matrimonio', 'varios']) {
+    for (const regime of ['pendiente', 'comunes', 'separados']) {
+      for (const representative of ['pendiente', 'si', 'no']) {
+        const config = { ...natural(), vendedorPropietarios: owners, vendedorRegimen: regime, vendedorRepresentante: representative };
+        assert.equal(documentApplies(definition('VENDEDOR_PARTIDA_MATRIMONIAL'), config), owners === 'matrimonio');
+        assert.equal(documentApplies(definition('VENDEDOR_SEPARACION_PATRIMONIAL'), config), owners === 'matrimonio' && regime === 'separados');
+        for (const key of ['VENDEDOR_PODER', 'VENDEDOR_VIGENCIA_PODER']) {
+          assert.equal(documentApplies(definition(key), config), representative === 'si');
+          const item = dossierStatus(config, [file(key)]).items.find(item => item.key === key);
+          assert.equal(item.documents.length, 1);
+          assert.equal(item.state, representative === 'si' ? 'completo' : 'no_aplica');
+        }
+        assert.equal(documentApplies(definition('COMPRADOR_PODER'), config), true);
+        assert.equal(documentApplies(definition('VENDEDOR_DNI'), config), true);
+      }
+    }
+  }
+});
+test('ownership inputs validate options and older records start with conditions pending verification', () => {
+  const old = natural();
+  for (const key of ['vendedorPropietarios', 'vendedorRegimen', 'vendedorRepresentante']) {
+    assert.throws(() => dossierInput({ ...old, [key]: 'invalido' }));
+    delete old[key];
+  }
+  const restored = dossierInput(old);
+  assert.equal(restored.vendedorPropietarios, 'pendiente');
+  assert.equal(restored.vendedorRegimen, 'pendiente');
+  assert.equal(restored.vendedorRepresentante, 'pendiente');
+  assert.ok(dossierStatus(restored).alerts.some(alert => alert.includes('propietarios')));
+  assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'VENDEDOR_PODER'), restored), false);
+});
+test('seller marriage certificate is optional for natural persons and allows multiple files', () => {
+  const key = 'VENDEDOR_PARTIDA_MATRIMONIAL';
+  const item = (config, files = [], operation = 'venta') => dossierStatus(config, files, operation).items.find(item => item.key === key);
+  assert.equal(DOCUMENT_TYPES.has(key), true);
+  assert.equal(item(natural()).state, 'opcional');
+  assert.equal(item(natural(), [file(key), file(key)]).documents.length, 2);
+  assert.equal(item(natural(), [file(key)]).state, 'completo');
+  assert.equal(item({ ...natural(), vendedorTipo: 'juridica' }).state, 'no_aplica');
+  assert.equal(item(natural(), [], 'alquiler'), undefined);
+  assert.equal(dossierDocuments.some(item => item.key === 'COMPRADOR_PARTIDA_MATRIMONIAL'), false);
+});
 test('seller and buyer independently change identification by person type', () => {
   const result = dossierStatus({ ...natural(), compradorTipo: 'juridica' });
   const item = key => result.items.find(item => item.key === key);
