@@ -36,11 +36,20 @@ La consulta y corrección de datos reales está pendiente: esta sesión no dispo
 
 - 37 archivos unitarios aprobados; incluyen monedas independientes, compatibilidad de ediciones parciales, rechazo de monedas inválidas y detección de notas ambiguas.
 - ESLint sin advertencias y TypeScript aprobado.
-- Compilación de producción Next.js webpack aprobada con MySQL local aislado, 57 páginas. Los cambios menores posteriores de mensajes e historial se verificaron con TypeScript y ESLint; Vercel compilará el árbol final.
+- Compilación de producción Next.js webpack aprobada con MySQL local aislado, 57 páginas. Los cambios menores posteriores de mensajes e historial se verificaron con TypeScript y ESLint; el árbol final también completó el build de Vercel.
 - Integración HTTP contra MySQL 8.4 desechable: registro mixto PEN/USD, validación, permisos, lectura en APIs de tasación/publicación/ficha/Cartera, edición de los tres montos, conservación en PATCH parcial, etapa intacta y anuncio pendiente al cambiar solo moneda. Aprobada. Las escrituras son exclusivamente ficticias y locales.
 - Instalador probado dos veces sobre tablas antiguas ficticias: añade columnas PEN sin modificar números ni notas; segunda ejecución sin cambios.
 - Navegador Chromium autenticado, escritorio 1440 px y móvil 375 px: editor con tres selectores, cambio de monedas y guardado real exclusivamente local; sin errores de ejecución ni desbordes. Captura móvil revisada.
 
 ## Publicación
 
-Pendiente de registrar SHA y estado real de Vercel después de enviar la entrega. La comprobación pública del login no sustituye una prueba autenticada de las pantallas ni la revisión de observaciones reales.
+- Código funcional: `2ca23691ffc21bebc86accef511811bf0aedbf8a`, enviado a `origin/main`.
+- Vercel: `H53SMLfwCkX6nnVJxARWMe6q56HH`; estado GitHub **success**, «Deployment has completed».
+- Production GitHub: `7290300509`, **success**, `2026-10-23T22:40:17Z`, para el mismo SHA.
+- URL de versión: https://inmobiliaria-alfarov2-dnmz68isn-puma19.vercel.app.
+- Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe. Comprobación pública posterior: ruta de registro redirige a /login (307), login responde 200.
+- El comando de build configurado ejecuta la preparación aditiva de columnas antes de compilar; la entrega completada implica que esa comprobación/preparación y la compilación terminaron sin errores. No se consultaron filas de clientes desde esta sesión.
+- Sin prueba autenticada de pantallas en producción: no se dispone de credenciales ni sesión en este entorno. Las verificaciones de guardado se realizaron en MySQL local aislado, cuyas cuentas, datos y contenedor se retiraron al terminar.
+- La búsqueda/corrección de observaciones reales en dólares permanece pendiente del acceso privado. No se cambiaron monedas de clientes por inferencia.
+
+Este cierre documental mantiene el código funcional publicado. La comprobación pública del login no sustituye una prueba autenticada de las pantallas ni la revisión de observaciones reales.

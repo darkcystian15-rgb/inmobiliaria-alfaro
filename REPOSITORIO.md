@@ -1,6 +1,6 @@
 # Tasaciones con moneda por monto
 
-Actualización del 23 de octubre: [Nuevos nombres, soles/dólares, edición compartida y despliegue](docs/tasaciones-nombres-monedas-2026-10-23.md).
+Publicación del 23 de octubre: [Nuevos nombres, soles/dólares, edición compartida y despliegue](docs/tasaciones-nombres-monedas-2026-10-23.md). Código `2ca2369`, Production GitHub `7290300509` **success**. La revisión de observaciones reales en dólares sigue pendiente del acceso privado a datos.
 
 # Repositorio y estado de entrega
 
