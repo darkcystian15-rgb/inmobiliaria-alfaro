@@ -1,4 +1,5 @@
 "use client";
+import { formatPrice } from "@/lib/prices.mjs";
 import ResumeSale from "@/app/components/ResumeSale";
 import ZoneFolderCard from "@/app/components/ZoneFolderCard";
 import { useZoneWorkspace } from "@/app/components/ZoneWorkspace";
@@ -77,7 +78,7 @@ type Inmueble = {
   tipoHistorico?: string | null;
   puedeRetomar?: boolean;
   propietario: string;
-  precioVenta: string | null;
+  precioVenta: string | null; precioVentaMoneda?: string;
   actividades: Actividades;
   visitaPendiente: boolean;
   tasacionPendiente: boolean;
@@ -277,9 +278,7 @@ function cardTheme(item: Inmueble) {
   return cardThemes.seguimiento;
 }
 
-function salePrice(value: string | null) {
-  return value ? `S/ ${Number(value).toLocaleString("es-PE", { maximumFractionDigits: 2 })}` : "Por definir";
-}
+
 
 export default function CarteraPage() {
   const {zones:catalogoZonas,zone:zonaActual}=useZoneWorkspace();
@@ -650,7 +649,7 @@ export default function CarteraPage() {
 
                         </div>
                         <div className="mt-auto pt-4">
-                          <div className="border-t border-slate-100 pt-3"><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{priceLabel(x.operacion)}</p><p className={`mt-1 break-words text-base font-bold tracking-tight ${x.precioVenta ? "text-slate-900" : "text-slate-500"}`}>{salePrice(x.precioVenta)}{x.operacion === "alquiler" ? " / mes" : ""}</p></div>
+                          <div className="border-t border-slate-100 pt-3"><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{priceLabel(x.operacion)}</p><p className={`mt-1 break-words text-base font-bold tracking-tight ${x.precioVenta ? "text-slate-900" : "text-slate-500"}`}>{formatPrice(x.precioVenta, x.precioVentaMoneda)}{x.operacion === "alquiler" ? " / mes" : ""}</p></div>
                           <p className="mt-3 text-xs font-semibold text-[#c80000] group-hover:text-[#a90000]">Ver detalle <span aria-hidden="true">→</span></p>
                         </div>
                       </> : <div className="flex flex-1 flex-col items-center justify-center py-6 text-center"><p className="text-xs font-semibold text-slate-500">Disponible</p><p className="mt-1 text-xs leading-4 text-slate-500">Lista para un nuevo inmueble</p></div>}

@@ -10,9 +10,9 @@ async function property(key:string){const [row]=await db.select({id:inmInmuebles
 export async function GET(_request:Request,context:{params:Promise<{id:string}>}){
  const auth=await authorizeApi(undefined,'informacion');if(auth.response)return auth.response;
  try{const row=await property((await context.params).id);if(!row)return NextResponse.json({error:'Inmueble no encontrado.'},{status:404});
- const items=await db.select({id:inmAnuncios.id,canal:inmAnuncios.canal,enlace:inmAnuncios.enlace,fechaPublicacion:inmAnuncios.fechaPublicacion,precioPublicado:inmAnuncios.precioPublicado,actualizado:inmAnuncios.actualizado,precioVenta:inmTasaciones.precioVenta,revisionTexto:inmAnuncios.revisionTexto}).from(inmAnuncios).leftJoin(inmTasaciones,eq(inmTasaciones.inmuebleId,inmAnuncios.inmuebleId)).where(eq(inmAnuncios.inmuebleId,row.id));
+ const items=await db.select({id:inmAnuncios.id,canal:inmAnuncios.canal,enlace:inmAnuncios.enlace,fechaPublicacion:inmAnuncios.fechaPublicacion,precioPublicado:inmAnuncios.precioPublicado,precioPublicadoMoneda:inmAnuncios.precioPublicadoMoneda,precioVentaMoneda:inmTasaciones.precioVentaMoneda,actualizado:inmAnuncios.actualizado,precioVenta:inmTasaciones.precioVenta,revisionTexto:inmAnuncios.revisionTexto}).from(inmAnuncios).leftJoin(inmTasaciones,eq(inmTasaciones.inmuebleId,inmAnuncios.inmuebleId)).where(eq(inmAnuncios.inmuebleId,row.id));
  const changes=await db.select({id:inmTimeline.id}).from(inmTimeline).where(and(eq(inmTimeline.inmuebleId,row.id),eq(inmTimeline.evento,'publicacion_actualizada')));
- return NextResponse.json({items:items.map(item=>({...item,pendiente:!item.precioVenta||Number(item.precioVenta)!==Number(item.precioPublicado)||changes.some(change=>change.id>item.revisionTexto)}))});
+ return NextResponse.json({items:items.map(item=>({...item,pendiente:!item.precioVenta||Number(item.precioVenta)!==Number(item.precioPublicado)||item.precioVentaMoneda!==item.precioPublicadoMoneda||changes.some(change=>change.id>item.revisionTexto)}))});
  }catch{return NextResponse.json({error:'No se pudieron consultar los anuncios.'},{status:500});}
 }
 async function save(request:Request,context:{params:Promise<{id:string}>}){

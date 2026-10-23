@@ -1,3 +1,7 @@
+# Tasaciones con moneda por monto
+
+Actualización del 23 de octubre: [Nuevos nombres, soles/dólares, edición compartida y despliegue](docs/tasaciones-nombres-monedas-2026-10-23.md).
+
 # Información del inmueble por carpetas
 
 Nueva entrega del 22 de octubre: [Explorador de zonas, inmuebles y carpetas; conservación y respaldo](docs/informacion-inmueble-carpetas-2026-10-22.md).

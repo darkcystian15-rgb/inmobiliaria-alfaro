@@ -1,10 +1,10 @@
 import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { appraisalAfterVisit } from "@/lib/workflow-dates.mjs";
-import { priceLabel } from "@/lib/operation.mjs";
+import { priceLabel, referenceLabel, targetLabel } from "@/lib/operation.mjs";
 import { authorizeApi } from "@/lib/auth";
 import { parseBusinessDate } from "@/lib/calendar.mjs";
-import { parsePrice } from "@/lib/prices.mjs";
+import { appraisalPrices, formatPrice } from "@/lib/prices.mjs";
 import { NextResponse } from "next/server";
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -21,16 +21,13 @@ function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function toMoney(value: unknown) {
-  return parsePrice(value);
-}
 
 type TasacionRow = {
   zona: string; zonaId: number | null; inmuebleId: number; codigo: string; posicion: number | null; referencia: string; tipo: string; operacion: string;
   distrito: string | null; provincia: string | null; departamento: string | null; direccion: string | null;
   propietarioNombres: string | null; propietarioApellidos: string | null;
   tasacionId?: number; fechaTasacion?: Date | string | null; valorReferencia?: string | null;
-  precioObjetivo?: string | null; precioVenta?: string | null; situacion?: string | null; observacion?: string | null;
+  valorReferenciaMoneda?: string; precioObjetivoMoneda?: string; precioVentaMoneda?: string; precioObjetivo?: string | null; precioVenta?: string | null; situacion?: string | null; observacion?: string | null;
 };
 
 function mapRow(row: TasacionRow) {
@@ -55,8 +52,11 @@ function mapRow(row: TasacionRow) {
         .join(" ") || "Sin contacto",
     fechaTasacion: row.fechaTasacion ?? null,
     valorReferencia: row.valorReferencia ?? null,
+    valorReferenciaMoneda: row.valorReferenciaMoneda ?? "PEN",
     precioObjetivo: row.precioObjetivo ?? null,
+    precioObjetivoMoneda: row.precioObjetivoMoneda ?? "PEN",
     precioVenta: row.precioVenta ?? null,
+    precioVentaMoneda: row.precioVentaMoneda ?? "PEN",
     situacion: row.situacion ?? null,
     observacion: row.observacion ?? null,
   };
@@ -136,8 +136,11 @@ export async function GET(request: Request) {
         posicion: inmPosiciones.numero,
         fechaTasacion: inmTasaciones.fechaTasacion,
         valorReferencia: inmTasaciones.valorReferencia,
+        valorReferenciaMoneda: inmTasaciones.valorReferenciaMoneda,
         precioObjetivo: inmTasaciones.precioObjetivo,
+        precioObjetivoMoneda: inmTasaciones.precioObjetivoMoneda,
         precioVenta: inmTasaciones.precioVenta,
+        precioVentaMoneda: inmTasaciones.precioVentaMoneda,
         situacion: inmTasaciones.situacion,
         observacion: inmTasaciones.observacion,
       })
@@ -201,14 +204,11 @@ export async function POST(request: Request) {
     const inmuebleId = Number(body.inmuebleId);
     const fechaTasacion = clean(body.fechaTasacion);
     const situacion = "aprobado";
-    const valorReferencia = toMoney(body.valorReferencia);
-    const precioObjetivo = toMoney(body.precioObjetivo);
-    const precioVenta = toMoney(body.precioVenta);
-    const observacion = clean(body.observacion);
-
-    if (![valorReferencia, precioObjetivo, precioVenta].every(value => value && Number(value) > 0)) {
-      return NextResponse.json({ ok: false, error: "Ingresa los tres precios, mayores que cero." }, { status: 400 });
+    let prices;
+    try { prices = appraisalPrices(body); } catch (error) {
+      return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
     }
+    const observacion = clean(body.observacion);
 
     if (!Number.isInteger(inmuebleId) || inmuebleId <= 0) {
       return NextResponse.json(
@@ -259,9 +259,7 @@ export async function POST(request: Request) {
       await tx.insert(inmTasaciones).values({
         inmuebleId,
         fechaTasacion: fecha,
-        valorReferencia,
-        precioObjetivo,
-        precioVenta,
+        ...prices,
         situacion,
         observacion: observacion || null,
         usuarioId: user.id,
@@ -318,8 +316,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ ok: false, error: "Solicitud no válida." }, { status: 400 });
   }
   const inmuebleId = Number(body?.inmuebleId);
-  const precioVenta = parsePrice(body?.precioVenta);
-  if (!Number.isSafeInteger(inmuebleId) || inmuebleId <= 0 || !precioVenta ||
+  if (!Number.isSafeInteger(inmuebleId) || inmuebleId <= 0 || !body ||
       (body.observacion !== undefined && typeof body.observacion !== "string")) {
     return NextResponse.json({ ok: false, error: "Ingresa un precio válido, mayor que cero y con hasta dos decimales." }, { status: 400 });
   }
@@ -332,19 +329,19 @@ export async function PATCH(request: Request) {
         .where(eq(inmTasaciones.inmuebleId, inmuebleId)).limit(1).for("update");
       if (!tasacion) throw new Error("El inmueble no tiene una tasación registrada.");
       const observacion = body.observacion === undefined ? tasacion.observacion : body.observacion.trim() || null;
-      if (precioVenta === tasacion.precioVenta && observacion === tasacion.observacion) return { precioVenta };
-      await tx.update(inmTasaciones).set({ precioVenta, observacion })
-        .where(eq(inmTasaciones.id, tasacion.id));
+      const prices = appraisalPrices(body, tasacion);
+      if (Object.entries(prices).every(([key, value]) => tasacion[key as keyof typeof tasacion] === value) && observacion === tasacion.observacion) return prices;
+      await tx.update(inmTasaciones).set({ ...prices, observacion }).where(eq(inmTasaciones.id, tasacion.id));
       await tx.insert(inmTimeline).values({
         inmuebleId, evento: property.operacion === "alquiler" ? "renta_mensual_actualizada" : "precio_venta_actualizado", usuarioId: auth.user.id,
-        observacion: `${priceLabel(property.operacion)}: S/ ${tasacion.precioVenta ?? "sin registrar"} → S/ ${precioVenta}. Observación: ${observacion ?? "sin observación"}`,
+        observacion: ["valorReferencia", "precioObjetivo", "precioVenta"].map((key, index) => `${[referenceLabel(property.operacion), targetLabel(property.operacion), priceLabel(property.operacion)][index]}: ${formatPrice(tasacion[key as keyof typeof tasacion], String(tasacion[`${key}Moneda` as keyof typeof tasacion]))} → ${formatPrice(prices[key], prices[`${key}Moneda`])}`).join(". ") + `. Observación: ${observacion ?? "sin observación"}`,
       });
-      return { precioVenta };
+      return prices;
     });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo actualizar el precio o la renta mensual.";
-    return NextResponse.json({ ok: false, error: /no tiene|no está activo/.test(message) ? message : "No se pudo actualizar el precio o la renta mensual." },
-      { status: /no tiene|no está activo/.test(message) ? 409 : 500 });
+    return NextResponse.json({ ok: false, error: /no tiene|no está activo|tres importes/.test(message) ? message : "No se pudo actualizar el precio o la renta mensual." },
+      { status: /tres importes/.test(message) ? 400 : /no tiene|no está activo/.test(message) ? 409 : 500 });
   }
 }

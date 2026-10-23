@@ -60,8 +60,11 @@ async function findProperty(key: string) {
       tasacionId: inmTasaciones.id,
       fechaTasacion: inmTasaciones.fechaTasacion,
       valorReferencia: inmTasaciones.valorReferencia,
+        valorReferenciaMoneda: inmTasaciones.valorReferenciaMoneda,
       precioObjetivo: inmTasaciones.precioObjetivo,
+        precioObjetivoMoneda: inmTasaciones.precioObjetivoMoneda,
       precioVenta: inmTasaciones.precioVenta,
+        precioVentaMoneda: inmTasaciones.precioVentaMoneda,
       situacionTasacion: inmTasaciones.situacion,
       observacionTasacion: inmTasaciones.observacion,
       publicacionId: inmPublicaciones.id,
@@ -92,7 +95,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const row = await findProperty(key);
     if (!row) return NextResponse.json({ error: "Inmueble no encontrado." }, { status: 404 });
 
-    const { visitaRealizada, tasacionId, fechaTasacion, valorReferencia, precioObjetivo, precioVenta, situacionTasacion, observacionTasacion, publicacionId, textoPublicacion, enlacePublicacion, publicado, fechaPublicacion, ...inmueble } = row;
+    const { visitaRealizada, tasacionId, fechaTasacion, valorReferencia, precioObjetivo, precioVenta, valorReferenciaMoneda, precioObjetivoMoneda, precioVentaMoneda, situacionTasacion, observacionTasacion, publicacionId, textoPublicacion, enlacePublicacion, publicado, fechaPublicacion, ...inmueble } = row;
 
     const expediente = (await publicationReadiness(db, row.id)).get(row.id);
     const dossier = await readDossier(row.id);
@@ -109,7 +112,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       venta: venta ?? null,
       alquiler: alquiler ?? null,
       progreso: { estado: row.estado, visitaRealizada: Boolean(visitaRealizada), tasacionRegistrada: Boolean(tasacionId), situacionTasacion, publicado: Boolean(publicado), expedienteCompleto: Boolean(expediente?.complete) },
-      tasacion: tasacionId ? { id: tasacionId, fechaTasacion, valorReferencia, precioObjetivo, precioVenta, situacion: situacionTasacion, observacion: observacionTasacion } : null,
+      tasacion: tasacionId ? { id: tasacionId, fechaTasacion, valorReferencia, precioObjetivo, precioVenta, valorReferenciaMoneda, precioObjetivoMoneda, precioVentaMoneda, situacion: situacionTasacion, observacion: observacionTasacion } : null,
       publicacion: publicacionId ? { id: publicacionId, texto: textoPublicacion, enlace: enlacePublicacion, publicado, fechaPublicacion } : null,
     });
   } catch (error) {

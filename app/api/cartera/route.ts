@@ -125,6 +125,7 @@ export async function GET(request: Request) {
         situacion: inmTasaciones.situacion,
         fechaTasacion: inmTasaciones.fechaTasacion,
         precioVenta: inmTasaciones.precioVenta,
+        precioVentaMoneda: inmTasaciones.precioVentaMoneda,
       })
       .from(inmTasaciones)
       .where(inArray(inmTasaciones.inmuebleId, inmuebleIds))
@@ -206,7 +207,7 @@ export async function GET(request: Request) {
         existe: boolean;
         situacion: string | null;
         fechaTasacion: Date | string | null;
-        precioVenta: string | null;
+        precioVenta: string | null; precioVentaMoneda: string;
       }
     >();
 
@@ -216,7 +217,7 @@ export async function GET(request: Request) {
           existe: true,
           situacion: tasacion.situacion,
           fechaTasacion: tasacion.fechaTasacion,
-          precioVenta: tasacion.precioVenta,
+          precioVenta: tasacion.precioVenta, precioVentaMoneda: tasacion.precioVentaMoneda,
         });
       }
     }
@@ -319,7 +320,7 @@ const materialPendiente =
         zonaId: row.zonaId,
         operacion: row.operacion,
         direccion: row.direccion || null,
-        precioVenta: tasacion?.precioVenta ?? null,
+        precioVenta: tasacion?.precioVenta ?? null, precioVentaMoneda: tasacion?.precioVentaMoneda ?? "PEN",
 
         estado:
           estadoNormalizado === "activo"

@@ -169,8 +169,11 @@ export const inmTasaciones = mysqlTable("inm_tasaciones", {
   inmuebleId: bigint("inmueble_id", { mode: "number", unsigned: true }).notNull().references(() => inmInmuebles.id),
   fechaTasacion: date("fecha_tasacion").notNull(),
   valorReferencia: decimal("valor_referencia", { precision: 15, scale: 2 }),
+  valorReferenciaMoneda: varchar("valor_referencia_moneda", { length: 3 }).notNull().default("PEN"),
   precioObjetivo: decimal("precio_objetivo", { precision: 15, scale: 2 }),
+  precioObjetivoMoneda: varchar("precio_objetivo_moneda", { length: 3 }).notNull().default("PEN"),
   precioVenta: decimal("precio_venta", { precision: 15, scale: 2 }),
+  precioVentaMoneda: varchar("precio_venta_moneda", { length: 3 }).notNull().default("PEN"),
   situacion: varchar("situacion", { length: 30 }).notNull().default("pendiente_aprobacion"),
   observacion: text("observacion"),
   usuarioId: bigint("usuario_id", { mode: "number", unsigned: true }).notNull().references(() => inmUsuarios.id),
@@ -293,6 +296,7 @@ export const inmAnuncios = mysqlTable("inm_anuncios", {
   enlace: varchar("enlace", {length: 1000}).notNull(),
   fechaPublicacion: date("fecha_publicacion", {mode: "string"}).notNull(),
   precioPublicado: decimal("precio_publicado", {precision:15,scale:2}).notNull(),
+  precioPublicadoMoneda: varchar("precio_publicado_moneda", {length:3}).notNull().default("PEN"),
   actualizado: timestamp("actualizado", {mode: "date"}).defaultNow().onUpdateNow().notNull(),
 }, table => ({inmuebleIdx:index("idx_anuncios_inmueble").on(table.inmuebleId)}));
 

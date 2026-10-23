@@ -1,0 +1,3 @@
+{
+  "buildCommand": "node scripts/install-appraisal-currencies.mjs --apply && npm run build -- --webpack"
+}

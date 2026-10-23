@@ -1,3 +1,7 @@
+# Tasaciones con moneda por monto
+
+Actualización del 23 de octubre: [Nuevos nombres, soles/dólares, edición compartida y despliegue](docs/tasaciones-nombres-monedas-2026-10-23.md).
+
 # Repositorio y estado de entrega
 
 Actualización del 20 de octubre publicada: [Carga por arrastre en expedientes y fotos](docs/carga-por-arrastre-2026-10-20.md). Documentos de venta/alquiler y fotos admiten arrastrar archivos o seleccionarlos con el botón; se conservan categorías, nombres y validaciones. Código `d19abd2`, Production `dpl_3bd3UzHm5z2DnEKoRDLLJQS6VD8Z`, **READY**, con ocho vistas verificadas en el dominio sin subidas reales ni escrituras de negocio.

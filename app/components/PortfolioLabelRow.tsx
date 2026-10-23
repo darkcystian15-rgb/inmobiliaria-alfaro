@@ -1,3 +1,4 @@
+import { formatPrice } from "@/lib/prices.mjs";
 import PropertySummary from "@/app/components/PropertySummary";
 import FolderIcon from "./FolderIcon";
 
@@ -11,7 +12,7 @@ type Property = {
   distrito: string | null;
   estado: string;
   tipoHistorico?: string | null;
-  precioVenta: string | null;
+  precioVenta: string | null; precioVentaMoneda?: string;
   visitaPendiente: boolean;
   tasacionPendiente: boolean;
   materialPendiente: boolean;
@@ -39,7 +40,7 @@ export default function PortfolioLabelRow({ property: x, onOpen }: { property: P
     if (x.negociacionEnCurso) states.push({ label: "Seguimiento anterior", tone: "material" });
     if (!states.length) states.push({ label: "En seguimiento", tone: "material" });
   }
-  const price = x.precioVenta ? `S/ ${Number(x.precioVenta).toLocaleString("es-PE", { maximumFractionDigits: 2 })}` : "Por definir";
+  const price = x.precioVenta ? formatPrice(x.precioVenta, x.precioVentaMoneda) : "Por definir";
 
   return <button type="button" onClick={onOpen} aria-label={`Ver detalle de ${x.propietario || "Sin contacto"}, ${x.posicion ? `posición ${x.posicion}` : "sin posición"}`} className="group grid w-full grid-cols-[4rem_minmax(0,1fr)] items-start gap-3 px-4 py-4 text-left transition hover:bg-red-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000] sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:items-center">
     <span className="flex min-h-8 items-center gap-2"><span className="font-mono text-sm font-semibold text-slate-500">{x.posicion ? String(x.posicion).padStart(2, "0") : "—"}</span><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /></span>

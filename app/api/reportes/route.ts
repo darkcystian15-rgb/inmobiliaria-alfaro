@@ -1,3 +1,4 @@
+import { formatPrice } from "@/lib/prices.mjs";
 import { reportCatalog } from '@/lib/report-catalog.mjs';
 import { workflowTasks } from '@/lib/workflow-tasks';
 import { inReportPeriod } from '@/lib/report-period.mjs';
@@ -461,7 +462,7 @@ export async function GET(request: NextRequest) {
         zona:x.zona,
         tipo: normalizarTipo(x.tipo),
         operacion: x.operacion === "alquiler" ? "Alquiler" : "Venta",
-        rentaMensualSolicitada: x.operacion === "alquiler" ? tasacion?.precioVenta ?? null : null,
+        rentaMensualSolicitada: x.operacion === "alquiler" ? tasacion?.precioVenta ? formatPrice(tasacion.precioVenta, tasacion.precioVentaMoneda) : null : null,
         direccion: x.direccion,
         ubicacion: propertyAddress(x),
         propietario:
@@ -484,14 +485,7 @@ export async function GET(request: NextRequest) {
         tasacionRegistrada: Boolean(tasacion),
         tasacionPendiente,
         fechaTasacion: tasacion?.fechaTasacion ? new Date(tasacion.fechaTasacion).toISOString().slice(0,10) : null,
-        tasacion:
-          tasacion && x.operacion !== "alquiler"
-            ? Number(
-                tasacion.precioObjetivo ??
-                  tasacion.valorReferencia ??
-                  0,
-              )
-            : null,
+        tasacion: tasacion && x.operacion !== "alquiler" ? (tasacion.precioObjetivo ? formatPrice(tasacion.precioObjetivo, tasacion.precioObjetivoMoneda) : tasacion.valorReferencia ? formatPrice(tasacion.valorReferencia, tasacion.valorReferenciaMoneda) : null) : null,
         situacionTasacion:
           tasacion?.situacion ?? null,
         aprobacionPendiente,

@@ -242,7 +242,7 @@ export default function Page() {
     ubicacion: "Ubicación",
     tipo: "Tipo",
     operacion: "Operación",
-    rentaMensualSolicitada: "Renta mensual solicitada (S/)",
+    rentaMensualSolicitada: "Renta mensual de salida",
     fechaAlquiler: "Fecha de cierre del alquiler",
     rentaMensual: "Renta mensual acordada (S/)",
     garantia: "Garantía (S/)",
@@ -255,7 +255,7 @@ export default function Page() {
     fechaRegistro: "Registro",
     fechaVisita: "Visita",
     fechaTasacion: "Tasación",
-    tasacion: "Precio objetivo",
+    tasacion: "Precio de cierre aceptado por propietario",
     situacionTasacion:
       "Situación tasación",
     estadoNegociacion:

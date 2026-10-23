@@ -37,8 +37,11 @@ const mapPending = (row: Awaited<ReturnType<typeof approved>>[number]) => ({
       .filter(Boolean)
       .join(" ") || "Sin contacto",
   valorReferencia: row.valorReferencia,
+  valorReferenciaMoneda: row.valorReferenciaMoneda,
   precioObjetivo: row.precioObjetivo,
+  precioObjetivoMoneda: row.precioObjetivoMoneda,
   precioVenta: row.precioVenta,
+  precioVentaMoneda: row.precioVentaMoneda,
   observacion: row.observacion,
 });
 
@@ -62,8 +65,11 @@ async function approved(scope: ReturnType<typeof zoneCondition>) {
       propietarioApellidos: sql<string>`NULL`,
       posicion: inmPosiciones.numero,
       valorReferencia: inmTasaciones.valorReferencia,
+        valorReferenciaMoneda: inmTasaciones.valorReferenciaMoneda,
       precioObjetivo: inmTasaciones.precioObjetivo,
+        precioObjetivoMoneda: inmTasaciones.precioObjetivoMoneda,
       precioVenta: inmTasaciones.precioVenta,
+        precioVentaMoneda: inmTasaciones.precioVentaMoneda,
       observacion: inmTasaciones.observacion,
       situacion: inmTasaciones.situacion,
     })

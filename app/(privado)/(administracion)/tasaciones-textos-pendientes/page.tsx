@@ -37,6 +37,7 @@ type Item = {
   tipo: string;
   operacion: string;
   propietario: string;
+  valorReferenciaMoneda?: string; precioObjetivoMoneda?: string; precioVentaMoneda?: string;
   valorReferencia?: string | null;
   precioObjetivo?: string | null;
   precioVenta?: string | null;

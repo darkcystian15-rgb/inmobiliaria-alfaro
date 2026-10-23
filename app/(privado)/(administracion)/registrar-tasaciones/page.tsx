@@ -1,4 +1,6 @@
 "use client";
+import CurrencySelect from "@/app/components/CurrencySelect";
+import { formatPrice } from "@/lib/prices.mjs";
 import { zoneUrl } from "@/lib/zone-url";
 import PropertyTaskSearch from "@/app/components/PropertyTaskSearch";
 import { filterTaskProperties } from "@/lib/property-task-list.mjs";
@@ -40,6 +42,7 @@ type Tasacion = {
   valorReferencia?: string | null;
   precioObjetivo?: string | null;
   precioVenta?: string | null;
+  valorReferenciaMoneda?: string; precioObjetivoMoneda?: string; precioVentaMoneda?: string;
   situacion?: string | null;
   observacion?: string | null;
 };
@@ -52,6 +55,7 @@ export default function Page() {
   const [valores, setValores] = useState<Record<number, string>>({});
   const [precios, setPrecios] = useState<Record<number, string>>({});
   const [ventas, setVentas] = useState<Record<number, string>>({});
+  const [monedas, setMonedas] = useState<Record<number, Record<string, string>>>({});
   const [observaciones, setObservaciones] = useState<Record<number, string>>({});
   const [mensaje, setMensaje] = useState("");
   const [siguienteAccion, setSiguienteAccion] = useState<NextRegistrationAction | null>(null);
@@ -104,6 +108,9 @@ export default function Page() {
         body: JSON.stringify({
           inmuebleId: item.inmuebleId,
           fechaTasacion: fecha,
+          valorReferenciaMoneda: monedas[item.inmuebleId]?.valorReferencia ?? "PEN",
+          precioObjetivoMoneda: monedas[item.inmuebleId]?.precioObjetivo ?? "PEN",
+          precioVentaMoneda: monedas[item.inmuebleId]?.precioVenta ?? "PEN",
           valorReferencia: valores[item.inmuebleId] || null,
           precioObjetivo: precios[item.inmuebleId] || null,
           precioVenta: ventas[item.inmuebleId],
@@ -113,6 +120,7 @@ export default function Page() {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || "No fue posible registrar la tasación.");
       for(const setter of [setFechas,setValores,setPrecios,setVentas,setObservaciones])setter(current=>{const next={...current};delete next[item.inmuebleId];return next;});
+      setMonedas(current=>{const next={...current};delete next[item.inmuebleId];return next;});
       setMensaje(`Tasación de “${item.nombre}” registrada correctamente.`);
       setSiguienteAccion({ href: `/tasaciones-textos-pendientes?inmueble=${item.inmuebleId}#material`, label: "Preparar documentos y texto de este inmueble" });
       setCargando(true);
@@ -127,7 +135,7 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-background p-5 lg:p-8">
       <div className="mx-auto max-w-6xl">
-      <DraftRecovery draftKey="tasaciones:actual" data={{fechas,valores,precios,ventas,observaciones}} dirty={[fechas,valores,precios,ventas,observaciones].some(record=>Object.values(record).some(Boolean))} onRestore={draft=>{if(draft.fechas)setFechas(draft.fechas as Record<number,string>);if(draft.valores)setValores(draft.valores as Record<number,string>);if(draft.precios)setPrecios(draft.precios as Record<number,string>);if(draft.ventas)setVentas(draft.ventas as Record<number,string>);if(draft.observaciones)setObservaciones(draft.observaciones as Record<number,string>);}}/>
+      <DraftRecovery draftKey="tasaciones:actual" data={{fechas,valores,precios,ventas,observaciones,monedas}} dirty={[fechas,valores,precios,ventas,observaciones].some(record=>Object.values(record).some(Boolean))} onRestore={draft=>{if(draft.monedas)setMonedas(draft.monedas as Record<number,Record<string,string>>);if(draft.fechas)setFechas(draft.fechas as Record<number,string>);if(draft.valores)setValores(draft.valores as Record<number,string>);if(draft.precios)setPrecios(draft.precios as Record<number,string>);if(draft.ventas)setVentas(draft.ventas as Record<number,string>);if(draft.observaciones)setObservaciones(draft.observaciones as Record<number,string>);}}/>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <PageHeading href="/registrar-tasaciones" /><ReturnLink />
           <Link href="/tasaciones-textos-pendientes" className="cartera-folder-navigation inline-flex items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 shadow-sm hover:bg-violet-100">Ver seguimiento →</Link>
@@ -170,9 +178,9 @@ export default function Page() {
                       </div>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <label className="text-xs font-semibold text-slate-600">Fecha de tasación *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!fechas[item.inmuebleId] && "Indica la fecha de la tasación."} help="Usa la fecha real de la tasación."><input type="date" max={hoy} value={fechas[item.inmuebleId] ?? ""} onChange={(e) => setFechas(a => ({...a,[item.inmuebleId]:e.target.value}))} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label>
-                        <label className="text-xs font-semibold text-slate-600">{referenceLabel(item.operacion)} *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(valores[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Valor de referencia de la tasación; importe en soles."><input type="number" min="0" step="0.01" value={valores[item.inmuebleId] ?? ""} onChange={(e) => setValores(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder={item.operacion === "alquiler" ? "1500" : "320000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label>
-                        <label className="text-xs font-semibold text-slate-600">{targetLabel(item.operacion)} *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(precios[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Importe objetivo acordado con el propietario, en soles."><input type="number" min="0" step="0.01" value={precios[item.inmuebleId] ?? ""} onChange={(e) => setPrecios(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder={item.operacion === "alquiler" ? "1500" : "315000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label>
-                        <label className="text-xs font-semibold text-slate-600">{priceLabel(item.operacion)} acordada/o *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(ventas[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Precio final acordado o renta mensual, según la operación."><input type="number" min="0.01" step="0.01" value={ventas[item.inmuebleId] ?? ""} onChange={e => setVentas(a => ({ ...a, [item.inmuebleId]: e.target.value }))} placeholder={item.operacion === "alquiler" ? "1500" : "450000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label>
+                        <div><label className="text-xs font-semibold text-slate-600">{referenceLabel(item.operacion)} *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(valores[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Valor de referencia de la tasación; elige soles o dólares."><input type="number" min="0" step="0.01" value={valores[item.inmuebleId] ?? ""} onChange={(e) => setValores(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder={item.operacion === "alquiler" ? "1500" : "320000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label><CurrencySelect label={referenceLabel(item.operacion)} value={monedas[item.inmuebleId]?.valorReferencia ?? "PEN"} onChange={value => setMonedas(current => ({...current, [item.inmuebleId]: {...current[item.inmuebleId], valorReferencia: value}}))} /></div>
+                        <div><label className="text-xs font-semibold text-slate-600">{targetLabel(item.operacion)} *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(precios[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Importe objetivo acordado con el propietario; elige soles o dólares."><input type="number" min="0" step="0.01" value={precios[item.inmuebleId] ?? ""} onChange={(e) => setPrecios(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder={item.operacion === "alquiler" ? "1500" : "315000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label><CurrencySelect label={targetLabel(item.operacion)} value={monedas[item.inmuebleId]?.precioObjetivo ?? "PEN"} onChange={value => setMonedas(current => ({...current, [item.inmuebleId]: {...current[item.inmuebleId], precioObjetivo: value}}))} /></div>
+                        <div><label className="text-xs font-semibold text-slate-600">{priceLabel(item.operacion)} *<FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(ventas[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Precio de salida al mercado o renta mensual, según la operación."><input type="number" min="0.01" step="0.01" value={ventas[item.inmuebleId] ?? ""} onChange={e => setVentas(a => ({ ...a, [item.inmuebleId]: e.target.value }))} placeholder={item.operacion === "alquiler" ? "1500" : "450000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label><CurrencySelect label={priceLabel(item.operacion)} value={monedas[item.inmuebleId]?.precioVenta ?? "PEN"} onChange={value => setMonedas(current => ({...current, [item.inmuebleId]: {...current[item.inmuebleId], precioVenta: value}}))} /></div>
                       </div>
                       <label className="text-xs font-semibold text-slate-600">Observación<textarea rows={3} value={observaciones[item.inmuebleId] ?? ""} onChange={(e) => setObservaciones(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder="Precio conversado, ajustes, comentarios del propietario..." className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
                       <div className="sticky bottom-3 z-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-background p-4 shadow-sm sm:static sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-slate-500">Al guardar confirmas que el precio o renta mensual ya fue acordado con el propietario.</p><button disabled={guardando === item.inmuebleId} onClick={() => registrar(item)} className="rounded-xl bg-violet-700 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{guardando === item.inmuebleId ? "Guardando..." : "Registrar tasación"}</button></div>
@@ -189,7 +197,7 @@ export default function Page() {
           <div className="divide-y divide-slate-100">
             {aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadasFiltradas.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones negociadas que coincidan con la búsqueda.</div> : aprobadasFiltradas.map(item => (
               <div key={item.inmuebleId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
-                <div><p className="font-semibold text-slate-900">{item.propietario || "Sin contacto"}</p><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)} · {operationLabel(item.operacion)} · posición {item.posicion} · {item.ubicacion}</p><p className="mt-1 text-xs text-slate-500">{referenceLabel(item.operacion)}: {item.valorReferencia ? `S/ ${item.valorReferencia}` : "sin valor"}{item.precioObjetivo ? ` · objetivo S/ ${item.precioObjetivo}` : ""}{item.precioVenta ? ` · ${priceLabel(item.operacion).toLowerCase()} S/ ${item.precioVenta}` : ""}</p></div>
+                <div><p className="font-semibold text-slate-900">{item.propietario || "Sin contacto"}</p><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)} · {operationLabel(item.operacion)} · posición {item.posicion} · {item.ubicacion}</p><p className="mt-1 text-xs text-slate-500">{referenceLabel(item.operacion)}: {formatPrice(item.valorReferencia, item.valorReferenciaMoneda)} · {targetLabel(item.operacion)}: {formatPrice(item.precioObjetivo, item.precioObjetivoMoneda)} · {priceLabel(item.operacion)}: {formatPrice(item.precioVenta, item.precioVentaMoneda)}</p></div>
                 <Link href={`/tasaciones-textos-pendientes?inmueble=${item.inmuebleId}#material`} className="rounded-xl bg-[#c80000] px-4 py-2.5 text-sm font-semibold text-white">Ver precios y preparar texto →</Link>
               </div>
             ))}

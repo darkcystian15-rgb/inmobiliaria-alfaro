@@ -35,7 +35,7 @@ const eventoMap: Record<string, string> = {
   publicacion_registrada: "Texto registrado",
   publicacion_actualizada: "Publicación actualizada",
   renta_mensual_actualizada: "Renta mensual actualizada",
-  precio_venta_actualizado: "Precio de venta actualizado",
+  precio_venta_actualizado: "Montos de tasación actualizados",
   listo_para_publicar: "Listo para publicar",
   publicado: "Publicado",
   liberacion_registrada: "Liberación registrada",

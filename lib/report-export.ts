@@ -175,7 +175,7 @@ export async function exportReportExcel(report: ReportExport) {
   report.columns.forEach((key, index) => {
     const column = detail.getColumn(index + 1);
   if (key.toLowerCase().includes("fecha")) column.numFmt = "dd/mm/yyyy";
-    if (["tasacion", "precioFinal", "comision", "rentaMensual", "rentaMensualSolicitada", "garantia", "adelanto"].includes(key)) column.numFmt = '"S/ "#,##0.00';
+    if (["precioFinal", "comision", "rentaMensual", "garantia", "adelanto"].includes(key)) column.numFmt = '"S/ "#,##0.00';
     if (key === "posicion") column.numFmt = "00";
   });
   detail.eachRow((row, index) => { if (index > 1) { row.height = Math.max(32, ...report.columns.map((key, columnIndex) => { const value = report.rows[index - 2] ? reportCellValue(key, report.rows[index - 2]) : null; const text = Array.isArray(value) ? value.join(" · ") : String(value ?? ""); return (Math.ceil(text.length / Math.max(10, (detail.getColumn(columnIndex + 1).width ?? 24) - 3)) + text.split("\n").length - 1) * 15 + 12; })); row.eachCell(cell => { cell.alignment = { vertical: "middle", wrapText: true }; cell.font = { name: "Calibri", size: 11 }; if (cell.value === "Activo" || cell.value === "Disponible") cell.font.color = { argb: "15803D" }; if (cell.value === "Histórico") cell.font.color = { argb: "64748B" }; }); } });
