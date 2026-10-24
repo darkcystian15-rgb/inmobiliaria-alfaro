@@ -124,6 +124,11 @@ export async function GET(request: Request) {
         inmuebleId: inmTasaciones.inmuebleId,
         situacion: inmTasaciones.situacion,
         fechaTasacion: inmTasaciones.fechaTasacion,
+        valorReferencia: inmTasaciones.valorReferencia,
+        valorReferenciaMoneda: inmTasaciones.valorReferenciaMoneda,
+        precioObjetivo: inmTasaciones.precioObjetivo,
+        precioObjetivoMoneda: inmTasaciones.precioObjetivoMoneda,
+        fechaActualizacion: inmTasaciones.fechaActualizacion,
         precioVenta: inmTasaciones.precioVenta,
         precioVentaMoneda: inmTasaciones.precioVentaMoneda,
       })
@@ -209,6 +214,9 @@ export async function GET(request: Request) {
         situacion: string | null;
         fechaTasacion: Date | string | null;
         precioVenta: string | null; precioVentaMoneda: string;
+        valorReferencia: string | null; valorReferenciaMoneda: string;
+        precioObjetivo: string | null; precioObjetivoMoneda: string;
+        fechaActualizacion: Date;
       }
     >();
 
@@ -218,6 +226,9 @@ export async function GET(request: Request) {
           existe: true,
           situacion: tasacion.situacion,
           fechaTasacion: tasacion.fechaTasacion,
+          valorReferencia: tasacion.valorReferencia, valorReferenciaMoneda: tasacion.valorReferenciaMoneda,
+          precioObjetivo: tasacion.precioObjetivo, precioObjetivoMoneda: tasacion.precioObjetivoMoneda,
+          fechaActualizacion: tasacion.fechaActualizacion,
           precioVenta: tasacion.precioVenta, precioVentaMoneda: tasacion.precioVentaMoneda,
         });
       }
@@ -321,6 +332,9 @@ const materialPendiente =
         zonaId: row.zonaId,
         operacion: row.operacion,
         direccion: row.direccion || null,
+        valorReferencia: tasacion?.valorReferencia ?? null, valorReferenciaMoneda: tasacion?.valorReferenciaMoneda ?? "PEN",
+        precioObjetivo: tasacion?.precioObjetivo ?? null, precioObjetivoMoneda: tasacion?.precioObjetivoMoneda ?? "PEN",
+        fechaActualizacionTasacion: tasacion?.fechaActualizacion ?? null,
         precioVenta: tasacion?.precioVenta ?? null, precioVentaMoneda: tasacion?.precioVentaMoneda ?? "PEN",
 
         estado:

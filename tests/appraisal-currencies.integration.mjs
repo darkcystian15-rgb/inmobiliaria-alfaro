@@ -49,20 +49,18 @@ try{
  await api(`/api/inmuebles/${ids.property}/anuncios`,'POST',{canal:'Prueba',enlace:'https://example.com/anuncio',fechaPublicacion:todayInPeru(),precioPublicado:'99000',precioPublicadoMoneda:'USD'},'admin',201);
  assert.equal((await api(`/api/inmuebles/${ids.property}/anuncios`)).items[0].pendiente,false);
  await api('/api/tasaciones','PATCH',{inmuebleId:ids.property,precioVentaMoneda:'PEN'});
- assert.equal((await api(`/api/inmuebles/${ids.property}/anuncios`)).items[0].pendiente,true);
- console.log('PASS API: registro mixto, lectura, edición de tres montos, moneda conservada, permisos y anuncios pendientes por moneda.');
+ assert.equal((await api(`/api/inmuebles/${ids.property}/anuncios`)).items[0].pendiente,false,'Price edits do not create automatic diffusion update tasks');
+ console.log('PASS API: registro mixto, lectura, edición de tres montos, moneda conservada, permisos y anuncios conservados sin tareas automáticas.');
  if(process.env.PLAYWRIGHT_MODULE){
   const {chromium}=await import(process.env.PLAYWRIGHT_MODULE);const browser=await chromium.launch({headless:true});
   try{for(const width of [1440,375]){
    const context=await browser.newContext({viewport:{width,height:1000}});await context.addCookies([{name:'aa_session',value:tokens.admin,url:base}]);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-   await page.goto(base+`/tasaciones-textos-pendientes?inmueble=${ids.property}`);await page.getByRole('button',{name:'Modificar montos, monedas y observación'}).click();
-   await page.getByRole('combobox',{name:'Moneda de Tasación de Inmobiliaria',exact:true}).selectOption('PEN');
-   await page.getByRole('combobox',{name:'Moneda de Precio de cierre aceptado por propietario',exact:true}).selectOption('USD');
-   await page.getByRole('combobox',{name:'Moneda de Precio de salida',exact:true}).selectOption('USD');
-   await page.getByRole('button',{name:'Guardar cambios',exact:true}).click();await page.getByRole('button',{name:'Modificar montos, monedas y observación'}).waitFor();
+   await page.goto(base+`/datos-inmuebles?codigo=${ids.property}&carpeta=precios&editar=precios`);await page.getByRole('combobox',{name:'Moneda de la tasación',exact:true}).waitFor();
+   assert.equal(await page.getByRole('combobox',{name:'Moneda de la tasación',exact:true}).count(),1);await page.getByRole('combobox',{name:'Moneda de la tasación',exact:true}).selectOption('USD');
+   await page.getByRole('button',{name:'Guardar cambios',exact:true}).click();await page.getByRole('button',{name:'Actualizar tasación y precios'}).waitFor();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
    await page.screenshot({path:`/tmp/appraisal-currencies-${width}.png`,fullPage:true});await context.close();
-  }}finally{await browser.close();}console.log('PASS navegador: editor con tres monedas, guardado real en BD aislada, 1440/375 px sin errores ni desbordes.');
+  }}finally{await browser.close();}console.log('PASS navegador: editor con una sola moneda, guardado real en BD aislada, 1440/375 px sin errores ni desbordes.');
  }
 }finally{
  server?.kill('SIGTERM');

@@ -12,9 +12,10 @@ import FolderIcon from './FolderIcon';
 import ZoneContext from './ZoneContext';
 import WorkflowNavigationGuard from './WorkflowNavigationGuard';
 import PropertyTaskSearch from './PropertyTaskSearch';
+import WorkflowPropertyList from './WorkflowPropertyList';
 import PropertyListIdentity from './PropertyListIdentity';
 import PropertyPublicationEditor, { type PublicationWorkflow } from './PropertyPublicationEditor';
-import SalePriceEditor, { type PropertyPrices } from './SalePriceEditor';
+import type { PropertyPrices } from './SalePriceEditor';
 import { Feedback, LoadingCards } from './InterfaceFeedback';
 
 type Screen = keyof typeof workflowScreens;
@@ -71,16 +72,13 @@ function Workspace({ screen }: { screen: Screen }) {
           {config.stage === 'publicacion' && chosen.etapa === 'texto_pendiente' ? <Feedback tone="error">Primero completa el texto comercial.<Link href={workflowPropertyHref('/registrar-textos', chosen)} className="aa-button aa-button-primary mt-3">Registrar texto</Link></Feedback> : <PropertyPublicationEditor key={`${screen}:${chosen.inmuebleId}`} propertyId={chosen.inmuebleId} text={chosen.texto} exists={Boolean(chosen.id)} publication={chosen} onSaved={reload} onDirtyChange={setDirty} onBusyChange={setBusy} mode={config.stage === 'texto' ? 'text' : 'publication'} initialEditing={config.stage === 'texto' && chosen.etapa === 'texto_pendiente'} initialEditingDiffusion={config.stage === 'publicacion' && chosen.etapa === 'difusion_pendiente'} />}
           {config.stage === 'texto' && chosen.etapa !== 'texto_pendiente' && <Feedback tone="success">Texto realizado. {chosen.etapa === 'completada' ? 'La publicación registrada se conserva.' : 'Continúa con el registro de la publicación.'}<Link href={workflowPropertyHref('/registrar-publicaciones', chosen)} className="aa-button aa-button-primary mt-3">{chosen.etapa === 'completada' ? 'Consultar publicación' : 'Registrar publicación'}</Link></Feedback>}
           {config.stage === 'publicacion' && chosen.etapa === 'completada' && <Feedback tone="success">Publicación registrada. Todas las acciones elegidas están confirmadas.</Feedback>}
-          <details className="rounded-xl border border-slate-200 p-4"><summary className="cursor-pointer text-sm font-semibold">Consultar o editar valores de tasación</summary><SalePriceEditor item={chosen} onSaved={reload} /></details>
+          <Link className="text-sm font-semibold text-red-700" href={`/datos-inmuebles?codigo=${chosen.inmuebleId}&zona=${encodeURIComponent(chosen.zona)}&carpeta=precios`}>Consultar tasación y precios →</Link>
           <Link className="text-sm font-semibold text-red-700" href={`/datos-inmuebles?zona=${encodeURIComponent(chosen.zona)}&codigo=${chosen.inmuebleId}&carpeta=${config.stage === 'texto' ? 'textos' : 'publicaciones'}`}>Abrir ficha del inmueble →</Link>
           <Link className="aa-button aa-button-secondary" href={`${path}?zona=${encodeURIComponent(zone || '')}`}>Volver al listado</Link>
         </article> : <Feedback tone="error">El inmueble no está disponible en esta etapa o zona. Consulta el listado o revisa primero su tasación.</Feedback> : <>
           {registration && <div className="flex flex-wrap gap-2" role="group" aria-label="Estado de los registros"><button type="button" aria-pressed={!registered} onClick={() => setRegistered(false)} className={`aa-button ${!registered ? 'aa-button-primary' : 'aa-button-secondary'}`}>Pendientes ({scoped.filter(item => matchesWorkflowScreen(item, config.stage)).length})</button><button type="button" aria-pressed={registered} onClick={() => setRegistered(true)} className={`aa-button ${registered ? 'aa-button-primary' : 'aa-button-secondary'}`}>{config.stage === 'texto' ? 'Textos registrados' : 'Publicaciones registradas'} ({scoped.filter(item => matchesWorkflowScreen(item, config.stage, true)).length})</button></div>}
           <div className="aa-card p-4"><PropertyTaskSearch value={search} onChange={setSearch} count={visible.length} total={eligible.length} /></div>
-          {!visible.length ? <div className="aa-card p-6 text-sm text-slate-500">{search ? 'No hay inmuebles que coincidan con la búsqueda.' : registered ? 'No hay registros completados en esta selección.' : 'No hay pendientes en esta selección.'}</div> : <section className="space-y-4" aria-label={config.title}>{visible.map(item => <article key={item.inmuebleId} className="aa-card space-y-4 p-5"><PropertyListIdentity code={item.codigo} position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.ubicacion || item.direccion} positionClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold" />
-            <p className="text-sm text-slate-600">{config.stage === 'tasacion' ? 'Tasación pendiente' : item.etapa === 'completada' ? 'Publicación registrada' : item.etapa === 'difusion_pendiente' ? 'Texto realizado · Publicación pendiente' : item.texto?.trim() ? 'Borrador guardado · Texto pendiente' : 'Texto pendiente'}</p>
-            <Link className="aa-button aa-button-primary" href={workflowPropertyHref(config.register, item)}>{registered ? config.stage === 'texto' ? 'Consultar o editar texto' : 'Consultar o actualizar publicación' : config.action}</Link>
-          </article>)}</section>}
+          {!visible.length ? <div className="aa-card p-6 text-sm text-slate-500">{search ? 'No hay inmuebles que coincidan con la búsqueda.' : registered ? 'No hay registros completados en esta selección.' : 'No hay pendientes en esta selección.'}</div> : <WorkflowPropertyList items={visible} stage={config.stage} title={config.title} register={config.register} action={config.action} registered={registered} />}
         </>}
       </>}
     </div>

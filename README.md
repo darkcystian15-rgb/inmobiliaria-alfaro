@@ -1,3 +1,7 @@
+# Panel, precios y bandejas compactas
+
+Una sola selección de moneda para los tres importes, conservando registros anteriores con monedas distintas. Cartera muestra los valores vigentes arriba, accesos separados para Tasación, Texto y Publicaciones y el resto de funciones del inmueble. Bandejas de pendientes en filas compactas. [Cambios, restauración y verificación](docs/panel-precios-listados-2026-10-24.md).
+
 # Seguimiento por tareas separadas
 
 Tasaciones pendientes y su registro, Textos pendientes y Registrar textos, Publicaciones pendientes y Registrar publicaciones. Sus submenús y pantallas operativas requieren seleccionar una zona válida; al volver a la vista general se ocultan. El texto se realiza antes de elegir/confirmar cartel y redes. Se conservan los datos y los enlaces anteriores. [Flujo, conservación y verificación](docs/submenus-flujo-2026-10-24.md).

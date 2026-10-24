@@ -8,7 +8,7 @@ import PropertyTypeSelect from "./PropertyTypeSelect";
 type Values = { operacion: string; tipo: string; nombreContacto: string; direccion: string };
 type Details = { inmueble: Values & { estado: string }; tasacion: unknown; publicacion: unknown };
 
-export default function PortfolioPropertyEditor({ propertyId, onSaved }: { propertyId: number; onSaved: () => Promise<void> }) {
+export default function PortfolioPropertyEditor({ propertyId, onSaved, onDirtyChange, onBusyChange }: { propertyId: number; onSaved: () => Promise<void>; onDirtyChange?: (value: boolean) => void; onBusyChange?: (value: boolean) => void }) {
   const [details, setDetails] = useState<Details | null>(null);
   const [form, setForm] = useState<Values | null>(null);
   const [editing, setEditing] = useState(false);
@@ -16,6 +16,8 @@ export default function PortfolioPropertyEditor({ propertyId, onSaved }: { prope
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [reload, setReload] = useState(0);
+  useEffect(() => { onDirtyChange?.(editing); return () => onDirtyChange?.(false); }, [editing, onDirtyChange]);
+  useEffect(() => { onBusyChange?.(busy); return () => onBusyChange?.(false); }, [busy, onBusyChange]);
   useEffect(() => {
     const controller = new AbortController();
     fetch(`/api/inmuebles/${propertyId}`, { cache: "no-store", signal: controller.signal }).then(async response => {

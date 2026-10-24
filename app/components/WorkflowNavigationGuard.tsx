@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ConfirmDialog from './ConfirmDialog';
 
-export default function WorkflowNavigationGuard({ dirty, busy }: { dirty: boolean; busy: boolean }) {
+export default function WorkflowNavigationGuard({ dirty, busy, message = "Guarda el texto o la publicación antes de salir para conservar los cambios de este formulario." }: { dirty: boolean; busy: boolean; message?: string }) {
   const router = useRouter(), [destination, setDestination] = useState<string | null>(null);
   useEffect(() => {
     if (!dirty && !busy) return;
@@ -21,5 +21,5 @@ export default function WorkflowNavigationGuard({ dirty, busy }: { dirty: boolea
     window.addEventListener('beforeunload', before); document.addEventListener('click', click, true);
     return () => { window.removeEventListener('beforeunload', before); document.removeEventListener('click', click, true); };
   }, [dirty, busy]);
-  return destination ? <ConfirmDialog title="Cambios sin guardar" confirmLabel="Salir sin guardar" onCancel={() => setDestination(null)} onConfirm={() => { const url = new URL(destination); setDestination(null); router.push(url.pathname + url.search + url.hash); }}>Guarda el texto o la publicación antes de salir para conservar los cambios de este formulario.</ConfirmDialog> : null;
+  return destination ? <ConfirmDialog title="Cambios sin guardar" confirmLabel="Salir sin guardar" onCancel={() => setDestination(null)} onConfirm={() => { const url = new URL(destination); setDestination(null); router.push(url.pathname + url.search + url.hash); }}>{message}</ConfirmDialog> : null;
 }

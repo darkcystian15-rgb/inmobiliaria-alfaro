@@ -1,12 +1,11 @@
 "use client";
 import { formatPrice } from "@/lib/prices.mjs";
-import ResumeSale from "@/app/components/ResumeSale";
+import PortfolioDetailPanel from "@/app/components/PortfolioDetailPanel";
 import ZoneFolderCard from "@/app/components/ZoneFolderCard";
 import { useZoneWorkspace } from "@/app/components/ZoneWorkspace";
 import { zoneHref } from "@/lib/zone-url";
 import { zoneUrl } from "@/lib/zone-url";
 
-import PortfolioPropertyEditor from "@/app/components/PortfolioPropertyEditor";
 import PropertySummary from "@/app/components/PropertySummary";
 
 import PortfolioLabelRow from "@/app/components/PortfolioLabelRow";
@@ -15,7 +14,7 @@ import OperationSelect from "@/app/components/OperationSelect";
 import { priceLabel } from "@/lib/operation.mjs";
 
 import PropertyTypeSelect from "@/app/components/PropertyTypeSelect";
-import { propertyPanelId, propertyPanelContactId } from "@/lib/property-panel-id.mjs";
+import { propertyPanelId } from "@/lib/property-panel-id.mjs";
 
 import PageHeading from "@/app/components/PageHeading";
 import { ALL_ZONES, inZone } from "@/lib/property-zones";
@@ -25,8 +24,6 @@ import { useEffect, useMemo, useState } from "react";
 import { ContextLink as Link, NavigationReturnProvider } from "@/app/components/NavigationReturn";
 import { useRef } from "react";
 import type { Checklist } from "@/app/components/PublicationChecklist";
-import PortfolioDocumentChecklist from "@/app/components/PortfolioDocumentChecklist";
-import StatusBadge from "@/app/components/StatusBadge";
 import { Feedback, LoadingCards } from "@/app/components/InterfaceFeedback";
 import PhotoGallery from "@/app/components/PhotoGallery";
 
@@ -79,6 +76,9 @@ type Inmueble = {
   puedeRetomar?: boolean;
   propietario: string;
   precioVenta: string | null; precioVentaMoneda?: string;
+  valorReferencia?: string | null; valorReferenciaMoneda?: string;
+  precioObjetivo?: string | null; precioObjetivoMoneda?: string;
+  fechaActualizacionTasacion?: string | Date | null;
   actividades: Actividades;
   visitaPendiente: boolean;
   tasacionPendiente: boolean;
@@ -230,35 +230,6 @@ function Icon({
   );
 }
 
-function EstadoActividad({
-  estado,
-  pendiente,
-  icon,
-}: {
-  estado: string;
-  pendiente: boolean;
-  icon: "clock" | "chart" | "camera" | "handshake" | "check";
-}) {
-  const etiqueta =
-    estado === "realizada"
-      ? "Realizada"
-      : estado === "registrada"
-        ? "Registrada"
-        : estado === "sin_negociacion"
-          ? "Sin negociación"
-          : estado === "en_curso"
-            ? "En curso"
-            : estado === "pendiente_aprobacion"
-              ? "Pendiente aprobación"
-              : pendiente
-                ? "Pendiente"
-                : estado;
-
-  const tone = estado === "en_curso" ? "progress" : pendiente ? "pending" : ["realizada", "registrada", "aprobado", "completo"].includes(estado) ? "complete" : "neutral";
-  return <StatusBadge tone={tone}><span className="inline-flex items-center gap-1.5"><Icon name={icon} />{etiqueta}</span></StatusBadge>;
-
-}
-
 const cardThemes = {
   visita: { label: "Visita pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-800 ring-amber-200", position: "bg-amber-50 text-amber-800", border: "hover:border-amber-300" },
   tasacion: { label: "Tasación pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-900 ring-amber-200", position: "bg-amber-50 text-amber-900", border: "hover:border-amber-300" },
@@ -318,7 +289,7 @@ export default function CarteraPage() {
     useState(true);
   const [error, setError] = useState("");
 
-  async function cargarDatos() {
+  async function cargarDatos(rethrow = false) {
     try {
       setError("");
 
@@ -346,6 +317,10 @@ export default function CarteraPage() {
       }
 
       setInmuebles(carteraData.inmuebles ?? []);
+      setSeleccionado(current => {
+        const detailId = current?.inmuebleId || Number(new URLSearchParams(window.location.search).get("detalle"));
+        return detailId ? (carteraData.inmuebles as Inmueble[]).find(item => item.inmuebleId === detailId) ?? null : null;
+      });
       setResumen(
         carteraData.resumen ?? {
           enCartera: 0,
@@ -364,6 +339,7 @@ export default function CarteraPage() {
           ? err.message
           : "No se pudo cargar la información."
       );
+      if (rethrow) throw err;
     } finally {
       setCargando(false);
       setCargandoPosiciones(false);
@@ -395,7 +371,10 @@ export default function CarteraPage() {
 
     const volver = () => restaurarVista(new URLSearchParams(window.location.search));
     window.addEventListener("popstate", volver);
-    return () => { window.clearTimeout(inicial); window.clearInterval(intervalo); window.removeEventListener("popstate", volver); };
+    const refresh = () => { void cargarDatos(); };
+    window.addEventListener("focus", refresh);
+    window.addEventListener("workflow-updated", refresh);
+    return () => { window.clearTimeout(inicial); window.clearInterval(intervalo); window.removeEventListener("popstate", volver); window.removeEventListener("focus", refresh); window.removeEventListener("workflow-updated", refresh); };
   }, []);
 
   const activos = useMemo(
@@ -477,6 +456,7 @@ export default function CarteraPage() {
     if (value !== defaultValue) returnParams.set(key, value);
   }
   if (soloDisponibles) returnParams.set("disponibles", "1");
+  if (seleccionado) returnParams.set("detalle", String(seleccionado.inmuebleId));
   const returnHref = `/cartera${returnParams.size ? `?${returnParams}` : ""}`;
 
   const tieneFiltros =
@@ -548,7 +528,7 @@ export default function CarteraPage() {
               <span className="cartera-folder-tab absolute -top-5 -left-px flex h-5 max-w-[95%] items-center rounded-t-lg border border-b-0 border-amber-200 bg-amber-100 px-3 text-xs font-semibold text-amber-900">{item.label}</span>
               <div className="flex items-center justify-between gap-3"><p className="text-3xl font-bold text-slate-950">{item.value}</p><FolderIcon className="h-9 w-9 shrink-0 text-amber-500" /></div>
               <p className="mt-2 min-h-5 text-xs text-slate-600">{item.detail || "Por atender"}</p>
-              {inboxLink && <p className="mt-2 text-xs font-semibold text-[#c80000]">{item.label === "Visitas pendientes" ? "Ver visitas" : "Ver tasaciones"} →</p>}
+              {inboxLink && <p className="mt-2 text-xs font-semibold text-[#c80000]">{item.label === "Visitas pendientes" ? "Ver visitas" : item.label === "Textos pendientes" ? "Ver textos" : item.label === "Publicaciones pendientes" ? "Ver publicaciones" : "Ver tasaciones"} →</p>}
             </>;
             const classes = "cartera-folder relative mt-5 rounded-b-2xl rounded-tr-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm";
             return inboxLink ? <Link key={item.label} href={inboxLink} data-folder-indicator="true" className={classes}>{content}</Link>
@@ -745,183 +725,8 @@ export default function CarteraPage() {
         <dialog ref={galleryDialog} onCancel={event => { event.preventDefault(); setGaleria(null); }} aria-labelledby="property-gallery-title" className="fixed inset-0 m-auto max-h-[90vh] w-[calc(100%_-_2rem)] max-w-4xl overflow-auto rounded-3xl bg-white p-5 shadow-2xl backdrop:bg-slate-950/50 sm:p-6">
           {galeria && <><div className="mb-5 flex items-start justify-between gap-3"><div className="min-w-0 break-words"><h2 id="property-gallery-title" className="text-lg font-bold text-slate-900">{galeria.nombre}</h2><p className="mt-1 text-xs text-slate-500">{propertyPanelId(galeria)} · {galeria.posicion ? `Posición ${galeria.posicion}` : 'Sin posición'}</p></div><button type="button" autoFocus onClick={() => setGaleria(null)} className="min-h-11 shrink-0 rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold">Cerrar</button></div><PhotoGallery key={galeria.inmuebleId} propertyId={galeria.inmuebleId} /></>}
         </dialog>
-        {/* MODAL */}
-        {seleccionado && (
-          <div
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/30 p-4"
-            onClick={() => setSeleccionado(null)}
-          >
-            <div
-              className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-3xl bg-white p-4 shadow-2xl sm:p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-lg bg-slate-100 px-2.5 py-1 font-mono text-xs font-bold text-slate-700">
-                      {seleccionado.posicion
-                        ? `Posición ${String(
-                            seleccionado.posicion
-                          ).padStart(2, "0")}`
-                        : "Sin posición activa"}
-                    </span>
+        {seleccionado && <PortfolioDetailPanel key={seleccionado.inmuebleId} property={seleccionado} positions={todasPosiciones} onClose={() => { const url = new URL(window.location.href); url.searchParams.delete("detalle"); window.history.replaceState(null, "", url.pathname + url.search); setSeleccionado(null); }} onPhotos={() => setGaleria(seleccionado)} onSaved={() => cargarDatos(true)} />}
 
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        seleccionado.estado === "Activo"
-                          ? "bg-[#f1f5f2] text-[#3f684c]"
-                          : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {seleccionado.tipoHistorico || seleccionado.estado}
-                    </span>
-                  </div>
-
-                  <h3 className="mt-3 break-words text-xl font-bold text-slate-950">
-                    {seleccionado.propietario || "Sin contacto"}
-                  </h3>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    <PropertySummary operation={seleccionado.operacion} type={seleccionado.tipo} location={seleccionado.direccion} />
-                  </p>
-                  <h3 className="mt-5 text-2xl font-extrabold tracking-wide text-slate-900 sm:text-3xl">FASE 1</h3>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSeleccionado(null)
-                  }
-                  aria-label="Cerrar detalle del inmueble"
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
-                >
-                  <Icon name="close" />
-                </button>
-              </div>
-
-              {seleccionado.estado === "Activo" && seleccionado.zona && <section className="mt-5 rounded-2xl border border-red-100 bg-red-50/40 p-4" aria-label="Liberar este inmueble">
-                <h4 className="text-sm font-bold text-slate-900">Liberar este inmueble</h4>
-                <p className="mt-2 text-xs leading-5 text-slate-600">{seleccionado.operacion === "venta" ? "Cerrar la operación, suspender la venta o eliminar la ficha." : "Cerrar el alquiler o eliminar la ficha."} Revisa la acción y confirma en el siguiente paso.</p>
-                <Link href={`/liberar-inmuebles?${new URLSearchParams({ zona: seleccionado.zona, inmueble: String(seleccionado.inmuebleId) })}`} className="aa-button aa-button-secondary mt-3">Liberar este inmueble →</Link>
-              </section>}
-              {seleccionado.puedeRetomar && <ResumeSale key={seleccionado.inmuebleId} propertyId={seleccionado.inmuebleId} zoneId={seleccionado.zonaId} zone={seleccionado.zona || ''} contact={seleccionado.propietario} positions={todasPosiciones} onSaved={async () => { await cargarDatos(); setSeleccionado(null); }} />}
-              <PortfolioPropertyEditor key={seleccionado.inmuebleId} propertyId={seleccionado.inmuebleId} onSaved={async () => {
-                const response = await fetch(zoneUrl("/api/cartera"), { cache: "no-store" });
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || "Los datos se guardaron, pero no se pudo actualizar la cartera. Recarga la página.");
-                const updated = (data.inmuebles as Inmueble[]).find(item => item.inmuebleId === seleccionado.inmuebleId);
-                setInmuebles(data.inmuebles ?? []);
-                if (updated) setSeleccionado(updated);
-              }} />
-
-              <div className="mt-6 grid gap-3">
-                <div className="rounded-2xl bg-background p-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    ID del inmueble
-                  </p>
-                  <p className="mt-1 break-words font-mono text-sm font-semibold text-slate-700">
-                    {propertyPanelContactId(seleccionado)}
-                  </p>
-                </div>
-
-
-              </div>
-
-              <div className="mt-4">
-                <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-                  Seguimiento operativo
-                </p>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-700">
-                        Visita
-                      </span>
-                      <EstadoActividad
-                        estado={
-                          seleccionado.actividades.visita
-                            .estado
-                        }
-                        pendiente={
-                          seleccionado.visitaPendiente
-                        }
-                        icon={
-                          seleccionado.visitaPendiente
-                            ? "clock"
-                            : "check"
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-700">
-                        Tasación
-                      </span>
-                      <EstadoActividad
-                        estado={
-                          seleccionado.actividades
-                            .tasacion.estado
-                        }
-                        pendiente={
-                          seleccionado.tasacionPendiente
-                        }
-                        icon="chart"
-                      />
-                    </div>
-                  </div>
-
-<div className="rounded-2xl border border-slate-200 p-4"><p className="text-sm font-semibold text-slate-700">Texto y publicación</p><p className="mt-2 text-sm text-slate-600">{seleccionado.actividades.publicacion.publicado ? "Publicación registrada" : seleccionado.actividades.tasacion.situacion !== "aprobado" ? "Disponible después de registrar la tasación" : seleccionado.difusionPendiente ? "Publicación pendiente" : seleccionado.textoRealizado ? "Texto realizado" : "Texto pendiente"}</p><div className="mt-4 flex flex-wrap gap-3">{seleccionado.estado === "Activo" && seleccionado.actividades.tasacion.situacion === "aprobado" && <><Link className="aa-button aa-button-secondary" href={`/datos-inmuebles?codigo=${encodeURIComponent(seleccionado.id)}&carpeta=precios`}>Editar tasación</Link><Link className="aa-button aa-button-secondary" href={`/datos-inmuebles?codigo=${encodeURIComponent(seleccionado.id)}&carpeta=textos&editar=texto`}>{seleccionado.actividades.publicacion.tieneTexto ? "Editar texto" : "Registrar texto"}</Link>{seleccionado.textoRealizado && <Link className="aa-button aa-button-secondary" href={`/registrar-publicaciones?zona=${encodeURIComponent(seleccionado.zona || "")}&inmueble=${seleccionado.inmuebleId}`}>{seleccionado.actividades.publicacion.publicado ? "Consultar publicación" : "Registrar publicación"}</Link>}</>}</div></div>
-
-                  <div className="rounded-2xl bg-background p-4">
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Publicación
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-700">
-                      {!seleccionado.actividades.publicacion.existe
-                        ? "Texto pendiente"
-                        : seleccionado.actividades.publicacion.publicado
-                          ? "Publicación registrada"
-                          : seleccionado.textoRealizado ? "Publicación pendiente" : "Texto pendiente"}
-                    </p>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <h3 className="mt-6 text-2xl font-extrabold tracking-wide text-slate-900 sm:text-3xl">FASE 2</h3>
-                    <PortfolioDocumentChecklist key={`${seleccionado.inmuebleId}:${seleccionado.operacion}`} propertyId={seleccionado.inmuebleId} operation={seleccionado.operacion} zone={seleccionado.zona} />
-                  </div>
-                </div>
-              </div>
-
-              <button type="button" onClick={() => setGaleria(seleccionado)} disabled={!seleccionado.tieneFotos} className="mt-3 w-full rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-semibold text-[#c80000] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-500">{seleccionado.tieneFotos ? "Ver fotos del inmueble" : "Fotos pendientes"}</button>
-              <div className="mt-5 grid grid-cols-2 gap-2">
-                <Link
-                  href={
-                    "/datos-inmuebles?codigo=" +
-                    encodeURIComponent(
-                      seleccionado.id
-                    )
-                  }
-                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-center text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50"
-                >
-                  Ver ficha
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSeleccionado(null)
-                  }
-                  className="rounded-xl bg-[#c80000] px-4 py-2.5 text-xs font-semibold text-white"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </main></NavigationReturnProvider>
   );
