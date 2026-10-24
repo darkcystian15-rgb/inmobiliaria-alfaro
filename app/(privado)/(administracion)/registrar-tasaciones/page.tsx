@@ -31,6 +31,7 @@ type Tasacion = {
   id: number;
   inmuebleId: number;
   codigo: string;
+  zona: string;
   posicion: string;
   nombre: string;
   ubicacion: string;
@@ -49,7 +50,10 @@ type Tasacion = {
 
 export default function Page() {
   const [items, setItems] = useState<Tasacion[]>([]);
-  const [busqueda, setBusqueda] = useState("");
+  const [pestana, setPestana] = useState<"pendientes" | "registradas">("pendientes");
+  const [busquedaPendientes, setBusquedaPendientes] = useState("");
+  const [busquedaRegistradas, setBusquedaRegistradas] = useState("");
+  const [inmuebleSeleccionado, setInmuebleSeleccionado] = useState<string | null>(null);
   const [aprobadas, setAprobadas] = useState<Tasacion[]>([]);
   const [fechas, setFechas] = useState<Record<number, string>>({});
   const [valores, setValores] = useState<Record<number, string>>({});
@@ -66,18 +70,30 @@ export default function Page() {
   const [guardando, setGuardando] = useState<number | null>(null);
 
   const hoy = useMemo(() => todayInPeru(), []);
-  const filtrados = useMemo(() => filterTaskProperties(items, busqueda), [items, busqueda]);
-  const aprobadasFiltradas = useMemo(() => filterTaskProperties(aprobadas, busqueda), [aprobadas, busqueda]);
-  const totalBusqueda = new Set([...items, ...aprobadas].map(item => item.inmuebleId)).size;
-  const totalFiltrados = new Set([...filtrados, ...aprobadasFiltradas].map(item => item.inmuebleId)).size;
+  const pendientesContexto = useMemo(() => inmuebleSeleccionado && items.some(item => String(item.inmuebleId) === inmuebleSeleccionado) ? items.filter(item => String(item.inmuebleId) === inmuebleSeleccionado) : items, [items, inmuebleSeleccionado]);
+  const filtrados = useMemo(() => filterTaskProperties(pendientesContexto, busquedaPendientes), [pendientesContexto, busquedaPendientes]);
+  const aprobadasFiltradas = useMemo(() => filterTaskProperties(aprobadas, busquedaRegistradas), [aprobadas, busquedaRegistradas]);
+  function cambiarPestana(value: "pendientes" | "registradas") {
+    if (guardando !== null) return;
+    setPestana(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set("pestana", value);
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
 
-  const cargar = useCallback((signal?: AbortSignal) => {
+  const cargar = useCallback((signal?: AbortSignal, elegirPestana = false) => {
     if (!signal?.aborted) { setCargando(true); setError(""); setErrorCarga(false); }
     return requestJson<{ pendientes: Tasacion[]; aprobadas: Tasacion[] }>("/api/tasaciones", { signal }).then(data => {
       if (signal?.aborted) return;
       const selected = new URLSearchParams(window.location.search).get("inmueble");
-      setItems((data.pendientes ?? []).filter(item=>!selected||String(item.inmuebleId)===selected));
+      setItems(data.pendientes ?? []);
+      setInmuebleSeleccionado(selected);
       setAprobadas(data.aprobadas ?? []);
+      if (elegirPestana) {
+        const requested = new URLSearchParams(window.location.search).get("pestana");
+        const alreadyRegistered = selected && (data.aprobadas ?? []).some(item => String(item.inmuebleId) === selected);
+        setPestana(requested === "registradas" || (requested !== "pendientes" && alreadyRegistered) ? "registradas" : "pendientes");
+      }
     }).catch(error => {
       if (!signal?.aborted) { setErrorCarga(true); setError(error instanceof Error ? error.message : "No se pudieron cargar las tasaciones."); }
     }).finally(() => {
@@ -87,11 +103,12 @@ export default function Page() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const timer = window.setTimeout(() => { if (!controller.signal.aborted) void cargar(controller.signal); }, 0);
+    const timer = window.setTimeout(() => { if (!controller.signal.aborted) void cargar(controller.signal, true); }, 0);
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [cargar]);
 
   const registrar = async (item: Tasacion) => {
+    if (guardando !== null) return;
     setRegistroIntentado(item.inmuebleId);
     setError("");
     setMensaje("");
@@ -122,7 +139,12 @@ export default function Page() {
       for(const setter of [setFechas,setValores,setPrecios,setVentas,setObservaciones])setter(current=>{const next={...current};delete next[item.inmuebleId];return next;});
       setMonedas(current=>{const next={...current};delete next[item.inmuebleId];return next;});
       setMensaje(`Tasación de “${item.nombre}” registrada correctamente.`);
-      setSiguienteAccion({ href: `/registrar-textos?inmueble=${item.inmuebleId}`, label: "Registrar texto de este inmueble" });
+      setSiguienteAccion({ href: `/registrar-textos?${new URLSearchParams({ inmueble: String(item.inmuebleId), zona: item.zona })}`, label: "Registrar texto de este inmueble" });
+      setBusquedaRegistradas("");
+      setPestana("registradas");
+      const url = new URL(window.location.href);
+      url.searchParams.set("pestana", "registradas");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
       setCargando(true);
       await cargar();
     } catch (err) {
@@ -141,27 +163,25 @@ export default function Page() {
           <Link href="/tasaciones-pendientes" className="cartera-folder-navigation inline-flex items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 shadow-sm hover:bg-violet-100">Ver tasaciones pendientes →</Link>
         </div>
 
-        <section className="mt-6 aa-summary p-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Acción principal</p>
-              <p className="mt-1 text-sm font-semibold">Registra los tres precios una vez concluida la negociación con el propietario.</p>
-            </div>
-            <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-800">Siguiente: registrar texto</span>
-          </div>
-        </section>
+        <p className="mt-4 text-sm leading-6 text-slate-600">Registra los valores acordados con el propietario y continúa con el texto comercial del inmueble.</p>
 
         {mensaje && <MobileFormFeedback value={mensaje}><RegistrationSuccess message={mensaje} nextAction={siguienteAccion} /></MobileFormFeedback>}
         {error && <MobileFormFeedback value={error}><Feedback tone="error" className="my-5">{error}{errorCarga && <button type="button" disabled={cargando} onClick={() => void cargar()} className="aa-button aa-button-secondary mt-3">{cargando ? "Cargando…" : "Reintentar"}</button>}</Feedback></MobileFormFeedback>}
 
-        <section className="mt-7 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Por registrar</p><p className="mt-2 text-3xl font-bold text-slate-950">{items.length}</p><p className="mt-1 text-xs text-slate-500">inmuebles con visita realizada</p></div>
-          <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 shadow-sm"><p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Tasación vigente</p><p className="mt-2 text-3xl font-bold text-slate-950">{aprobadas.length}</p><p className="mt-1 text-xs text-violet-700/80">negociadas actualmente</p></div>
-        </section>
+        <div role="tablist" aria-label="Tasaciones" className="mt-6 grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2">
+          {([['pendientes', 'Tasaciones por registrar', items.length], ['registradas', 'Tasaciones Negociadas Registradas', aprobadas.length]] as const).map(([value, label, count], index) => <button key={value} type="button" role="tab" id={`tab-tasaciones-${value}`} aria-controls={`panel-tasaciones-${value}`} aria-selected={pestana === value} tabIndex={pestana === value ? 0 : -1} disabled={guardando !== null} onClick={() => cambiarPestana(value)} onKeyDown={event => {
+            if (event.altKey || event.ctrlKey || event.metaKey || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key) || guardando !== null) return;
+            event.preventDefault();
+            const next = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - index;
+            cambiarPestana(next === 0 ? 'pendientes' : 'registradas');
+            (event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next])?.focus();
+          }} className={`flex min-h-12 min-w-0 items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:opacity-60 ${pestana === value ? 'bg-red-50 text-red-800' : 'text-slate-600 hover:bg-slate-50'}`}><span className="min-w-0 break-words">{label}</span><span className={`shrink-0 rounded-full px-2.5 py-1 text-xs ${pestana === value ? 'bg-white text-red-800' : 'bg-slate-100 text-slate-600'}`}>{cargando ? '…' : count}</span></button>)}
+        </div>
 
-        <section className="mt-7">
+        <section role="tabpanel" id="panel-tasaciones-pendientes" aria-labelledby="tab-tasaciones-pendientes" hidden={pestana !== "pendientes"} className="mt-5">
           <div className="mb-3"><h2 className="font-bold text-slate-900">Tasaciones por registrar</h2><p className="mt-1 text-sm text-slate-500">Estos inmuebles están activos, tienen posición asignada y todavía no tienen tasación registrada.</p></div>
-          <div className="aa-card mb-4 p-4"><PropertyTaskSearch value={busqueda} onChange={setBusqueda} count={totalFiltrados} total={totalBusqueda} disabled={cargando} /></div>
+          {inmuebleSeleccionado && pendientesContexto.length < items.length && <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-slate-700"><span>Mostrando el inmueble seleccionado. El contador de la pestaña incluye toda la zona.</span><button type="button" disabled={guardando !== null} className="min-h-11 font-semibold text-red-800" onClick={() => { const url = new URL(window.location.href); url.searchParams.delete("inmueble"); window.history.replaceState(null, "", url.pathname + url.search + url.hash); setInmuebleSeleccionado(null); }}>Ver todos los pendientes</button></div>}
+          <div className="aa-card mb-4 p-4"><PropertyTaskSearch value={busquedaPendientes} onChange={setBusquedaPendientes} count={filtrados.length} total={pendientesContexto.length} disabled={cargando} /></div>
           {cargando ? <LoadingCards label="Cargando inmuebles…" /> : items.length > 0 && filtrados.length === 0 ? (
             <div className="aa-card p-6 text-sm text-slate-600">No hay inmuebles que coincidan con la búsqueda. Prueba otro contacto, dirección o ID visible.</div>
           ) : items.length === 0 ? (
@@ -184,7 +204,7 @@ export default function Page() {
                         <div><label className="text-xs font-semibold text-slate-600">{priceLabel(item.operacion)} * <span className="text-slate-400">({monedas[item.inmuebleId]?.precioVenta === "USD" ? "US$" : "S/"})</span><FieldGuidance showError={registroIntentado === item.inmuebleId} error={!(Number(ventas[item.inmuebleId]) > 0) && "Ingresa un importe mayor que cero."} help="Precio de salida al mercado o renta mensual, según la operación."><input type="number" min="0.01" step="0.01" value={ventas[item.inmuebleId] ?? ""} onChange={e => setVentas(a => ({ ...a, [item.inmuebleId]: e.target.value }))} placeholder={item.operacion === "alquiler" ? "1500" : "450000"} className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></FieldGuidance></label></div>
                       </div>
                       <label className="text-xs font-semibold text-slate-600">Observación<textarea rows={3} value={observaciones[item.inmuebleId] ?? ""} onChange={(e) => setObservaciones(a => ({...a,[item.inmuebleId]:e.target.value}))} placeholder="Precio conversado, ajustes, comentarios del propietario..." className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700" /></label>
-                      <div className="sticky bottom-3 z-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-background p-4 shadow-sm sm:static sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-slate-500">Al guardar confirmas que el precio o renta mensual ya fue acordado con el propietario.</p><button disabled={guardando === item.inmuebleId} onClick={() => registrar(item)} className="rounded-xl bg-violet-700 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{guardando === item.inmuebleId ? "Guardando..." : "Registrar tasación"}</button></div>
+                      <div className="sticky bottom-3 z-10 flex flex-col gap-3 rounded-xl border border-slate-200 bg-background p-4 shadow-sm sm:static sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-slate-500">Al guardar confirmas que el precio o renta mensual ya fue acordado con el propietario.</p><button disabled={guardando !== null} onClick={() => registrar(item)} className="rounded-xl bg-violet-700 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{guardando === item.inmuebleId ? "Guardando..." : "Registrar tasación"}</button></div>
                     </div>
                   </div>
                 </article>
@@ -193,13 +213,14 @@ export default function Page() {
           )}
         </section>
 
-        <section className="mt-8 rounded-2xl border border-violet-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-900">Tasaciones negociadas registradas</h2><p className="mt-1 text-xs text-slate-500">Actualiza los valores desde Tasaciones del inmueble; el texto y la publicación conservan su estado.</p></div>
+        <section role="tabpanel" id="panel-tasaciones-registradas" aria-labelledby="tab-tasaciones-registradas" hidden={pestana !== "registradas"} className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-900">Tasaciones Negociadas Registradas</h2><p className="mt-1 text-xs text-slate-500">Actualiza los valores desde Tasaciones del inmueble; el texto y la publicación conservan su estado.</p></div>
+          <div className="border-b border-slate-100 p-4"><PropertyTaskSearch value={busquedaRegistradas} onChange={setBusquedaRegistradas} count={aprobadasFiltradas.length} total={aprobadas.length} disabled={cargando} /></div>
           <div className="divide-y divide-slate-100">
-            {aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadasFiltradas.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones negociadas que coincidan con la búsqueda.</div> : aprobadasFiltradas.map(item => (
+            {cargando ? <LoadingCards label="Cargando tasaciones registradas…" /> : aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadasFiltradas.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones negociadas que coincidan con la búsqueda.</div> : aprobadasFiltradas.map(item => (
               <div key={item.inmuebleId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
                 <div><p className="font-semibold text-slate-900">{item.propietario || "Sin contacto"}</p><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)} · {operationLabel(item.operacion)} · posición {item.posicion} · {item.ubicacion}</p><p className="mt-1 text-xs text-slate-500">{referenceLabel(item.operacion)}: {formatPrice(item.valorReferencia, item.valorReferenciaMoneda)} · {targetLabel(item.operacion)}: {formatPrice(item.precioObjetivo, item.precioObjetivoMoneda)} · {priceLabel(item.operacion)}: {formatPrice(item.precioVenta, item.precioVentaMoneda)}</p></div>
-                <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}&carpeta=precios&editar=precios`} className="aa-button aa-button-secondary shrink-0">Actualizar valores →</Link>
+                <div className="flex shrink-0 flex-wrap gap-2"><Link href={`/datos-inmuebles?${new URLSearchParams({ codigo: String(item.inmuebleId), zona: item.zona, carpeta: "precios", editar: "precios" })}`} className="aa-button aa-button-secondary">Actualizar valores →</Link><Link href={`/registrar-textos?${new URLSearchParams({ inmueble: String(item.inmuebleId), zona: item.zona })}`} className="aa-button aa-button-secondary">Ir a textos →</Link></div>
               </div>
             ))}
           </div>
