@@ -49,4 +49,10 @@ Para recuperar código, extraer la referencia anterior del bundle en otra carpet
 
 ## Producción
 
-Preparación de columnas y sesiones técnicas en una versión temporal sin asignación de dominios. Publicación funcional, comprobación autenticada de solo lectura, retirada de cuentas técnicas y contraste con el respaldo pendientes de consignar al terminar.
+Publicación funcional comprobada el 24 de octubre de 2026. El push de `f9c2c6f` generó automáticamente el despliegue `dpl_G49XncqJMovXExu81oTTWrkvzCho`, estado READY, entorno production, versión https://inmobiliaria-alfarov2-imifuil9f-puma19.vercel.app. Vercel confirmó el alias https://intranet.inmobiliariaalbertoalfaro.com.pe y el build con las seis columnas de texto/difusión correctas.
+
+Verificación HTTP autenticada sobre el dominio público, sin escrituras de negocio: administrador obtuvo 200 en publicaciones, Cartera, panel, los tres reportes de texto/difusión y las páginas de Cartera y bandeja. Ambos roles obtuvieron 200 en consulta de inmuebles y su pantalla de información. Operador obtuvo 403 en las API administrativas y redirección en sus páginas, de acuerdo con los permisos. No se repitió la prueba visual de Chromium en producción; la evidencia visual anterior corresponde al entorno local.
+
+Contraste del respaldo: 19 de 27 tablas mantienen exactamente su hash original; ocho difieren respecto del 23 de octubre. El estado previo a estas comprobaciones ya tenía 131 inmuebles, 36 tasaciones, 13 archivos, 58 visitas y 384 eventos de historial, frente a 30 tasaciones, 43 visitas y 359 eventos en el respaldo. Estas diferencias son anteriores a la verificación de esta sesión; no se restauraron ni sobrescribieron datos. Las sucesivas comparaciones durante la verificación conservaron esos conteos y el mismo conjunto de tablas distintas. No se certifica igualdad total con el respaldo ni se atribuye cada modificación a una causa concreta.
+
+Las comprobaciones de base de datos se ejecutaron en versiones privadas con `--skip-domain`, sin reasignar el dominio de la intranet. Evidencia HTTP y de despliegues guardada en `output/text-diffusion/`, excluido de Git. Las sesiones temporales antiguas tenían un formato incompatible; se regeneraron para la verificación y se retiraron al finalizar.
