@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { requestJson } from '@/lib/client-request';
-const labels:Record<string,string>={visita:'Visita',tasacion:'Tasación',expediente:'Texto comercial',publicacion:'Difusión',documentacion:'Expediente documental'};
+const labels:Record<string,string>={visita:'Visita',tasacion:'Tasación',expediente:'Texto comercial',publicacion:'Publicación',documentacion:'Expediente documental'};
 export default function DeadlineSettings(){
  const [items,setItems]=useState<{actividad:string;dias:number}[]>([]),[error,setError]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true);
  useEffect(()=>{const controller=new AbortController();requestJson<{items:typeof items}>('/api/plazos',{signal:controller.signal}).then(data=>{if(!controller.signal.aborted)setItems(data.items.filter(item=>labels[item.actividad]));}).catch(()=>{if(!controller.signal.aborted)setError('No se pudieron consultar los plazos.');}).finally(()=>{if(!controller.signal.aborted)setLoading(false);});return()=>controller.abort();},[]);

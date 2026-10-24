@@ -17,7 +17,7 @@ export async function GET(request:Request){
   const legacy=await db.select({inmuebleId:inmAnuncios.inmuebleId,canal:inmAnuncios.canal,url:inmAnuncios.enlace}).from(inmAnuncios);
   const todas=rows.map(row=>({...row,posicion:row.posicion==null?'—':String(row.posicion).padStart(3,'0'),texto:row.texto??'',textoRealizado:row.textoRealizado??false,publicado:row.publicado??false,cartelColocado:row.cartelColocado??false,redesPublicadas:row.redesPublicadas??false,ubicacion:propertyAddress(row),referencias:row.referenciasDifusion===null?legacy.filter(a=>a.inmuebleId===row.inmuebleId).map(a=>({canal:a.canal,url:a.url})):readReferences(row.referenciasDifusion),etapa:diffusionState(row),expediente:expedientes.get(row.inmuebleId)}));
   return NextResponse.json({ok:true,todas,pendientes:todas.filter(row=>row.etapa==='texto_pendiente'),listos:todas.filter(row=>row.etapa==='difusion_pendiente'),publicadas:todas.filter(row=>row.etapa==='completada'),incompletos:[]});
- }catch{return NextResponse.json({error:'No se pudo consultar texto y difusión.'},{status:500});}
+ }catch{return NextResponse.json({error:'No se pudo consultar texto y publicación.'},{status:500});}
 }
 
 async function save(request:Request){
@@ -38,7 +38,7 @@ async function save(request:Request){
    if(!valuation)throw new Error('El inmueble no tiene una tasación registrada.');
    const [previous]=await tx.select().from(inmPublicaciones).where(eq(inmPublicaciones.inmuebleId,inmuebleId)).limit(1).for('update');
    if(diffusion){
-    if(!previous?.textoRealizado||!previous.texto.trim())throw new DiffusionInputError('Completa el texto antes de registrar la difusión.');
+    if(!previous?.textoRealizado||!previous.texto.trim())throw new DiffusionInputError('Completa el texto antes de registrar la publicación.');
     const values={...diffusionValues!,fechaPublicacion:diffusionValues!.publicado?(previous.fechaPublicacion??new Date()):previous.fechaPublicacion,usuarioPublicacionId:diffusionValues!.publicado?auth.user.id:previous.usuarioPublicacionId};
     await tx.update(inmPublicaciones).set(values).where(eq(inmPublicaciones.id,previous.id));
     await tx.insert(inmTimeline).values({inmuebleId,evento:'difusion_actualizada',usuarioId:auth.user.id,observacion:JSON.stringify({anterior:{medios:previous.mediosDifusion,cartel:previous.cartelColocado,redes:previous.redesPublicadas,completada:previous.publicado,referencias:readReferences(previous.referenciasDifusion)},nuevo:diffusionValues})});
@@ -48,8 +48,7 @@ async function save(request:Request){
    // Existing completed text and diffusion remain completed when edited.
    const textoRealizado=Boolean(previous?.textoRealizado||body.textoRealizado===true);
    const mediosDifusion=body.mediosDifusion===undefined?previous?.mediosDifusion??null:body.mediosDifusion;
-   if(mediosDifusion!==null&&!['cartel','redes','ambos'].includes(mediosDifusion))throw new DiffusionInputError('Selecciona medios de difusión válidos.');
-   if(textoRealizado&&!previous?.textoRealizado&&!previous?.publicado&&!mediosDifusion)throw new DiffusionInputError('Selecciona cartel físico, redes sociales o ambos para completar el texto.');
+   if(mediosDifusion!==null&&!['cartel','redes','ambos'].includes(mediosDifusion))throw new DiffusionInputError('Selecciona medios de publicación válidos.');
    // Media are configured in the diffusion editor for existing texts; text edits never reset confirmations.
    const values={texto,textoRealizado,fechaTextoRealizado:textoRealizado?(previous?.textoRealizado?previous.fechaTextoRealizado:new Date()):null,mediosDifusion:previous?.textoRealizado&&previous.mediosDifusion?previous.mediosDifusion:mediosDifusion};
    if(previous)await tx.update(inmPublicaciones).set(values).where(eq(inmPublicaciones.id,previous.id));
@@ -58,7 +57,7 @@ async function save(request:Request){
    return {situacion:previous?.publicado?'completada':textoRealizado?'difusion_pendiente':'texto_pendiente'};
   });
   return NextResponse.json({ok:true,...result},{status:request.method==='POST'?201:200});
- }catch(error){const message=error instanceof Error?error.message:'';const status=error instanceof DiffusionInputError?400:/no está activo|no tiene una tasación/.test(message)?409:500;return NextResponse.json({error:status===500?'No se pudo guardar texto y difusión.':message},{status});}
+ }catch(error){const message=error instanceof Error?error.message:'';const status=error instanceof DiffusionInputError?400:/no está activo|no tiene una tasación/.test(message)?409:500;return NextResponse.json({error:status===500?'No se pudo guardar texto y publicación.':message},{status});}
 }
 export const POST=save;
 export const PUT=save;

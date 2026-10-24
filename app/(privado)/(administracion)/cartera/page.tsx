@@ -263,7 +263,7 @@ const cardThemes = {
   visita: { label: "Visita pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-800 ring-amber-200", position: "bg-amber-50 text-amber-800", border: "hover:border-amber-300" },
   tasacion: { label: "Tasación pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-900 ring-amber-200", position: "bg-amber-50 text-amber-900", border: "hover:border-amber-300" },
   material: { label: "Texto pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-900 ring-amber-200", position: "bg-amber-50 text-amber-900", border: "hover:border-amber-300" },
-  publicado: { label: "Difusión completada", stripe: "bg-emerald-400", badge: "bg-emerald-50 text-emerald-800 ring-emerald-200", position: "bg-emerald-50 text-emerald-800", border: "hover:border-emerald-300" },
+  publicado: { label: "Publicación registrada", stripe: "bg-emerald-400", badge: "bg-emerald-50 text-emerald-800 ring-emerald-200", position: "bg-emerald-50 text-emerald-800", border: "hover:border-emerald-300" },
   seguimiento: { label: "En seguimiento", stripe: "bg-blue-400", badge: "bg-blue-50 text-blue-800 ring-blue-200", position: "bg-blue-50 text-blue-800", border: "hover:border-blue-300" },
 };
 
@@ -274,7 +274,7 @@ function cardTheme(item: Inmueble) {
   if (item.negociacionEnCurso) return { ...cardThemes.seguimiento, label: "Seguimiento anterior" };
   if (item.visitaPendiente) return cardThemes.visita;
   if (item.tasacionPendiente) return cardThemes.tasacion;
-  if (item.difusionPendiente) return {...cardThemes.material,label:"Difusión pendiente"};
+  if (item.difusionPendiente) return {...cardThemes.material,label:"Publicación pendiente"};
   if (item.materialPendiente) return cardThemes.material;
   return cardThemes.seguimiento;
 }
@@ -512,7 +512,7 @@ export default function CarteraPage() {
           {!cargando && !error && zonas.length === 0 && <p className="mt-4 text-sm text-slate-500">Todavía no hay inmuebles registrados en la cartera.</p>}
         </section>}
         {/* INDICADORES */}
-        <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {[
             {
               label: "En cartera",
@@ -538,10 +538,12 @@ export default function CarteraPage() {
               detail: "",
               icon: "chart" as const,
             },
+            { label: "Textos pendientes", value: activosZona.filter(x => x.materialPendiente).length, detail: "", icon: "clipboard" as const },
+            { label: "Publicaciones pendientes", value: activosZona.filter(x => x.difusionPendiente).length, detail: "", icon: "clipboard" as const },
           ].map((item) => {
             const inboxLink = item.label === "Visitas pendientes"
               ? `/visitas-pendientes?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}`
-              : item.label === "Tasaciones pendientes" ? `/tasaciones-textos-pendientes?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}` : null;
+              : item.label === "Tasaciones pendientes" ? `/tasaciones-pendientes?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}` : item.label === "Textos pendientes" ? `/textos-pendientes?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}` : item.label === "Publicaciones pendientes" ? `/publicaciones-pendientes?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}` : null;
             const content = <>
               <span className="cartera-folder-tab absolute -top-5 -left-px flex h-5 max-w-[95%] items-center rounded-t-lg border border-b-0 border-amber-200 bg-amber-100 px-3 text-xs font-semibold text-amber-900">{item.label}</span>
               <div className="flex items-center justify-between gap-3"><p className="text-3xl font-bold text-slate-950">{item.value}</p><FolderIcon className="h-9 w-9 shrink-0 text-amber-500" /></div>
@@ -646,7 +648,7 @@ export default function CarteraPage() {
                         <div className="mt-3 flex min-h-12 content-start flex-wrap gap-1.5">
                           {x.visitaPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-800">Visita pendiente</span>}
                           {x.tasacionPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Tasación pendiente</span>}
-                          {x.difusionPendiente && <span className="rounded-md bg-blue-50 px-1.5 py-1 text-xs font-semibold text-blue-900">Difusión pendiente</span>}
+                          {x.difusionPendiente && <span className="rounded-md bg-blue-50 px-1.5 py-1 text-xs font-semibold text-blue-900">Publicación pendiente</span>}
                           {x.materialPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Texto pendiente</span>}
 
                         </div>
@@ -871,18 +873,18 @@ export default function CarteraPage() {
                     </div>
                   </div>
 
-<div className="rounded-2xl border border-slate-200 p-4"><p className="text-sm font-semibold text-slate-700">Texto y difusión</p><p className="mt-2 text-sm text-slate-600">{seleccionado.actividades.publicacion.publicado ? "Difusión completada" : seleccionado.actividades.tasacion.situacion !== "aprobado" ? "Disponible después de registrar la tasación" : seleccionado.difusionPendiente ? "Difusión pendiente" : seleccionado.textoRealizado ? "Texto realizado" : "Texto pendiente"}</p><div className="mt-4 flex flex-wrap gap-3">{seleccionado.estado === "Activo" && seleccionado.actividades.tasacion.situacion === "aprobado" && <><Link className="aa-button aa-button-secondary" href={`/datos-inmuebles?codigo=${encodeURIComponent(seleccionado.id)}&carpeta=precios`}>Editar tasación</Link><Link className="aa-button aa-button-secondary" href={`/datos-inmuebles?codigo=${encodeURIComponent(seleccionado.id)}&carpeta=publicacion&editar=texto`}>{seleccionado.actividades.publicacion.tieneTexto ? "Editar texto" : "Registrar texto"}</Link></>}</div></div>
+<div className="rounded-2xl border border-slate-200 p-4"><p className="text-sm font-semibold text-slate-700">Texto y publicación</p><p className="mt-2 text-sm text-slate-600">{seleccionado.actividades.publicacion.publicado ? "Publicación registrada" : seleccionado.actividades.tasacion.situacion !== "aprobado" ? "Disponible después de registrar la tasación" : seleccionado.difusionPendiente ? "Publicación pendiente" : seleccionado.textoRealizado ? "Texto realizado" : "Texto pendiente"}</p><div className="mt-4 flex flex-wrap gap-3">{seleccionado.estado === "Activo" && seleccionado.actividades.tasacion.situacion === "aprobado" && <><Link className="aa-button aa-button-secondary" href={`/datos-inmuebles?codigo=${encodeURIComponent(seleccionado.id)}&carpeta=precios`}>Editar tasación</Link><Link className="aa-button aa-button-secondary" href={`/datos-inmuebles?codigo=${encodeURIComponent(seleccionado.id)}&carpeta=textos&editar=texto`}>{seleccionado.actividades.publicacion.tieneTexto ? "Editar texto" : "Registrar texto"}</Link>{seleccionado.textoRealizado && <Link className="aa-button aa-button-secondary" href={`/registrar-publicaciones?zona=${encodeURIComponent(zonaSeleccionada || ALL_ZONES)}&inmueble=${seleccionado.inmuebleId}`}>{seleccionado.actividades.publicacion.publicado ? "Consultar publicación" : "Registrar publicación"}</Link>}</>}</div></div>
 
                   <div className="rounded-2xl bg-background p-4">
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Difusión
+                      Publicación
                     </p>
                     <p className="mt-1 text-sm font-medium text-slate-700">
                       {!seleccionado.actividades.publicacion.existe
                         ? "Texto pendiente"
                         : seleccionado.actividades.publicacion.publicado
-                          ? "Difusión completada"
-                          : seleccionado.textoRealizado ? "Difusión pendiente" : "Texto pendiente"}
+                          ? "Publicación registrada"
+                          : seleccionado.textoRealizado ? "Publicación pendiente" : "Texto pendiente"}
                     </p>
                   </div>
 

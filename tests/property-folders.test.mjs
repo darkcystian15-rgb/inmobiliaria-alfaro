@@ -48,7 +48,7 @@ for (const renta of ['afecto','exonerado']) {
 for(const operation of ['venta','alquiler']) {
   for(const administrator of [false,true]) {
     const folders=informationFolders(operation,administrator,1);
-    assert.deepEqual(folders.filter(item=>item.phase===1).map(item=>item.key),['visitas','precios','publicacion']);
+    assert.deepEqual(folders.filter(item=>item.phase===1).map(item=>item.key),['visitas','precios','textos','publicaciones']);
     const phaseTwo=folders.filter(item=>item.phase===2);
     const numbered=phaseTwo.filter(item=>/^\d+\./.test(item.label));
     assert.equal(numbered.length,operation==='venta'?7:5);

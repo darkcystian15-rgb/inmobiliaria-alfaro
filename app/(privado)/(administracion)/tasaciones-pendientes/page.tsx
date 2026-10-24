@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import PublicationWorkflowWorkspace from '@/app/components/PublicationWorkflowWorkspace';
 
 export default function Page() {
-  redirect("/registrar-tasaciones");
+  return <PublicationWorkflowWorkspace screen="tasaciones-pendientes" />;
 }

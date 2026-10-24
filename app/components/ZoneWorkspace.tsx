@@ -28,11 +28,11 @@ export function ZoneWorkspaceProvider({children}:{children:ReactNode}) {
   return <Workspace.Provider value={{zones,zone,requested,loading,error,reload}}>{children}</Workspace.Provider>;
 }
 const required=new Set(['/registrar-inmueble','/visitas-pendientes','/registrar-visitas','/registrar-tasaciones','/tasaciones-textos-pendientes','/liberar-inmuebles']);
-const generalViews=new Set(['/visitas-pendientes','/tasaciones-textos-pendientes','/liberar-inmuebles']);
+const generalViews=new Set(['/registrar-tasaciones','/tasaciones-pendientes','/textos-pendientes','/registrar-textos','/publicaciones-pendientes','/registrar-publicaciones','/visitas-pendientes','/tasaciones-textos-pendientes','/liberar-inmuebles']);
 export function ZonePage({children}:{children:ReactNode}) {
   const {zone,requested,loading,error,reload}=useZoneWorkspace();const path=usePathname();const user=useSessionUser();
   if(!isAdministrator(user))return <>{children}</>;
   if(required.has(path)&&!zone&&(!generalViews.has(path)||Boolean(requested&&requested!=='*')))return <main className="p-6 sm:p-8"><div className="aa-card mx-auto max-w-3xl p-6"><h1 className="text-xl font-bold">{loading?'Consultando zona…':error?'No se pudieron consultar las zonas':'Selecciona una zona para trabajar'}</h1><p className="mt-3 text-sm text-slate-600">{error||'Abre una carpeta de la cartera para registrar y gestionar sus inmuebles.'}</p>{error&&<button onClick={()=>void reload()} className="aa-button aa-button-secondary mt-4">Reintentar</button>}<Link href="/cartera" className="aa-button aa-button-primary mt-4">Abrir cartera por zonas</Link></div></main>;
-  const ownBanner=new Set(['/datos-inmuebles','/cartera','/visitas-pendientes','/tasaciones-textos-pendientes']);
+  const ownBanner=new Set(['/tasaciones-pendientes','/textos-pendientes','/registrar-textos','/publicaciones-pendientes','/registrar-publicaciones','/datos-inmuebles','/cartera','/visitas-pendientes','/tasaciones-textos-pendientes']);
   return <div key={path === "/datos-inmuebles" ? path : `${path}:${requested||''}`}>{zone&&!ownBanner.has(path)&&<div className="flex flex-wrap items-center gap-3 px-4 pt-5 sm:px-8"><Link href="/cartera" className="aa-button aa-button-secondary">← Todas las zonas</Link><ZoneContext name={zone.nombre}/><span className="text-xs text-slate-500">Capacidad: {zone.capacidad} inmuebles</span></div>}{children}</div>;
 }

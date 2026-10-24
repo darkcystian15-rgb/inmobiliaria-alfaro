@@ -22,9 +22,9 @@ type DashboardData = {
 };
 const destinations: Record<string, { href: string; action: string }> = {
   "Visita pendiente": { href: "/visitas-pendientes", action: "Revisar visitas" },
-  "Tasación pendiente": { href: "/registrar-tasaciones", action: "Registrar tasaciones" },
-  "Texto pendiente": { href: "/tasaciones-textos-pendientes#material", action: "Completar texto" },
-  "Difusión pendiente": { href: "/tasaciones-textos-pendientes#difusion", action: "Registrar difusión" },
+  "Tasación pendiente": { href: "/tasaciones-pendientes", action: "Revisar tasaciones" },
+  "Texto pendiente": { href: "/textos-pendientes", action: "Revisar textos" },
+  "Publicación pendiente": { href: "/publicaciones-pendientes", action: "Revisar publicaciones" },
 };
 function businessClock(now: Date) {
   const hour = Number(new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", hour: "numeric", hourCycle: "h23" }).format(now));

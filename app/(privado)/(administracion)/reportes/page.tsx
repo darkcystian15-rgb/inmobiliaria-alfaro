@@ -1,5 +1,5 @@
 "use client";
-import { reportCatalog as reportes, recommendedReportColumns } from "@/lib/report-catalog.mjs";
+import { reportCatalog as reportes, recommendedReportColumns, workflowReportLabel } from "@/lib/report-catalog.mjs";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { zoneUrl } from "@/lib/zone-url";
@@ -431,10 +431,10 @@ export default function Page() {
                   Texto pendiente
                 </option>
                 <option>
-                  Difusión pendiente
+                  Publicación pendiente
                 </option>
                 <option>
-                  Difusión completada
+                  Publicación registrada
                 </option>
               </select>
             </label>
@@ -549,7 +549,7 @@ export default function Page() {
                   resumen.materialPendiente,
                 ],
                 [
-                  "Difusión completada",
+                  "Publicación registrada",
                   resumen.publicados,
                 ],
               ].map(
@@ -583,12 +583,12 @@ export default function Page() {
               </select>
             </label>
             <nav className="mt-3 grid max-h-80 gap-1 overflow-y-auto sm:grid-cols-2 xl:max-h-[640px] xl:grid-cols-1">
-              {visibles.map(reporte => <button key={reporte.nombre} type="button"
+              {visibles.map(reporte => <button key={workflowReportLabel(reporte.nombre)} type="button"
                 aria-current={seleccionado === reporte.nombre ? "page" : undefined}
                 title={reporte.descripcion} onClick={() => solicitarReporte(reporte.nombre)}
                 className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${seleccionado === reporte.nombre ? "bg-red-50 font-semibold text-[#c80000]" : "text-slate-600 hover:bg-slate-50"}`}>
                 <WorkspaceFileIcon report />
-                {reporte.nombre}
+                {workflowReportLabel(reporte.nombre)}
               </button>)}
             </nav>
           </aside>
@@ -603,7 +603,7 @@ export default function Page() {
               </p>
 
               <h2 className="mt-1 text-lg font-bold text-slate-950">
-                {seleccionado}
+                {workflowReportLabel(seleccionado)}
               </h2>
 
               <p className="mt-1 text-xs text-slate-500">

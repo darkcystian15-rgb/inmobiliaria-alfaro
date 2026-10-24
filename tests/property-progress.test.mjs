@@ -9,6 +9,8 @@ test('workflow follows agreed prices and a complete dossier without a separate a
   const valued = {...initial,visitaRealizada:true,tasacionRegistrada:true,situacionTasacion:'aprobado'};
   assert.equal(propertyProgress(valued).steps[3].label, 'Texto');
   assert.equal(propertyProgress(valued).steps[3].state, 'current');
+  assert.equal(propertyProgress(valued).href, '/registrar-textos');
+  assert.equal(propertyProgress({...valued,textoRealizado:true}).href, '/registrar-publicaciones');
   assert.equal(propertyProgress({...valued,textoRealizado:true}).steps[4].state, 'current');
 });
 test('historical and published properties have no new operational action', () => {

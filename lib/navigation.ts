@@ -15,8 +15,12 @@ export const menuGroups = [
       { href: "/liberar-inmuebles", label: "Liberar inmueble", icon: "release" },
       { href: "/visitas-pendientes", label: "Visitas pendientes", icon: "clock" },
       { href: "/registrar-visitas", label: "Registrar visitas", icon: "visit" },
-      { href: "/tasaciones-textos-pendientes", label: "Tasaciones, texto y difusión", icon: "clipboard" },
+      { href: "/tasaciones-pendientes", label: "Tasaciones pendientes", icon: "clipboard" },
       { href: "/registrar-tasaciones", label: "Registrar tasaciones", icon: "valuation" },
+      { href: "/textos-pendientes", label: "Textos pendientes", icon: "clipboard" },
+      { href: "/registrar-textos", label: "Registrar textos", icon: "clipboard" },
+      { href: "/publicaciones-pendientes", label: "Publicaciones pendientes", icon: "clipboard" },
+      { href: "/registrar-publicaciones", label: "Registrar publicaciones", icon: "clipboard" },
     ],
   },
   {

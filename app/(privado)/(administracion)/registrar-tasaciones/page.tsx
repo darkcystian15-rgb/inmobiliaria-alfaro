@@ -122,7 +122,7 @@ export default function Page() {
       for(const setter of [setFechas,setValores,setPrecios,setVentas,setObservaciones])setter(current=>{const next={...current};delete next[item.inmuebleId];return next;});
       setMonedas(current=>{const next={...current};delete next[item.inmuebleId];return next;});
       setMensaje(`Tasación de “${item.nombre}” registrada correctamente.`);
-      setSiguienteAccion({ href: `/tasaciones-textos-pendientes?inmueble=${item.inmuebleId}#material`, label: "Preparar documentos y texto de este inmueble" });
+      setSiguienteAccion({ href: `/registrar-textos?inmueble=${item.inmuebleId}`, label: "Registrar texto de este inmueble" });
       setCargando(true);
       await cargar();
     } catch (err) {
@@ -138,7 +138,7 @@ export default function Page() {
       <DraftRecovery draftKey="tasaciones:actual" data={{fechas,valores,precios,ventas,observaciones,monedas}} dirty={[fechas,valores,precios,ventas,observaciones].some(record=>Object.values(record).some(Boolean))} onRestore={draft=>{if(draft.monedas)setMonedas(draft.monedas as Record<number,Record<string,string>>);if(draft.fechas)setFechas(draft.fechas as Record<number,string>);if(draft.valores)setValores(draft.valores as Record<number,string>);if(draft.precios)setPrecios(draft.precios as Record<number,string>);if(draft.ventas)setVentas(draft.ventas as Record<number,string>);if(draft.observaciones)setObservaciones(draft.observaciones as Record<number,string>);}}/>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <PageHeading href="/registrar-tasaciones" /><ReturnLink />
-          <Link href="/tasaciones-textos-pendientes" className="cartera-folder-navigation inline-flex items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 shadow-sm hover:bg-violet-100">Ver seguimiento →</Link>
+          <Link href="/tasaciones-pendientes" className="cartera-folder-navigation inline-flex items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 shadow-sm hover:bg-violet-100">Ver tasaciones pendientes →</Link>
         </div>
 
         <section className="mt-6 aa-summary p-5">
@@ -147,7 +147,7 @@ export default function Page() {
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Acción principal</p>
               <p className="mt-1 text-sm font-semibold">Registra los tres precios una vez concluida la negociación con el propietario.</p>
             </div>
-            <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-800">Siguiente: seguimiento</span>
+            <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-800">Siguiente: registrar texto</span>
           </div>
         </section>
 
@@ -198,7 +198,7 @@ export default function Page() {
             {aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadasFiltradas.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones negociadas que coincidan con la búsqueda.</div> : aprobadasFiltradas.map(item => (
               <div key={item.inmuebleId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
                 <div><p className="font-semibold text-slate-900">{item.propietario || "Sin contacto"}</p><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)} · {operationLabel(item.operacion)} · posición {item.posicion} · {item.ubicacion}</p><p className="mt-1 text-xs text-slate-500">{referenceLabel(item.operacion)}: {formatPrice(item.valorReferencia, item.valorReferenciaMoneda)} · {targetLabel(item.operacion)}: {formatPrice(item.precioObjetivo, item.precioObjetivoMoneda)} · {priceLabel(item.operacion)}: {formatPrice(item.precioVenta, item.precioVentaMoneda)}</p></div>
-                <Link href={`/tasaciones-textos-pendientes?inmueble=${item.inmuebleId}#material`} className="rounded-xl bg-[#c80000] px-4 py-2.5 text-sm font-semibold text-white">Ver precios y preparar texto →</Link>
+                <Link href={`/registrar-textos?inmueble=${item.inmuebleId}`} className="rounded-xl bg-[#c80000] px-4 py-2.5 text-sm font-semibold text-white">Registrar texto →</Link>
               </div>
             ))}
           </div>

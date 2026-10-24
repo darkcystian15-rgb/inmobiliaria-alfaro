@@ -1,3 +1,7 @@
+# Seguimiento por tareas separadas
+
+Tasaciones pendientes y su registro, Textos pendientes y Registrar textos, Publicaciones pendientes y Registrar publicaciones. El texto se realiza antes de elegir/confirmar cartel y redes. Se conservan los datos y los enlaces anteriores. [Flujo, conservación y verificación](docs/submenus-flujo-2026-10-24.md).
+
 # Texto y difusión por inmueble
 
 Actualización del 24 de octubre: [Flujo, accesos desde Cartera, restauración y verificación](docs/texto-difusion-2026-10-24.md).

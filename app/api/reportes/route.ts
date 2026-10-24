@@ -98,8 +98,8 @@ function agregarSituaciones(item: {
   }
   if (item.materialPendiente) situaciones.push("Texto pendiente");
   if (item.negociacionEnCurso) situaciones.push("En negociación");
-  if (item.listoParaPublicar) situaciones.push("Difusión pendiente");
-  if (item.publicado) situaciones.push("Difusión completada");
+  if (item.listoParaPublicar) situaciones.push("Publicación pendiente");
+  if (item.publicado) situaciones.push("Publicación registrada");
 
   return situaciones;
 }
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
     if (auth.response) return auth.response;
     const sp = request.nextUrl.searchParams;
 
-    const aliases:Record<string,string>={"Material pendiente":"Texto pendiente","Listos para publicar":"Difusión pendiente","Publicados":"Difusión completada"};
+    const aliases:Record<string,string>={"Textos pendientes":"Texto pendiente","Publicaciones pendientes":"Publicación pendiente","Publicaciones registradas":"Publicación registrada","Difusión pendiente":"Publicación pendiente","Difusión completada":"Publicación registrada","Material pendiente":"Texto pendiente","Listos para publicar":"Publicación pendiente","Publicados":"Publicación registrada"};
     const requested=sp.get("reporte")||"Cartera activa";
     const reporte=aliases[requested]||requested;
     if(!reportCatalog.some(report=>report.nombre===reporte))return NextResponse.json({error:'Reporte no válido.'},{status:400});
@@ -119,13 +119,13 @@ export async function GET(request: NextRequest) {
     const desde = sp.get("desde") || "";
     const hasta = sp.get("hasta") || "";
     const oldSituation=sp.get("situacion")||"Todas";
-    const situacion=({"Material pendiente":"Texto pendiente","Listo para publicar":"Difusión pendiente","Publicado":"Difusión completada"} as Record<string,string>)[oldSituation]||oldSituation;
+    const situacion=({"Difusión pendiente":"Publicación pendiente","Difusión completada":"Publicación registrada","Material pendiente":"Texto pendiente","Listo para publicar":"Publicación pendiente","Publicado":"Publicación registrada"} as Record<string,string>)[oldSituation]||oldSituation;
     const estado = sp.get("estado") || "Todos";
     const posicionFiltro = sp.get("posicion") || "";
     const operacion = sp.get("operacion") || "Todos";
     if (!["Todos", "venta", "alquiler"].includes(operacion)) return NextResponse.json({error:"Operación no válida."},{status:400});
     const tipo = sp.get("tipo") || "Todos";
-    if(!['Todos','Activo','Histórico'].includes(estado)||!['Todas','Visita pendiente','Tasación pendiente','Texto pendiente','Difusión pendiente','Difusión completada'].includes(situacion))return NextResponse.json({error:'Estado o actividad no válidos.'},{status:400});
+    if(!['Todos','Activo','Histórico'].includes(estado)||!['Todas','Visita pendiente','Tasación pendiente','Texto pendiente','Publicación pendiente','Publicación registrada'].includes(situacion))return NextResponse.json({error:'Estado o actividad no válidos.'},{status:400});
     if(posicionFiltro&&(!Number.isSafeInteger(Number(posicionFiltro))||Number(posicionFiltro)<1||Number(posicionFiltro)>999999))return NextResponse.json({error:'Posición no válida.'},{status:400});
 
     if ((desde && !validCalendarDate(desde)) || (hasta && !validCalendarDate(hasta)) || (desde && hasta && desde > hasta)) return NextResponse.json({error:'Indica un período válido, con Desde anterior o igual a Hasta.'},{status:400});
@@ -168,7 +168,7 @@ export async function GET(request: NextRequest) {
     if(posicionFiltro){const position=Number(posicionFiltro);if(!Number.isSafeInteger(position)||position<1||position>999999)return NextResponse.json({error:'Posición no válida.'},{status:400});conditions.push(sql`(SELECT p.numero FROM inm_asignaciones_zona a JOIN inm_posiciones_zona p ON p.id=a.posicion_id WHERE a.inmueble_id=${inmInmuebles.id} ORDER BY a.activa DESC,a.fecha_inicio DESC,a.id DESC LIMIT 1)=${position}`);}
     if(flowStarts[reporte])conditions.push(sql`EXISTS(SELECT 1 FROM inm_timeline t WHERE t.inmueble_id=${inmInmuebles.id} AND t.evento=${flowStarts[reporte]})`);
     if(reportPredicates[reporte])conditions.push(reportPredicates[reporte]);
-    const situationReports:Record<string,string>={'Visita pendiente':'Visitas pendientes','Tasación pendiente':'Tasaciones pendientes','Texto pendiente':'Texto pendiente','Difusión pendiente':'Difusión pendiente','Difusión completada':'Difusión completada'};
+    const situationReports:Record<string,string>={'Visita pendiente':'Visitas pendientes','Tasación pendiente':'Tasaciones pendientes','Texto pendiente':'Texto pendiente','Publicación pendiente':'Publicación pendiente','Publicación registrada':'Publicación registrada'};
     if(situacion!=='Todas'&&situationReports[situacion])conditions.push(reportPredicates[situationReports[situacion]]);
     const where=and(...conditions)??sql`1=1`;
     const [countResult]=await db.execute(sql`SELECT COUNT(*) total ${factsFrom} WHERE ${where}`);
@@ -632,13 +632,13 @@ export async function GET(request: NextRequest) {
         (x) => x.materialPendiente,
       );
     } else if (
-      reporte === "Difusión pendiente"
+      reporte === "Publicación pendiente"
     ) {
       rows = filtered.filter(
         (x) => x.listoParaPublicar,
       );
     } else if (
-      reporte === "Difusión completada"
+      reporte === "Publicación registrada"
     ) {
       rows = filtered.filter(
         (x) => x.publicado,

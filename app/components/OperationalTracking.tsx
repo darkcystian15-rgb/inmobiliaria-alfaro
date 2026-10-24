@@ -5,7 +5,7 @@ import type { PropertyProgressData } from '@/lib/property-progress';
 import DeadlineNotice from './DeadlineNotice';
 type Task={actividad:string;fechaLimite:string|null;observacion:string|null};
 type Current={actividad:string;fechaLimite:string|null;estadoPlazo:string;plazoOrigen:string};
-const labels:Record<string,string>={visita:'Visita',tasacion:'Tasación',expediente:'Texto comercial',publicacion:'Difusión',documentacion:'Expediente documental de la operación'};
+const labels:Record<string,string>={visita:'Visita',tasacion:'Tasación',expediente:'Texto comercial',publicacion:'Publicación',documentacion:'Expediente documental de la operación'};
 export default function OperationalTracking({propertyId,administrator,progress,documentaryComplete,onChanged,onBusyChange}:{propertyId:number;administrator:boolean;progress:PropertyProgressData;documentaryComplete:boolean;onChanged?:()=>void;onBusyChange?:(busy:boolean)=>void}){
  const [tasks,setTasks]=useState<Task[]>([]),[current,setCurrent]=useState<Current|null>(null);
  const [error,setError]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true);
