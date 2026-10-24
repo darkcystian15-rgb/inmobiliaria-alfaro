@@ -44,7 +44,7 @@ export default function SalePriceEditor({ item, onSaved, onBusyChange, onDirtyCh
       if (!response.ok || !data.ok) throw new Error(data.error || "No se pudo guardar el precio.");
       await onSaved();
       setEditing(false);
-      setMessage("Tasación y precios actualizados.");
+      setMessage("Valores de tasación actualizados.");
       window.dispatchEvent(new Event("workflow-updated"));
     } catch (error) {
       setError(error instanceof Error ? error.message : "No se pudo guardar el precio.");
@@ -62,7 +62,7 @@ export default function SalePriceEditor({ item, onSaved, onBusyChange, onDirtyCh
       <label className="block text-xs font-semibold text-slate-600">Observación<textarea rows={3} value={observation} disabled={pending} onChange={event => setObservation(event.target.value)} className={inputClass} /></label>
       <p className="text-xs text-slate-500">El precio puede cambiar incluso después de publicar. El inmueble conserva su etapa actual.</p>
       <div className="flex gap-3"><button disabled={pending} className="rounded-xl bg-[#c80000] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">{pending ? "Guardando…" : "Guardar cambios"}</button><button type="button" disabled={pending} onClick={() => { setEditing(false); setError(""); }} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold">Cancelar</button></div>
-    </form> : <div className="mt-4 rounded-xl border border-slate-200 p-4"><p className="text-xs font-bold text-slate-500">Observación</p><p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{item.observacion || "Sin observaciones registradas."}</p><button type="button" onClick={() => { setPrices(initialPrices()); setObservation(item.observacion ?? ""); setError(""); setMessage(""); setEditing(true); }} className="mt-3 text-xs font-bold text-[#c80000]">Actualizar tasación y precios</button></div>}
+    </form> : <div className="mt-4 rounded-xl border border-slate-200 p-4"><p className="text-xs font-bold text-slate-500">Observación</p><p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{item.observacion || "Sin observaciones registradas."}</p><button type="button" onClick={() => { setPrices(initialPrices()); setObservation(item.observacion ?? ""); setError(""); setMessage(""); setEditing(true); }} className="mt-3 text-xs font-bold text-[#c80000]">Actualizar valores</button></div>}
     {error && <Feedback tone="error" className="mt-3">{error}</Feedback>}
     {message && <Feedback className="mt-3">{message}</Feedback>}
   </div>;

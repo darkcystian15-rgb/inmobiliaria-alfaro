@@ -14,7 +14,7 @@ Precio de salida (o renta mensual para alquiler) es el importe comercial que se 
 
 El detalle del inmueble mantiene identificación, posición, zona, contacto, dirección, tipo, operación, estado, edición de datos, documentación y requisitos de Fase 2, fotografías, ficha, seguimiento/historial, liberación y recuperación de venta suspendida.
 
-La parte superior muestra los tres precios actuales con sus monedas y la fecha de actualización. Actualizar tasación y precios abre directamente el editor correspondiente. Texto y Publicaciones tienen bloques y acciones independientes; se elimina el bloque combinado y el estado de publicación repetido. Liberar inmueble queda al final, separado de las tareas habituales. Se conserva el lenguaje visual de la intranet y las carpetas por zona.
+El panel sigue el orden Visitas → Tasaciones → Texto → Publicaciones. Tasaciones muestra los tres importes actuales con sus monedas y la fecha de actualización. Actualizar valores abre directamente el editor correspondiente. Texto y Publicaciones tienen bloques y acciones independientes; se elimina el bloque combinado y el estado de publicación repetido. Liberar inmueble queda al final, separado de las tareas habituales. Se conserva el lenguaje visual de la intranet y las carpetas por zona.
 
 El panel usa diálogo nativo, cabecera y cierre persistentes, desplazamiento interior y distribución adaptable. Cerrar, Escape o navegar desde una edición de datos pendiente requiere descartar expresamente; mientras guarda se bloquean el cierre y los enlaces. Las funciones de edición mantienen sus permisos y reglas anteriores.
 
@@ -56,3 +56,8 @@ Comprobación autenticada a las 22:15:53 UTC: diez vistas entre escritorio 1440 
 Evidencia privada: `output/panel-prices/production-summary.json`, logs y archivos del directorio de restauración. La sesión técnica y el respaldo se prepararon en versiones privadas sin reasignar el dominio de la intranet.
 
 Las dos cuentas técnicas y sus sesiones se retiraron a las 22:16:49 UTC; los tokens posteriores devolvieron 401. La comparación de las 22:16:50 UTC mantiene exactamente la huella inicial de las 27 tablas: `83948ced7079e97d9ce4fa2e49d49e156e41cf9a6b962f3dbdd5c8c8f03577d1`. Se conservaron todos los valores y conteos de negocio. Los datos y el contenedor de pruebas locales quedaron retirados/detenidos. El respaldo cifrado y su código anterior permanecen disponibles en el directorio privado documentado.
+
+
+## Corrección de orden y nombres
+
+Visitas se presenta primero en una fila compacta, seguida de Tasaciones con sus tres importes visibles. Después aparecen Texto y Publicaciones. El título del cuadro es únicamente Tasaciones y el acceso al editor se llama Actualizar valores, también en los demás accesos del mismo editor. Se conservan importes, moneda, estados y enlaces; es un ajuste de presentación.

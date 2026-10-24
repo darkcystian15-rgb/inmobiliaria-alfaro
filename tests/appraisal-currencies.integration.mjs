@@ -57,7 +57,7 @@ try{
    const context=await browser.newContext({viewport:{width,height:1000}});await context.addCookies([{name:'aa_session',value:tokens.admin,url:base}]);const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(base+`/datos-inmuebles?codigo=${ids.property}&carpeta=precios&editar=precios`);await page.getByRole('combobox',{name:'Moneda de la tasación',exact:true}).waitFor();
    assert.equal(await page.getByRole('combobox',{name:'Moneda de la tasación',exact:true}).count(),1);await page.getByRole('combobox',{name:'Moneda de la tasación',exact:true}).selectOption('USD');
-   await page.getByRole('button',{name:'Guardar cambios',exact:true}).click();await page.getByRole('button',{name:'Actualizar tasación y precios'}).waitFor();
+   await page.getByRole('button',{name:'Guardar cambios',exact:true}).click();await page.getByRole('button',{name:'Actualizar valores'}).waitFor();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
    await page.screenshot({path:`/tmp/appraisal-currencies-${width}.png`,fullPage:true});await context.close();
   }}finally{await browser.close();}console.log('PASS navegador: editor con una sola moneda, guardado real en BD aislada, 1440/375 px sin errores ni desbordes.');

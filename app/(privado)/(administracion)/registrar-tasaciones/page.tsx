@@ -194,12 +194,12 @@ export default function Page() {
         </section>
 
         <section className="mt-8 rounded-2xl border border-violet-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-900">Tasaciones negociadas registradas</h2><p className="mt-1 text-xs text-slate-500">Actualiza los valores desde Tasación y precios del inmueble; el texto y la publicación conservan su estado.</p></div>
+          <div className="border-b border-slate-200 px-5 py-4"><h2 className="font-bold text-slate-900">Tasaciones negociadas registradas</h2><p className="mt-1 text-xs text-slate-500">Actualiza los valores desde Tasaciones del inmueble; el texto y la publicación conservan su estado.</p></div>
           <div className="divide-y divide-slate-100">
             {aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Todavía no hay tasaciones negociadas.</div> : aprobadasFiltradas.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones negociadas que coincidan con la búsqueda.</div> : aprobadasFiltradas.map(item => (
               <div key={item.inmuebleId} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
                 <div><p className="font-semibold text-slate-900">{item.propietario || "Sin contacto"}</p><p className="mt-1 text-xs text-slate-500">{propertyDisplayId(item)} · {operationLabel(item.operacion)} · posición {item.posicion} · {item.ubicacion}</p><p className="mt-1 text-xs text-slate-500">{referenceLabel(item.operacion)}: {formatPrice(item.valorReferencia, item.valorReferenciaMoneda)} · {targetLabel(item.operacion)}: {formatPrice(item.precioObjetivo, item.precioObjetivoMoneda)} · {priceLabel(item.operacion)}: {formatPrice(item.precioVenta, item.precioVentaMoneda)}</p></div>
-                <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}&carpeta=precios&editar=precios`} className="aa-button aa-button-secondary shrink-0">Actualizar tasación y precios →</Link>
+                <Link href={`/datos-inmuebles?codigo=${item.inmuebleId}&carpeta=precios&editar=precios`} className="aa-button aa-button-secondary shrink-0">Actualizar valores →</Link>
               </div>
             ))}
           </div>
