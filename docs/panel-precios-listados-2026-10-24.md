@@ -47,4 +47,12 @@ Para recuperar código, extraer/verificar la referencia del bundle en otra carpe
 - Regresión de texto/difusión con HTTP y Chromium local aprobada: borradores, texto realizado, tres combinaciones de medios, confirmaciones parciales, referencias opcionales, edición sin reiniciar publicación, bandejas/contadores, permisos y enlaces anteriores.
 - Las escrituras de prueba son exclusivamente ficticias y locales; se retiran sus datos al terminar.
 
-Pendiente: publicación, comprobación autenticada de solo lectura en producción, comparación final de datos y retirada de identidades técnicas.
+## Producción
+
+Código funcional `e61d212`, despliegue `dpl_4GxyVqhUWjAtASEHT6oLGfbkQqV4`, READY en production. Versión https://inmobiliaria-alfarov2-herdv4lle-puma19.vercel.app. La lista de alias confirmó que el dominio https://intranet.inmobiliariaalbertoalfaro.com.pe apunta a esta versión.
+
+Comprobación autenticada a las 22:15:53 UTC: diez vistas entre escritorio 1440 px y móvil 375 px. Se verificaron las tres bandejas, los tres importes superiores frente a la API, los bloques separados, documentación, seguimiento/historial, liberación, el editor con una sola moneda, cancelación sin guardar, regreso automático al mismo panel y cierre retirando el detalle. El registro de tasación también mostró un solo selector. Administrador consultó y operador mantuvo acceso a la ficha y rechazo 403 de la API de Cartera. Sin errores de ejecución; los métodos de escritura estaban bloqueados en el navegador y no hubo intentos de escritura de negocio.
+
+Evidencia privada: `output/panel-prices/production-summary.json`, logs y archivos del directorio de restauración. La sesión técnica y el respaldo se prepararon en versiones privadas sin reasignar el dominio de la intranet.
+
+Las dos cuentas técnicas y sus sesiones se retiraron a las 22:16:49 UTC; los tokens posteriores devolvieron 401. La comparación de las 22:16:50 UTC mantiene exactamente la huella inicial de las 27 tablas: `83948ced7079e97d9ce4fa2e49d49e156e41cf9a6b962f3dbdd5c8c8f03577d1`. Se conservaron todos los valores y conteos de negocio. Los datos y el contenedor de pruebas locales quedaron retirados/detenidos. El respaldo cifrado y su código anterior permanecen disponibles en el directorio privado documentado.
