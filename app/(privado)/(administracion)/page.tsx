@@ -1,5 +1,6 @@
 "use client";
-import { zoneUrl } from "@/lib/zone-url";
+import { useZoneWorkspace } from "@/app/components/ZoneWorkspace";
+import { zoneHref, zoneUrl } from "@/lib/zone-url";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
@@ -36,6 +37,7 @@ function businessClock(now: Date) {
 }
 export default function Home() {
   const user = useSessionUser();
+  const {zone} = useZoneWorkspace();
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -88,7 +90,7 @@ export default function Home() {
           {work.length ? <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{work.map(item => {
             const target = destinations[item.etapa] ?? { href: "/cartera", action: "Ver cartera" };
             const progress = item.etapa === "En negociación";
-            return <Link key={item.etapa} href={target.href} className={`cartera-folder group relative mt-5 flex min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border p-4 transition hover:shadow-md ${progress ? "border-blue-200 bg-blue-50/50" : "border-amber-200 bg-amber-50/40"}`}>
+            return <Link key={item.etapa} href={zoneHref(target.href,zone?.nombre)} className={`cartera-folder group relative mt-5 flex min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border p-4 transition hover:shadow-md ${progress ? "border-blue-200 bg-blue-50/50" : "border-amber-200 bg-amber-50/40"}`}>
               <span aria-hidden="true" className="cartera-folder-tab absolute -top-5 -left-px h-5 w-24 rounded-t-lg border border-b-0 border-amber-200 bg-amber-100" /><div className="mb-3 flex items-center justify-between gap-2"><FolderIcon /><span className="text-xs font-semibold text-slate-500">Abrir carpeta</span></div><div className="flex flex-wrap items-center justify-between gap-2"><span className="text-3xl font-bold tabular-nums text-slate-950">{item.total}</span><StatusBadge tone={progress ? "progress" : "pending"}>{progress ? "En proceso" : "Pendiente"}</StatusBadge></div><h3 className="mt-3 text-sm font-bold text-slate-900">{item.etapa}</h3><span className="mt-4 text-sm font-semibold text-slate-800 group-hover:underline">{target.action} →</span>
             </Link>;
           })}</div> : <p className="mt-5 rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">✓ No hay visitas, tasaciones, expedientes ni publicaciones pendientes en las áreas consultadas.</p>}
