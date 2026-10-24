@@ -63,3 +63,10 @@ Huella de las 27 tablas de producción anterior al despliegue: `83948ced7079e97d
 Verificación autenticada de producción, 21:26:49 UTC: 20 vistas (cinco pantallas, dos zonas, escritorio 1440 px y móvil 375 px), nueve submenús con la zona correcta, entradas sin zona/general/inexistente, elección de zona, regreso a Cartera, Atrás/Adelante y recarga. Sin errores de ejecución, errores de aplicación ni desbordes. El navegador bloqueó métodos distintos de GET/HEAD/OPTIONS y no realizó escrituras de negocio. Evidencia privada: `output/zone-workflow/production-summary.json`.
 
 Las dos cuentas y sesiones técnicas se retiraron a las 21:28:20 UTC. Los tokens ya no acceden (401). La comparación de las 21:28:21 UTC mantiene exactamente la huella inicial de las 27 tablas: `83948ced7079e97d9ce4fa2e49d49e156e41cf9a6b962f3dbdd5c8c8f03577d1`. Los datos de negocio permanecen intactos. El MySQL local de pruebas quedó detenido.
+
+
+## Presentación de carpetas por zona
+
+El selector de zona de las pantallas operativas reutiliza las carpetas de Cartera: pestaña superior, icono amarillo, nombre de zona, ocupación/capacidad y apertura como enlace. Las nuevas bandejas mantienen ese lenguaje visual en sus accesos y en la ruta de la carpeta actual. Distribución adaptable a escritorio y móvil; se conserva el foco visible para teclado. La regla de zona seleccionada y los enlaces de regreso no cambian. Ajuste exclusivamente visual, sin cambios de API ni datos.
+
+Verificación del ajuste visual: ESLint, TypeScript y build webpack aprobados. Chromium local autenticado en 1440/375 px comprobó enlaces de carpetas, nombres largos, ruta de carpeta, regreso a Cartera y ocultación del menú al salir de la zona. Sin desbordes ni errores de ejecución; capturas de selección y carpeta abierta inspeccionadas. Solo se usaron zonas y cuenta ficticias locales, retiradas al terminar.
