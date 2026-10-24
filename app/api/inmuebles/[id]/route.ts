@@ -1,3 +1,5 @@
+import { inmAnuncios } from "@/db/schema";
+import { readReferences } from "@/lib/diffusion.mjs";
 import { propertyZoneName } from "@/lib/zone-scope";
 import { validatePropertyEditFields, canChangeOperation } from "@/lib/property-edit-policy.mjs";
 import { propertyCode } from "@/lib/property-code.mjs";
@@ -51,7 +53,7 @@ async function findProperty(key: string) {
       caracteristicas: inmInmuebles.caracteristicas,
       observaciones: inmInmuebles.observaciones,
       estado: inmInmuebles.estado,
-      etapa: sql<string>`CASE WHEN ${inmInmuebles.estado}<>'activo' THEN 'historico' WHEN EXISTS(SELECT 1 FROM inm_publicaciones p WHERE p.inmueble_id=${inmInmuebles.id} AND p.publicado=1) THEN 'publicado' WHEN EXISTS(SELECT 1 FROM inm_tasaciones t WHERE t.inmueble_id=${inmInmuebles.id}) THEN 'material_pendiente' WHEN EXISTS(SELECT 1 FROM inm_visitas v WHERE v.inmueble_id=${inmInmuebles.id} AND v.completada=1) THEN 'tasacion_pendiente' ELSE 'visita_pendiente' END`,
+      etapa: sql<string>`CASE WHEN ${inmInmuebles.estado}<>'activo' THEN 'historico' WHEN EXISTS(SELECT 1 FROM inm_publicaciones p WHERE p.inmueble_id=${inmInmuebles.id} AND p.publicado=1) THEN 'difusion_completada' WHEN EXISTS(SELECT 1 FROM inm_publicaciones p WHERE p.inmueble_id=${inmInmuebles.id} AND p.texto_realizado=1 AND LENGTH(TRIM(p.texto))>0) THEN 'difusion_pendiente' WHEN EXISTS(SELECT 1 FROM inm_tasaciones t WHERE t.inmueble_id=${inmInmuebles.id}) THEN 'texto_pendiente' WHEN EXISTS(SELECT 1 FROM inm_visitas v WHERE v.inmueble_id=${inmInmuebles.id} AND v.completada=1) THEN 'tasacion_pendiente' ELSE 'visita_pendiente' END`,
       fechaRegistro: databaseInstant(inmInmuebles.fechaRegistro),
       fechaActualizacion: inmInmuebles.fechaActualizacion,
       fechaSalida: inmInmuebles.fechaSalida,
@@ -69,6 +71,11 @@ async function findProperty(key: string) {
       observacionTasacion: inmTasaciones.observacion,
       publicacionId: inmPublicaciones.id,
       textoPublicacion: inmPublicaciones.texto,
+      textoRealizado: inmPublicaciones.textoRealizado,
+      mediosDifusion: inmPublicaciones.mediosDifusion,
+      cartelColocado: inmPublicaciones.cartelColocado,
+      redesPublicadas: inmPublicaciones.redesPublicadas,
+      referenciasDifusion: inmPublicaciones.referenciasDifusion,
       enlacePublicacion: inmPublicaciones.driveLink,
       publicado: inmPublicaciones.publicado,
       fechaPublicacion: inmPublicaciones.fechaPublicacion,
@@ -95,8 +102,9 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const row = await findProperty(key);
     if (!row) return NextResponse.json({ error: "Inmueble no encontrado." }, { status: 404 });
 
-    const { visitaRealizada, tasacionId, fechaTasacion, valorReferencia, precioObjetivo, precioVenta, valorReferenciaMoneda, precioObjetivoMoneda, precioVentaMoneda, situacionTasacion, observacionTasacion, publicacionId, textoPublicacion, enlacePublicacion, publicado, fechaPublicacion, ...inmueble } = row;
+    const { visitaRealizada, tasacionId, fechaTasacion, valorReferencia, precioObjetivo, precioVenta, valorReferenciaMoneda, precioObjetivoMoneda, precioVentaMoneda, situacionTasacion, observacionTasacion, publicacionId, textoPublicacion, textoRealizado, mediosDifusion, cartelColocado, redesPublicadas, referenciasDifusion, enlacePublicacion, publicado, fechaPublicacion, ...inmueble } = row;
 
+    const referenciasAnteriores = await db.select({canal:inmAnuncios.canal,url:inmAnuncios.enlace}).from(inmAnuncios).where(eq(inmAnuncios.inmuebleId,row.id));
     const expediente = (await publicationReadiness(db, row.id)).get(row.id);
     const dossier = await readDossier(row.id);
     const files = await db.select({ tipoDocumento: inmArchivos.tipoDocumento, almacenamiento: inmArchivos.almacenamiento }).from(inmArchivos).where(eq(inmArchivos.inmuebleId, row.id));
@@ -111,9 +119,9 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       expediente,
       venta: venta ?? null,
       alquiler: alquiler ?? null,
-      progreso: { estado: row.estado, visitaRealizada: Boolean(visitaRealizada), tasacionRegistrada: Boolean(tasacionId), situacionTasacion, publicado: Boolean(publicado), expedienteCompleto: Boolean(expediente?.complete) },
+      progreso: { estado: row.estado, visitaRealizada: Boolean(visitaRealizada), tasacionRegistrada: Boolean(tasacionId), situacionTasacion, publicado: Boolean(publicado), expedienteCompleto: Boolean(expediente?.complete), textoRealizado: Boolean(textoRealizado && textoPublicacion?.trim()) },
       tasacion: tasacionId ? { id: tasacionId, fechaTasacion, valorReferencia, precioObjetivo, precioVenta, valorReferenciaMoneda, precioObjetivoMoneda, precioVentaMoneda, situacion: situacionTasacion, observacion: observacionTasacion } : null,
-      publicacion: publicacionId ? { id: publicacionId, texto: textoPublicacion, enlace: enlacePublicacion, publicado, fechaPublicacion } : null,
+      publicacion: publicacionId ? { id: publicacionId, texto: textoPublicacion, textoRealizado, mediosDifusion, cartelColocado, redesPublicadas, referencias: referenciasDifusion === null ? referenciasAnteriores : readReferences(referenciasDifusion), enlace: enlacePublicacion, publicado, fechaPublicacion } : null,
     });
   } catch (error) {
     console.error("Operación fallida: inmuebles/[id]", (error as { code?: string; cause?: { code?: string } }).cause?.code ?? (error as { code?: string }).code ?? "ERROR");

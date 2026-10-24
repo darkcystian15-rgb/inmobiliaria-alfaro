@@ -1,6 +1,7 @@
+import { textDone } from "@/lib/diffusion.mjs";
 import { fileActivitySummary, fileEventNames } from '@/lib/file-activity.mjs';
 import { databaseInstant } from '@/lib/business-time';
-import { publicationReadiness } from "@/lib/publication-readiness";
+
 import { authorizeApi } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { and, desc, eq } from "drizzle-orm";
@@ -33,11 +34,12 @@ const eventoMap: Record<string, string> = {
   tasacion_realizada: "Tasación realizada",
   tasacion_actualizada: "Tasación actualizada",
   publicacion_registrada: "Texto registrado",
+  difusion_actualizada: "Difusión actualizada",
   publicacion_actualizada: "Publicación actualizada",
   renta_mensual_actualizada: "Renta mensual actualizada",
   precio_venta_actualizado: "Montos de tasación actualizados",
-  listo_para_publicar: "Listo para publicar",
-  publicado: "Publicado",
+  listo_para_publicar: "Difusión pendiente",
+  publicado: "Difusión completada",
   liberacion_registrada: "Liberación registrada",
   inmueble_liberado: "Inmueble liberado",
   venta_suspendida: "Venta suspendida por el propietario",
@@ -99,6 +101,8 @@ export async function GET() {
         .select({
           inmuebleId: inmPublicaciones.inmuebleId,
           publicado: inmPublicaciones.publicado,
+          texto: inmPublicaciones.texto,
+          textoRealizado: inmPublicaciones.textoRealizado,
         })
         .from(inmPublicaciones),
 
@@ -202,7 +206,7 @@ export async function GET() {
 
     const publicacionPorInmueble = new Map<
       number,
-      boolean
+      (typeof publicaciones)[number]
     >();
 
     for (const publicacion of publicaciones) {
@@ -210,7 +214,7 @@ export async function GET() {
 
       publicacionPorInmueble.set(
         publicacion.inmuebleId,
-        publicacion.publicado
+        publicacion
       );
     }
 
@@ -221,7 +225,7 @@ export async function GET() {
     let textosPendientes = 0;
     let listosParaPublicar = 0;
 
-    const expedientes = await publicationReadiness();
+
     for (const inmuebleId of activos) {
       const visita = ultimaVisita.get(inmuebleId);
       const tasacion = tasacionPorInmueble.get(inmuebleId);
@@ -244,11 +248,11 @@ export async function GET() {
         negociacionesEnCurso++;
       }
 
-      if (tasacion === "aprobado" && !expedientes.get(inmuebleId)?.complete) {
+      if (tasacion === "aprobado" && !publicacion?.publicado && !textDone(publicacion)) {
         textosPendientes++;
       }
 
-      if (publicacion === false && expedientes.get(inmuebleId)?.complete) {
+      if (publicacion && !publicacion.publicado && textDone(publicacion)) {
         listosParaPublicar++;
       }
     }
@@ -279,12 +283,12 @@ export async function GET() {
           tone: "orange",
         },
         {
-          etapa: "Expediente pendiente",
+          etapa: "Texto pendiente",
           total: textosPendientes,
           tone: "rose",
         },
         {
-          etapa: "Listo para publicar",
+          etapa: "Difusión pendiente",
           total: listosParaPublicar,
           tone: "emerald",
         },

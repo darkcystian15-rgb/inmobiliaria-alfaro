@@ -1,3 +1,4 @@
+import { textDone } from "@/lib/diffusion.mjs";
 import { formatPrice } from "@/lib/prices.mjs";
 import { reportCatalog } from '@/lib/report-catalog.mjs';
 import { workflowTasks } from '@/lib/workflow-tasks';
@@ -95,10 +96,10 @@ function agregarSituaciones(item: {
   if (item.aprobacionPendiente) {
     situaciones.push("Pendiente de aprobación");
   }
-  if (item.materialPendiente) situaciones.push("Material pendiente");
+  if (item.materialPendiente) situaciones.push("Texto pendiente");
   if (item.negociacionEnCurso) situaciones.push("En negociación");
-  if (item.listoParaPublicar) situaciones.push("Listo para publicar");
-  if (item.publicado) situaciones.push("Publicado");
+  if (item.listoParaPublicar) situaciones.push("Difusión pendiente");
+  if (item.publicado) situaciones.push("Difusión completada");
 
   return situaciones;
 }
@@ -109,19 +110,22 @@ export async function GET(request: NextRequest) {
     if (auth.response) return auth.response;
     const sp = request.nextUrl.searchParams;
 
-    const reporte = sp.get("reporte") || "Cartera activa";
+    const aliases:Record<string,string>={"Material pendiente":"Texto pendiente","Listos para publicar":"Difusión pendiente","Publicados":"Difusión completada"};
+    const requested=sp.get("reporte")||"Cartera activa";
+    const reporte=aliases[requested]||requested;
     if(!reportCatalog.some(report=>report.nombre===reporte))return NextResponse.json({error:'Reporte no válido.'},{status:400});
     const plazo=sp.get('plazo')||'Todos';
     if(!['Todos','Vencido','Vence hoy','En plazo'].includes(plazo))return NextResponse.json({error:'Estado de plazo no válido.'},{status:400});
     const desde = sp.get("desde") || "";
     const hasta = sp.get("hasta") || "";
-    const situacion = sp.get("situacion") || "Todas";
+    const oldSituation=sp.get("situacion")||"Todas";
+    const situacion=({"Material pendiente":"Texto pendiente","Listo para publicar":"Difusión pendiente","Publicado":"Difusión completada"} as Record<string,string>)[oldSituation]||oldSituation;
     const estado = sp.get("estado") || "Todos";
     const posicionFiltro = sp.get("posicion") || "";
     const operacion = sp.get("operacion") || "Todos";
     if (!["Todos", "venta", "alquiler"].includes(operacion)) return NextResponse.json({error:"Operación no válida."},{status:400});
     const tipo = sp.get("tipo") || "Todos";
-    if(!['Todos','Activo','Histórico'].includes(estado)||!['Todas','Visita pendiente','Tasación pendiente','Material pendiente','Listo para publicar','Publicado'].includes(situacion))return NextResponse.json({error:'Estado o actividad no válidos.'},{status:400});
+    if(!['Todos','Activo','Histórico'].includes(estado)||!['Todas','Visita pendiente','Tasación pendiente','Texto pendiente','Difusión pendiente','Difusión completada'].includes(situacion))return NextResponse.json({error:'Estado o actividad no válidos.'},{status:400});
     if(posicionFiltro&&(!Number.isSafeInteger(Number(posicionFiltro))||Number(posicionFiltro)<1||Number(posicionFiltro)>999999))return NextResponse.json({error:'Posición no válida.'},{status:400});
 
     if ((desde && !validCalendarDate(desde)) || (hasta && !validCalendarDate(hasta)) || (desde && hasta && desde > hasta)) return NextResponse.json({error:'Indica un período válido, con Desde anterior o igual a Hasta.'},{status:400});
@@ -164,7 +168,7 @@ export async function GET(request: NextRequest) {
     if(posicionFiltro){const position=Number(posicionFiltro);if(!Number.isSafeInteger(position)||position<1||position>999999)return NextResponse.json({error:'Posición no válida.'},{status:400});conditions.push(sql`(SELECT p.numero FROM inm_asignaciones_zona a JOIN inm_posiciones_zona p ON p.id=a.posicion_id WHERE a.inmueble_id=${inmInmuebles.id} ORDER BY a.activa DESC,a.fecha_inicio DESC,a.id DESC LIMIT 1)=${position}`);}
     if(flowStarts[reporte])conditions.push(sql`EXISTS(SELECT 1 FROM inm_timeline t WHERE t.inmueble_id=${inmInmuebles.id} AND t.evento=${flowStarts[reporte]})`);
     if(reportPredicates[reporte])conditions.push(reportPredicates[reporte]);
-    const situationReports:Record<string,string>={'Visita pendiente':'Visitas pendientes','Tasación pendiente':'Tasaciones pendientes','Material pendiente':'Material pendiente','Listo para publicar':'Listos para publicar','Publicado':'Publicados'};
+    const situationReports:Record<string,string>={'Visita pendiente':'Visitas pendientes','Tasación pendiente':'Tasaciones pendientes','Texto pendiente':'Texto pendiente','Difusión pendiente':'Difusión pendiente','Difusión completada':'Difusión completada'};
     if(situacion!=='Todas'&&situationReports[situacion])conditions.push(reportPredicates[situationReports[situacion]]);
     const where=and(...conditions)??sql`1=1`;
     const [countResult]=await db.execute(sql`SELECT COUNT(*) total ${factsFrom} WHERE ${where}`);
@@ -417,7 +421,7 @@ export async function GET(request: NextRequest) {
       const materialPendiente =
         activo &&
         esTasacionAprobada(tasacion?.situacion) &&
-        !expedientes.get(x.id)?.complete;
+        !publicacion?.publicado && !textDone(publicacion);
 
       const negociacionEnCurso =
         activo &&
@@ -428,7 +432,7 @@ export async function GET(request: NextRequest) {
         activo &&
         Boolean(
           publicacion &&
-            !publicacion.publicado && expedientes.get(x.id)?.complete,
+            !publicacion.publicado && textDone(publicacion),
         );
 
       const publicado =
@@ -622,19 +626,19 @@ export async function GET(request: NextRequest) {
           x.tasacionRechazada,
       );
     } else if (
-      reporte === "Material pendiente"
+      reporte === "Texto pendiente"
     ) {
       rows = filtered.filter(
         (x) => x.materialPendiente,
       );
     } else if (
-      reporte === "Listos para publicar"
+      reporte === "Difusión pendiente"
     ) {
       rows = filtered.filter(
         (x) => x.listoParaPublicar,
       );
     } else if (
-      reporte === "Publicados"
+      reporte === "Difusión completada"
     ) {
       rows = filtered.filter(
         (x) => x.publicado,

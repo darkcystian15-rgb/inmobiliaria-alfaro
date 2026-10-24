@@ -1,0 +1,7 @@
+// Compare original business columns with the private pre-change snapshot.
+import {createHash} from 'node:crypto';import mysql from 'mysql2/promise';
+const spec=JSON.parse(Buffer.from(process.env.RESTORE_POINT_VERIFICATION_BASE64||'','base64').toString('utf8'));
+if(!Array.isArray(spec)||!spec.length)throw new Error('Falta el manifiesto de comparación.');
+const db=await mysql.createConnection({uri:process.env.DATABASE_URL,...(process.env.DATABASE_SSL_CA||process.env.DATABASE_TLS_REQUIRED==='1'?{ssl:{...(process.env.DATABASE_SSL_CA?{ca:process.env.DATABASE_SSL_CA.replace(/\\n/g,'\n')} : {}),rejectUnauthorized:true,verifyIdentity:true}}:{})});
+try{const results=[];await db.query('START TRANSACTION WITH CONSISTENT SNAPSHOT');for(const table of spec){if(!/^inm_[a-z_]+$/.test(table.name)||!Array.isArray(table.columns)||table.columns.some(column=>!/^\w+$/.test(column)))throw new Error('Tabla no válida.');
+ const[rows]=await db.query(`SELECT ${table.columns.map(column=>`\`${column}\``).join(',')} FROM \`${table.name}\``);const normalized=rows.map(row=>JSON.stringify(row)).sort();const hash=createHash('sha256').update(JSON.stringify(normalized)).digest('hex');results.push({table:table.name,rows:rows.length,match:hash===table.sha256});}await db.commit();console.log('RESTORE_BUSINESS_COMPARISON '+JSON.stringify({tables:results.length,matching:results.filter(row=>row.match).length,changed:results.filter(row=>!row.match)}));}finally{await db.end();}

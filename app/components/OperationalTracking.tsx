@@ -5,7 +5,7 @@ import type { PropertyProgressData } from '@/lib/property-progress';
 import DeadlineNotice from './DeadlineNotice';
 type Task={actividad:string;fechaLimite:string|null;observacion:string|null};
 type Current={actividad:string;fechaLimite:string|null;estadoPlazo:string;plazoOrigen:string};
-const labels:Record<string,string>={visita:'Visita',tasacion:'Tasación',expediente:'Material para publicar',publicacion:'Publicación',documentacion:'Expediente documental de la operación'};
+const labels:Record<string,string>={visita:'Visita',tasacion:'Tasación',expediente:'Texto comercial',publicacion:'Difusión',documentacion:'Expediente documental de la operación'};
 export default function OperationalTracking({propertyId,administrator,progress,documentaryComplete,onChanged,onBusyChange}:{propertyId:number;administrator:boolean;progress:PropertyProgressData;documentaryComplete:boolean;onChanged?:()=>void;onBusyChange?:(busy:boolean)=>void}){
  const [tasks,setTasks]=useState<Task[]>([]),[current,setCurrent]=useState<Current|null>(null);
  const [error,setError]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true);
@@ -16,7 +16,7 @@ export default function OperationalTracking({propertyId,administrator,progress,d
   }catch(error){if(!signal?.aborted)setError(error instanceof Error?error.message:'No se pudo cargar el seguimiento.');}finally{if(!signal?.aborted)setLoading(false);}
  },[url]);
  useEffect(()=>{if(!administrator)return;const controller=new AbortController();void Promise.resolve().then(()=>load(controller.signal));return()=>controller.abort();},[load,administrator]);
- const completed:Record<string,boolean>={visita:progress.visitaRealizada,tasacion:progress.tasacionRegistrada,expediente:!!progress.expedienteCompleto,publicacion:progress.publicado,documentacion:documentaryComplete};
+ const completed:Record<string,boolean>={visita:progress.visitaRealizada,tasacion:progress.tasacionRegistrada,expediente:!!progress.textoRealizado,publicacion:progress.publicado,documentacion:documentaryComplete};
  async function save(task:Task){setBusy(true);onBusyChange?.(true);setError('');setMessage('');try{await requestJson(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(task)});await load();onChanged?.();window.dispatchEvent(new Event('workflow-updated'));setMessage('Plazo del inmueble guardado. Las alertas usan la nueva fecha.');}catch(error){setError(error instanceof Error?error.message:'No se pudo guardar.');}finally{setBusy(false);onBusyChange?.(false);}}
  function update(activity:string,change:Partial<Task>){setTasks(previous=>previous.map(task=>task.actividad===activity?{...task,...change}:task));}
  if(!administrator)return null;

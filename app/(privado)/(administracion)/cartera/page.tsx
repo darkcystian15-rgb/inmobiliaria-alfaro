@@ -82,7 +82,7 @@ type Inmueble = {
   actividades: Actividades;
   visitaPendiente: boolean;
   tasacionPendiente: boolean;
-  materialPendiente: boolean;
+  materialPendiente: boolean; difusionPendiente?: boolean; textoRealizado?: boolean;
   fotosPendientes: boolean;
   tieneFotos: boolean;
   textoPendiente: boolean;
@@ -262,8 +262,8 @@ function EstadoActividad({
 const cardThemes = {
   visita: { label: "Visita pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-800 ring-amber-200", position: "bg-amber-50 text-amber-800", border: "hover:border-amber-300" },
   tasacion: { label: "Tasación pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-900 ring-amber-200", position: "bg-amber-50 text-amber-900", border: "hover:border-amber-300" },
-  material: { label: "Publicación pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-900 ring-amber-200", position: "bg-amber-50 text-amber-900", border: "hover:border-amber-300" },
-  publicado: { label: "Publicado", stripe: "bg-emerald-400", badge: "bg-emerald-50 text-emerald-800 ring-emerald-200", position: "bg-emerald-50 text-emerald-800", border: "hover:border-emerald-300" },
+  material: { label: "Texto pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-900 ring-amber-200", position: "bg-amber-50 text-amber-900", border: "hover:border-amber-300" },
+  publicado: { label: "Difusión completada", stripe: "bg-emerald-400", badge: "bg-emerald-50 text-emerald-800 ring-emerald-200", position: "bg-emerald-50 text-emerald-800", border: "hover:border-emerald-300" },
   seguimiento: { label: "En seguimiento", stripe: "bg-blue-400", badge: "bg-blue-50 text-blue-800 ring-blue-200", position: "bg-blue-50 text-blue-800", border: "hover:border-blue-300" },
 };
 
@@ -274,7 +274,8 @@ function cardTheme(item: Inmueble) {
   if (item.negociacionEnCurso) return { ...cardThemes.seguimiento, label: "Seguimiento anterior" };
   if (item.visitaPendiente) return cardThemes.visita;
   if (item.tasacionPendiente) return cardThemes.tasacion;
-  if (item.materialPendiente || item.actividades.tasacion.situacion === "aprobado") return cardThemes.material;
+  if (item.difusionPendiente) return {...cardThemes.material,label:"Difusión pendiente"};
+  if (item.materialPendiente) return cardThemes.material;
   return cardThemes.seguimiento;
 }
 
@@ -645,7 +646,8 @@ export default function CarteraPage() {
                         <div className="mt-3 flex min-h-12 content-start flex-wrap gap-1.5">
                           {x.visitaPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-800">Visita pendiente</span>}
                           {x.tasacionPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Tasación pendiente</span>}
-                          {x.materialPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Material pendiente</span>}
+                          {x.difusionPendiente && <span className="rounded-md bg-blue-50 px-1.5 py-1 text-xs font-semibold text-blue-900">Difusión pendiente</span>}
+                          {x.materialPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Texto pendiente</span>}
 
                         </div>
                         <div className="mt-auto pt-4">
@@ -869,55 +871,18 @@ export default function CarteraPage() {
                     </div>
                   </div>
 
-<div className="rounded-2xl border border-slate-200 p-4">
-  <div className="flex flex-wrap items-center justify-between gap-2">
-    <p className="text-sm font-semibold text-slate-700">Material</p>
-    {seleccionado.actividades.tasacion.estado !== "aprobado" && (
-      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-        Disponible tras aprobar la tasación
-      </span>
-    )}
-  </div>
-
-  {seleccionado.actividades.tasacion.estado !== "aprobado" ? null : (
-    <div className="mt-2 flex flex-wrap gap-1.5">
-      <span
-        className={`rounded-full px-2 py-1 text-xs font-semibold ${
-          seleccionado.fotosPendientes
-            ? "bg-amber-50 text-amber-900"
-            : "bg-emerald-50 text-emerald-800"
-        }`}
-      >
-        {seleccionado.fotosPendientes
-          ? "Fotos pendientes"
-          : "Fotos completas"}
-      </span>
-
-      <span
-        className={`rounded-full px-2 py-1 text-xs font-semibold ${
-          seleccionado.textoPendiente
-            ? "bg-amber-50 text-amber-900"
-            : "bg-emerald-50 text-emerald-800"
-        }`}
-      >
-        {seleccionado.textoPendiente
-          ? "Texto pendiente"
-          : "Texto registrado"}
-      </span>
-    </div>
-  )}
-</div>
+<div className="rounded-2xl border border-slate-200 p-4"><p className="text-sm font-semibold text-slate-700">Texto y difusión</p><p className="mt-2 text-sm text-slate-600">{seleccionado.actividades.publicacion.publicado ? "Difusión completada" : seleccionado.actividades.tasacion.situacion !== "aprobado" ? "Disponible después de registrar la tasación" : seleccionado.difusionPendiente ? "Difusión pendiente" : seleccionado.textoRealizado ? "Texto realizado" : "Texto pendiente"}</p><div className="mt-4 flex flex-wrap gap-3">{seleccionado.estado === "Activo" && seleccionado.actividades.tasacion.situacion === "aprobado" && <><Link className="aa-button aa-button-secondary" href={`/datos-inmuebles?codigo=${encodeURIComponent(seleccionado.id)}&carpeta=precios`}>Editar tasación</Link><Link className="aa-button aa-button-secondary" href={`/datos-inmuebles?codigo=${encodeURIComponent(seleccionado.id)}&carpeta=publicacion&editar=texto`}>{seleccionado.actividades.publicacion.tieneTexto ? "Editar texto" : "Registrar texto"}</Link></>}</div></div>
 
                   <div className="rounded-2xl bg-background p-4">
                     <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Publicación
+                      Difusión
                     </p>
                     <p className="mt-1 text-sm font-medium text-slate-700">
                       {!seleccionado.actividades.publicacion.existe
-                        ? "Sin publicación registrada"
+                        ? "Texto pendiente"
                         : seleccionado.actividades.publicacion.publicado
-                          ? "Publicación realizada"
-                          : "Texto registrado, pendiente de publicación"}
+                          ? "Difusión completada"
+                          : seleccionado.textoRealizado ? "Difusión pendiente" : "Texto pendiente"}
                     </p>
                   </div>
 

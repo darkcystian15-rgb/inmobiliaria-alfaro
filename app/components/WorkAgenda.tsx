@@ -6,8 +6,8 @@ import Link from 'next/link';
 import DeadlineNotice from './DeadlineNotice';
 type Task={id:number;zona:string;posicion:number|null;tipo:string|null;operacion:string;direccion:string|null;propietarioNombres:string|null;actividad:string;fechaLimite:string|null;estadoPlazo:string;plazoOrigen:string;diasRetraso:number};
 type Data={items:Task[];total:number;resumen:{vencidos:number;hoy:number;proximos:number}};
-const labels:Record<string,string>={visita:'Registrar visita',tasacion:'Registrar tasación',expediente:'Completar material',publicacion:'Confirmar publicación'};
-const statuses:Record<string,string>={visita:'Visita pendiente',tasacion:'Tasación pendiente',expediente:'Material pendiente',publicacion:'Publicación pendiente'};
+const labels:Record<string,string>={visita:'Registrar visita',tasacion:'Registrar tasación',expediente:'Completar texto',publicacion:'Registrar difusión'};
+const statuses:Record<string,string>={visita:'Visita pendiente',tasacion:'Tasación pendiente',expediente:'Texto pendiente',publicacion:'Difusión pendiente'};
 const destinations:Record<string,string>={visita:'/registrar-visitas',tasacion:'/registrar-tasaciones',expediente:'/tasaciones-textos-pendientes',publicacion:'/tasaciones-textos-pendientes'};
 export default function WorkAgenda(){
  const [data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[reload,setReload]=useState(0);

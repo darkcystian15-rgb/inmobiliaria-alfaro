@@ -15,7 +15,7 @@ type Property = {
   precioVenta: string | null; precioVentaMoneda?: string;
   visitaPendiente: boolean;
   tasacionPendiente: boolean;
-  materialPendiente: boolean;
+  materialPendiente: boolean; difusionPendiente?: boolean;
   negociacionEnCurso: boolean;
   actividades: { publicacion: { publicado: boolean }; tasacion: { situacion: string | null } };
 };
@@ -34,8 +34,9 @@ export default function PortfolioLabelRow({ property: x, onOpen }: { property: P
   else {
     if (x.visitaPendiente) states.push({ label: "Visita pendiente", tone: "visit" });
     if (x.tasacionPendiente) states.push({ label: "Tasación pendiente", tone: "valuation" });
-    if (x.materialPendiente) states.push({ label: "Material pendiente", tone: "material" });
-    if (x.actividades.publicacion.publicado) states.push({ label: "Publicado", tone: "published" });
+    if (x.difusionPendiente) states.push({ label:"Difusión pendiente",tone:"material" });
+    if (x.materialPendiente) states.push({ label: "Texto pendiente", tone: "material" });
+    if (x.actividades.publicacion.publicado) states.push({ label: "Difusión completada", tone: "published" });
     if (x.actividades.tasacion.situacion === "pendiente_aprobacion") states.push({ label: "Tasación anterior por revisar", tone: "valuation" });
     if (x.negociacionEnCurso) states.push({ label: "Seguimiento anterior", tone: "material" });
     if (!states.length) states.push({ label: "En seguimiento", tone: "material" });

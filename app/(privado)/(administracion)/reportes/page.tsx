@@ -233,7 +233,7 @@ export default function Page() {
     fechaVenta: "Fecha de venta",
     precioFinal: "Precio final (S/)",
     comision: "Comisión (S/)",
-    expedientePendiente: "Expediente pendiente",
+    expedientePendiente: "Texto pendiente",
     codigo: "ID del inmueble",
     zona: "Zona",
     posicion: "Pos.",
@@ -428,13 +428,13 @@ export default function Page() {
                   Tasación pendiente
                 </option>
                 <option>
-                  Material pendiente
+                  Texto pendiente
                 </option>
                 <option>
-                  Listo para publicar
+                  Difusión pendiente
                 </option>
                 <option>
-                  Publicado
+                  Difusión completada
                 </option>
               </select>
             </label>
@@ -545,11 +545,11 @@ export default function Page() {
                   resumen.tasacionesPendientes,
                 ],
                 [
-                  "Material pendiente",
+                  "Texto pendiente",
                   resumen.materialPendiente,
                 ],
                 [
-                  "Publicados",
+                  "Difusión completada",
                   resumen.publicados,
                 ],
               ].map(

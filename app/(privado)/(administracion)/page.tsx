@@ -23,8 +23,8 @@ type DashboardData = {
 const destinations: Record<string, { href: string; action: string }> = {
   "Visita pendiente": { href: "/visitas-pendientes", action: "Revisar visitas" },
   "Tasación pendiente": { href: "/registrar-tasaciones", action: "Registrar tasaciones" },
-  "Expediente pendiente": { href: "/tasaciones-textos-pendientes#material", action: "Completar material" },
-  "Listo para publicar": { href: "/tasaciones-textos-pendientes#listos", action: "Revisar publicaciones" },
+  "Texto pendiente": { href: "/tasaciones-textos-pendientes#material", action: "Completar texto" },
+  "Difusión pendiente": { href: "/tasaciones-textos-pendientes#difusion", action: "Registrar difusión" },
 };
 function businessClock(now: Date) {
   const hour = Number(new Intl.DateTimeFormat("es-PE", { timeZone: "America/Lima", hour: "numeric", hourCycle: "h23" }).format(now));

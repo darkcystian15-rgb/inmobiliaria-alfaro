@@ -1,3 +1,7 @@
+# Texto y difusión por inmueble
+
+Actualización del 24 de octubre: [Flujo, accesos desde Cartera, restauración y verificación](docs/texto-difusion-2026-10-24.md).
+
 # Tasaciones con moneda por monto
 
 Actualización del 23 de octubre: [Nuevos nombres, soles/dólares, edición compartida y despliegue](docs/tasaciones-nombres-monedas-2026-10-23.md).

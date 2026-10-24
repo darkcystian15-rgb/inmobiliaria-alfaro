@@ -8,6 +8,7 @@ export async function publicationReadiness(executor: Pick<typeof db, 'select'> =
   const rows = await executor.select({
     id: inmInmuebles.id,
     texto: inmPublicaciones.texto,
+    textoRealizado: inmPublicaciones.textoRealizado,
     operacion: inmInmuebles.operacion,
     documentoDni: sql<number>`EXISTS (SELECT 1 FROM inm_archivos a WHERE a.inmueble_id = ${inmInmuebles.id} AND (a.tipo_documento IN ('DNI_PROPIETARIO', 'VENDEDOR_DNI', 'VENDEDOR_DNI_GERENTE') OR (${inmInmuebles.operacion} = 'alquiler' AND a.tipo_documento = 'ARRENDADOR_DNI')) AND a.almacenamiento = 'hosting')`,
     archivoTasacion: sql<number>`EXISTS (SELECT 1 FROM inm_archivos a WHERE a.inmueble_id = ${inmInmuebles.id} AND a.tipo_documento IN ('TASACION', 'TASACION_EXPRESS') AND a.almacenamiento = 'hosting')`,

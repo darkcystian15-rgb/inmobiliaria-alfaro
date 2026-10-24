@@ -1,585 +1,65 @@
-import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
-import { propertyAddress } from "@/lib/property-address.mjs";
-import { publicationReadiness, requirePublicationReadiness } from "@/lib/publication-readiness";
-import { authorizeApi } from "@/lib/auth";
-import { NextResponse } from "next/server";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { db } from "@/lib/db";
-import {
-  inmAsignacionesPosicion,
-  inmInmuebles,
-  inmPosiciones,
-  inmPublicaciones,
-  inmTasaciones,
-  inmTimeline,
-} from "@/db/schema";
+import {propertyZoneName,zoneCondition} from '@/lib/zone-scope';
+import {propertyAddress} from '@/lib/property-address.mjs';
+import {publicationReadiness} from '@/lib/publication-readiness';
+import {authorizeApi} from '@/lib/auth';
+import {diffusionInput,diffusionState,readReferences,DiffusionInputError} from '@/lib/diffusion.mjs';
+import {NextResponse} from 'next/server';
+import {and,asc,eq,or,isNotNull} from 'drizzle-orm';
+import {db} from '@/lib/db';
+import {inmAsignacionesPosicion,inmInmuebles,inmPosiciones,inmPublicaciones,inmTasaciones,inmTimeline,inmAnuncios} from '@/db/schema';
 
-const clean = (value: unknown) =>
-  typeof value === "string" ? value.trim() : "";
-
-
-const mapPending = (row: Awaited<ReturnType<typeof approved>>[number]) => ({
-  inmuebleId: row.inmuebleId,
-  codigo: row.codigo,
-  distrito: row.distrito,
-  posicion: row.posicion
-    ? String(row.posicion).padStart(2, "0")
-    : "—",
-  nombre: row.referencia,
-  zona: row.zona,
-  zonaId: row.zonaId,
-  direccion: row.direccion,
-  ubicacion: propertyAddress(row),
-  tipo: row.tipo,
-    operacion: row.operacion,
-  propietario:
-    [row.propietarioNombres, row.propietarioApellidos]
-      .filter(Boolean)
-      .join(" ") || "Sin contacto",
-  valorReferencia: row.valorReferencia,
-  valorReferenciaMoneda: row.valorReferenciaMoneda,
-  precioObjetivo: row.precioObjetivo,
-  precioObjetivoMoneda: row.precioObjetivoMoneda,
-  precioVenta: row.precioVenta,
-  precioVentaMoneda: row.precioVentaMoneda,
-  observacion: row.observacion,
-});
-
-async function approved(scope: ReturnType<typeof zoneCondition>) {
-  return db
-    .select({
-      inmuebleId: inmInmuebles.id,
-      codigo: inmInmuebles.codigo,
-      distrito: inmInmuebles.distrito,
-      tipo: inmInmuebles.tipo,
-        operacion: inmInmuebles.operacion,
-      referencia: inmInmuebles.referencia,
-      zona: propertyZoneName,
-      zonaId: inmInmuebles.zonaId,
-      nombreContacto: inmInmuebles.nombreContacto,
-      direccion: inmInmuebles.direccion,
-
-      provincia: inmInmuebles.provincia,
-      departamento: inmInmuebles.departamento,
-      propietarioNombres: inmInmuebles.nombreContacto,
-      propietarioApellidos: sql<string>`NULL`,
-      posicion: inmPosiciones.numero,
-      valorReferencia: inmTasaciones.valorReferencia,
-        valorReferenciaMoneda: inmTasaciones.valorReferenciaMoneda,
-      precioObjetivo: inmTasaciones.precioObjetivo,
-        precioObjetivoMoneda: inmTasaciones.precioObjetivoMoneda,
-      precioVenta: inmTasaciones.precioVenta,
-        precioVentaMoneda: inmTasaciones.precioVentaMoneda,
-      observacion: inmTasaciones.observacion,
-      situacion: inmTasaciones.situacion,
-    })
-    .from(inmTasaciones)
-    .innerJoin(
-      inmInmuebles,
-      eq(inmInmuebles.id, inmTasaciones.inmuebleId)
-    )
-
-    .leftJoin(
-      inmAsignacionesPosicion,
-      and(
-        eq(
-          inmAsignacionesPosicion.inmuebleId,
-          inmInmuebles.id
-        ),
-        eq(inmAsignacionesPosicion.activa, true)
-      )
-    )
-    .leftJoin(
-      inmPosiciones,
-      eq(
-        inmPosiciones.id,
-        inmAsignacionesPosicion.posicionId
-      )
-    )
-    .leftJoin(
-      inmPublicaciones,
-      eq(
-        inmPublicaciones.inmuebleId,
-        inmInmuebles.id
-      )
-    )
-    .where(
-      and(scope,
-        eq(inmInmuebles.estado, "activo"),
-        eq(inmTasaciones.situacion, "aprobado"),
-        isNull(inmPublicaciones.id)
-      )
-    )
-    .orderBy(
-      desc(inmTasaciones.fechaActualizacion)
-    );
+export async function GET(request:Request){
+ const auth=await authorizeApi();if(auth.response)return auth.response;
+ try{
+  const rows=await db.select({inmuebleId:inmInmuebles.id,codigo:inmInmuebles.codigo,zona:propertyZoneName,zonaId:inmInmuebles.zonaId,distrito:inmInmuebles.distrito,provincia:inmInmuebles.provincia,departamento:inmInmuebles.departamento,direccion:inmInmuebles.direccion,nombre:inmInmuebles.referencia,tipo:inmInmuebles.tipo,operacion:inmInmuebles.operacion,propietario:inmInmuebles.nombreContacto,posicion:inmPosiciones.numero,id:inmPublicaciones.id,texto:inmPublicaciones.texto,textoRealizado:inmPublicaciones.textoRealizado,mediosDifusion:inmPublicaciones.mediosDifusion,cartelColocado:inmPublicaciones.cartelColocado,redesPublicadas:inmPublicaciones.redesPublicadas,referenciasDifusion:inmPublicaciones.referenciasDifusion,publicado:inmPublicaciones.publicado,fechaPublicacion:inmPublicaciones.fechaPublicacion,valorReferencia:inmTasaciones.valorReferencia,valorReferenciaMoneda:inmTasaciones.valorReferenciaMoneda,precioObjetivo:inmTasaciones.precioObjetivo,precioObjetivoMoneda:inmTasaciones.precioObjetivoMoneda,precioVenta:inmTasaciones.precioVenta,precioVentaMoneda:inmTasaciones.precioVentaMoneda,observacion:inmTasaciones.observacion})
+  .from(inmInmuebles).leftJoin(inmTasaciones,eq(inmTasaciones.inmuebleId,inmInmuebles.id)).leftJoin(inmPublicaciones,eq(inmPublicaciones.inmuebleId,inmInmuebles.id)).leftJoin(inmAsignacionesPosicion,and(eq(inmAsignacionesPosicion.inmuebleId,inmInmuebles.id),eq(inmAsignacionesPosicion.activa,true))).leftJoin(inmPosiciones,eq(inmPosiciones.id,inmAsignacionesPosicion.posicionId)).where(and(zoneCondition(request),eq(inmInmuebles.estado,'activo'),or(eq(inmTasaciones.situacion,'aprobado'),isNotNull(inmPublicaciones.id)))).orderBy(asc(inmPosiciones.numero),asc(inmInmuebles.id));
+  const expedientes=await publicationReadiness(db,rows.map(row=>row.inmuebleId));
+  const legacy=await db.select({inmuebleId:inmAnuncios.inmuebleId,canal:inmAnuncios.canal,url:inmAnuncios.enlace}).from(inmAnuncios);
+  const todas=rows.map(row=>({...row,posicion:row.posicion==null?'—':String(row.posicion).padStart(3,'0'),texto:row.texto??'',textoRealizado:row.textoRealizado??false,publicado:row.publicado??false,cartelColocado:row.cartelColocado??false,redesPublicadas:row.redesPublicadas??false,ubicacion:propertyAddress(row),referencias:row.referenciasDifusion===null?legacy.filter(a=>a.inmuebleId===row.inmuebleId).map(a=>({canal:a.canal,url:a.url})):readReferences(row.referenciasDifusion),etapa:diffusionState(row),expediente:expedientes.get(row.inmuebleId)}));
+  return NextResponse.json({ok:true,todas,pendientes:todas.filter(row=>row.etapa==='texto_pendiente'),listos:todas.filter(row=>row.etapa==='difusion_pendiente'),publicadas:todas.filter(row=>row.etapa==='completada'),incompletos:[]});
+ }catch{return NextResponse.json({error:'No se pudo consultar texto y difusión.'},{status:500});}
 }
 
-async function published(scope: ReturnType<typeof zoneCondition>) {
-  return db
-    .select({
-      inmuebleId: inmInmuebles.id,
-      codigo: inmInmuebles.codigo,
-      distrito: inmInmuebles.distrito,
-      tipo: inmInmuebles.tipo,
-        operacion: inmInmuebles.operacion,
-      referencia: inmInmuebles.referencia,
-      zona: propertyZoneName,
-      zonaId: inmInmuebles.zonaId,
-      nombreContacto: inmInmuebles.nombreContacto,
-      direccion: inmInmuebles.direccion,
-
-      provincia: inmInmuebles.provincia,
-      departamento: inmInmuebles.departamento,
-      posicion: inmPosiciones.numero,
-      publicado: inmPublicaciones.publicado,
-      fechaPublicacion:
-        inmPublicaciones.fechaPublicacion,
-      texto: inmPublicaciones.texto,
-    })
-    .from(inmPublicaciones)
-    .innerJoin(
-      inmInmuebles,
-      eq(inmInmuebles.id, inmPublicaciones.inmuebleId)
-    )
-    .leftJoin(
-      inmAsignacionesPosicion,
-      and(
-        eq(
-          inmAsignacionesPosicion.inmuebleId,
-          inmInmuebles.id
-        ),
-        eq(inmAsignacionesPosicion.activa, true)
-      )
-    )
-    .leftJoin(
-      inmPosiciones,
-      eq(
-        inmPosiciones.id,
-        inmAsignacionesPosicion.posicionId
-      )
-    )
-    .where(
-      and(scope,
-        eq(inmInmuebles.estado, "activo"),
-        eq(inmPublicaciones.publicado, true)
-      )
-    )
-    .orderBy(
-      desc(inmPublicaciones.fechaPublicacion)
-    );
+async function save(request:Request){
+ const auth=await authorizeApi(request);if(auth.response)return auth.response;
+ let body;
+ try{body=await request.json();if(!body||typeof body!=='object'||Array.isArray(body))throw new Error();}catch{return NextResponse.json({error:'Solicitud no válida.'},{status:400});}
+ const inmuebleId=Number(body.inmuebleId);
+ if(!Number.isSafeInteger(inmuebleId)||inmuebleId<1)return NextResponse.json({error:'Inmueble no válido.'},{status:400});
+ const diffusion=request.method==='PATCH';
+ try{
+  if(!diffusion&&(typeof body.texto!=='string'||!body.texto.trim()||body.texto.length>20000))throw new DiffusionInputError('Ingresa el texto (hasta 20 000 caracteres).');
+  if(body.textoRealizado!==undefined&&typeof body.textoRealizado!=='boolean')throw new DiffusionInputError('Estado del texto no válido.');
+  const diffusionValues=diffusion?diffusionInput(body):null;
+  const result=await db.transaction(async tx=>{
+   const [property]=await tx.select().from(inmInmuebles).where(and(eq(inmInmuebles.id,inmuebleId),zoneCondition(request))).limit(1).for('update');
+   if(property?.estado!=='activo')throw new Error('El inmueble no está activo.');
+   const [valuation]=await tx.select({id:inmTasaciones.id}).from(inmTasaciones).where(and(eq(inmTasaciones.inmuebleId,inmuebleId),eq(inmTasaciones.situacion,'aprobado'))).limit(1);
+   if(!valuation)throw new Error('El inmueble no tiene una tasación registrada.');
+   const [previous]=await tx.select().from(inmPublicaciones).where(eq(inmPublicaciones.inmuebleId,inmuebleId)).limit(1).for('update');
+   if(diffusion){
+    if(!previous?.textoRealizado||!previous.texto.trim())throw new DiffusionInputError('Completa el texto antes de registrar la difusión.');
+    const values={...diffusionValues!,fechaPublicacion:diffusionValues!.publicado?(previous.fechaPublicacion??new Date()):previous.fechaPublicacion,usuarioPublicacionId:diffusionValues!.publicado?auth.user.id:previous.usuarioPublicacionId};
+    await tx.update(inmPublicaciones).set(values).where(eq(inmPublicaciones.id,previous.id));
+    await tx.insert(inmTimeline).values({inmuebleId,evento:'difusion_actualizada',usuarioId:auth.user.id,observacion:JSON.stringify({anterior:{medios:previous.mediosDifusion,cartel:previous.cartelColocado,redes:previous.redesPublicadas,completada:previous.publicado,referencias:readReferences(previous.referenciasDifusion)},nuevo:diffusionValues})});
+    return {situacion:values.publicado?'completada':'difusion_pendiente'};
+   }
+   const texto=body.texto.trim();
+   // Existing completed text and diffusion remain completed when edited.
+   const textoRealizado=Boolean(previous?.textoRealizado||body.textoRealizado===true);
+   const mediosDifusion=body.mediosDifusion===undefined?previous?.mediosDifusion??null:body.mediosDifusion;
+   if(mediosDifusion!==null&&!['cartel','redes','ambos'].includes(mediosDifusion))throw new DiffusionInputError('Selecciona medios de difusión válidos.');
+   if(textoRealizado&&!previous?.textoRealizado&&!previous?.publicado&&!mediosDifusion)throw new DiffusionInputError('Selecciona cartel físico, redes sociales o ambos para completar el texto.');
+   // Media are configured in the diffusion editor for existing texts; text edits never reset confirmations.
+   const values={texto,textoRealizado,fechaTextoRealizado:textoRealizado?(previous?.textoRealizado?previous.fechaTextoRealizado:new Date()):null,mediosDifusion:previous?.textoRealizado&&previous.mediosDifusion?previous.mediosDifusion:mediosDifusion};
+   if(previous)await tx.update(inmPublicaciones).set(values).where(eq(inmPublicaciones.id,previous.id));
+   else await tx.insert(inmPublicaciones).values({...values,inmuebleId,driveLink:'',usuarioRegistroId:auth.user.id,publicado:false});
+   await tx.insert(inmTimeline).values({inmuebleId,evento:previous?'publicacion_actualizada':'publicacion_registrada',usuarioId:auth.user.id,observacion:JSON.stringify({anterior:previous?.texto??null,nuevo:texto,textoRealizado})});
+   return {situacion:previous?.publicado?'completada':textoRealizado?'difusion_pendiente':'texto_pendiente'};
+  });
+  return NextResponse.json({ok:true,...result},{status:request.method==='POST'?201:200});
+ }catch(error){const message=error instanceof Error?error.message:'';const status=error instanceof DiffusionInputError?400:/no está activo|no tiene una tasación/.test(message)?409:500;return NextResponse.json({error:status===500?'No se pudo guardar texto y difusión.':message},{status});}
 }
-
-async function ready(scope: ReturnType<typeof zoneCondition>) {
-  return db
-    .select({
-      inmuebleId: inmInmuebles.id,
-      codigo: inmInmuebles.codigo,
-      distrito: inmInmuebles.distrito,
-      tipo: inmInmuebles.tipo,
-        operacion: inmInmuebles.operacion,
-      referencia: inmInmuebles.referencia,
-      zona: propertyZoneName,
-      zonaId: inmInmuebles.zonaId,
-      nombreContacto: inmInmuebles.nombreContacto,
-      direccion: inmInmuebles.direccion,
-
-      provincia: inmInmuebles.provincia,
-      departamento: inmInmuebles.departamento,
-      posicion: inmPosiciones.numero,
-      publicado: inmPublicaciones.publicado,
-      fechaRegistro: inmPublicaciones.fechaRegistro,
-      texto: inmPublicaciones.texto,
-    })
-    .from(inmPublicaciones)
-    .innerJoin(
-      inmInmuebles,
-      eq(inmInmuebles.id, inmPublicaciones.inmuebleId)
-    )
-    .leftJoin(
-      inmAsignacionesPosicion,
-      and(
-        eq(
-          inmAsignacionesPosicion.inmuebleId,
-          inmInmuebles.id
-        ),
-        eq(inmAsignacionesPosicion.activa, true)
-      )
-    )
-    .leftJoin(
-      inmPosiciones,
-      eq(
-        inmPosiciones.id,
-        inmAsignacionesPosicion.posicionId
-      )
-    )
-    .where(
-      and(scope,
-        eq(inmInmuebles.estado, "activo"),
-        eq(inmPublicaciones.publicado, false)
-      )
-    )
-    .orderBy(
-      desc(inmPublicaciones.fechaRegistro)
-    );
-}
-
-export async function GET(request: Request) {
-  try {
-    const auth = await authorizeApi();
-    if (auth.response) return auth.response;
-    const rows = await approved(zoneCondition(request));
-    const listos = await ready(zoneCondition(request));
-    const publicadas = await published(zoneCondition(request));
-    const expedientes = await publicationReadiness();
-    const withChecklist = <T extends { inmuebleId: number; ubicacion?: string }>(item: T) => ({ ...item, ubicacion: item.ubicacion ?? propertyAddress(item), expediente: expedientes.get(item.inmuebleId) });
-
-    return NextResponse.json({
-      ok: true,
-      pendientes: rows.map(mapPending).map(withChecklist),
-      listos: listos.filter(item => expedientes.get(item.inmuebleId)?.complete).map(withChecklist),
-      incompletos: listos.filter(item => !expedientes.get(item.inmuebleId)?.complete).map(withChecklist),
-      publicadas: publicadas.map(withChecklist),
-    });
-  } catch (error) {
-    console.error("Operación fallida: publicaciones", (error as { code?: string; cause?: { code?: string } }).cause?.code ?? (error as { code?: string }).code ?? "ERROR");
-
-    return NextResponse.json(
-      {
-        ok: false,
-        error:
-          "No se pudieron consultar los textos pendientes.",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const auth = await authorizeApi(request);
-    if (auth.response) return auth.response;
-    let body;
-    try { body = await request.json(); } catch { return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 }); }
-    if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 });
-
-    const inmuebleId = Number(body.inmuebleId);
-    const texto = clean(body.texto);
-
-
-    if (
-      !Number.isInteger(inmuebleId) ||
-      inmuebleId <= 0
-    ) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Inmueble no válido.",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!texto) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            "El texto de publicación es obligatorio.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const result = await db.transaction(async (tx) => {
-      const [property] = await tx
-        .select()
-        .from(inmInmuebles)
-        .where(and(eq(inmInmuebles.id, inmuebleId),zoneCondition(request)))
-        .limit(1).for("update");
-
-      if (!property || property.estado !== "activo") {
-        throw new Error(
-          "El inmueble no está activo."
-        );
-      }
-
-      const [tasacion] = await tx
-        .select()
-        .from(inmTasaciones)
-        .where(
-          and(
-            eq(
-              inmTasaciones.inmuebleId,
-              inmuebleId
-            ),
-            eq(
-              inmTasaciones.situacion,
-              "aprobado"
-            )
-          )
-        )
-        .limit(1);
-
-      if (!tasacion) {
-        throw new Error(
-          "El inmueble no tiene una tasación aprobada."
-        );
-      }
-
-      await requirePublicationReadiness(tx, inmuebleId, texto);
-
-      const [existingPublication] = await tx
-        .select({
-          id: inmPublicaciones.id,
-        })
-        .from(inmPublicaciones)
-        .where(
-          eq(
-            inmPublicaciones.inmuebleId,
-            inmuebleId
-          )
-        )
-        .limit(1);
-
-      if (existingPublication) {
-        throw new Error(
-          "El inmueble ya tiene una publicación registrada."
-        );
-      }
-
-      const user = auth.user;
-
-      await tx.insert(inmPublicaciones).values({
-        inmuebleId,
-        texto,
-        driveLink: "",
-        usuarioRegistroId: user.id,
-        publicado: false,
-      });
-
-      await tx.insert(inmTimeline).values({
-        inmuebleId,
-        evento: "publicacion_registrada",
-        observacion:
-          "Texto registrado con las fotos de la galería. Inmueble listo para publicar.",
-        usuarioId: user.id,
-      });
-
-      return {
-        situacion: "listo_para_publicar",
-      };
-    });
-
-    return NextResponse.json(
-      {
-        ok: true,
-        ...result,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No fue posible registrar la publicación.";
-
-    return NextResponse.json(
-      {
-        ok: false,
-        error: message,
-      },
-      {
-        status:
-          /no está activo|no tiene|ya tiene|Expediente incompleto/i.test(
-            message
-          )
-            ? 409
-            : 500,
-      }
-    );
-  }
-}
-
-export async function PUT(request: Request) {
-  try {
-    const auth = await authorizeApi(request);
-    if (auth.response) return auth.response;
-    let body;
-    try { body = await request.json(); } catch { return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 }); }
-    if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 });
-
-    const inmuebleId = Number(body.inmuebleId);
-
-    const editarMaterial = body.texto !== undefined;
-    const texto = clean(body.texto);
-
-    if (
-      !Number.isInteger(inmuebleId) ||
-      inmuebleId <= 0
-    ) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Inmueble no válido.",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (editarMaterial) {
-      if (!texto) {
-        return NextResponse.json(
-          {
-            ok: false,
-            error:
-              "El texto de publicación es obligatorio.",
-          },
-          { status: 400 }
-        );
-      }
-
-    }
-
-    const result = await db.transaction(
-      async (tx) => {
-        const [property] = await tx
-          .select()
-          .from(inmInmuebles)
-          .where(
-            eq(inmInmuebles.id, inmuebleId)
-          )
-          .limit(1).for("update");
-
-        if (
-          !property ||
-          property.estado !== "activo"
-        ) {
-          throw new Error(
-            "El inmueble no está activo."
-          );
-        }
-
-        const [publication] = await tx
-          .select()
-          .from(inmPublicaciones)
-          .where(
-            eq(
-              inmPublicaciones.inmuebleId,
-              inmuebleId
-            )
-          )
-          .limit(1);
-
-        if (!publication) {
-          throw new Error(
-            "El inmueble no tiene una publicación registrada."
-          );
-        }
-
-        if (publication.publicado && !editarMaterial) {
-          throw new Error(
-            "La publicación ya figura como publicada."
-          );
-        }
-
-        const user = auth.user;
-
-        /*
-         * Si viene texto, actualizamos
-         * el material existente.
-         *
-         * No se crea otra publicación.
-         */
-        if (editarMaterial) {
-          await tx
-            .update(inmPublicaciones)
-            .set({
-              texto,
-
-            })
-            .where(
-              eq(
-                inmPublicaciones.id,
-                publication.id
-              )
-            );
-
-          await tx.insert(inmTimeline).values({
-            inmuebleId,
-            evento: "publicacion_actualizada",
-            observacion: JSON.stringify({ anterior: publication.texto, nuevo: texto, anuncioExternoPendiente: publication.publicado }),
-            usuarioId: user.id,
-          });
-
-          return {
-            codigo: property.codigo,
-            situacion: publication.publicado ? "publicado" : "listo_para_publicar",
-          };
-        }
-
-        /*
-         * Si no viene texto,
-         * el PUT mantiene su función original:
-         * marcar la publicación como realizada.
-         */
-        await requirePublicationReadiness(tx, inmuebleId);
-
-        const ahora = new Date();
-
-        await tx
-          .update(inmPublicaciones)
-          .set({
-            publicado: true,
-            fechaPublicacion: ahora,
-            usuarioPublicacionId: user.id,
-          })
-          .where(
-            eq(
-              inmPublicaciones.id,
-              publication.id
-            )
-          );
-
-        await tx.insert(inmTimeline).values({
-          inmuebleId,
-          evento: "publicado",
-          observacion:
-            "La publicación fue marcada como publicada.",
-          usuarioId: user.id,
-        });
-
-        return {
-          codigo: property.codigo,
-          situacion: "publicado",
-          fechaPublicacion: ahora,
-        };
-      }
-    );
-
-    return NextResponse.json({
-      ok: true,
-      ...result,
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No fue posible actualizar la publicación.";
-
-    return NextResponse.json(
-      {
-        ok: false,
-        error: message,
-      },
-      {
-        status:
-          /no está activo|no tiene|ya figura|Expediente incompleto/i.test(
-            message
-          )
-            ? 409
-            : 500,
-      }
-    );
-  }
-}
+export const POST=save;
+export const PUT=save;
+export const PATCH=save;

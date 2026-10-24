@@ -50,3 +50,11 @@ test('Bloques y mapa son opcionales; solo los apartados activados e incompletos 
  const snapshot=snapshotPublicSettings({map:{mode:'approximate',latitude:'-9.123456',longitude:'-78.543210'}});assert.equal(snapshot.map.latitude,-9.12);assert.ok(!JSON.stringify(snapshot).includes('-9.123456'));
  assert.equal(snapshotPublicSettings({map:{mode:'none',latitude:'-9.123456',longitude:'-78.543210'}}).map.latitude,null);
 });
+
+test('El portal sigue exigiendo documentos y texto realizado, independientemente de la difusión',()=>{
+ const prepared=draft();
+ assert.equal(webPublicationChecklist({...source,textCompleted:false},prepared).complete,false);
+ assert.equal(webPublicationChecklist({...source,textCompleted:true,identityDocument:false},prepared).complete,false);
+ assert.equal(webPublicationChecklist({...source,textCompleted:true,valuationFile:false},prepared).complete,false);
+ assert.equal(webPublicationChecklist({...source,textCompleted:true},prepared).complete,true);
+});

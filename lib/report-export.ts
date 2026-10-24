@@ -39,7 +39,7 @@ export function reportText(key: string, value: ReportValue): string {
   if (typeof value === "boolean") return value ? "Sí" : "No";
   if (Array.isArray(value)) return value.length ? value.join(" · ") : "—";
   if(key==='estadoPlazo')return ({vencido:'Vencido',vence_hoy:'Vence hoy',en_plazo:'En plazo',sin_plazo:'Sin plazo'} as Record<string,string>)[String(value)]??String(value);
-  if(key==='actividadPendiente')return ({visita:'Visita',tasacion:'Tasación',expediente:'Material para publicar',publicacion:'Publicación'} as Record<string,string>)[String(value)]??String(value);
+  if(key==='actividadPendiente')return ({visita:'Visita',tasacion:'Tasación',expediente:'Texto comercial',publicacion:'Difusión'} as Record<string,string>)[String(value)]??String(value);
   if (key.toLowerCase().includes("fecha")) return reportDate(value)?.toLocaleDateString("es-PE", { timeZone: "America/Lima" }) ?? "—";
   if (["tasacion", "precioFinal", "comision", "rentaMensual", "rentaMensualSolicitada", "garantia", "adelanto"].includes(key) && Number.isFinite(Number(value))) return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(Number(value));
   return String(value);
@@ -71,7 +71,7 @@ async function logo() {
 }
 function metrics(report: ReportExport): [string, number][] {
   if (!report.summary) return [];
-  return [["Activos", report.summary.activos], ["Históricos", report.summary.historicos], ["Posiciones libres (zona)", report.summary.disponibles], ["Visitas pendientes", report.summary.visitasPendientes], ["Tasaciones pendientes", report.summary.tasacionesPendientes], ["Material pendiente", report.summary.materialPendiente], ["Publicados", report.summary.publicados]];
+  return [["Activos", report.summary.activos], ["Históricos", report.summary.historicos], ["Posiciones libres (zona)", report.summary.disponibles], ["Visitas pendientes", report.summary.visitasPendientes], ["Tasaciones pendientes", report.summary.tasacionesPendientes], ["Texto pendiente", report.summary.materialPendiente], ["Difusión completada", report.summary.publicados]];
 }
 
 export async function exportReportPDF(report: ReportExport) {

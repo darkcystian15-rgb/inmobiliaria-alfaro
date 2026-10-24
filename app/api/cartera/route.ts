@@ -167,6 +167,7 @@ export async function GET(request: Request) {
       .select({
         inmuebleId: inmPublicaciones.inmuebleId,
         texto: inmPublicaciones.texto,
+        textoRealizado: inmPublicaciones.textoRealizado,
         publicado: inmPublicaciones.publicado,
         fechaPublicacion: inmPublicaciones.fechaPublicacion,
       })
@@ -266,7 +267,7 @@ export async function GET(request: Request) {
 
     for (const publicacion of publicaciones) {
       publicacionPorInmueble.set(publicacion.inmuebleId, {
-        tieneTexto: Boolean(publicacion.texto?.trim()),
+        tieneTexto: Boolean(publicacion.texto?.trim() && publicacion.textoRealizado),
         publicado: publicacion.publicado,
         fechaPublicacion: publicacion.fechaPublicacion,
       });
@@ -294,10 +295,10 @@ const fotosPendientes =
   materialHabilitado && !expedientes.get(row.id)?.fotosVisita;
 
 const textoPendiente =
-  materialHabilitado && !publicacion?.tieneTexto;
+  materialHabilitado && !publicacion?.publicado && !publicacion?.tieneTexto;
 
 const materialPendiente =
-  materialHabilitado && !expedientes.get(row.id)?.complete;
+  materialHabilitado && !publicacion?.publicado && !publicacion?.tieneTexto;
 
       const estadoNormalizado = row.estado?.toLowerCase() ?? "";
 
@@ -361,6 +362,8 @@ const materialPendiente =
             pendiente: materialPendiente,
             fotosPendientes,
             textoPendiente,
+        difusionPendiente: materialHabilitado && Boolean(publicacion?.tieneTexto) && !publicacion?.publicado,
+        textoRealizado: Boolean(publicacion?.tieneTexto),
           },
 
           negociacion: {
@@ -387,6 +390,8 @@ const materialPendiente =
         tieneFotos: fotosPorInmueble.has(row.id),
         expediente: expedientes.get(row.id),
         textoPendiente,
+        difusionPendiente: materialHabilitado && Boolean(publicacion?.tieneTexto) && !publicacion?.publicado,
+        textoRealizado: Boolean(publicacion?.tieneTexto),
         negociacionEnCurso: negociacion?.enCurso ?? false,
 
         fechaRegistro: row.fechaRegistro,
