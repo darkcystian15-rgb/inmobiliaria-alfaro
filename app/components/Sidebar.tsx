@@ -15,6 +15,17 @@ import { usePathname } from "next/navigation";
 function Icon({ name }: { name: string }) {
   const common = { className: "h-[18px] w-[18px]", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   const paths: Record<string, React.ReactNode> = {
+    agreement: <><path d="m3 9 4-4 5 2 5-2 4 4-8 10a2 2 0 0 1-3 0L3 12V9Z"/><path d="m7 5 5 5-3 3M15 12l3 3"/></>,
+    textPending: <><path d="M13 3H5v18h8M8 7h4M8 11h3"/><circle cx="17" cy="16" r="5"/><path d="M17 13v3l2 1"/></>,
+    write: <><path d="M12 4H4v16h16v-8"/><path d="m10 14 1-4 9-9 3 3-9 9-4 1Z"/></>,
+    publicationPending: <><path d="m3 10 12-5v14L3 14v-4ZM6 15l1 5h3l-1-4M19 7v5M19 16v1"/></>,
+    publish: <><path d="M4 16v5h16v-5M12 16V3m-5 5 5-5 5 5"/></>,
+    webPending: <><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M7 5h.01M10 5h.01M12 12v6m-3-3h6"/></>,
+    globe: <><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6h14M5 18h14"/></>,
+    files: <><path d="M8 3h8l4 4v10H8V3Zm8 0v5h4M4 7v14h12M11 12h6"/></>,
+    buildings: <><path d="M3 21V7h9v14M12 11h9v10M2 21h20M6 10h3M6 14h3M6 18h3M15 14h3M15 18h3"/></>,
+    deadlines: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M7 14h2M13 14h4M7 17h2M13 17h4"/></>,
+    shield: <><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></>,
     image: <><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m3 16 5-4 4 4 3-3 6 5"/></>,
     dashboard: <><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></>,
     home: <path d="m3 10 9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9Z"/>,
@@ -31,7 +42,7 @@ function Icon({ name }: { name: string }) {
     menu: <><path d="M4 7h16M4 12h16M4 17h16"/></>,
     close: <><path d="M6 6l12 12M18 6 6 18"/></>,
   };
-  return <svg {...common}>{paths[name]}</svg>;
+  return <svg {...common} aria-hidden="true">{paths[name]}</svg>;
 }
 
 function MenuLink({ item, onNavigate }: { item: { href: string; label: string; icon: string }; onNavigate?: () => void }) {

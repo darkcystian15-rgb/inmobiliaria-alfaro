@@ -111,6 +111,7 @@ try {
   await page.getByRole('heading',{name:'Plazos de este inmueble',exact:true}).waitFor();
   assert.equal(await page.getByRole('combobox',{name:'Responsable',exact:true}).count(),0);
   assert.equal(await page.getByText('Plazos generales de alerta',{exact:true}).count(),0);
+  await page.getByText('Ajustar fechas de este inmueble',{exact:true}).click();
   const visitField=page.getByRole('group',{name:'Visita · Pendiente',exact:true});
   await visitField.getByLabel('Fecha límite particular').fill(future);
   await visitField.getByRole('button',{name:'Guardar seguimiento'}).click();
