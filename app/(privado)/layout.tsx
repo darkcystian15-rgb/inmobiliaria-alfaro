@@ -10,7 +10,7 @@ export default async function PrivateLayout({ children }: { children: React.Reac
   return (
     <SessionProvider user={user}>
       <ZoneWorkspaceProvider><Sidebar />
-      <div className="mobile-page-shell min-h-screen min-w-0 xl:pl-64"><ZonePage>{children}</ZonePage></div></ZoneWorkspaceProvider>
+      <div className="mobile-page-shell min-h-screen min-w-0 xl:pl-72"><ZonePage>{children}</ZonePage></div></ZoneWorkspaceProvider>
     </SessionProvider>
   );
 }

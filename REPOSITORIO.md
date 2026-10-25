@@ -1,4 +1,4 @@
-Actualización visual del 25 de octubre: código `b1d14bc`, Vercel Production `dpl_A1JfjGUZv6JXWJ7csadzAMqf7g5C` READY, recuperación `recovery/diseno-20261025`. [Cambios y evidencia](docs/actualizacion-diseno-2026-10-25.md).
+Diseño vigente: se restaura la interfaz anterior al rediseño y se corrigen únicamente textos duplicados. [Alcance y restauración](docs/diseno-original-textos-2026-10-25.md).
 
 > Actualización de integridad: [eliminación completa, archivos y expedientes cerrados](docs/integridad-datos-eliminacion-2026-10-25.md). Las referencias históricas siguientes conservan su fecha.
 

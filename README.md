@@ -1,8 +1,4 @@
-Ajuste posterior de diseño: se recuperan colores, carpetas, bienvenida y accesos rápidos, conservando espacios compactos y textos sin duplicar. [Detalle y restauración](docs/recuperacion-estilo-2026-10-25.md).
-
-# Diseño compacto de la intranet
-
-Tarjetas, colores, encabezados y navegación simplificados. [Cambios, punto de restauración y despliegue](docs/actualizacion-diseno-2026-10-25.md).
+Diseño vigente: se restaura la interfaz anterior al rediseño y se corrigen únicamente textos duplicados. [Alcance y restauración](docs/diseno-original-textos-2026-10-25.md).
 
 # Integridad de datos y expedientes cerrados
 
