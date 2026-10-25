@@ -1,0 +1,20 @@
+export type Tasacion = {
+  id: number;
+  inmuebleId: number;
+  codigo: string;
+  zona: string;
+  posicion: string;
+  nombre: string;
+  ubicacion: string;
+  direccion: string | null;
+  tipo: string;
+  operacion: string;
+  propietario: string;
+  fechaTasacion?: string | null;
+  valorReferencia?: string | null;
+  precioObjetivo?: string | null;
+  precioVenta?: string | null;
+  valorReferenciaMoneda?: string; precioObjetivoMoneda?: string; precioVentaMoneda?: string;
+  situacion?: string | null;
+  observacion?: string | null;
+};

@@ -1,8 +1,12 @@
+# Tasaciones registradas en submenú por zona
+
+Registrar tasaciones conserva solo los pendientes, sin pestañas ni título duplicado. Tasaciones negociadas registradas aparece debajo y busca únicamente en la zona ya seleccionada. Documentos: Copia literal o CRI; HR y PU del año de la venta. [Cambios, restauración y verificación](docs/tasaciones-submenu-2026-10-25.md).
+
 # Panel, precios y bandejas compactas
 
 Una sola selección de moneda para los tres importes, conservando registros anteriores con monedas distintas. Cartera muestra los valores vigentes arriba, accesos separados para Tasación, Texto y Publicaciones y el resto de funciones del inmueble. Bandejas de pendientes en filas compactas. [Cambios, restauración y verificación](docs/panel-precios-listados-2026-10-24.md).
 
-Registrar tasaciones tiene dos pestañas con contadores y búsquedas independientes, conservando borradores, zona y acceso al texto. [Flujo de pestañas y restauración](docs/tasaciones-pestanas-2026-10-24.md).
+Organización anterior, sustituida el 25 de octubre: Registrar tasaciones tenía dos pestañas con contadores y búsquedas independientes, conservando borradores, zona y acceso al texto. [Flujo de pestañas y restauración](docs/tasaciones-pestanas-2026-10-24.md).
 
 # Seguimiento por tareas separadas
 

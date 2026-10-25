@@ -17,6 +17,7 @@ export const menuGroups = [
       { href: "/registrar-visitas", label: "Registrar visitas", icon: "visit" },
       { href: "/tasaciones-pendientes", label: "Tasaciones pendientes", icon: "clipboard" },
       { href: "/registrar-tasaciones", label: "Registrar tasaciones", icon: "valuation" },
+      { href: "/tasaciones-negociadas-registradas", label: "Tasaciones negociadas registradas", icon: "valuation" },
       { href: "/textos-pendientes", label: "Textos pendientes", icon: "clipboard" },
       { href: "/registrar-textos", label: "Registrar textos", icon: "clipboard" },
       { href: "/publicaciones-pendientes", label: "Publicaciones pendientes", icon: "clipboard" },

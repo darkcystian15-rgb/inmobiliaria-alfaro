@@ -90,7 +90,7 @@ try {
   let events=(await db.query("SELECT evento,usuario_id,observacion FROM inm_timeline WHERE inmueble_id=1 AND evento='archivo_subido'"))[0];
   assert.equal(events.length,1);assert.equal(events[0].usuario_id,2);
   let metadata=JSON.parse(events[0].observacion).archivo;
-  assert.equal(metadata.nombre,'Copia literal');assert.equal(metadata.nombreOriginal,'Copia literal.pdf');assert.equal(metadata.categoria,'Copia literal o CRI-PU');
+  assert.equal(metadata.nombre,'Copia literal');assert.equal(metadata.nombreOriginal,'Copia literal.pdf');assert.equal(metadata.categoria,'Copia literal o CRI');
   assert.ok(!events[0].observacion.includes('rutaAlmacenamiento'));
   const recent=(await request('/api/dashboard',admin)).data.recientes.find(item=>item.etapa==='Archivo subido');
   assert.ok(recent.detalle.includes('Copia literal.pdf'));assert.equal(recent.usuario,'usuario');
@@ -223,8 +223,8 @@ try {
   assert.equal(businessWrites, 0, 'Folder traversal never writes or moves business records');
   assert.deepEqual(await currentRecords(), beforeNavigation, 'All existing file metadata and storage paths are preserved');
   const literalItem = page.locator('[data-document-type=COPIA_LITERAL_CRI]');
-  await literalItem.getByLabel('Archivos: Copia literal o CRI-PU', { exact: true }).setInputFiles({ name: 'literal-inline.pdf', mimeType: 'application/pdf', buffer: pdf });
-  const literalForm = literalItem.getByRole('form', { name: 'Subir archivos: Copia literal o CRI-PU', exact: true });
+  await literalItem.getByLabel('Archivos: Copia literal o CRI', { exact: true }).setInputFiles({ name: 'literal-inline.pdf', mimeType: 'application/pdf', buffer: pdf });
+  const literalForm = literalItem.getByRole('form', { name: 'Subir archivos: Copia literal o CRI', exact: true });
   await literalForm.getByRole('textbox', { name: /^Nombre del archivo 1/ }).fill('Copia literal dentro del ítem');
   await literalForm.getByRole('textbox', { name: 'Observación opcional', exact: true }).fill('Observación del ítem');
   await literalForm.getByRole('button', { name: 'Subir archivos', exact: true }).click();

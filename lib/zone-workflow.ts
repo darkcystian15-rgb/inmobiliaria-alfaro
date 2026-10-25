@@ -2,7 +2,7 @@
 // A general view (zona=*) is not a selected work zone.
 export const zoneWorkflowPaths = new Set([
   '/registrar-inmueble', '/visitas-pendientes', '/registrar-visitas',
-  '/tasaciones-pendientes', '/registrar-tasaciones',
+  '/tasaciones-pendientes', '/registrar-tasaciones', '/tasaciones-negociadas-registradas',
   '/textos-pendientes', '/registrar-textos',
   '/publicaciones-pendientes', '/registrar-publicaciones',
   '/tasaciones-textos-pendientes',
