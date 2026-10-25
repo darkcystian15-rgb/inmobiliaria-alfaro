@@ -25,4 +25,12 @@ No se cambian las reglas de cálculo, las API ni los datos de inmuebles.
 
 ## Publicación
 
-Preparado para publicar en main mediante la integración de GitHub con Vercel. El resultado confirmado se añadirá tras el despliegue.
+- Código funcional: `325dec9790da5599e521bcbb1cb13966f8812a00`, publicado en `main`.
+- Vercel: `dpl_HeM1jb4hNViFvxbCQHtkz5xzqp7c`, **Ready**, entorno **production**. GitHub confirmó `success` el `2026-10-25T13:43:27Z`.
+- [Despliegue en Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/HeM1jb4hNViFvxbCQHtkz5xzqp7c).
+- Versión: https://inmobiliaria-alfarov2-j6jx5pars-puma19.vercel.app.
+- Dominio de producción confirmado por Vercel: https://intranet.inmobiliariaalbertoalfaro.com.pe.
+
+La comprobación HTTP en producción verificó login disponible y acceso privado protegido. Las pruebas de edición y diseño se realizaron con datos simulados, sin modificar inmuebles ni plazos reales.
+
+El commit documental posterior registra esta evidencia y conserva el mismo código funcional.
