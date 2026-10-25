@@ -606,7 +606,7 @@ export default function CarteraPage() {
                 </PortfolioPropertyCard> : <article data-folder-card="true" key={pos.id} className="cartera-folder relative mt-4 flex h-full min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border border-dashed border-slate-200 bg-slate-50/60">
                   <span aria-hidden="true" className="cartera-folder-tab absolute -top-4 left-[-1px] h-4 w-24 rounded-t-xl border border-b-0 border-slate-200 bg-slate-100" />
                   <button type="button" disabled aria-label={`Posición ${pos.numero} disponible`} className="flex min-h-40 w-full flex-1 flex-col text-left">
-                    <div aria-hidden="true" className="h-1.5 w-full rounded-tr-2xl bg-slate-100" />
+                    <div aria-hidden="true" className="h-1.5 w-full rounded-tr-2xl bg-amber-100/70" />
                     <div className="flex w-full flex-1 flex-col p-3.5 sm:p-4"><div className="flex items-center justify-between gap-2">{zonaSeleccionada === ALL_ZONES && <span className="text-xs text-slate-500">{pos.zona}</span>}<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 font-mono text-xl font-bold tracking-tight text-slate-500">{String(pos.numero).padStart(2, "0")}</span><FolderIcon className="h-7 w-7 shrink-0 text-slate-300" /></div><div className="flex flex-1 flex-col items-center justify-center py-6 text-center"><p className="text-xs font-semibold text-slate-500">Disponible</p></div></div>
                   </button>
                 </article>;

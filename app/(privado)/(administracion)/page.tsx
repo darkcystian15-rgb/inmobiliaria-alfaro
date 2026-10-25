@@ -4,6 +4,7 @@ import { zoneHref, zoneUrl } from "@/lib/zone-url";
 
 import PropertySummary from "@/app/components/PropertySummary";
 
+import FolderIcon from "@/app/components/FolderIcon";
 import RentalAlerts from "@/app/components/RentalAlerts";
 import WorkAgenda from "@/app/components/WorkAgenda";
 import PageHeading from "@/app/components/PageHeading";
@@ -74,7 +75,7 @@ export default function Home() {
         <Link href="/cartera" className="aa-button aa-button-primary">Trabajar por zonas</Link>
       </header>
       <section className="aa-card flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-[var(--aa-red)] px-4 py-3 sm:px-5">
-        <h2 className="break-words text-base font-semibold text-slate-950">{clock?.greeting ?? "Bienvenido"}, {user.nombre.split(" ")[0]}.</h2>
+        <h2 className="break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"><span aria-hidden="true" className="mr-2">{clock?.icon ?? ""}</span>{clock?.greeting ?? "Bienvenido"}, {user.nombre.split(" ")[0]}.</h2>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600"><p className="capitalize">{clock?.date ?? "Resumen de la jornada"}</p><time className="font-mono tabular-nums" dateTime={now?.toISOString()} aria-label={clock ? `Hora actual: ${clock.time}` : "Cargando hora"}>{clock?.time ?? "--:--:--"}</time></div>
       </section>
       <WorkAgenda/><RentalAlerts/>
@@ -82,10 +83,12 @@ export default function Home() {
       {loading ? <LoadingCards label="Cargando cartera y pendientes…" count={6} /> : data && !error && <>
         <details open aria-labelledby="attention-title" className="aa-card p-5 sm:p-6">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3"><h2 id="attention-title" className="text-lg font-bold text-slate-950">Pendientes</h2><span className="text-sm text-slate-600">{work.length ? `${work.length} áreas` : "Al día"}<span aria-hidden="true" className="ml-2">⌄</span></span></summary>
-          {work.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{work.map(item => {
+          {work.length ? <div className="mt-7 grid gap-x-3 gap-y-7 sm:grid-cols-2 xl:grid-cols-3">{work.map(item => {
             const target = destinations[item.etapa] ?? { href: "/cartera", action: "Ver cartera" };
             const progress = item.etapa === "En negociación";
-            return <Link key={item.etapa} href={zoneHref(target.href,zone?.nombre)} className="group flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:bg-slate-50">
+            return <Link key={item.etapa} href={zoneHref(target.href,zone?.nombre)} className={`cartera-folder group relative flex min-w-0 items-center gap-3 rounded-b-2xl rounded-tr-2xl border p-4 transition hover:shadow-md ${progress ? "border-blue-200 bg-blue-50/50" : "border-amber-200 bg-amber-50/40"}`}>
+              <span aria-hidden="true" className={`cartera-folder-tab absolute -top-4 -left-px h-4 w-20 rounded-t-lg border border-b-0 ${progress ? "border-blue-200 bg-blue-100" : "border-amber-200 bg-amber-100"}`} />
+              <FolderIcon className={`h-6 w-6 shrink-0 ${progress ? "text-blue-500" : "text-amber-500"}`} />
               <span className={`flex h-12 min-w-12 shrink-0 items-center justify-center rounded-xl px-2 text-2xl font-bold tabular-nums ${progress ? "bg-blue-50 text-blue-800" : "bg-amber-50 text-amber-900"}`}>{item.total}</span>
               <div className="min-w-0"><h3 className="text-sm font-semibold text-slate-900">{item.etapa}</h3><span className="mt-1 block text-xs font-semibold text-[var(--aa-red)] group-hover:underline">{target.action} →</span></div>
             </Link>;
@@ -107,7 +110,7 @@ export default function Home() {
           </li>) : <li className="px-5 py-4 text-sm text-slate-600">Todavía no hay movimientos registrados.</li>}</ul>
         </section>
       </>}
-
+      <section aria-labelledby="quick-actions-title" className="aa-card p-4 sm:p-5"><h2 id="quick-actions-title" className="text-lg font-bold text-slate-900">Acciones rápidas</h2><div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[["Trabajar por zonas", "/cartera"], ["Ver reportes", "/reportes"], ["Consultar contratos", "/alquileres"], ["Consultar fichas", "/datos-inmuebles"]].map(([label, href]) => <Link key={href} href={href} className="cartera-folder-navigation aa-button aa-button-secondary justify-between border-amber-200 bg-amber-50/40"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />{label}<span aria-hidden="true">→</span></Link>)}</div></section>
     </div>
   </main>;
 }

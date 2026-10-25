@@ -80,7 +80,7 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       {isAdministrator(user) && <section aria-labelledby="navigation-phase-one">
-        <h2 id="navigation-phase-one" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-sm font-bold tracking-wide text-slate-900">FASE 1</h2>
+        <h2 id="navigation-phase-one" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 1</h2>
         <div className="mb-1">
           <MenuLink item={dashboardMenuItem} onNavigate={onNavigate} />
         </div>
@@ -89,13 +89,13 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
         {renderGroups(phaseOne)}
       </section>}
       {phaseTwo.length > 0 && <section aria-labelledby="navigation-phase-two" className={isAdministrator(user) ? "mt-5 border-t border-slate-200 pt-4" : ""}>
-        <h2 id="navigation-phase-two" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-sm font-bold tracking-wide text-slate-900">FASE 2</h2>
+        <h2 id="navigation-phase-two" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 2</h2>
         {!isAdministrator(user) && zone && <Link href="/datos-inmuebles" onClick={onNavigate} className="aa-button aa-button-secondary mb-3 w-full">← Todas las zonas</Link>}
         {!isAdministrator(user) && zone && <p className="px-3 text-sm font-bold text-slate-900">Zona: {zone.nombre}</p>}
         {renderGroups(phaseTwo)}
       </section>}
       {canAccessPortal(user) && phaseThree.length > 0 && <section aria-labelledby="navigation-phase-three" className="mt-5 border-t border-slate-200 pt-4">
-        <h2 id="navigation-phase-three" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-sm font-bold tracking-wide text-slate-900">FASE 3</h2>
+        <h2 id="navigation-phase-three" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 3</h2>
         {renderGroups(phaseThree)}
       </section>}
     </>
@@ -138,9 +138,9 @@ export default function Sidebar() {
             />
           </div>
           <div className="mt-3 w-[176px] text-center">
-
+            <div aria-hidden="true" className="mx-auto mb-2 h-0.5 w-10 rounded-full bg-[var(--aa-red)]" />
             <div className="text-sm font-bold tracking-[0.12em] text-slate-900">INTRANET</div>
-
+            <div className="mt-1 text-xs leading-4 text-slate-500">Gestión inmobiliaria</div>
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto px-3 py-4">

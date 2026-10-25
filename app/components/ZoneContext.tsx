@@ -1,9 +1,9 @@
 import FolderIcon from "./FolderIcon";
 
 export default function ZoneContext({ name, general = false, tone = "red" }: { name: string; general?: boolean; tone?: "red" | "violet" | "folder" }) {
-  const colors = tone === "folder" ? { panel: "border-slate-200 border-l-slate-400 bg-white", icon: "text-slate-500", label: "text-slate-600" }
-    : tone === "violet" ? { panel: "border-slate-200 border-l-slate-400 bg-white", icon: "text-slate-500", label: "text-slate-600" }
-    : { panel: "border-slate-200 border-l-[#c80000] bg-white", icon: "text-[#c80000]", label: "text-red-800" };
+  const colors = tone === "folder" ? { panel: "border-amber-200 border-l-amber-400 bg-amber-50/60", icon: "text-amber-500", label: "text-amber-800" }
+    : tone === "violet" ? { panel: "border-violet-200 border-l-violet-600 bg-violet-50/70", icon: "text-violet-600", label: "text-violet-800" }
+    : { panel: "border-red-200 border-l-[#c80000] bg-red-50/70", icon: "text-[#c80000]", label: "text-red-800" };
   return <div aria-current="page" className={`flex w-full min-w-0 items-center gap-3 rounded-2xl border border-l-4 ${colors.panel} px-4 py-2 shadow-sm sm:w-auto`}>
     <FolderIcon className={`h-8 w-8 shrink-0 ${colors.icon}`} />
     <div className="min-w-0">

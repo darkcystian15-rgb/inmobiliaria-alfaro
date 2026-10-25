@@ -26,7 +26,7 @@ export type PortfolioProperty = {
 const tones = {
   neutral: "border-slate-200 bg-slate-50 text-slate-700",
   visit: "border-amber-200 bg-amber-50 text-amber-900",
-  valuation: "border-amber-200 bg-amber-50 text-amber-900",
+  valuation: "border-violet-200 bg-violet-50 text-violet-900",
   material: "border-blue-200 bg-blue-50 text-blue-900",
   published: "border-emerald-200 bg-emerald-50 text-emerald-900",
 };
@@ -40,8 +40,8 @@ export default function PortfolioLabelRow({ property: x, onOpen, actionLabel = "
   else {
     if (x.visitaPendiente) states.push({ label: "Visita pendiente", tone: "visit" });
     if (x.tasacionPendiente) states.push({ label: "Tasación pendiente", tone: "valuation" });
-    if (x.difusionPendiente) states.push({ label:"Publicación pendiente",tone:"visit" });
-    if (x.materialPendiente) states.push({ label: "Texto pendiente", tone: "visit" });
+    if (x.difusionPendiente) states.push({ label:"Publicación pendiente",tone:"material" });
+    if (x.materialPendiente) states.push({ label: "Texto pendiente", tone: "material" });
     if (x.actividades?.publicacion.publicado) states.push({ label: "Publicación registrada", tone: "published" });
     if (x.actividades?.tasacion.situacion === "pendiente_aprobacion") states.push({ label: "Tasación anterior por revisar", tone: "valuation" });
     if (x.negociacionEnCurso) states.push({ label: "Seguimiento anterior", tone: "material" });
@@ -50,7 +50,7 @@ export default function PortfolioLabelRow({ property: x, onOpen, actionLabel = "
   const price = x.precioVenta ? formatPrice(x.precioVenta, x.precioVentaMoneda) : "Por definir";
 
   return <button type="button" onClick={onOpen} aria-label={`${actionLabel} de ${x.propietario || "Sin contacto"}, ${x.posicion ? `posición ${x.posicion}` : "sin posición"}`} className="group grid w-full grid-cols-[4rem_minmax(0,1fr)] items-start gap-3 px-4 py-4 text-left transition hover:bg-red-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000] sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:items-center">
-    <span className="flex min-h-8 items-center gap-2"><span className="font-mono text-sm font-semibold text-slate-500">{x.posicion ? String(x.posicion).padStart(2, "0") : "—"}</span><FolderIcon className="h-5 w-5 shrink-0 text-slate-500" /></span>
+    <span className="flex min-h-8 items-center gap-2"><span className="font-mono text-sm font-semibold text-slate-500">{x.posicion ? String(x.posicion).padStart(2, "0") : "—"}</span><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /></span>
     <span className="min-w-0">
       <span className="block break-words text-sm font-semibold leading-6 text-slate-900 group-hover:text-[#c80000] sm:text-base">{x.propietario || "Sin contacto"}</span>
       <span className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
