@@ -14,6 +14,7 @@ import {
   inmZonas,
   inmPosiciones,
   inmTimeline,
+  inmTasaciones,
 } from "@/db/schema";
 
 // Minimal selector for the property information module, independent of cartera.
@@ -35,7 +36,10 @@ export async function GET(request: Request) {
       estado: inmInmuebles.estado,
       contacto: inmInmuebles.nombreContacto,
       posicion: inmPosiciones.numero,
+      precioVenta: inmTasaciones.precioVenta,
+      precioVentaMoneda: inmTasaciones.precioVentaMoneda,
     }).from(inmInmuebles)
+      .leftJoin(inmTasaciones, eq(inmTasaciones.inmuebleId, inmInmuebles.id))
       .leftJoin(inmAsignacionesPosicion, and(
         eq(inmAsignacionesPosicion.inmuebleId, inmInmuebles.id),
         eq(inmAsignacionesPosicion.activa, true),

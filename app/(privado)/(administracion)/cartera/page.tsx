@@ -1,17 +1,15 @@
 "use client";
-import { formatPrice } from "@/lib/prices.mjs";
 import PortfolioDetailPanel from "@/app/components/PortfolioDetailPanel";
 import ZoneFolderCard from "@/app/components/ZoneFolderCard";
 import { useZoneWorkspace } from "@/app/components/ZoneWorkspace";
 import { zoneHref } from "@/lib/zone-url";
 import { zoneUrl } from "@/lib/zone-url";
 
-import PropertySummary from "@/app/components/PropertySummary";
 
 import PortfolioLabelRow from "@/app/components/PortfolioLabelRow";
+import PortfolioPropertyCard from "@/app/components/PortfolioPropertyCard";
 import ZoneContext from "@/app/components/ZoneContext";
 import OperationSelect from "@/app/components/OperationSelect";
-import { priceLabel } from "@/lib/operation.mjs";
 
 import PropertyTypeSelect from "@/app/components/PropertyTypeSelect";
 import { propertyPanelId } from "@/lib/property-panel-id.mjs";
@@ -603,47 +601,15 @@ export default function CarteraPage() {
                   return null;
                 }
 
-                const theme = x ? cardTheme(x) : null;
-                return (
-                  <article data-folder-card="true" key={pos.id} className={`cartera-folder relative mt-4 flex h-full min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border transition duration-200 ${x ? "border-amber-200 bg-amber-50/40 shadow-[0_3px_14px_rgba(15,23,42,0.04)] hover:border-amber-300 hover:shadow-lg" : "border-dashed border-slate-200 bg-slate-50/60"}`}>
-                  <span aria-hidden="true" className={`cartera-folder-tab absolute -top-4 left-[-1px] h-4 w-24 rounded-t-xl border border-b-0 ${x ? "border-amber-200 bg-amber-100" : "border-slate-200 bg-slate-100"}`} />
-                  <button
-                    type="button"
-                    onClick={() => x && setSeleccionado(x)}
-                    disabled={!x}
-                    aria-label={x ? `Ver detalle de ${x.propietario || "Sin contacto"}, posición ${pos.numero}` : `Posición ${pos.numero} disponible`}
-                    className="group flex min-h-[345px] w-full flex-1 flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000]"
-                  >
+                return x ? <PortfolioPropertyCard key={pos.id} property={x} onOpen={() => setSeleccionado(x)} theme={cardTheme(x)} showZone={zonaSeleccionada === ALL_ZONES}>
+                  <div className="mx-4 mb-4 grid gap-2"><button type="button" onClick={() => setGaleria(x)} disabled={!x.tieneFotos} aria-label={`${x.tieneFotos ? "Ver fotos" : "Fotos pendientes"} de ${x.nombre}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-[#c80000] enabled:hover:bg-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-500"><Icon name="camera" />{x.tieneFotos ? "Ver fotos" : "Fotos pendientes"}</button></div>
+                </PortfolioPropertyCard> : <article data-folder-card="true" key={pos.id} className="cartera-folder relative mt-4 flex h-full min-w-0 flex-col rounded-b-2xl rounded-tr-2xl border border-dashed border-slate-200 bg-slate-50/60">
+                  <span aria-hidden="true" className="cartera-folder-tab absolute -top-4 left-[-1px] h-4 w-24 rounded-t-xl border border-b-0 border-slate-200 bg-slate-100" />
+                  <button type="button" disabled aria-label={`Posición ${pos.numero} disponible`} className="flex min-h-[345px] w-full flex-1 flex-col text-left">
                     <div aria-hidden="true" className="h-1.5 w-full rounded-tr-2xl bg-amber-100/70" />
-                    <div className="flex w-full flex-1 flex-col p-3.5 sm:p-4">
-                      <div className="flex items-center justify-between gap-2">
-                        {zonaSeleccionada===ALL_ZONES&&<span className="text-xs text-slate-500">{pos.zona}</span>}<span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-mono text-xl font-bold tracking-tight ${theme?.position ?? "bg-slate-100 text-slate-500"}`}>{String(pos.numero).padStart(2, "0")}</span>
-                        <span className={x ? "text-slate-300" : "text-slate-300 text-2xl font-light"}>{x ? <FolderIcon /> : <FolderIcon className="h-7 w-7 shrink-0 text-slate-300" />}</span>
-                      </div>
-                      {x && theme ? <>
-                        <span className={`mt-3 inline-flex self-start rounded-lg px-2 py-1 text-xs font-semibold ring-1 ring-inset ${theme.badge}`}>{theme.label}</span>
-                        <h3 className="mt-3 min-h-10 break-words text-sm font-bold leading-5 text-slate-900" title={x.propietario || "Sin contacto"}>{x.propietario || "Sin contacto"}</h3>
-                        <p className="mt-2 text-xs font-semibold text-slate-700"><PropertySummary operation={x.operacion} type={x.tipo} location={x.direccion} /></p>
-                        <p className="mt-1 break-words font-mono text-xs text-slate-500">{propertyPanelId(x)}</p>
-                        <div className="mt-3 flex min-h-12 content-start flex-wrap gap-1.5">
-                          {x.visitaPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-800">Visita pendiente</span>}
-                          {x.tasacionPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Tasación pendiente</span>}
-                          {x.difusionPendiente && <span className="rounded-md bg-blue-50 px-1.5 py-1 text-xs font-semibold text-blue-900">Publicación pendiente</span>}
-                          {x.materialPendiente && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Texto pendiente</span>}
-
-                        </div>
-                        <div className="mt-auto pt-4">
-                          <div className="border-t border-slate-100 pt-3"><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{priceLabel(x.operacion)}</p><p className={`mt-1 break-words text-base font-bold tracking-tight ${x.precioVenta ? "text-slate-900" : "text-slate-500"}`}>{formatPrice(x.precioVenta, x.precioVentaMoneda)}{x.operacion === "alquiler" ? " / mes" : ""}</p></div>
-                          <p className="mt-3 text-xs font-semibold text-[#c80000] group-hover:text-[#a90000]">Ver detalle <span aria-hidden="true">→</span></p>
-                        </div>
-                      </> : <div className="flex flex-1 flex-col items-center justify-center py-6 text-center"><p className="text-xs font-semibold text-slate-500">Disponible</p><p className="mt-1 text-xs leading-4 text-slate-500">Lista para un nuevo inmueble</p></div>}
-                    </div>
+                    <div className="flex w-full flex-1 flex-col p-3.5 sm:p-4"><div className="flex items-center justify-between gap-2">{zonaSeleccionada === ALL_ZONES && <span className="text-xs text-slate-500">{pos.zona}</span>}<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 font-mono text-xl font-bold tracking-tight text-slate-500">{String(pos.numero).padStart(2, "0")}</span><FolderIcon className="h-7 w-7 shrink-0 text-slate-300" /></div><div className="flex flex-1 flex-col items-center justify-center py-6 text-center"><p className="text-xs font-semibold text-slate-500">Disponible</p><p className="mt-1 text-xs leading-4 text-slate-500">Lista para un nuevo inmueble</p></div></div>
                   </button>
-                  {x && <div className="mx-4 mb-4 grid gap-2">
-                    <button type="button" onClick={() => setGaleria(x)} disabled={!x.tieneFotos} aria-label={`${x.tieneFotos ? "Ver fotos" : "Fotos pendientes"} de ${x.nombre}`} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-[#c80000] enabled:hover:bg-red-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-500"><Icon name="camera" />{x.tieneFotos ? "Ver fotos" : "Fotos pendientes"}</button>
-                  </div>}
-                  </article>
-                );
+                </article>;
               })
             ) : (
               <div className="col-span-full rounded-2xl border border-[#eadede] bg-[#fff5f5] p-6 text-sm text-[#a90000]">

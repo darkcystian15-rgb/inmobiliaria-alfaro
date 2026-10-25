@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rentalResult, rentalContractStatus } from '../lib/rental-result.mjs';
-import { operation, priceLabel } from '../lib/operation.mjs';
+import { operation, priceLabel, referenceLabel, targetLabel } from '../lib/operation.mjs';
 const now = new Date('2026-10-06T18:00:00Z');
 const base = {fechaAlquiler:'2026-10-06',rentaMensual:'1500.50'};
 test('contract alerts use the same Peru calendar across the UTC midnight boundary',()=>{
@@ -14,7 +14,10 @@ test('contract alerts use the same Peru calendar across the UTC midnight boundar
  assert.equal(rentalContractStatus('2027-01-15',new Date('2026-12-17T02:00:00Z')),'Vence en 30 días');
 });
 test('operation defaults to sale and validates supported choices',()=>{
- assert.equal(operation(),'venta'); assert.equal(operation('alquiler'),'alquiler'); assert.throws(()=>operation('otro')); assert.equal(priceLabel('alquiler'),'Renta mensual');
+ assert.equal(operation(),'venta'); assert.equal(operation('alquiler'),'alquiler'); assert.throws(()=>operation('otro')); assert.equal(priceLabel('alquiler'),'Precio de salida');
+});
+test('appraisal labels are shared by sale and rental without changing monthly rent amounts',()=>{
+ for(const value of ['venta','alquiler']){assert.equal(referenceLabel(value),'Tasación de Inmobiliaria');assert.equal(targetLabel(value),'Precio de cierre aceptado por propietario');assert.equal(priceLabel(value),'Precio de salida');}
 });
 test('rental captures monthly price and optional contract amounts',()=>{
  const result=rentalResult({...base,comision:'2000',garantia:'0',fechaInicioAlquiler:'2026-11-01',fechaFinAlquiler:'2027-11-01'},now);

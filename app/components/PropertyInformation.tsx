@@ -8,7 +8,7 @@ import PropertySummary from "@/app/components/PropertySummary";
 
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { MobileFormFeedback } from "./MobileFormActions";
-import PropertyFolderBrowser from "./PropertyFolderBrowser";
+import PropertyFolderBrowser, { type PropertyBrowserItem } from "./PropertyFolderBrowser";
 import FolderIcon from "./FolderIcon";
 import { sectionsForOperation, dossierStatus } from "@/lib/transaction-dossier.mjs";
 import { informationFolders, folderForLegacyTab, filesByInformationFolder } from "@/lib/property-folders.mjs";
@@ -38,7 +38,7 @@ import { useSessionUser } from "./SessionProvider";
 import { isAdministrator } from "@/lib/access.mjs";
 import { requestJson } from "@/lib/client-request";
 
-type Item = { zona: string; id: string; posicion: number | null; nombre: string; tipo: string; operacion: string; ubicacion: string; direccion: string | null; propietario: string; estado: string };
+type Item = PropertyBrowserItem;
 type Property = {
   zona?: string; id: number; inmuebleOrigenId?:number|null; codigo: string; posicion: number | null; tipo: string; operacion: string; referencia: string; estado: string;
   nombreContacto: string | null; direccion: string | null; distrito: string | null; provincia: string | null; departamento: string | null;
@@ -151,7 +151,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
     ]).then(([data, expediente, files]) => {
       if (signal?.aborted || id !== loadRequest.current) return;
       setError(""); setDetails(data); setDocuments(files.archivos); setUploadReady(files.subidaHabilitada); setDossier(expediente.status);
-      setItems(previous => previous.map(item => item.id !== data.inmueble.codigo ? item : { ...item, nombre: data.inmueble.referencia, direccion: data.inmueble.direccion, operacion: data.inmueble.operacion, tipo: data.inmueble.tipo, ubicacion: propertyAddress(data.inmueble), propietario: data.inmueble.nombreContacto || "Sin contacto" }));
+      setItems(previous => previous.map(item => item.id !== data.inmueble.codigo ? item : { ...item, nombre: data.inmueble.referencia, direccion: data.inmueble.direccion, operacion: data.inmueble.operacion, tipo: data.inmueble.tipo, ubicacion: propertyAddress(data.inmueble), propietario: data.inmueble.nombreContacto || "Sin contacto", precioVenta: data.tasacion?.precioVenta ?? null, precioVentaMoneda: data.tasacion?.precioVentaMoneda }));
     }).catch(error => {
       if (!signal?.aborted && id === loadRequest.current) { setErrorCarga(true); setError(error instanceof Error ? error.message : "No se pudo cargar la ficha."); }
     }).finally(() => {
@@ -218,7 +218,7 @@ export default function PropertyInformation({ initialCode = "", initialTab = "Re
         {activeFolder && <><span aria-hidden="true">/</span><span aria-current="page" className="break-words text-slate-500">{activeFolder.label}</span></>}
       </nav>}
       <div className="mt-6 space-y-5">
-        <div hidden={Boolean(code)}><PropertyFolderBrowser items={items} zoneNames={zoneNames} zone={zone} loading={listLoading} error={listError} onZone={changeZone} onOpen={selectProperty} onRetry={() => { setListLoading(true); setListError(""); setListReload(value => value + 1); }} /></div>
+        <div hidden={Boolean(code)}><PropertyFolderBrowser key={zone} items={items} zoneNames={zoneNames} zone={zone} loading={listLoading} error={listError} onZone={changeZone} onOpen={selectProperty} onRetry={() => { setListLoading(true); setListError(""); setListReload(value => value + 1); }} /></div>
 
         <div ref={sheet} hidden={!code} className="min-w-0 scroll-mt-24 xl:scroll-mt-5">
           {code && !folder && <button type="button" disabled={busy || dirty} onClick={() => changeZone(details?.inmueble.zona || zone)} className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-600">← Volver a los inmuebles de la zona</button>}

@@ -1,3 +1,7 @@
+# Datos de inmuebles y FASE 3 Portal web
+
+Datos de inmuebles comparte el diseño de lista compacta y tarjetas de Cartera, con buscador y etiqueta Activo; abre directamente las fases. Alquiler usa los mismos tres nombres de tasación que venta. Portal web pasa a FASE 3 debajo de FASE 2 en el menú lateral. [Cambios, punto de restauración y verificación](docs/datos-inmuebles-listas-alquiler-fase3-2026-10-25.md).
+
 # Tasaciones registradas en submenú por zona
 
 Registrar tasaciones conserva solo los pendientes, sin pestañas ni título duplicado. Tasaciones negociadas registradas aparece debajo y busca únicamente en la zona ya seleccionada. Documentos: Copia literal o CRI; HR y PU del año de la venta. [Cambios, restauración y verificación](docs/tasaciones-submenu-2026-10-25.md). Código `5ef970c`, Vercel `dpl_DgXtCQF1GvXVez5cCTgnLh2AL4DK`, **READY** en producción y dominio de la intranet confirmado.
