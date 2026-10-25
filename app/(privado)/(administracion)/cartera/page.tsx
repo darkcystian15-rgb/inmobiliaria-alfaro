@@ -574,9 +574,23 @@ export default function CarteraPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
-            {[["Pendiente", "bg-amber-400"], ["En proceso", "bg-blue-400"], ["Completado", "bg-emerald-400"]].map(([label, color]) => <span key={label} className="inline-flex items-center gap-1.5"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${color}`} />{label}</span>)}
-            <span className="text-slate-500">{cargandoPosiciones ? "Consultando posiciones…" : `${posiciones.length || resumen.capacidad} posiciones`}</span>
+          <div className="max-w-xl space-y-2 text-xs text-slate-600">
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">Colores de las etiquetas</span><span className="text-slate-500">{cargandoPosiciones ? "Consultando posiciones…" : `${posiciones.length || resumen.capacidad} posiciones`}</span></div>
+            <ul aria-label="Leyenda de estados de la cartera" className="flex flex-wrap gap-x-4 gap-y-2">
+              {(vista === "posiciones" && estado !== "Histórico" ? [
+                ["Pendientes", "bg-amber-400"],
+                ["Seguimiento o publicación pendiente", "bg-blue-400"],
+                ["Publicación registrada", "bg-emerald-400"],
+                ["Histórico o posición libre", "bg-slate-400"],
+              ] : [
+                ["Visita pendiente", "bg-amber-400"],
+                ["Tasación pendiente o por revisar", "bg-violet-400"],
+                ["Texto/publicación pendiente o seguimiento", "bg-blue-400"],
+                ["Publicación registrada", "bg-emerald-400"],
+                ["Histórico", "bg-slate-400"],
+              ]).map(([label, color]) => <li key={label} className="inline-flex items-center gap-1.5"><span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${color}`} />{label}</li>)}
+            </ul>
+            <p className="text-slate-500">El expediente y el Portal web muestran su estado por separado.</p>
           </div>
         </div>
 
