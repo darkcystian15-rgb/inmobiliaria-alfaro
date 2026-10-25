@@ -1,3 +1,7 @@
+# Diseño compacto de la intranet
+
+Tarjetas, colores, encabezados y navegación simplificados. [Cambios, punto de restauración y despliegue](docs/actualizacion-diseno-2026-10-25.md).
+
 # Integridad de datos y expedientes cerrados
 
 Eliminación definitiva también en el portal, tareas recuperables de archivos y protección del expediente al cerrar. [Cambios, restauración y verificación](docs/integridad-datos-eliminacion-2026-10-25.md).

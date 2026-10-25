@@ -54,7 +54,7 @@ function MenuLink({ item, onNavigate }: { item: { href: string; label: string; i
       href={item.href === "/cartera" && zone ? `/cartera?zona=${encodeURIComponent(zone.nombre)}` : zoneHref(item.href, zone?.nombre)}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`group relative flex items-center gap-3 rounded-full px-3 py-2.5 text-[13px] font-medium transition ${active ? "bg-[var(--aa-brand-soft)] text-[var(--aa-red-dark)]" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
+      className={`group relative flex items-center gap-3 rounded-full px-3 py-1.5 text-[13px] font-medium transition ${active ? "bg-[var(--aa-brand-soft)] text-[var(--aa-red-dark)]" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
     >
       <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${active ? "bg-white/70 text-[var(--aa-red-dark)]" : "text-slate-500 group-hover:text-slate-700"}`}>
         <Icon name={item.icon}/>
@@ -72,7 +72,7 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   const phaseOne = groups.filter(group => group.label !== "Portal web" && !group.items.some(item => item.href === "/datos-inmuebles"));
   const phaseTwo = groups.filter(group => group.items.some(item => item.href === "/datos-inmuebles"));
   const renderGroups = (items: typeof groups) => items.map(group => <div key={group.label}>
-    <div className="mb-2 mt-6 px-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{group.label}</div>
+    <div className="mb-2 mt-4 px-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{group.label}</div>
     <div className="space-y-1">
       {group.items.map(item => <MenuLink key={item.href} item={item} onNavigate={onNavigate} />)}
     </div>
@@ -80,7 +80,7 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       {isAdministrator(user) && <section aria-labelledby="navigation-phase-one">
-        <h2 id="navigation-phase-one" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 1</h2>
+        <h2 id="navigation-phase-one" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-sm font-bold tracking-wide text-slate-900">FASE 1</h2>
         <div className="mb-1">
           <MenuLink item={dashboardMenuItem} onNavigate={onNavigate} />
         </div>
@@ -88,14 +88,14 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
         {zone && <p className="px-3 text-sm font-bold text-slate-900">Zona: {zone.nombre}</p>}
         {renderGroups(phaseOne)}
       </section>}
-      {phaseTwo.length > 0 && <section aria-labelledby="navigation-phase-two" className={isAdministrator(user) ? "mt-7 border-t border-slate-200 pt-5" : ""}>
-        <h2 id="navigation-phase-two" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 2</h2>
+      {phaseTwo.length > 0 && <section aria-labelledby="navigation-phase-two" className={isAdministrator(user) ? "mt-5 border-t border-slate-200 pt-4" : ""}>
+        <h2 id="navigation-phase-two" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-sm font-bold tracking-wide text-slate-900">FASE 2</h2>
         {!isAdministrator(user) && zone && <Link href="/datos-inmuebles" onClick={onNavigate} className="aa-button aa-button-secondary mb-3 w-full">← Todas las zonas</Link>}
         {!isAdministrator(user) && zone && <p className="px-3 text-sm font-bold text-slate-900">Zona: {zone.nombre}</p>}
         {renderGroups(phaseTwo)}
       </section>}
-      {canAccessPortal(user) && phaseThree.length > 0 && <section aria-labelledby="navigation-phase-three" className="mt-7 border-t border-slate-200 pt-5">
-        <h2 id="navigation-phase-three" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 3</h2>
+      {canAccessPortal(user) && phaseThree.length > 0 && <section aria-labelledby="navigation-phase-three" className="mt-5 border-t border-slate-200 pt-4">
+        <h2 id="navigation-phase-three" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-sm font-bold tracking-wide text-slate-900">FASE 3</h2>
         {renderGroups(phaseThree)}
       </section>}
     </>
@@ -126,7 +126,7 @@ export default function Sidebar() {
         <button type="button" aria-label="Cerrar menú" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[1px] xl:hidden" />
       )}
 
-      <aside id="navigation-panel" className={`fixed inset-y-0 left-0 z-50 flex w-[min(86vw,18rem)] flex-col border-r border-slate-200 bg-[var(--aa-workspace)] shadow-xl transition-transform duration-200 xl:top-0 xl:w-72 xl:translate-x-0 xl:shadow-none ${open ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside id="navigation-panel" className={`fixed inset-y-0 left-0 z-50 flex w-[min(86vw,18rem)] flex-col border-r border-slate-200 bg-[var(--aa-workspace)] shadow-xl transition-transform duration-200 xl:top-0 xl:w-64 xl:translate-x-0 xl:shadow-none ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex shrink-0 flex-col items-center justify-center border-b border-slate-100 px-5 py-4">
           <div className="flex w-[176px] items-center justify-center rounded-xl border border-slate-200 bg-white p-3">
             <Image
@@ -138,12 +138,12 @@ export default function Sidebar() {
             />
           </div>
           <div className="mt-3 w-[176px] text-center">
-            <div aria-hidden="true" className="mx-auto mb-3 h-0.5 w-10 rounded-full bg-[var(--aa-red)]" />
+
             <div className="text-sm font-bold tracking-[0.12em] text-slate-900">INTRANET</div>
-            <div className="mt-1 text-xs leading-4 text-slate-500">Gestión inmobiliaria</div>
+
           </div>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 py-5">
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
           <MenuContent onNavigate={() => setOpen(false)}/>
         </nav>
 
@@ -158,9 +158,7 @@ export default function Sidebar() {
                 <div className="text-xs text-slate-500">{user.rol === "administrador" ? "Administrador" : "Operador"}</div>
               </div>
             </div>
-            <div className="mt-3 border-t border-slate-200 pt-3 text-xs leading-4 text-slate-500">
-              Cartera, seguimiento y pendientes en un solo lugar.
-            </div>
+
           </div>
           <LogoutButton />
         </div>
