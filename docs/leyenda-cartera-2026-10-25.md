@@ -17,3 +17,7 @@ Se sustituye «Completado» por «Publicación registrada». El expediente y el 
 La revisión utiliza los estilos y condiciones reales de `PortfolioLabelRow.tsx`, `PortfolioPropertyCard.tsx` y `cardTheme` de Cartera. No hay cambios en APIs, esquema, datos ni permisos. Verificación: ESLint completo, compilación Webpack/TypeScript y comprobación del despliegue del commit en Vercel.
 
 Para recuperar la leyenda anterior se puede revertir el commit de esta entrega; no requiere restaurar datos. El punto `recovery/diseno-20261025` sigue conservando el diseño anterior al rediseño.
+
+## Presentación compacta
+
+A petición del usuario, la leyenda visible se reduce a puntos de color y palabras breves. Se eliminan su título y explicación permanente; el significado completo queda en la ayuda ⓘ, desplegable por clic o teclado, sin desplazar el listado. Se conserva el contador de posiciones. En pantallas estrechas las etiquetas pueden repartirse en dos líneas para evitar desbordes.

@@ -464,6 +464,19 @@ export default function CarteraPage() {
     tipo !== "Todos" ||
     operacion !== "Todos";
 
+  const leyenda = vista === "posiciones" && estado !== "Histórico" ? [
+    ["Pendiente", "Pendientes", "bg-amber-400"],
+    ["Seguimiento", "Seguimiento o publicación pendiente", "bg-blue-400"],
+    ["Registrada", "Publicación registrada", "bg-emerald-400"],
+    ["Histórico/libre", "Histórico o posición libre", "bg-slate-400"],
+  ] : [
+    ["Visita", "Visita pendiente", "bg-amber-400"],
+    ["Tasación", "Tasación pendiente o por revisar", "bg-violet-400"],
+    ["Seguimiento", "Texto/publicación pendiente o seguimiento", "bg-blue-400"],
+    ["Registrada", "Publicación registrada", "bg-emerald-400"],
+    ["Histórico", "Histórico", "bg-slate-400"],
+  ];
+
   return (
     <NavigationReturnProvider href={returnHref}><main className="min-h-screen bg-background p-6 lg:p-8">
       <div className="mx-auto max-w-[1550px]">
@@ -574,23 +587,18 @@ export default function CarteraPage() {
             </p>
           </div>
 
-          <div className="max-w-xl space-y-2 text-xs text-slate-600">
-            <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">Colores de las etiquetas</span><span className="text-slate-500">{cargandoPosiciones ? "Consultando posiciones…" : `${posiciones.length || resumen.capacidad} posiciones`}</span></div>
-            <ul aria-label="Leyenda de estados de la cartera" className="flex flex-wrap gap-x-4 gap-y-2">
-              {(vista === "posiciones" && estado !== "Histórico" ? [
-                ["Pendientes", "bg-amber-400"],
-                ["Seguimiento o publicación pendiente", "bg-blue-400"],
-                ["Publicación registrada", "bg-emerald-400"],
-                ["Histórico o posición libre", "bg-slate-400"],
-              ] : [
-                ["Visita pendiente", "bg-amber-400"],
-                ["Tasación pendiente o por revisar", "bg-violet-400"],
-                ["Texto/publicación pendiente o seguimiento", "bg-blue-400"],
-                ["Publicación registrada", "bg-emerald-400"],
-                ["Histórico", "bg-slate-400"],
-              ]).map(([label, color]) => <li key={label} className="inline-flex items-center gap-1.5"><span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${color}`} />{label}</li>)}
+          <div className="relative flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 text-xs text-slate-600">
+            <ul aria-label="Leyenda de estados de la cartera" className="flex flex-wrap gap-x-3 gap-y-1">
+              {leyenda.map(([label, description, color]) => <li key={label} title={description} className="inline-flex items-center gap-1.5"><span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${color}`} />{label}</li>)}
             </ul>
-            <p className="text-slate-500">El expediente y el Portal web muestran su estado por separado.</p>
+            <details>
+              <summary aria-label="Ver explicación de los colores" className="cursor-pointer list-none rounded-full px-1 font-semibold text-slate-500">ⓘ</summary>
+              <div className="absolute right-0 top-full z-20 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
+                <ul className="space-y-2">{leyenda.map(([label, description, color]) => <li key={label} className="flex items-start gap-2"><span aria-hidden="true" className={`mt-1 h-2 w-2 shrink-0 rounded-full ${color}`} />{description}</li>)}</ul>
+                <p className="mt-3 border-t border-slate-100 pt-3 text-slate-500">El expediente y el Portal web muestran su estado por separado.</p>
+              </div>
+            </details>
+            <span className="text-slate-500">{cargandoPosiciones ? "Consultando posiciones…" : `${posiciones.length || resumen.capacidad} posiciones`}</span>
           </div>
         </div>
 
