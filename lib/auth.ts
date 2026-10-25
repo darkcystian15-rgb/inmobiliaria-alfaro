@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { inmSesiones, inmUsuarios } from "@/db/schema";
 import { hashSessionToken } from "@/lib/password.mjs";
 import { sameOrigin } from "@/lib/request-origin.mjs";
-import { isAdministrator } from "@/lib/access.mjs";
+import { isAdministrator, canAccessPortal } from "@/lib/access.mjs";
 import { LOGIN_MFA_REQUIRED } from "@/lib/auth-policy";
 
 export { sameOrigin };
@@ -54,7 +54,7 @@ export async function requireRecentAuthentication() {
   return null;
 }
 
-export async function authorizeApi(request?: Request, access: "administrador" | "informacion" = "administrador") {
+export async function authorizeApi(request?: Request, access: "administrador" | "informacion" | "portal" = "administrador") {
   if (request && !["GET", "HEAD", "OPTIONS"].includes(request.method) && !sameOrigin(request)) {
     return { user: null, response: NextResponse.json({ error: "Solicitud no permitida." }, { status: 403 }) };
   }
@@ -62,6 +62,7 @@ export async function authorizeApi(request?: Request, access: "administrador" | 
   if (!user) {
     return { user: null, response: NextResponse.json({ error: "Inicia sesión para continuar." }, { status: 401 }) };
   }
+  if (access === "portal" && !canAccessPortal(user)) return { user: null, response: NextResponse.json({ error: "No tienes permiso para acceder al Portal web." }, { status: 403 }) };
   if (access === "administrador" && !isAdministrator(user)) {
     return { user: null, response: NextResponse.json({ error: "No tienes permiso para acceder a este módulo." }, { status: 403 }) };
   }

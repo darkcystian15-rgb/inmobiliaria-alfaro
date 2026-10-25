@@ -1,3 +1,6 @@
+import { drizzle } from 'drizzle-orm/mysql2';
+import { synchronizePropertyCurrency } from './property-currency-service';
+import { propertyCurrency } from './property-currency.mjs';
 import 'server-only';
 import {enrichWebExtras} from './portal-web-extras';
 import {createHash,timingSafeEqual} from 'node:crypto';
@@ -24,9 +27,9 @@ export function bridgeAuthorized(request:Request){const secret=process.env.PORTA
 
 export async function webSources(id?:number,db:Executor=pool,lock=false):Promise<WebSource[]>{
  if(lock&&id)await db.query('SELECT id FROM inm_inmuebles WHERE id=? FOR UPDATE',[id]);
- const [rows]=await db.query<RowDataPacket[]>(`SELECT i.id,i.codigo,i.tipo,i.operacion,i.estado,i.distrito,i.area_terreno,i.area_construida,i.habitaciones,i.banos,
+ const [rows]=await db.query<RowDataPacket[]>(`SELECT i.id,i.codigo,i.tipo,i.operacion,i.estado,i.moneda,i.distrito,i.area_terreno,i.area_construida,i.habitaciones,i.banos,
  z.nombre zona,(SELECT p.numero FROM inm_asignaciones_zona a JOIN inm_posiciones_zona p ON p.id=a.posicion_id WHERE a.inmueble_id=i.id AND a.activa=1 LIMIT 1) posicion,
- t.precio_venta,t.precio_venta_moneda,t.situacion tasacion_situacion,COALESCE(pub.texto,'') texto,pub.texto_realizado,
+ t.precio_venta,t.precio_venta_moneda,t.valor_referencia_moneda,t.precio_objetivo_moneda,t.situacion tasacion_situacion,COALESCE(pub.texto,'') texto,pub.texto_realizado,
  EXISTS(SELECT 1 FROM inm_archivos a WHERE a.inmueble_id=i.id AND a.almacenamiento='hosting' AND (a.tipo_documento IN ('DNI_PROPIETARIO','VENDEDOR_DNI','VENDEDOR_DNI_GERENTE') OR (i.operacion='alquiler' AND a.tipo_documento='ARRENDADOR_DNI'))) identity_document,
  EXISTS(SELECT 1 FROM inm_archivos a WHERE a.inmueble_id=i.id AND a.almacenamiento='hosting' AND a.tipo_documento IN ('TASACION','TASACION_EXPRESS')) valuation_file,
  EXISTS(SELECT 1 FROM inm_archivos a JOIN inm_visitas v ON v.id=a.visita_id AND v.inmueble_id=i.id AND v.completada=1 WHERE a.inmueble_id=i.id AND a.tipo_documento='FOTO_INMUEBLE' AND a.almacenamiento='hosting' AND a.tipo_mime LIKE 'image/%') completed_visit_photos
@@ -36,7 +39,7 @@ export async function webSources(id?:number,db:Executor=pool,lock=false):Promise
  const [photos]=await db.query<RowDataPacket[]>("SELECT id,inmueble_id,nombre,es_portada,ruta_almacenamiento,fecha_registro,observacion FROM inm_archivos WHERE inmueble_id IN (?) AND tipo_documento='FOTO_INMUEBLE' AND almacenamiento='hosting' AND tipo_mime IN ('image/jpeg','image/png','image/webp') ORDER BY es_portada DESC,id",[ids]);
  return rows.map(row=>{
   const selected=photos.filter(photo=>Number(photo.inmueble_id)===Number(row.id));
-  const source:WebSource={id:Number(row.id),code:row.codigo,zone:row.zona||'Sin zona',position:row.posicion==null?null:Number(row.posicion),type:row.tipo,operation:row.operacion,state:row.estado,district:row.distrito,landArea:row.area_terreno,builtArea:row.area_construida,bedrooms:row.habitaciones,bathrooms:row.banos,price:row.precio_venta,currency:row.precio_venta_moneda??"PEN",baseText:row.texto,textCompleted:Boolean(row.texto_realizado),valuationApproved:row.tasacion_situacion==='aprobado',identityDocument:Boolean(row.identity_document),valuationFile:Boolean(row.valuation_file),completedVisitPhotos:Boolean(row.completed_visit_photos),photos:selected.map(photo=>({id:Number(photo.id),name:photo.nombre,cover:Boolean(photo.es_portada),url:`/api/inmuebles/${row.id}/archivos/${photo.id}`})),revision:''};
+  const source:WebSource={id:Number(row.id),code:row.codigo,zone:row.zona||'Sin zona',position:row.posicion==null?null:Number(row.posicion),type:row.tipo,operation:row.operacion,state:row.estado,district:row.distrito,landArea:row.area_terreno,builtArea:row.area_construida,bedrooms:row.habitaciones,bathrooms:row.banos,price:row.precio_venta,currency:propertyCurrency({moneda:row.moneda}, row.tasacion_situacion ? {valorReferenciaMoneda:row.valor_referencia_moneda,precioObjetivoMoneda:row.precio_objetivo_moneda,precioVentaMoneda:row.precio_venta_moneda} : null),baseText:row.texto,textCompleted:Boolean(row.texto_realizado),valuationApproved:row.tasacion_situacion==='aprobado',identityDocument:Boolean(row.identity_document),valuationFile:Boolean(row.valuation_file),completedVisitPhotos:Boolean(row.completed_visit_photos),photos:selected.map(photo=>({id:Number(photo.id),name:photo.nombre,cover:Boolean(photo.es_portada),url:`/api/inmuebles/${row.id}/archivos/${photo.id}`})),revision:''};
   source.revision=createHash('sha256').update(JSON.stringify({...source,photos:selected})).digest('hex');return source;
  });
 }
@@ -58,11 +61,14 @@ export async function listWebRecords(zone?:string|null){
 export async function saveWebDraft(id:number,input:unknown,expected:number,sourceRevision:string,user:number){
  const draft=normalizeWebDraft(input) as unknown as WebDraft;
  return transaction(async db=>{
-  const [source]=await webSources(id,db,true);if(!source)throw new PortalError('Inmueble no encontrado.',404);
+  let [source]=await webSources(id,db,true);if(!source)throw new PortalError('Inmueble no encontrado.',404);
   if(source.state!=='activo')throw new PortalError('El inmueble ya no está activo.',409);
   if(source.revision!==sourceRevision)throw new PortalError('La ficha de origen cambió. Recarga y revisa los datos antes de guardar.',409);
   const old=await readPortalValue(`draft:${id}`,db,true);if((old?.version||0)!==expected)throw new PortalError('Otro usuario modificó este borrador. Recarga antes de guardar.',409);
-  await writeValue(db,`draft:${id}`,{draft,sourceRevision},expected+1,user);await event(db,`draft:${id}`,'draft.saved',user,expected+1,'Borrador web guardado');
+  draft.currency=draft.currency || source.currency || '';
+  await synchronizePropertyCurrency(drizzle(db),id,draft.currency,user);
+  [source]=await webSources(id,db);
+  await writeValue(db,`draft:${id}`,{draft,sourceRevision:source.revision},expected+1,user);await event(db,`draft:${id}`,'draft.saved',user,expected+1,'Borrador web guardado');
   return webRecord(source,db);
  });
 }

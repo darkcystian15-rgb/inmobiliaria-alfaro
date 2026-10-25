@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dossierDefaults, dossierInput, dossierDocuments, dossierStatus, documentApplies } from '../lib/transaction-dossier.mjs';
+import { dossierDefaults, dossierClosureStatus, dossierInput, dossierDocuments, dossierStatus, documentApplies } from '../lib/transaction-dossier.mjs';
 import { DOCUMENT_TYPES } from '../lib/document-files.mjs';
 
 const natural = () => ({ ...dossierDefaults(), vendedorTipo: 'natural', vendedorPropietarios: 'matrimonio', vendedorRegimen: 'comunes', vendedorRepresentante: 'no', compradorAsignado: true, compradorTipo: 'natural', renta: 'afecto', rentaObservacion: 'Sustento de prueba del pago de renta.' });
@@ -106,23 +106,28 @@ test('configuration rejects malformed input and validates the single buyer type'
   for (const input of [null, [], { ...natural(), compradorTipo: '' }, { ...natural(), renta: 'no' }, { ...natural(), cargas: 'si' }, { ...natural(), vendedorBusquedaNota: 'a'.repeat(2001) }]) assert.throws(() => dossierInput(input));
 });
 
-test('rental has exactly five groups and both parties without sale taxes or person conditions', () => {
-  const status = dossierStatus(dossierDefaults(), [], 'alquiler');
-  assert.deepEqual(status.sections.map(item => item.key), ['identificacion', 'inmueble', 'contratos', 'servicios', 'tasaciones']);
+test('rental has five groups and powers depend independently on representation', () => {
+  const base = {...dossierDefaults(),arrendadorRepresentante:'no',arrendatarioRepresentante:'no'};
+  const status = dossierStatus(base, [], 'alquiler');
+  assert.deepEqual(status.sections.map(item => item.key), ['identificacion','inmueble','contratos','servicios','tasaciones']);
   assert.deepEqual(status.alerts, []);
-  for (const key of ['ARRENDADOR_DNI', 'ARRENDADOR_PODER', 'ARRENDATARIO_DNI', 'ARRENDATARIO_PODER', 'COPIA_LITERAL_CRI', 'CONTRATO_ALQUILER', 'RECIBO_SERVICIO', 'PAGO_SERVICIO', 'TASACION_EXPRESS']) {
-    assert.equal(status.items.find(item => item.key === key).state, 'pendiente', key);
+  assert.equal(dossierStatus(dossierDefaults(), [], 'alquiler').alerts.length,2);
+  for (const party of ['arrendador','arrendatario']) {
+    const key=party.toUpperCase()+'_PODER';
+    assert.equal(status.items.find(item=>item.key===key).state,'no_aplica');
+    const represented={...base,[party+'Representante']:'si'};
+    assert.equal(dossierStatus(represented,[],'alquiler').items.find(item=>item.key===key).state,'pendiente');
+    const files=dossierStatus(represented,[],'alquiler').items.filter(item=>item.applies&&item.required).map(item=>file(item.key));
+    assert.equal(dossierStatus(represented,files,'alquiler').complete,true);
+    assert.equal(dossierStatus(represented,files.filter(item=>item.tipoDocumento!==key),'alquiler').complete,false);
+    const kept=dossierStatus(base,[file(key)],'alquiler').items.find(item=>item.key===key);
+    assert.equal(kept.documents.length,1);assert.equal(kept.applies,false);
   }
-  assert.ok(!status.items.some(item => item.key.includes('ALCABALA') || item.key === 'HR_VENTA' || item.key.includes('RENTA')));
-  const files = status.items.filter(item => item.required).map(item => file(item.key));
-  assert.equal(dossierStatus(dossierDefaults(), files, 'alquiler').complete, true);
-  assert.equal(dossierStatus(dossierDefaults(), files, 'alquiler').percent, 100);
-  assert.equal(dossierStatus(dossierDefaults(), files.filter(item => item.tipoDocumento !== 'ARRENDATARIO_PODER'), 'alquiler').complete, false);
 });
 test('rental recognizes old party files without rewriting and keeps named contracts independently', () => {
   const files = ['VENDEDOR_DNI', 'COMPRADOR_DNI_GERENTE', 'VENDEDOR_PODER', 'COMPRADOR_PODER', 'COPIA_LITERAL', 'CONTRATO', 'CONTRATO_ALQUILER', 'VENDEDOR_RECIBO_AGUA', 'TASACION'].map(file);
   files[5].nombre = 'Contrato inicial'; files[6].nombre = 'Adenda de renovación';
-  const status = dossierStatus({}, files, 'alquiler');
+  const status = dossierStatus({arrendadorRepresentante:'si',arrendatarioRepresentante:'si'}, files, 'alquiler');
   for (const key of ['ARRENDADOR_DNI', 'ARRENDATARIO_DNI', 'ARRENDADOR_PODER', 'ARRENDATARIO_PODER', 'COPIA_LITERAL_CRI', 'RECIBO_SERVICIO', 'TASACION_EXPRESS']) assert.equal(status.items.find(item => item.key === key).state, 'completo', key);
   assert.deepEqual(status.items.find(item => item.key === 'CONTRATO_ALQUILER').documents.map(item => item.nombre), ['Contrato inicial', 'Adenda de renovación']);
   assert.equal(files[0].tipoDocumento, 'VENDEDOR_DNI');
@@ -130,7 +135,7 @@ test('rental recognizes old party files without rewriting and keeps named contra
 test('file categories are restricted by operation for upload and reclassification', () => {
   assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'ARRENDADOR_DNI'), natural(), 'venta'), false);
   assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'VENDEDOR_FORMULARIO_RENTA'), natural(), 'alquiler'), false);
-  assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'ARRENDATARIO_PODER'), dossierDefaults(), 'alquiler'), true);
+  assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'ARRENDATARIO_PODER'), {...dossierDefaults(),arrendatarioRepresentante:'si'}, 'alquiler'), true);
 });
 
 test('municipal voucher preserves existing uploads and adds a separate no-debt certificate', () => {
@@ -241,4 +246,17 @@ test('no payment needs separate exemption and national-search uploads; neither c
   assert.equal(find([file(search),file(exemption)],exemption).state,'completo');
   assert.ok(DOCUMENT_TYPES.has(exemption));
   assert.equal(documentApplies(dossierDocuments.find(item=>item.key===exemption),natural()),false);
+});
+
+test('closing needs all applicable uploads, party conditions and an assigned buyer; interim notes do not replace uploads',()=>{
+ const config={...natural(),vendedorBusquedaNota:'Nota admitida en preparación',compradorBusquedaNota:'Otra nota'};
+ const required=dossierStatus(config).items.filter(item=>item.applies&&item.required);
+ const uploads=required.map(item=>file(item.key));
+ assert.equal(dossierClosureStatus(config,uploads).complete,true);
+ for(const item of required){const incomplete=uploads.filter(row=>row.tipoDocumento!==item.key);assert.equal(dossierClosureStatus(config,incomplete).complete,false,item.key);}
+ assert.equal(dossierClosureStatus({...config,compradorAsignado:false},uploads).complete,false);
+ const noteOnly=uploads.filter(row=>!row.tipoDocumento.endsWith('_BUSQUEDA_NACIONAL'));
+ assert.equal(dossierStatus(config,noteOnly).complete,true);
+ assert.equal(dossierClosureStatus(config,noteOnly).complete,false);
+ assert.equal(dossierClosureStatus(config,uploads.map(row=>({...row,almacenamiento:'enlace'}))).complete,false);
 });

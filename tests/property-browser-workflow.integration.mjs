@@ -71,11 +71,11 @@ try {
     await page.goto(base + '/datos-inmuebles' + zone);
     if (width < 1280) await page.getByRole('button', { name: 'Abrir menú', exact: true }).click();
     const navigation = page.locator('#navigation-panel');
-    if (role === 'admin') {
+    {
       await navigation.getByText(`Zona: Listado ${tag}`, { exact: true }).waitFor();
       const thirdPhase = navigation.getByRole('region', { name: 'FASE 3', exact: true });
       await thirdPhase.waitFor();
-      assert.deepEqual(await navigation.locator('h2').allTextContents(), ['FASE 1', 'FASE 2', 'FASE 3']);
+      assert.deepEqual(await navigation.locator('h2').allTextContents(), role === 'admin' ? ['FASE 1', 'FASE 2', 'FASE 3'] : ['FASE 2', 'FASE 3']);
       assert.equal(await navigation.getByRole('region', { name: 'FASE 1', exact: true }).getByRole('link', { name: 'Inmuebles por publicar', exact: true }).count(), 0);
       for (const [name, route] of [['Inmuebles por publicar','/portal-web/por-publicar'],['Publicaciones activas','/portal-web/activas'],['Portada del sitio','/portal-web/portada']]) {
         const link = thirdPhase.getByRole('link', { name, exact: true });
@@ -86,7 +86,7 @@ try {
       }
       await thirdPhase.scrollIntoViewIfNeeded();
       await page.screenshot({ path: `/tmp/menu-fase3-${width}.png`, fullPage: false });
-    } else assert.equal(await navigation.getByRole('region', { name: 'FASE 3', exact: true }).count(), 0);
+    }
     if (width < 1280) await page.getByRole('button', { name: 'Cerrar menú', exact: true }).first().click();
 
     const region = page.getByRole('region', { name: 'Inmuebles de la zona', exact: true });

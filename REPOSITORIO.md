@@ -1,3 +1,9 @@
+# Reglas de cierre, moneda y acceso del operador
+
+Retiro voluntario del anuncio al cerrar/suspender, documentos obligatorios para cerrar, una moneda por inmueble con conversión manual, poderes según representación y operador con acceso completo a FASE 3. [Decisiones, restauración y verificación](docs/reglas-proceso-cierre-moneda-operador-2026-10-25.md).
+
+Estudio para auditoría: [Interpretación del proceso inmobiliario y programa de revisión](docs/estudio-proceso-inmobiliario-auditoria-2026-10-25.md). Incluye primera evaluación de inconsistencias y riesgos de control por lectura de código; sin cambios de funcionamiento.
+
 # Datos de inmuebles y FASE 3 Portal web
 
 Datos de inmuebles comparte el diseño de lista compacta y tarjetas de Cartera, con buscador y etiqueta Activo; abre directamente las fases. Alquiler usa los mismos tres nombres de tasación que venta. Portal web pasa a FASE 3 debajo de FASE 2 en el menú lateral. [Cambios, punto de restauración y verificación](docs/datos-inmuebles-listas-alquiler-fase3-2026-10-25.md). Código `eb91733`, Vercel `dpl_2KP8JsjCsec5uAp5aW4yDXQSWESy`, **READY** en producción y dominio de la intranet confirmado.

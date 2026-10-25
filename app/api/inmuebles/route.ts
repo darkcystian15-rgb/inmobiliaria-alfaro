@@ -1,3 +1,4 @@
+import { parseCurrency } from "@/lib/prices.mjs";
 import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { nextPropertyOrder } from "@/lib/property-identity";
@@ -68,6 +69,8 @@ export async function POST(request: Request) {
     try { body = await request.json(); } catch { return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 }); }
     if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 });
 
+    const moneda = parseCurrency(body.moneda ?? "PEN");
+    if (!moneda) throw new PropertyInputError("Selecciona soles o dólares.");
     const { posicion, tipo: selectedType, ...values } = registrationInput(body);
     const zonaId=Number(body.zonaId);
     if(!Number.isSafeInteger(zonaId)||zonaId<1)throw new PropertyInputError("Selecciona una zona de la cartera.");
@@ -133,6 +136,7 @@ export async function POST(request: Request) {
         .insert(inmInmuebles)
         .values({
           ...values,
+          moneda,
           ...location,
           codigo,
           numeroOrden,

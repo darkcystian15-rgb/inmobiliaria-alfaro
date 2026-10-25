@@ -1,5 +1,6 @@
 export type Tasacion = {
   id: number;
+  moneda?: string;
   inmuebleId: number;
   codigo: string;
   zona: string;

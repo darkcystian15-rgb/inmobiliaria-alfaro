@@ -6,7 +6,7 @@ import { zoneHref } from "@/lib/zone-url";
 import Image from "next/image";
 import { useState } from "react";
 import { dashboardMenuItem, menuGroups } from "@/lib/navigation";
-import { isAdministrator } from "@/lib/access.mjs";
+import { isAdministrator, canAccessPortal } from "@/lib/access.mjs";
 import LogoutButton from "./LogoutButton";
 import { useSessionUser } from "./SessionProvider";
 import Link from "next/link";
@@ -56,7 +56,7 @@ function MenuLink({ item, onNavigate }: { item: { href: string; label: string; i
 function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
   const user = useSessionUser();
   const {zone} = useZoneWorkspace();
-  const groups=menuGroups.map(group=>({...group,items:group.items.filter(item=>!isAdministrator(user)?item.href==="/datos-inmuebles":zone||!zoneWorkflowPaths.has(item.href))})).filter(group=>group.items.length);
+  const groups=menuGroups.map(group=>({...group,items:group.items.filter(item=>!isAdministrator(user)?item.href==="/datos-inmuebles"||(canAccessPortal(user)&&group.label==="Portal web"):zone||!zoneWorkflowPaths.has(item.href))})).filter(group=>group.items.length);
   const phaseThree = groups.filter(group => group.label === "Portal web");
   const phaseOne = groups.filter(group => group.label !== "Portal web" && !group.items.some(item => item.href === "/datos-inmuebles"));
   const phaseTwo = groups.filter(group => group.items.some(item => item.href === "/datos-inmuebles"));
@@ -79,11 +79,11 @@ function MenuContent({ onNavigate }: { onNavigate?: () => void }) {
       </section>}
       {phaseTwo.length > 0 && <section aria-labelledby="navigation-phase-two" className={isAdministrator(user) ? "mt-7 border-t border-slate-200 pt-5" : ""}>
         <h2 id="navigation-phase-two" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 2</h2>
-        {!isAdministrator(user) && zone && <Link href="/cartera" onClick={onNavigate} className="aa-button aa-button-secondary mb-3 w-full">← Todas las zonas</Link>}
+        {!isAdministrator(user) && zone && <Link href="/datos-inmuebles" onClick={onNavigate} className="aa-button aa-button-secondary mb-3 w-full">← Todas las zonas</Link>}
         {!isAdministrator(user) && zone && <p className="px-3 text-sm font-bold text-slate-900">Zona: {zone.nombre}</p>}
         {renderGroups(phaseTwo)}
       </section>}
-      {isAdministrator(user) && phaseThree.length > 0 && <section aria-labelledby="navigation-phase-three" className="mt-7 border-t border-slate-200 pt-5">
+      {canAccessPortal(user) && phaseThree.length > 0 && <section aria-labelledby="navigation-phase-three" className="mt-7 border-t border-slate-200 pt-5">
         <h2 id="navigation-phase-three" className="mb-3 border-l-4 border-[var(--aa-red)] px-3 text-lg font-extrabold tracking-wide text-slate-900">FASE 3</h2>
         {renderGroups(phaseThree)}
       </section>}

@@ -528,6 +528,7 @@ export async function GET(request: NextRequest) {
         motivoLiberacion:
           liberacion?.motivo ?? null,
         fechaVenta: liberacion?.fechaVenta ? new Date(liberacion.fechaVenta).toISOString().slice(0,10) : null,
+        monedaCierre: liberacion ? liberacion.moneda ?? "PEN" : null,
         precioFinal: liberacion?.precioFinal ?? null,
         fechaAlquiler: liberacion?.fechaAlquiler ?? null,
         rentaMensual: liberacion?.rentaMensual ?? null,

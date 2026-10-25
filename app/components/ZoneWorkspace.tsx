@@ -14,9 +14,9 @@ export const useZoneWorkspace = () => useContext(Workspace);
 export function ZoneWorkspaceProvider({children}:{children:ReactNode}) {
   const user=useSessionUser(), params=useSearchParams();
   const requested=params.get("zona"), pathname=usePathname();
-  const [zones,setZones]=useState<WorkspaceZone[]>([]),[loading,setLoading]=useState(isAdministrator(user)),[error,setError]=useState("");
+  const [zones,setZones]=useState<WorkspaceZone[]>([]),[loading,setLoading]=useState(Boolean(user)),[error,setError]=useState("");
   const reload=useCallback(async()=>{
-    if(!isAdministrator(user))return;
+    if(!user)return;
     setLoading(true);
     try{const response=await fetch('/api/zonas',{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'No se pudieron consultar las zonas.');setZones(data.zonas);setError('');}
     catch(e){setError(e instanceof Error?e.message:'No se pudieron consultar las zonas.');}
@@ -26,7 +26,7 @@ export function ZoneWorkspaceProvider({children}:{children:ReactNode}) {
     const timer=window.setTimeout(()=>void reload(),0);
     return()=>window.clearTimeout(timer);
   },[reload,pathname,requested]);
-  const zone=isAdministrator(user)&&!error?zones.find(z=>z.nombre===requested)??null:null;
+  const zone=!error?zones.find(z=>z.nombre===requested)??null:null;
   return <Workspace.Provider value={{zones,zone,requested,loading,error,reload}}>{children}</Workspace.Provider>;
 }
 

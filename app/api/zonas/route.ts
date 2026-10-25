@@ -6,7 +6,7 @@ import { inmZonas, inmPosiciones, inmAsignacionesPosicion, inmInmuebles } from "
 import { zoneKey } from "@/lib/zone-plan.mjs";
 
 export async function GET() {
-  const auth = await authorizeApi(); if (auth.response) return auth.response;
+  const auth = await authorizeApi(undefined, "informacion"); if (auth.response) return auth.response;
   try {
     const zonas = await db.select({ id: inmZonas.id, nombre: inmZonas.nombre, capacidad: inmZonas.capacidad,
       ocupados: sql<number>`(SELECT COUNT(*) FROM ${inmAsignacionesPosicion} a JOIN ${inmPosiciones} p ON p.id=a.posicion_id WHERE p.zona_id=${inmZonas}.id AND a.activa=1)`,

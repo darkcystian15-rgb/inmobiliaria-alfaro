@@ -1,3 +1,8 @@
+import { propertyCurrency, selectedPropertyCurrency } from "@/lib/property-currency.mjs";
+import { synchronizePropertyCurrency } from "@/lib/property-currency-service";
+import { closureWebListings, prepareClosureWithdrawal } from "@/lib/portal-web-closure";
+import { deliver } from "@/lib/portal-web";
+import { closureReadiness } from "@/lib/closure-readiness";
 import { propertyZoneName, zoneCondition, selectedZone } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { rentalResult } from "@/lib/rental-result.mjs";
@@ -13,11 +18,14 @@ import {
   inmPosiciones,
   inmTimeline,
   inmEliminacionesPendientes,
+  inmTasaciones,
 } from "@/db/schema";
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
+
+export const maxDuration = 60;
 
 const MOTIVOS = new Set(["vendido", "alquilado", "venta_suspendida"]);
 
@@ -30,6 +38,11 @@ export async function GET(request: Request) {
     const rows = await db
       .select({
         inmuebleId: inmInmuebles.id,
+        moneda: inmInmuebles.moneda,
+        valorReferenciaMoneda: inmTasaciones.valorReferenciaMoneda,
+        precioObjetivoMoneda: inmTasaciones.precioObjetivoMoneda,
+        precioVentaMoneda: inmTasaciones.precioVentaMoneda,
+        tasacionId: inmTasaciones.id,
         codigo: inmInmuebles.codigo,
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
@@ -47,6 +60,7 @@ export async function GET(request: Request) {
         fechaRegistro: inmInmuebles.fechaRegistro,
       })
       .from(inmInmuebles)
+      .leftJoin(inmTasaciones,eq(inmTasaciones.inmuebleId,inmInmuebles.id))
 
       .leftJoin(
         inmAsignacionesPosicion,
@@ -68,12 +82,15 @@ export async function GET(request: Request) {
       .where(and(eq(inmInmuebles.estado, "activo"),zoneCondition(request)))
      .orderBy(inmPosiciones.numero);
 
+    const documentacion = await closureReadiness(db, rows);
+    const anunciosWeb = await closureWebListings(db);
     const pendientes = await db.select({ id: inmEliminacionesPendientes.id, creado: inmEliminacionesPendientes.creado }).from(inmEliminacionesPendientes).where(and(eq(inmEliminacionesPendientes.estado, 'archivos'), sql`${inmEliminacionesPendientes.zonaId}=(SELECT id FROM inm_zonas WHERE nombre=${selectedZone(request)} AND activo=1)`));
     return NextResponse.json({
       ok: true,
       eliminacionesPendientes: pendientes,
       items: rows.map((row) => ({
         inmuebleId: row.inmuebleId,
+        moneda: propertyCurrency(row,row.tasacionId ? row : null),
         codigo: row.codigo,
         posicion: row.posicion
           ? String(row.posicion).padStart(2, "0")
@@ -92,6 +109,8 @@ export async function GET(request: Request) {
             .filter(Boolean)
             .join(" ") || "Sin contacto",
         fechaRegistro: row.fechaRegistro,
+        cierreDocumental: documentacion.get(row.inmuebleId),
+        tieneAnuncioWeb: anunciosWeb.has(row.inmuebleId),
       })),
     });
   } catch (error) {
@@ -117,6 +136,7 @@ export async function POST(request: Request) {
     try { body = await request.json(); } catch { return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 }); }
     if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Solicitud no válida." }, { status: 400 });
 
+    if (body.retirarAnuncioWeb !== undefined && typeof body.retirarAnuncioWeb !== "boolean") return NextResponse.json({error:"Elige si deseas retirar el anuncio web."},{status:400});
     const inmuebleId = Number(body.inmuebleId);
     const motivo = clean(body.motivo);
     const detalleOtro = clean(body.detalleOtro);
@@ -210,12 +230,21 @@ export async function POST(request: Request) {
         );
       }
 
+      if (motivo === 'vendido' || motivo === 'alquilado') {
+        const documentation = (await closureReadiness(tx, [{ inmuebleId, operacion: property.operacion }], true)).get(inmuebleId)!;
+        if (!documentation.complete) return { blocked: true as const, missing: documentation.missing };
+      }
+      const [appraisal] = await tx.select().from(inmTasaciones).where(eq(inmTasaciones.inmuebleId,inmuebleId)).limit(1);
+      const currency = motivo === 'venta_suspendida' ? propertyCurrency(property,appraisal) : selectedPropertyCurrency(body,property,appraisal);
+      if (body.monedaEsperada !== undefined && body.monedaEsperada !== propertyCurrency(property,appraisal)) return { currencyConflict: true as const };
+      if (motivo !== 'venta_suspendida') await synchronizePropertyCurrency(tx,inmuebleId,currency,auth.user.id);
       const user = auth.user;
       const ahora = new Date();
 
       await tx.insert(inmLiberaciones).values({
         inmuebleId,
         motivo,
+        moneda: currency || null,
         ...(venta ?? {}),
         ...(alquiler ?? {}),
         detalleOtro:
@@ -285,25 +314,37 @@ export async function POST(request: Request) {
         evento: motivo === "venta_suspendida" ? "venta_suspendida" : "inmueble_liberado",
         observacion:
           `Inmueble liberado. Motivo: ${motivoLabel}.` +
-          (venta ? ` Fecha de venta: ${body.fechaVenta}; precio final: S/ ${venta.precioFinal}; comisión: S/ ${venta.comision}.` : "") +
-          (alquiler ? ` Alquiler cerrado el ${alquiler.fechaAlquiler}; renta mensual: S/ ${alquiler.rentaMensual}; comisión: S/ ${alquiler.comision}.` : "") +
+          (venta ? ` Fecha de venta: ${body.fechaVenta}; precio final: ${currency} ${venta.precioFinal}; comisión: ${currency} ${venta.comision}.` : "") +
+          (alquiler ? ` Alquiler cerrado el ${alquiler.fechaAlquiler}; renta mensual: ${currency} ${alquiler.rentaMensual}; comisión: ${currency} ${alquiler.comision}.` : "") +
           (motivo === "venta_suspendida"
             ? ` Detalle: ${detalleOtro}`
             : ""),
         usuarioId: user.id,
       });
 
+      const retiro = body.retirarAnuncioWeb ? await prepareClosureWithdrawal(tx, inmuebleId, user.id, `Retiro solicitado al ${motivo === 'venta_suspendida' ? 'suspender la venta' : 'cerrar la operación'}.`) : null;
       return {
+        retiro,
         codigo: property.codigo,
         motivo: motivoLabel,
         posicionLiberada: Boolean(assignment),
       };
     });
 
+    if ('currencyConflict' in result) return NextResponse.json({error:'La moneda del inmueble cambió. Actualiza antes de confirmar el cierre.'},{status:409});
+    if (result.blocked === true) return NextResponse.json({ error: `Completa la documentación antes de cerrar. Pendiente: ${result.missing.join('; ')}.`, pendientesDocumentales: result.missing }, { status: 409 });
+
+    const { retiro, ...closed } = result;
+    let retiroWeb: { synced: boolean; error: string } | null = null;
+    if (retiro) {
+      try { retiroWeb = await deliver(retiro.key, retiro.version, retiro.body); }
+      catch { retiroWeb = {synced:false,error:'El cierre se guardó; el retiro del anuncio está pendiente. Reintenta desde Publicaciones activas.'}; }
+    }
     return NextResponse.json(
       {
         ok: true,
-        ...result,
+        ...closed,
+        retiroWeb,
       },
       { status: 201 }
     );
@@ -313,7 +354,7 @@ export async function POST(request: Request) {
         ? error.message
         : "No fue posible liberar el inmueble.";
 
-    const status =
+    const status = /moneda/.test(message) ? 400 :
       /no existe|ya no está|ya tiene|no corresponde/i.test(message)
         ? 409
         : 500;

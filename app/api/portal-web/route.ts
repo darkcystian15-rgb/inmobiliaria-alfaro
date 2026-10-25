@@ -3,7 +3,7 @@ import {listLegacyRecords} from '@/lib/portal-web-legacy';
 import {authorizeApi} from '@/lib/auth';
 import {listWebRecords,bridgeConfigured} from '@/lib/portal-web';
 export async function GET(request:Request){
- const auth=await authorizeApi();if(auth.response)return auth.response;
+ const auth=await authorizeApi(undefined,'portal');if(auth.response)return auth.response;
  try{
   const query=new URL(request.url).searchParams;
   // Leer todos los vínculos para no mostrar dos veces un anuncio vinculado en otra zona.

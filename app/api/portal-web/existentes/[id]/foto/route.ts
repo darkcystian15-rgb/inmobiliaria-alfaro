@@ -1,7 +1,7 @@
 import {authorizeApi} from '@/lib/auth';
 import {legacyCatalog} from '@/lib/portal-web-legacy';
 export async function GET(request:Request,context:{params:Promise<{id:string}>}){
- const auth=await authorizeApi();if(auth.response)return auth.response;
+ const auth=await authorizeApi(undefined,'portal');if(auth.response)return auth.response;
  try{
   const id=Number((await context.params).id),photo=Number(new URL(request.url).searchParams.get('foto'));
   if(!Number.isSafeInteger(id)||id<1||!Number.isSafeInteger(photo)||photo<0)return new Response(null,{status:404});

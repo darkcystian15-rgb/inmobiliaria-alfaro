@@ -1,3 +1,5 @@
+import { synchronizePropertyCurrency } from '@/lib/property-currency-service';
+import { selectedPropertyCurrency } from '@/lib/property-currency.mjs';
 import { propertyIdentifierCondition } from "@/lib/property-identity";
 import { NextResponse } from 'next/server';
 import { and, eq, desc, sql } from 'drizzle-orm';
@@ -20,8 +22,11 @@ async function save(request:Request,context:{params:Promise<{id:string}>}){
  try{const row=await property((await context.params).id);if(!row)return NextResponse.json({error:'Inmueble no encontrado.'},{status:404});
  await db.transaction(async tx=>{
   const [current]=await tx.select().from(inmInmuebles).where(eq(inmInmuebles.id,row.id)).limit(1).for('update');if(current.estado!=='activo')throw new Error('El inmueble es histórico.');
+  const [appraisal]=await tx.select().from(inmTasaciones).where(eq(inmTasaciones.inmuebleId,row.id)).limit(1);
+  const currency=selectedPropertyCurrency({moneda:body.moneda ?? body.precioPublicadoMoneda},current,appraisal);
+  await synchronizePropertyCurrency(tx,row.id,currency,auth.user.id);
   const [lastText]=await tx.select({id:inmTimeline.id}).from(inmTimeline).where(and(eq(inmTimeline.inmuebleId,row.id),eq(inmTimeline.evento,"publicacion_actualizada"))).orderBy(desc(inmTimeline.id)).limit(1);
-  const stored={...values,revisionTexto:lastText?.id??0};
+  const stored={...values,precioPublicadoMoneda:currency,revisionTexto:lastText?.id??0};
   let previous=null;
   if(request.method==='PUT'){const [old]=await tx.select().from(inmAnuncios).where(and(eq(inmAnuncios.id,body.id),eq(inmAnuncios.inmuebleId,row.id))).limit(1);if(!old)throw new Error('Anuncio no encontrado.');previous=old;await tx.update(inmAnuncios).set({...stored,actualizado:sql`CURRENT_TIMESTAMP`}).where(eq(inmAnuncios.id,old.id));}
   else await tx.insert(inmAnuncios).values({...stored,inmuebleId:row.id});

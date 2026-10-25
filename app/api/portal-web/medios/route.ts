@@ -7,7 +7,7 @@ import {registerBannerAsset} from '@/lib/portal-web';
 export const runtime='nodejs';
 export const maxDuration=60;
 export async function POST(request:Request){
- const auth=await authorizeApi(request);if(auth.response)return auth.response;
+ const auth=await authorizeApi(request,'portal');if(auth.response)return auth.response;
  try{
   if(Number(request.headers.get('content-length'))>4*1024*1024+65536)return NextResponse.json({error:'La imagen debe pesar como máximo 4 MB.'},{status:413});
   const form=await request.formData(),file=form.get('image');if(!(file instanceof File)||file.size>4*1024*1024)return NextResponse.json({error:'Selecciona una imagen JPG, PNG o WebP de hasta 4 MB.'},{status:400});

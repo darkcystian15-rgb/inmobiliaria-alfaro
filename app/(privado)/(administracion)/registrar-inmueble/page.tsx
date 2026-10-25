@@ -15,7 +15,7 @@ import { requestJson } from "@/lib/client-request";
 import { propertyDisplayId } from "@/lib/property-display-id";
 
 type Position = { numero: number; disponible: boolean };
-const empty = { operacion: "venta", tipo: "", direccion: "", nombreContacto: "" };
+const empty = { moneda: "PEN", operacion: "venta", tipo: "", direccion: "", nombreContacto: "" };
 const fieldClass = "mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-[#c80000] disabled:opacity-50";
 
 export default function RegistrarInmueblePage() {
@@ -76,13 +76,14 @@ export default function RegistrarInmueblePage() {
   }
   return <main className="min-h-screen p-4 pb-40 sm:p-6 lg:p-8"><div className="mx-auto max-w-5xl">
     <header className="mb-6 flex flex-wrap items-start justify-between gap-4"><PageHeading href="/registrar-inmueble" /><Link href={returnHref} className="aa-button aa-button-secondary">Volver a cartera</Link></header>
-    <DraftRecovery draftKey={`registro:zona-${zone?.id ?? "sin-zona"}`} data={{ ...form, seleccionPosicion: selection }} dirty={Object.entries(form).some(([key, value]) => key !== "operacion" && Boolean(value))}
+    <DraftRecovery draftKey={`registro:zona-${zone?.id ?? "sin-zona"}`} data={{ ...form, seleccionPosicion: selection }} dirty={Object.entries(form).some(([key, value]) => !["operacion", "moneda"].includes(key) && Boolean(value))}
       onRestore={draft => { setForm(Object.fromEntries(Object.entries(empty).map(([key, fallback]) => [key, typeof draft[key] === "string" ? draft[key] : fallback])) as typeof empty); setSelection(String(draft.seleccionPosicion ?? "")); }} />
     <form id="registro-inmueble" onSubmit={event => { event.preventDefault(); void register(); }} className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">
       <div><h2 className="text-lg font-bold text-slate-900">Datos de registro</h2><p className="mt-2 text-sm text-slate-600">Registra el inmueble dentro de la zona seleccionada. El DNI del propietario se adjunta después en Información de inmuebles → Documentación.</p></div>
       <fieldset disabled={busy} className="space-y-4"><legend className="mb-3 text-sm font-bold text-slate-800">Posición y operación</legend>
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="text-sm font-semibold">Posición en esta zona *<select required value={position} disabled={loading || loadError || !available.length || busy} onChange={event => setSelection(event.target.value)} className={fieldClass}><option value="">{loading ? "Consultando…" : "Sin posiciones disponibles"}</option>{available.map(item => <option key={item.numero} value={item.numero}>{String(item.numero).padStart(2, "0")} · Disponible</option>)}</select></label>
+          <label className="text-sm font-semibold">Moneda del inmueble *<select value={form.moneda} disabled={busy} onChange={event => update("moneda",event.target.value)} className={fieldClass}><option value="PEN">Soles (S/)</option><option value="USD">Dólares (US$)</option></select></label>
           <label className="text-sm font-semibold">Tipo de operación *<OperationSelect value={form.operacion} onChange={value => update("operacion", value)} disabled={busy} className={fieldClass} /></label>
           <label className="text-sm font-semibold">Tipo de inmueble *<PropertyTypeSelect value={form.tipo} onChange={value => update("tipo", value)} disabled={busy} className={fieldClass} /></label>
         </div><p className="text-xs text-slate-500">La primera posición libre se selecciona automáticamente. Puedes cambiarla antes de guardar.</p>

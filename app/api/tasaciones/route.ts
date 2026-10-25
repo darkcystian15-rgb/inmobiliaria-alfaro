@@ -1,3 +1,5 @@
+import { propertyCurrency, selectedPropertyCurrency } from "@/lib/property-currency.mjs";
+import { synchronizePropertyCurrency } from "@/lib/property-currency-service";
 import { propertyZoneName, zoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { appraisalAfterVisit } from "@/lib/workflow-dates.mjs";
@@ -23,7 +25,7 @@ function clean(value: unknown) {
 
 
 type TasacionRow = {
-  zona: string; zonaId: number | null; inmuebleId: number; codigo: string; posicion: number | null; referencia: string; tipo: string; operacion: string;
+  moneda?: string | null; zona: string; zonaId: number | null; inmuebleId: number; codigo: string; posicion: number | null; referencia: string; tipo: string; operacion: string;
   distrito: string | null; provincia: string | null; departamento: string | null; direccion: string | null;
   propietarioNombres: string | null; propietarioApellidos: string | null;
   tasacionId?: number; fechaTasacion?: Date | string | null; valorReferencia?: string | null;
@@ -33,6 +35,7 @@ type TasacionRow = {
 function mapRow(row: TasacionRow) {
   return {
     id: row.tasacionId ?? null,
+    moneda: propertyCurrency({moneda:row.moneda}, row.tasacionId ? row : null),
     inmuebleId: row.inmuebleId,
     codigo: row.codigo,
     distrito: row.distrito,
@@ -69,6 +72,7 @@ export async function GET(request: Request) {
     const pendientes = await db
       .select({
         inmuebleId: inmInmuebles.id,
+        moneda: inmInmuebles.moneda,
         codigo: inmInmuebles.codigo,
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
@@ -120,6 +124,7 @@ export async function GET(request: Request) {
       .select({
         tasacionId: inmTasaciones.id,
         inmuebleId: inmInmuebles.id,
+        moneda: inmInmuebles.moneda,
         codigo: inmInmuebles.codigo,
         tipo: inmInmuebles.tipo,
         operacion: inmInmuebles.operacion,
@@ -234,6 +239,9 @@ export async function POST(request: Request) {
       if (property.estado !== "activo") {
         throw new Error("El inmueble ya no está activo.");
       }
+      const currency = selectedPropertyCurrency(body, property);
+      prices = appraisalPrices({...body,valorReferenciaMoneda:currency,precioObjetivoMoneda:currency,precioVentaMoneda:currency});
+      await synchronizePropertyCurrency(tx, inmuebleId, currency, auth.user.id);
 
       const [position] = await tx.select({ id: inmAsignacionesPosicion.id }).from(inmAsignacionesPosicion)
         .where(and(eq(inmAsignacionesPosicion.inmuebleId, inmuebleId), eq(inmAsignacionesPosicion.activa, true))).limit(1);
@@ -298,7 +306,7 @@ export async function POST(request: Request) {
         error: message,
       },
       {
-        status: message.includes("anterior a la visita") ? 400 :
+        status: /anterior a la visita|moneda|tres importes/.test(message) ? 400 :
           /no existe|ya no está|ya tiene|no tiene/i.test(message)
             ? 409
             : 500,
@@ -322,14 +330,16 @@ export async function PATCH(request: Request) {
   }
   try {
     const result = await db.transaction(async (tx) => {
-      const [property] = await tx.select({ estado: inmInmuebles.estado, operacion: inmInmuebles.operacion }).from(inmInmuebles)
+      const [property] = await tx.select({ estado: inmInmuebles.estado, operacion: inmInmuebles.operacion, moneda: inmInmuebles.moneda }).from(inmInmuebles)
         .where(and(eq(inmInmuebles.id, inmuebleId),zoneCondition(request))).limit(1).for("update");
       if (property?.estado !== "activo") throw new Error("El inmueble ya no está activo.");
       const [tasacion] = await tx.select().from(inmTasaciones)
         .where(eq(inmTasaciones.inmuebleId, inmuebleId)).limit(1).for("update");
       if (!tasacion) throw new Error("El inmueble no tiene una tasación registrada.");
       const observacion = body.observacion === undefined ? tasacion.observacion : body.observacion.trim() || null;
-      const prices = appraisalPrices(body, tasacion);
+      const currency = selectedPropertyCurrency(body, property, tasacion);
+      const prices = appraisalPrices({...body,valorReferenciaMoneda:currency,precioObjetivoMoneda:currency,precioVentaMoneda:currency}, tasacion);
+      await synchronizePropertyCurrency(tx, inmuebleId, currency, auth.user.id);
       if (Object.entries(prices).every(([key, value]) => tasacion[key as keyof typeof tasacion] === value) && observacion === tasacion.observacion) return prices;
       await tx.update(inmTasaciones).set({ ...prices, observacion }).where(eq(inmTasaciones.id, tasacion.id));
       await tx.insert(inmTimeline).values({
@@ -341,7 +351,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo actualizar el precio o la renta mensual.";
-    return NextResponse.json({ ok: false, error: /no tiene|no está activo|tres importes/.test(message) ? message : "No se pudo actualizar el precio o la renta mensual." },
-      { status: /tres importes/.test(message) ? 400 : /no tiene|no está activo/.test(message) ? 409 : 500 });
+    return NextResponse.json({ ok: false, error: /no tiene|no está activo|tres importes|moneda/.test(message) ? message : "No se pudo actualizar el precio o la renta mensual." },
+      { status: /tres importes|moneda/.test(message) ? 400 : /no tiene|no está activo/.test(message) ? 409 : 500 });
   }
 }
