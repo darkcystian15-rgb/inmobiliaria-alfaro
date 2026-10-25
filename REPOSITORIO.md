@@ -1,6 +1,6 @@
 # Reglas de cierre, moneda y acceso del operador
 
-Retiro voluntario del anuncio al cerrar/suspender, documentos obligatorios para cerrar, una moneda por inmueble con conversión manual, poderes según representación y operador con acceso completo a FASE 3. [Decisiones, restauración y verificación](docs/reglas-proceso-cierre-moneda-operador-2026-10-25.md).
+Retiro voluntario del anuncio al cerrar/suspender, documentos obligatorios para cerrar, una moneda por inmueble con conversión manual, poderes según representación y operador con acceso completo a FASE 3. [Decisiones, restauración y verificación](docs/reglas-proceso-cierre-moneda-operador-2026-10-25.md). Código `c8be0bd`, Vercel `dpl_GC3Uu4nJEm1BDk2pz6AnqfVRbmKM`, **READY** en producción y dominio confirmado.
 
 Estudio para auditoría: [Interpretación del proceso inmobiliario y programa de revisión](docs/estudio-proceso-inmobiliario-auditoria-2026-10-25.md). Incluye primera evaluación de inconsistencias y riesgos de control por lectura de código; sin cambios de funcionamiento.
 

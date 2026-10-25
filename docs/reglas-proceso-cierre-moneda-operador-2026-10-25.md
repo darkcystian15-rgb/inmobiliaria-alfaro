@@ -69,4 +69,12 @@ Restaurar código no revierte decisiones de negocio realizadas después. Las col
 - Integraciones de listas/tarjetas/fases y panel/precios anteriores adaptadas a las nuevas reglas y aprobadas en ambos anchos: búsqueda, zona, historial de navegación, moneda común elegida explícitamente, conservación de importes y publicación, cierre con cambios y regreso al panel.
 - Las escrituras fueron exclusivamente locales. Las fichas, archivos de metadatos, zonas, usuarios y sesiones ficticios se retiraron; el estado anterior de la portada local se restauró. No se cerraron operaciones ni se alteraron anuncios reales para probar.
 
-Publicación pendiente de confirmación. La entrega utiliza la integración automática de `main` con el proyecto Vercel existente.
+## Publicación confirmada
+
+Código funcional `c8be0bd65b769e25254851246ef541b8eb7bc209`, subido a `main` junto con la referencia remota de restauración `recovery/reglas-proceso-20261025`. La metadata de Vercel confirmó el mismo SHA de GitHub y Codespaces.
+
+Despliegue `dpl_GC3Uu4nJEm1BDk2pz6AnqfVRbmKM`, **READY**, entorno **production**, versión https://inmobiliaria-alfarov2-1g8j2rha9-puma19.vercel.app. Vercel confirmó el dominio https://intranet.inmobiliariaalbertoalfaro.com.pe.
+
+El dominio responde 200 en `/login`; Datos de inmuebles, Liberar inmueble y los tres apartados de Portal web redirigen a `/login` sin sesión. La API de Portal web y el receptor sin token responden 401. La prueba funcional autenticada fue local; no se crearon cuentas técnicas, no se cerraron inmuebles reales ni se enviaron anuncios de prueba en producción.
+
+El despliegue prepara únicamente las dos columnas nullable nuevas, sin modificar importes ni completar condiciones de expedientes existentes. La base de ensayo local quedó detenida. El commit documental posterior conserva exactamente el mismo código funcional y se publica por la misma integración de `main`.
