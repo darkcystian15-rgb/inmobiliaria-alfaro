@@ -1,0 +1,35 @@
+{
+  "checkedAt": "2026-10-25T21:36:12.551Z",
+  "httpStatus": 200,
+  "id": "dpl_8p2RCjRdBrw98PKZw5DtK7gPZdSb",
+  "state": "READY",
+  "target": "production",
+  "url": "inmobiliaria-alfarov2-p9865pyuf-puma19.vercel.app",
+  "aliases": [
+    "inmobiliaria-alfarov2-umber.vercel.app",
+    "intranet.inmobiliariaalbertoalfaro.com.pe",
+    "inmobiliaria-alfarov2-git-main-puma19.vercel.app"
+  ],
+  "commit": "815ca54163c48cab4e127857aa41bec2dd1ae147",
+  "checks": [
+    {
+      "route": "/login",
+      "status": 200
+    },
+    {
+      "asset": "/_next/static/css/c38d0f603b6aa7b9.css",
+      "status": 200,
+      "compactSidebar": true,
+      "compactContentOffset": true
+    },
+    {
+      "route": "/api/portal-web",
+      "status": 401
+    },
+    {
+      "route": "/api/mantenimiento/archivos",
+      "status": 401
+    }
+  ],
+  "scope": "Public read-only checks; no authenticated business operations. Visual fixtures checked locally."
+}
