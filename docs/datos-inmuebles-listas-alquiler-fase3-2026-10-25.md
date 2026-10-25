@@ -28,6 +28,8 @@ Portal web sale de FASE 1 y pasa a una sección FASE 3, inmediatamente después 
 
 Revisión previa `681d268c0fe7da174aeea3d5797691e055c2f2fc`.
 
+Referencia de restauración publicada en GitHub: `recovery/datos-listas-alquiler-fase3-20261025`.
+
 Historial completo privado en `restore-points/datos-listas-alquiler-20261025/anterior.bundle`, excluido de Git y de Vercel. `git bundle verify` confirmó el respaldo completo. Para recuperar, abrir ese bundle en otra carpeta y recuperar la revisión previa, o revertir el commit funcional de esta entrega y volver a desplegar. Esta actualización no requiere restauración de datos porque no modifica registros existentes ni introduce cambios de esquema.
 
 ## Verificación
@@ -42,4 +44,10 @@ Historial completo privado en `restore-points/datos-listas-alquiler-20261025/ant
 
 ## Publicación
 
-Pendiente de confirmar la revisión funcional en Vercel. La publicación utiliza `main` del repositorio conectado y la integración automática del proyecto existente.
+Código funcional `eb917337f355ac9358319e5c957683f6af7a2df4`, subido a `main`. La metadata del despliegue automático de Vercel confirma ese mismo SHA y la rama `main` del repositorio conectado.
+
+Despliegue `dpl_2KP8JsjCsec5uAp5aW4yDXQSWESy`, estado **READY**, entorno **production**, versión https://inmobiliaria-alfarov2-ntbhbf8sr-puma19.vercel.app. El alias confirmado por Vercel es https://intranet.inmobiliariaalbertoalfaro.com.pe.
+
+Verificación HTTP del dominio: `/login` responde 200; Datos de inmuebles, Registrar tasaciones y los tres accesos de Portal web responden 307 a `/login` sin sesión, conforme a sus permisos. La comprobación funcional autenticada se realizó en local; no se crearon usuarios ni registros ficticios ni se publicaron anuncios en producción.
+
+La entrega documental posterior conserva exactamente este código funcional y se publica por la misma integración automática. El punto de restauración se comprobó también mediante su SHA-256. La base local de pruebas quedó detenida.
