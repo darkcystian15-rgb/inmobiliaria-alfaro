@@ -25,4 +25,10 @@ ESLint y TypeScript aprobados; 40 archivos de pruebas unitarias aprobados. Compi
 
 Integración autenticada con MySQL local y Chromium aprobada en 1440 y 375 px: registro con moneda USD, título único, buscadores sin pestañas, búsqueda por contacto/dirección, limpiar filtro, contador, recarga, enlaces antiguos, zona vacía, cambio de zona con búsqueda limpia, y entradas sin zona/general/inexistente sin listado ni submenú. Conservados precios, monedas mixtas, etapa, fechas y publicación; edición y retorno a Cartera también aprobados. Sin errores de ejecución ni desbordes. Captura móvil del nuevo apartado inspeccionada. Los inmuebles, zonas y usuarios ficticios se retiraron al terminar.
 
-Publicación pendiente de confirmar en Vercel.
+## Producción
+
+Código funcional `5ef970cbfc14a8df54b675a061ae8427a63a3a25`, subido a `main` junto con la referencia remota de restauración `recovery/tasaciones-submenu-20261025`.
+
+Despliegue automático de Vercel `dpl_DgXtCQF1GvXVez5cCTgnLh2AL4DK`, estado **READY**, entorno **production**, versión https://inmobiliaria-alfarov2-hyf7dssr4-puma19.vercel.app. Vercel confirmó el alias https://intranet.inmobiliariaalbertoalfaro.com.pe.
+
+Verificación HTTP del dominio público: `/login` responde 200; Registrar tasaciones y Tasaciones negociadas registradas con `zona=Chimbote` responden 307 a `/login` sin sesión, conforme al control de acceso. La prueba funcional autenticada se realizó en local; no se crearon usuarios ni registros ficticios en producción. La entrega documental posterior conserva exactamente este código funcional.

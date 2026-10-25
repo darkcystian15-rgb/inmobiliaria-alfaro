@@ -1,6 +1,6 @@
 # Tasaciones registradas en submenú por zona
 
-Registrar tasaciones conserva solo los pendientes, sin pestañas ni título duplicado. Tasaciones negociadas registradas aparece debajo y busca únicamente en la zona ya seleccionada. Documentos: Copia literal o CRI; HR y PU del año de la venta. [Cambios, restauración y verificación](docs/tasaciones-submenu-2026-10-25.md).
+Registrar tasaciones conserva solo los pendientes, sin pestañas ni título duplicado. Tasaciones negociadas registradas aparece debajo y busca únicamente en la zona ya seleccionada. Documentos: Copia literal o CRI; HR y PU del año de la venta. [Cambios, restauración y verificación](docs/tasaciones-submenu-2026-10-25.md). Código `5ef970c`, Vercel `dpl_DgXtCQF1GvXVez5cCTgnLh2AL4DK`, **READY** en producción y dominio de la intranet confirmado.
 
 # Panel, precios y bandejas compactas
 
