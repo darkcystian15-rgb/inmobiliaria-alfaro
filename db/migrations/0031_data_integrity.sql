@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS inm_tareas_archivos (
+ id VARCHAR(36) PRIMARY KEY,
+ inmueble_id BIGINT UNSIGNED NULL,
+ archivo_id BIGINT UNSIGNED NULL,
+ ruta VARCHAR(1000) NOT NULL,
+ tipo VARCHAR(20) NOT NULL,
+ usuario_id BIGINT UNSIGNED NULL,
+ expira DATETIME NOT NULL,
+ creado TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_tareas_expira(expira)
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS inm_expedientes_cierre (
+ liberacion_id BIGINT UNSIGNED PRIMARY KEY,
+ inmueble_id BIGINT UNSIGNED NOT NULL,
+ contenido MEDIUMTEXT NOT NULL,
+ creado TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_cierre_inmueble(inmueble_id)
+) ENGINE=InnoDB;

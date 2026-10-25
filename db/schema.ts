@@ -343,3 +343,20 @@ export const inmEliminacionesPendientes = mysqlTable('inm_eliminaciones_pendient
   expira: datetime('expira', { mode: 'date' }).notNull(),
   creado: timestamp('creado', { mode: 'date' }).defaultNow().notNull(),
 }, table => ({ zonaIdx: index('idx_eliminaciones_zona').on(table.zonaId, table.estado) }));
+
+export const inmTareasArchivos = mysqlTable('inm_tareas_archivos', {
+ id: varchar('id',{length:36}).primaryKey(),
+ inmuebleId: bigint('inmueble_id',{mode:'number',unsigned:true}),
+ archivoId: bigint('archivo_id',{mode:'number',unsigned:true}),
+ ruta: varchar('ruta',{length:1000}).notNull(),
+ tipo: varchar('tipo',{length:20}).notNull(),
+ usuarioId: bigint('usuario_id',{mode:'number',unsigned:true}),
+ expira: datetime('expira',{mode:'date'}).notNull(),
+ creado: timestamp('creado',{mode:'date'}).defaultNow().notNull(),
+}, t=>({expiresIdx:index('idx_tareas_expira').on(t.expira)}));
+export const inmExpedientesCierre = mysqlTable('inm_expedientes_cierre', {
+ liberacionId: bigint('liberacion_id',{mode:'number',unsigned:true}).primaryKey(),
+ inmuebleId: bigint('inmueble_id',{mode:'number',unsigned:true}).notNull(),
+ contenido: mediumtext('contenido').notNull(),
+ creado: timestamp('creado',{mode:'date'}).defaultNow().notNull(),
+},t=>({propertyIdx:index('idx_cierre_inmueble').on(t.inmuebleId)}));

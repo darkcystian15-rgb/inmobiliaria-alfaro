@@ -1,3 +1,4 @@
+import { assertWritable } from '@/lib/data-integrity-service';
 import { inmAnuncios } from "@/db/schema";
 import { readReferences } from "@/lib/diffusion.mjs";
 import { propertyZoneName } from "@/lib/zone-scope";
@@ -153,6 +154,7 @@ async function updateProperty(request: Request, context: { params: Promise<{ id:
       const [current] = await tx.select().from(inmInmuebles)
         .where(eq(inmInmuebles.id, row.id)).limit(1).for("update");
       if (!current) throw new PropertyInputError("Inmueble no encontrado.");
+      await assertWritable(tx,current.id);
       if (propertyValues.operacion && propertyValues.operacion !== current.operacion) {
         if (auth.user.rol !== 'administrador') throw new PropertyInputError('Solo el administrador puede cambiar la operación.');
         const [prices] = await tx.select({ id: inmTasaciones.id }).from(inmTasaciones).where(eq(inmTasaciones.inmuebleId, current.id)).limit(1);
@@ -177,6 +179,7 @@ async function updateProperty(request: Request, context: { params: Promise<{ id:
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if(error instanceof Error && /expediente está cerrado|eliminación en curso/.test(error.message)) return NextResponse.json({error:error.message},{status:409});
     if (error instanceof PropertyInputError) return NextResponse.json({ error: error.message }, { status: 400 });
     console.error("Operación fallida: inmuebles/[id]", (error as { code?: string; cause?: { code?: string } }).cause?.code ?? (error as { code?: string }).code ?? "ERROR");
     return NextResponse.json({ error: "No se pudieron guardar los datos del inmueble." }, { status: 500 });

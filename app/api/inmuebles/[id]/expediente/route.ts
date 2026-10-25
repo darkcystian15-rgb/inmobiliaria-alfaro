@@ -1,3 +1,4 @@
+import { assertWritable } from '@/lib/data-integrity-service';
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
@@ -34,6 +35,7 @@ export async function PUT(request: Request, context: Context) {
     const result = await db.transaction(async tx => {
       const [property] = await tx.select({ id: inmInmuebles.id, operacion: inmInmuebles.operacion }).from(inmInmuebles).where(propertyIdentifierCondition((await context.params).id)).limit(1).for('update');
       if (!property) return { error: 'Inmueble no encontrado.', status: 404 };
+      await assertWritable(tx,property.id);
       const current = await readDossier(property.id, tx);
       if (current.version !== version) return { error: 'Otra persona actualizó el expediente. Recarga antes de guardar.', status: 409 };
       // Never silently hide a buyer or documents when changing person/conditions.
@@ -46,5 +48,5 @@ export async function PUT(request: Request, context: Context) {
     });
     if ('error' in result) return NextResponse.json({ error: result.error }, { status: result.status });
     return NextResponse.json({ ok: true, ...result });
-  } catch { return NextResponse.json({ error: 'No se pudo guardar el expediente.' }, { status: 500 }); }
+  } catch (error) { if(error instanceof Error && /expediente está cerrado|eliminación en curso/.test(error.message)) return NextResponse.json({error:error.message},{status:409}); return NextResponse.json({ error: 'No se pudo guardar el expediente.' }, { status: 500 }); }
 }

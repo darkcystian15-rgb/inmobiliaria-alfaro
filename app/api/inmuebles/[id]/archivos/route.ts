@@ -1,3 +1,7 @@
+import { assertWritable } from '@/lib/data-integrity-service';
+import { inmTareasArchivos } from '@/db/schema';
+import { pool } from '@/lib/db';
+import { prepareUpload, cleanFileJob } from '@/lib/data-integrity.mjs';
 import { canWritePropertyFile } from '@/lib/phase-one-access.mjs';
 import { isAdministrator } from '@/lib/access.mjs';
 import { fileActivitySnapshot } from '@/lib/file-activity.mjs';
@@ -5,7 +9,7 @@ import { propertyIdentifierCondition } from "@/lib/property-identity";
 import { auditValues } from "@/lib/security-audit";
 import { authorizeApi } from '@/lib/auth';
 import { NextResponse } from 'next/server';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { hostingRequest } from '@/lib/document-hosting';
 import { IMAGE_EXTENSIONS, prepareImage } from '@/lib/image-files.mjs';
@@ -33,7 +37,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const rows = await db.select().from(inmArchivos).where(eq(inmArchivos.inmuebleId, inmueble.id)).orderBy(asc(inmArchivos.tipoDocumento), asc(inmArchivos.fechaRegistro));
     const archivos = rows.map(row => ({ ...row, enlace: row.almacenamiento === 'hosting' ? `/api/inmuebles/${inmueble.id}/archivos/${row.id}` : row.enlace, rutaAlmacenamiento: undefined }));
     return NextResponse.json({ archivos, subidaHabilitada: storageConfigured() }, { headers: { 'Cache-Control': 'private, no-store' } });
-  } catch { return NextResponse.json({ error: 'No se pudieron consultar los archivos.' }, { status: 500 }); }
+  } catch (error) { if(error instanceof Error && /expediente está cerrado|eliminación en curso/.test(error.message)) return NextResponse.json({error:error.message},{status:409}); return NextResponse.json({ error: 'No se pudieron consultar los archivos.' }, { status: 500 }); }
 }
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -54,7 +58,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         const selected = form.get('archivo');
         if (selected instanceof File) file = selected;
       } else body = await request.json();
-    } catch { return NextResponse.json({ error: 'Solicitud de documento no válida.' }, { status: 400 }); }
+    } catch (error) { if(error instanceof Error && /expediente está cerrado|eliminación en curso/.test(error.message)) return NextResponse.json({error:error.message},{status:409}); return NextResponse.json({ error: 'Solicitud de documento no válida.' }, { status: 400 }); }
     const requestedType = String(body.tipoDocumento ?? '').trim();
     const tipoDocumento = dossierDocumentType(requestedType, inmueble.operacion), nombre = String(body.nombre ?? '').trim(), observacion = String(body.observacion ?? '').trim();
     if (!DOCUMENT_TYPES.has(tipoDocumento) || !nombre || nombre.length > 255 || observacion.length > 500) return NextResponse.json({ error: 'Revisa el tipo, nombre (máximo 255 caracteres) y observación (máximo 500).' }, { status: 400 });
@@ -74,10 +78,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       if (!/^https?:\/\//i.test(enlace) || enlace.length > 1000) return NextResponse.json({ error: 'Enlace no válido.' }, { status: 400 });
       const created = await db.transaction(async tx => {
         await tx.select({id:inmInmuebles.id}).from(inmInmuebles).where(eq(inmInmuebles.id,inmueble.id)).for('update');
+      await assertWritable(tx, inmueble.id);
         if(definition&&!documentApplies(definition,(await readDossier(inmueble.id,tx)).config,inmueble.operacion))throw new Error('Las condiciones del expediente cambiaron.');
         const [row]=await tx.insert(inmArchivos).values({inmuebleId:inmueble.id,tipoDocumento,nombre,enlace,observacion:observacion||null,usuarioId}).$returningId();
         await tx.insert(securityAudit).values(auditValues(usuarioId,'file.link',`file:${row.id}`));
         await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId,evento:'archivo_enlazado',observacion:JSON.stringify({archivo:fileActivitySnapshot({...row,tipoDocumento,nombre,observacion},inmueble.operacion)})});
+      await tx.delete(inmTareasArchivos).where(eq(inmTareasArchivos.id, uploadJob));
       return row;
       });
       return NextResponse.json({ ok: true, id: created.id }, { status: 201 });
@@ -102,25 +108,30 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const [position] = await db.select({ numero: inmPosiciones.numero }).from(inmAsignacionesPosicion).innerJoin(inmPosiciones, eq(inmPosiciones.id, inmAsignacionesPosicion.posicionId)).where(and(eq(inmAsignacionesPosicion.inmuebleId, inmueble.id), eq(inmAsignacionesPosicion.activa, true))).limit(1);
     const pathname = documentPath({ position: position?.numero ?? null, propertyId: inmueble.id, propertyCode: inmueble.codigo, type: tipoDocumento, name: storedName, uniqueId: randomUUID() });
     const originalName = file.name;
+    const uploadJob = await prepareUpload(pool, inmueble.id, pathname);
     const created = await storeDocument({ pathname, bytes,
       upload: async (path: string, data: Uint8Array) => { await hostingRequest('PUT', path, data); },
-      remove: async (path: string) => { await hostingRequest('DELETE', path); },
+      remove: async () => { await pool.query('UPDATE inm_tareas_archivos SET expira=NOW() WHERE id=?',[uploadJob]); },
       register: async (stored: { pathname: string }) => {
       return db.transaction(async tx => {
       await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, inmueble.id)).for('update');
+      await assertWritable(tx, inmueble.id);
       if (definition && !documentApplies(definition, (await readDossier(inmueble.id, tx)).config, inmueble.operacion)) throw new Error('Las condiciones del expediente cambiaron.');
       if (visitaId !== null) {
         const [visit] = await tx.select({ id: inmVisitas.id }).from(inmVisitas).where(and(eq(inmVisitas.id, visitaId), eq(inmVisitas.inmuebleId, inmueble.id), eq(inmVisitas.completada, true))).limit(1).for('update');
         if (!visit) throw new Error('La visita ya no está disponible.');
       }
+      const [jobs] = await tx.execute(sql`SELECT id FROM inm_tareas_archivos WHERE id=${uploadJob} FOR UPDATE`);
+      if (!(jobs as unknown as {id:string}[]).length) throw new Error('La autorización de subida venció.');
       const [row] = await tx.insert(inmArchivos).values({ inmuebleId: inmueble.id, visitaId, tipoDocumento, nombre, enlace: stored.pathname, almacenamiento: 'hosting', rutaAlmacenamiento: stored.pathname, nombreOriginal: originalName, tamanoBytes: bytes.length, tipoMime: contentType, observacion: observacion || null, usuarioId }).$returningId();
       await tx.insert(securityAudit).values(auditValues(usuarioId,"file.upload",`file:${row.id}`));
       await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId,evento:'archivo_subido',observacion:JSON.stringify({archivo:fileActivitySnapshot({...row,tipoDocumento,nombre,nombreOriginal:originalName,tipoMime:contentType,tamanoBytes:bytes.length,visitaId,observacion},inmueble.operacion)})});
+      await tx.delete(inmTareasArchivos).where(eq(inmTareasArchivos.id, uploadJob));
       return row;
       });
     } });
     return NextResponse.json({ ok: true, id: created.id }, { status: 201 });
-  } catch { return NextResponse.json({ error: 'No se pudo guardar el documento. Comprueba la configuración del almacenamiento de documentos.' }, { status: 500 }); }
+  } catch (error) { if(error instanceof Error && /expediente está cerrado|eliminación en curso/.test(error.message)) return NextResponse.json({error:error.message},{status:409}); return NextResponse.json({ error: 'No se pudo guardar el documento. Comprueba la configuración del almacenamiento de documentos.' }, { status: 500 }); }
 }
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -133,20 +144,28 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     const condition = and(eq(inmArchivos.id, fileId), eq(inmArchivos.inmuebleId, inmueble.id));
     const found = await db.transaction(async tx => {
       await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, inmueble.id)).for('update');
+      await assertWritable(tx, inmueble.id);
       const [file] = await tx.select().from(inmArchivos).where(condition).limit(1).for('update');
       if (!file) return false;
+      const jobId = randomUUID();
       if (file.almacenamiento === 'hosting') {
         if (!file.rutaAlmacenamiento) throw new Error('Ruta no disponible.');
-        await hostingRequest('DELETE', file.rutaAlmacenamiento);
+        await tx.insert(inmTareasArchivos).values({id:jobId,inmuebleId:inmueble.id,archivoId:file.id,ruta:file.rutaAlmacenamiento,tipo:'borrado',usuarioId:auth.user.id,expira:new Date()});
       }
       await tx.delete(inmArchivos).where(condition);
       await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId:auth.user.id,evento:'archivo_eliminado',observacion:JSON.stringify({archivo:fileActivitySnapshot(file,inmueble.operacion)})});
       await tx.insert(securityAudit).values(auditValues(auth.user.id,"file.delete",`file:${fileId}`));
-      return true;
+      return file.almacenamiento === 'hosting' ? jobId : true;
     });
     if (!found) return NextResponse.json({ error: 'Documento no encontrado.' }, { status: 404 });
+    if (typeof found === 'string') {
+      const connection=await pool.getConnection();
+      try { await cleanFileJob(connection,found,async (path:string)=>{await hostingRequest('DELETE',path);}); }
+      catch { return NextResponse.json({ok:true,pendiente:true,mensaje:'Documento retirado; limpieza del archivo pendiente.'},{status:202}); }
+      finally {connection.release();}
+    }
     return NextResponse.json({ ok: true });
-  } catch { return NextResponse.json({ error: 'No se pudo eliminar el documento. Puedes intentarlo de nuevo.' }, { status: 500 }); }
+  } catch (error) { if(error instanceof Error && /expediente está cerrado|eliminación en curso/.test(error.message)) return NextResponse.json({error:error.message},{status:409}); return NextResponse.json({ error: 'No se pudo eliminar el documento. Puedes intentarlo de nuevo.' }, { status: 500 }); }
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -167,6 +186,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       if (!definition || body.esPortada !== undefined) return NextResponse.json({ error: 'Categoría del expediente no válida.' }, { status: 400 });
       const result = await db.transaction(async tx => {
         await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, inmueble.id)).for('update');
+      await assertWritable(tx, inmueble.id);
         if (!documentApplies(definition, (await readDossier(inmueble.id, tx)).config, inmueble.operacion)) return 'conditions';
         const condition = and(eq(inmArchivos.id, archivoId), eq(inmArchivos.inmuebleId, inmueble.id));
         const [file] = await tx.select().from(inmArchivos).where(condition).limit(1).for('update');
@@ -186,6 +206,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const found = await db.transaction(async tx => {
       // Lock the property so simultaneous cover changes keep a single cover.
       await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, inmueble.id)).for('update');
+      await assertWritable(tx, inmueble.id);
       const condition = and(eq(inmArchivos.id, archivoId), eq(inmArchivos.inmuebleId, inmueble.id), eq(inmArchivos.tipoDocumento, 'FOTO_INMUEBLE'), eq(inmArchivos.almacenamiento, 'hosting'));
       const [file] = await tx.select().from(inmArchivos).where(condition).limit(1);
       if (!file?.tipoMime?.startsWith('image/')) return false;
@@ -198,5 +219,5 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     });
     if (!found) return NextResponse.json({ error: 'Foto no encontrada.' }, { status: 404 });
     return NextResponse.json({ ok: true });
-  } catch { return NextResponse.json({ error: 'No se pudo actualizar la foto.' }, { status: 500 }); }
+  } catch (error) { if(error instanceof Error && /expediente está cerrado|eliminación en curso/.test(error.message)) return NextResponse.json({error:error.message},{status:409}); return NextResponse.json({ error: 'No se pudo actualizar la foto.' }, { status: 500 }); }
 }

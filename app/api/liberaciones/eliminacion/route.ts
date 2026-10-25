@@ -1,3 +1,4 @@
+import { deletePortalProperty } from '@/lib/portal-deletion';
 import { NextResponse } from 'next/server';
 import { authorizeApi } from '@/lib/auth';
 import { pool } from '@/lib/db';
@@ -25,9 +26,9 @@ async function operate(request: Request, mode: 'prepare' | 'delete' | 'retry') {
       return NextResponse.json({ eliminacionId: result.eliminacionId, inmueble: propertyPanelContactId({ ...result.property, posicion: result.posicion }), archivos: result.archivos }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
     if (mode === 'delete') await commitDeletion(connection, auth.user.id, zone, body.eliminacionId);
-    const complete = await finishDeletion(connection, zone, body.eliminacionId, async (path: string) => { await hostingRequest('DELETE', path); });
+    const complete = await finishDeletion(connection, zone, body.eliminacionId, async (path: string) => { await hostingRequest('DELETE', path); }, deletePortalProperty);
     return NextResponse.json({ ok: true, completo: complete, eliminacionId: complete ? undefined : body.eliminacionId,
-      mensaje: complete ? 'Inmueble, documentos, fotos e historial eliminados. La posición está disponible.' : 'El inmueble ya fue eliminado de la base de datos. Falta completar el borrado de archivos; puedes reintentarlo desde esta pantalla.' }, { status: complete ? 200 : 202, headers: { 'Cache-Control': 'private, no-store' } });
+      mensaje: complete ? 'Inmueble, documentos, fotos e historial eliminados. La posición está disponible.' : 'El inmueble ya fue eliminado de la base de datos. Falta completar la eliminación en el portal o de archivos; puedes reintentarlo desde esta pantalla.' }, { status: complete ? 200 : 202, headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     const expected = /confirm|cambió|ya no está|no existe/i.test(message);

@@ -19,6 +19,7 @@ import {
   inmTimeline,
   inmEliminacionesPendientes,
   inmTasaciones,
+  inmExpedientes, inmArchivos, inmExpedientesCierre,
 } from "@/db/schema";
 
 function clean(value: unknown) {
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
 
     const documentacion = await closureReadiness(db, rows);
     const anunciosWeb = await closureWebListings(db);
-    const pendientes = await db.select({ id: inmEliminacionesPendientes.id, creado: inmEliminacionesPendientes.creado }).from(inmEliminacionesPendientes).where(and(eq(inmEliminacionesPendientes.estado, 'archivos'), sql`${inmEliminacionesPendientes.zonaId}=(SELECT id FROM inm_zonas WHERE nombre=${selectedZone(request)} AND activo=1)`));
+    const pendientes = await db.select({ id: inmEliminacionesPendientes.id, creado: inmEliminacionesPendientes.creado }).from(inmEliminacionesPendientes).where(and(sql`${inmEliminacionesPendientes.estado} IN ('portal','archivos')`, sql`${inmEliminacionesPendientes.zonaId}=(SELECT id FROM inm_zonas WHERE nombre=${selectedZone(request)} AND activo=1)`));
     return NextResponse.json({
       ok: true,
       eliminacionesPendientes: pendientes,
@@ -241,7 +242,7 @@ export async function POST(request: Request) {
       const user = auth.user;
       const ahora = new Date();
 
-      await tx.insert(inmLiberaciones).values({
+      const [release] = await tx.insert(inmLiberaciones).values({
         inmuebleId,
         motivo,
         moneda: currency || null,
@@ -253,7 +254,12 @@ export async function POST(request: Request) {
         confirmado: true,
         fechaConfirmacion: ahora,
         usuarioConfirmacionId: user.id,
-      });
+      }).$returningId();
+      if (motivo === 'vendido' || motivo === 'alquilado') {
+        const [record] = await tx.select().from(inmExpedientes).where(eq(inmExpedientes.inmuebleId,inmuebleId));
+        const files = await tx.select().from(inmArchivos).where(eq(inmArchivos.inmuebleId,inmuebleId));
+        await tx.insert(inmExpedientesCierre).values({liberacionId:release.id,inmuebleId,contenido:JSON.stringify({version:1,fecha:ahora.toISOString(),usuarioId:user.id,operacion:property.operacion,moneda:currency,resultado:venta??alquiler,configuracion:record?JSON.parse(record.configuracion):null,archivos:files})});
+      }
 
       const [assignment] = await tx
         .select({

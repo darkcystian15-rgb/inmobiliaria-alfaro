@@ -141,4 +141,5 @@ export async function publishBanners(expected:number,user:number){
   await writeValue(db,'banners:live',payload,version,user);await event(db,'banners:live','banners.publish',user,version,'Portada autorizada');return {payload,version};
  });return deliver('banners:live',delivery.version,{kind:'banners',revision:delivery.version,items:delivery.payload.items});
 }
-export async function registerBannerAsset(id:string,payload:unknown,user:number){await transaction(async db=>{await writeValue(db,`asset:${id}`,payload,1,user);await event(db,`asset:${id}`,'asset.upload',user,1,'Imagen de portada cargada');});}
+export async function registerBannerAsset(id:string,payload:unknown,user:number,job?:string){await transaction(async db=>{if(job){const [[found]]=await db.query<RowDataPacket[]>('SELECT id FROM inm_tareas_archivos WHERE id=? FOR UPDATE',[job]);if(!found)throw new PortalError('La autorización de subida venció.',409);}
+await writeValue(db,`asset:${id}`,payload,1,user);if(job)await db.query('DELETE FROM inm_tareas_archivos WHERE id=?',[job]);await event(db,`asset:${id}`,'asset.upload',user,1,'Imagen de portada cargada');});}

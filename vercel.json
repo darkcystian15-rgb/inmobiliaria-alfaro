@@ -1,3 +1,9 @@
 {
-  "buildCommand": "node scripts/install-property-currency.mjs --apply && node scripts/install-appraisal-currencies.mjs --apply && node scripts/install-text-diffusion.mjs --apply && npm run build -- --webpack"
+  "buildCommand": "node scripts/install-data-integrity.mjs && node scripts/install-property-currency.mjs --apply && node scripts/install-appraisal-currencies.mjs --apply && node scripts/install-text-diffusion.mjs --apply && npm run build -- --webpack",
+  "crons": [
+    {
+      "path": "/api/mantenimiento/archivos",
+      "schedule": "0 8 * * *"
+    }
+  ]
 }

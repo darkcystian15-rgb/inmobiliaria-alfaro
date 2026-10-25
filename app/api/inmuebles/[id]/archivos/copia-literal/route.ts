@@ -1,3 +1,7 @@
+import { assertWritable } from '@/lib/data-integrity-service';
+import { prepareUpload } from '@/lib/data-integrity.mjs';
+import { pool } from '@/lib/db';
+import { inmTareasArchivos } from '@/db/schema';
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { and, eq } from 'drizzle-orm';
@@ -33,6 +37,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       if (!capabilities.ok || (await capabilities.json()).literalUploadVersion !== 1) return NextResponse.json({ error: 'Falta actualizar el servicio de documentos en cPanel para habilitar copias literales de hasta 50 MB. Los archivos de hasta 4 MB siguen disponibles.' }, { status: 503 });
       const [position] = await db.select({ numero: inmPosiciones.numero }).from(inmAsignacionesPosicion).innerJoin(inmPosiciones, eq(inmPosiciones.id, inmAsignacionesPosicion.posicionId)).where(eq(inmAsignacionesPosicion.inmuebleId, property.id)).limit(1);
       const path = documentPath({ position: position?.numero ?? null, propertyId: property.id, propertyCode: property.codigo, type: 'COPIA_LITERAL_CRI', name: input.filename.toLowerCase(), uniqueId: randomUUID() });
+      await db.transaction(async tx=>{await tx.select({id:inmInmuebles.id}).from(inmInmuebles).where(eq(inmInmuebles.id,property.id)).for('update');await assertWritable(tx,property.id);});
+      await prepareUpload(pool,property.id,path);
       const token = signLiteralUpload({ ...input, path, type: 'COPIA_LITERAL_CRI', propertyId: property.id, userId: auth.user.id, expires: Math.floor(Date.now() / 1000) + 1800 }, secret);
       endpoint.searchParams.delete('capabilities'); endpoint.searchParams.set('path', path);
       return NextResponse.json({ token, uploadUrl: endpoint.toString() }, { headers: { 'Cache-Control': 'private, no-store' } });
@@ -55,8 +61,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const usuarioId = auth.user.id;
     const created = await db.transaction(async tx => {
       await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, property.id)).for('update');
+      await assertWritable(tx,property.id);
+      const [job] = await tx.select().from(inmTareasArchivos).where(eq(inmTareasArchivos.ruta,claims.path)).limit(1).for('update');
       const [existing] = await tx.select({ id: inmArchivos.id }).from(inmArchivos).where(and(eq(inmArchivos.inmuebleId, property.id), eq(inmArchivos.rutaAlmacenamiento, claims.path))).limit(1);
       if (existing) return existing;
+      if(!job)throw Error('La autorización de subida venció.');
       // Serialize cancellation with confirmation so a deleted upload cannot be registered.
       const stillStored = await hostingRequest('GET', claims.path);
       const storedSize = Number(stillStored.headers.get('content-length'));
@@ -66,11 +75,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       const [row] = await tx.insert(inmArchivos).values(values).$returningId();
       await tx.insert(securityAudit).values(auditValues(usuarioId, 'file.upload', `file:${row.id}`));
       await tx.insert(inmTimeline).values({ inmuebleId: property.id, usuarioId, evento: 'archivo_subido', observacion: JSON.stringify({ archivo: fileActivitySnapshot({ ...values, id: row.id }, property.operacion) }) });
+      await tx.delete(inmTareasArchivos).where(eq(inmTareasArchivos.id,job.id));
       return row;
     });
     return NextResponse.json({ ok: true, id: created.id }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
+    if (/expediente está cerrado|eliminación en curso/.test(message)) return NextResponse.json({error:message},{status:409});
     const safe = /^(Selecciona|La copia|Revisa|Datos de archivo|Autorización|La autorización|Ruta no válida|El archivo recibido|La subida está)/.test(message);
     return NextResponse.json({ error: safe ? message : 'No se pudo procesar la copia literal. Comprueba la conexión y la actualización del servicio de documentos.' }, { status: safe ? 400 : 503 });
   }

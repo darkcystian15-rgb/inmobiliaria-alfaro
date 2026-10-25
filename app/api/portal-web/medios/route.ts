@@ -1,3 +1,5 @@
+import {prepareUpload} from '@/lib/data-integrity.mjs';
+import {pool} from '@/lib/db';
 import {NextResponse} from 'next/server';
 import {randomUUID} from 'node:crypto';
 import {authorizeApi} from '@/lib/auth';
@@ -13,8 +15,9 @@ export async function POST(request:Request){
   const form=await request.formData(),file=form.get('image');if(!(file instanceof File)||file.size>4*1024*1024)return NextResponse.json({error:'Selecciona una imagen JPG, PNG o WebP de hasta 4 MB.'},{status:400});
   const prepared=await prepareImage(file.name,Buffer.from(await file.arrayBuffer()));
   const id=randomUUID(),path=`portal-web/banners/${id}.webp`;
+  const job=await prepareUpload(pool,null,path);
   await hostingRequest('PUT',path,prepared.bytes);
-  try{await registerBannerAsset(id,{path,name:file.name.slice(0,255),mime:prepared.contentType},auth.user.id);}catch(error){await hostingRequest('DELETE',path).catch(()=>{});throw error;}
+  try{await registerBannerAsset(id,{path,name:file.name.slice(0,255),mime:prepared.contentType},auth.user.id,job);}catch(error){await pool.query('UPDATE inm_tareas_archivos SET expira=NOW() WHERE id=?',[job]).catch(()=>{});throw error;}
   return NextResponse.json({id,url:`/api/portal-web/medios/${id}`},{status:201});
  }catch{return NextResponse.json({error:'No se pudo cargar la imagen. Revisa su formato y el almacenamiento.'},{status:400});}
 }

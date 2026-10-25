@@ -1,3 +1,7 @@
+# Integridad de datos y expedientes cerrados
+
+Eliminación definitiva también en el portal, tareas recuperables de archivos y protección del expediente al cerrar. [Cambios, restauración y verificación](docs/integridad-datos-eliminacion-2026-10-25.md).
+
 # Panel, precios y bandejas compactas
 
 Una sola selección de moneda para los tres importes, conservando registros anteriores con monedas distintas. Cartera muestra los valores vigentes arriba, accesos separados para Tasación, Texto y Publicaciones y el resto de funciones del inmueble. Bandejas de pendientes en filas compactas. [Cambios, restauración y verificación](docs/panel-precios-listados-2026-10-24.md).
