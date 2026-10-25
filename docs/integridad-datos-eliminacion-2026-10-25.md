@@ -58,4 +58,14 @@ No se afirma una auditoría del inventario real de producción ni una limpieza m
 
 Portal: código `aa171d1`, despliegue `dpl_EsV5dYoj1cub9UhHDxL3uacV324o`, READY en production; alias https://app-alfaro-git-smoky.vercel.app. El bundle privado `portal-actualizado.bundle` conserva también el código publicado.
 
-La cuenta GitHub conectada rechazó con HTTP 403 el push del portal tanto a origin como a upstream. Esto no impidió el despliegue directo autorizado en Vercel. El commit y su referencia de recuperación se conservan localmente y en los bundles; no se declara que estén publicados en GitHub.
+La cuenta GitHub conectada rechazó con HTTP 403 el push del portal tanto a origin como a upstream. Esto no impidió el despliegue directo autorizado en Vercel. El commit y su referencia de recuperación se conservan localmente y en los bundles. El [parche del portal](portal-integridad-20261025.patch) se guarda además en este repositorio de intranet para poder aplicar el mismo commit mediante `git am` cuando se disponga de permisos. No se declara que el commit esté publicado en el GitHub del portal; un despliegue futuro desde su rama antigua debe incorporar primero este parche.
+
+Intranet: código funcional `e8a6d5ccaaabb2c9d271ea91a15fbcf3b87efb44`, enviado a `origin/main` junto con la referencia remota `recovery/integridad-20261025`. El commit documental posterior conserva ese mismo código funcional.
+
+## Confirmación de producción
+
+Intranet: despliegue `dpl_B33e54tpH6Qo9sgVrv5LpMRs7Mg9`, **READY**, entorno **production**, código funcional `e8a6d5ccaaabb2c9d271ea91a15fbcf3b87efb44`. Versión https://inmobiliaria-alfarov2-f2j586zsa-puma19.vercel.app. La API de Vercel confirmó los alias https://intranet.inmobiliariaalbertoalfaro.com.pe y https://inmobiliaria-alfarov2-umber.vercel.app, además del cron diario `0 8 * * *` y su ruta protegida.
+
+El dominio real respondió 200 en `/login`, 401 en `/api/mantenimiento/archivos` sin secreto y 401 en `/api/portal-web` sin sesión. No se ejecutó el mantenimiento autenticado ni se eliminaron inmuebles, anuncios o archivos reales para verificar el despliegue. Las verificaciones autenticadas completas se hicieron localmente, incluida la eliminación de extremo a extremo y su recuperación tras una caída simulada del portal. [Evidencia de producción](evidencia-integridad/PRODUCCION.json).
+
+Las bases ficticias creadas para esta entrega se eliminaron y el contenedor de MySQL de ensayo se dejó detenido, como estaba antes. Las capturas privadas del expediente protegido se inspeccionaron en móvil y escritorio.

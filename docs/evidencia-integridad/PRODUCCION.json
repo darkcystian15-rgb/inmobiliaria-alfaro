@@ -1,0 +1,49 @@
+{
+  "fecha": "2026-10-25T20:10:04.719Z",
+  "intranet": {
+    "deployment": "dpl_B33e54tpH6Qo9sgVrv5LpMRs7Mg9",
+    "state": "READY",
+    "commit": "e8a6d5ccaaabb2c9d271ea91a15fbcf3b87efb44",
+    "url": "inmobiliaria-alfarov2-f2j586zsa-puma19.vercel.app",
+    "aliases": [
+      "inmobiliaria-alfarov2-umber.vercel.app",
+      "intranet.inmobiliariaalbertoalfaro.com.pe"
+    ],
+    "crons": [
+      {
+        "path": "/api/mantenimiento/archivos",
+        "schedule": "0 8 * * *"
+      }
+    ]
+  },
+  "portal": {
+    "deployment": "dpl_EsV5dYoj1cub9UhHDxL3uacV324o",
+    "state": "READY",
+    "commit": "aa171d142ed32676f69bcb9c84ea6e090dcbebc2",
+    "alias": "app-alfaro-git-smoky.vercel.app",
+    "githubPush": "403; parche conservado en repositorio intranet"
+  },
+  "checks": [
+    {
+      "url": "https://intranet.inmobiliariaalbertoalfaro.com.pe/login",
+      "status": 200,
+      "location": null
+    },
+    {
+      "url": "https://intranet.inmobiliariaalbertoalfaro.com.pe/api/mantenimiento/archivos",
+      "status": 401,
+      "location": null
+    },
+    {
+      "url": "https://intranet.inmobiliariaalbertoalfaro.com.pe/api/portal-web",
+      "status": 401,
+      "location": null
+    },
+    {
+      "url": "https://app-alfaro-git-smoky.vercel.app/api/intranet-sync",
+      "status": 404,
+      "location": null
+    }
+  ],
+  "alcance": "Comprobaciones remotas sin sesión ni escrituras de negocio; pruebas autenticadas sobre bases locales aisladas."
+}

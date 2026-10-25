@@ -1,0 +1,80 @@
+From aa171d142ed32676f69bcb9c84ea6e090dcbebc2 Mon Sep 17 00:00:00 2001
+From: pumadev01 <lucianapumaricraguzman@gmail.com>
+Date: Sun, 25 Oct 2026 19:46:36 +0000
+Subject: [PATCH] Eliminar anuncios y relaciones al borrar un inmueble desde
+ intranet
+
+---
+ docs/integridad-eliminacion-2026-10-25.md | 15 +++++++++++++++
+ server/intranet-sync.js                   | 22 +++++++++++++++++++++-
+ 2 files changed, 36 insertions(+), 1 deletion(-)
+ create mode 100644 docs/integridad-eliminacion-2026-10-25.md
+
+diff --git a/docs/integridad-eliminacion-2026-10-25.md b/docs/integridad-eliminacion-2026-10-25.md
+new file mode 100644
+index 0000000..9e61962
+--- /dev/null
++++ b/docs/integridad-eliminacion-2026-10-25.md
+@@ -0,0 +1,15 @@
++# Eliminación definitiva solicitada desde la intranet
++
++El receptor autenticado de integración admite `kind: property`, `status: deleted`, `sourceId` y `revision`. Elimina el anuncio asociado por el mapeo interno, publicaciones, eventos dependientes por FK, galería, información adicional y referencias de mapa/edición anterior en una transacción. No acepta un ID público arbitrario para borrar otro inmueble.
++
++Las fotografías de inmuebles sincronizados son enlaces al bridge privado: sus bytes se eliminan en el hosting desde la intranet. Los recursos estáticos compartidos del sitio no pertenecen exclusivamente al inmueble y no se eliminan.
++
++Se conserva únicamente una marca técnica terminal por ID interno, sin contenido comercial, sin ID público y sin fotografías. Impide que una entrega antigua o una publicación retrasada recree el anuncio. Repetir la eliminación devuelve confirmación sin duplicar efectos. No existe acción pública sin token.
++
++## Restauración
++
++Fuente anterior conservada en la referencia `recovery/integridad-20261025` y en el bundle privado `restore-points/integridad-20261025/portal-anterior.bundle` del proyecto intranet. Este cambio no altera datos al desplegar; solo actúa ante solicitudes autenticadas de eliminación. Restaurar código no recupera anuncios que se eliminen después de publicar: requiere la copia de datos correspondiente. No ejecutar restauraciones masivas sobre cambios posteriores.
++
++## Verificación
++
++Compilación Vite y tres archivos de pruebas del portal aprobados. Integración real con MySQL local: borrado de anuncio y relaciones, eventos con FK, repetición idempotente y rechazo de intentos de publicar un inmueble eliminado. Sin eliminación de anuncios reales para probar.
+diff --git a/server/intranet-sync.js b/server/intranet-sync.js
+index 627fae7..a720126 100644
+--- a/server/intranet-sync.js
++++ b/server/intranet-sync.js
+@@ -13,7 +13,7 @@ export function validateSync(body){
+   for(const b of body.items)if(!b.authorized||!b.enabled||!/^[a-f0-9-]{36}$/.test(b.imageId)||typeof b.title!=='string'||!b.title||b.title.length>120||((b.href||b.buttonLabel)&&(!b.buttonLabel||!/^\/(?:propiedades(?:\/resumen\/[1-9]\d*)?|contacto|vende-o-alquila)?(?:\?[^\\\s#]*)?$/.test(b.href))))throw new Error('invalid');
+   return;
+  }
+- if(body.kind!=='property'||!Number.isSafeInteger(body.sourceId)||body.sourceId<1||!['published','suspended','withdrawn'].includes(body.status))throw new Error('invalid');
++ if(body.kind!=='property'||!Number.isSafeInteger(body.sourceId)||body.sourceId<1||!['published','suspended','withdrawn','deleted'].includes(body.status))throw new Error('invalid');
+  const s=body.snapshot;
+  if(body.status!=='published')return;
+  validatePropertyExtras(s);
+@@ -31,10 +31,30 @@ export async function applySync(db,body,origin){
+   const key=body.kind==='banners'?'home':`property:${body.sourceId}`;
+   await db.query('INSERT IGNORE INTO portal_intranet_sync(clave,revision,contenido,body_hash) VALUES (?,0,?,?)',[key,'{}','']);
+   const [[old]]=await db.query('SELECT * FROM portal_intranet_sync WHERE clave=? FOR UPDATE',[key]);
++  const prior=typeof old.contenido==='string'?JSON.parse(old.contenido):old.contenido;
++  if(prior?.status==='deleted'){
++   if(body.status!=='deleted')throw Error('stale');
++   await db.commit();return {ok:true,deleted:true,sourceId:body.sourceId};
++  }
+   if(body.revision<old.revision||(body.revision===old.revision&&old.body_hash!==hash))throw new Error('stale');
+   if(body.revision===old.revision){await db.commit();return old.property_id?{portalId:old.property_id,portalUrl:`${origin}/propiedades/resumen/${old.property_id}`}:{ok:true};}
+   let id=old.property_id;
+   if(body.kind==='property'){
++   if(body.status==='deleted'){
++    if(id){
++     // Remove every FK child of this property, including publication_events.
++     const [refs]=await db.query("SELECT TABLE_NAME t,COLUMN_NAME c FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND REFERENCED_TABLE_NAME='properties' AND REFERENCED_COLUMN_NAME='id'");
++     for(const ref of refs){if(!/^[a-z_]+$/i.test(ref.t)||!/^[a-z_]+$/i.test(ref.c))throw Error('schema');await db.query('DELETE FROM `'+ref.t+'` WHERE `'+ref.c+'`=?',[id]);}
++     await db.query('DELETE FROM sub_properties WHERE property_ref_id=? OR property_id=?',[id,id]);
++     await db.query('DELETE FROM mas_info WHERE property_ref_id=? OR id_properties=?',[id,id]);
++     await db.query('DELETE FROM publications WHERE property_id=?',[id]);
++     await db.query('DELETE FROM portal_intranet_sync WHERE clave IN (?,?)',[`map:${id}`,`legacy:${id}`]);
++     await db.query('DELETE FROM properties WHERE id=?',[id]);
++    }
++    // Minimal terminal marker prevents any delayed publish from resurrecting data.
++    await db.query('UPDATE portal_intranet_sync SET revision=?,contenido=?,body_hash=?,property_id=NULL WHERE clave=?',[body.revision,JSON.stringify({status:'deleted'}),hash,key]);
++    await db.commit();return {ok:true,deleted:true,sourceId:body.sourceId};
++   }
+    if(body.status==='published'){
+     const s=body.snapshot;const description=escaped(s.description).replace(/\r?\n/g,'<br>');if(description.length>10000)throw new Error('invalid');
+     if(!id&&s.existingPortalId!=null){
+-- 
+2.55.0
+
