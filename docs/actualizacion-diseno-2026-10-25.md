@@ -30,6 +30,9 @@ Para volver al diseño previo, comprobar la etiqueta o el hash y preparar un che
 - 41 archivos de pruebas unitarias aprobados.
 - Compilación de producción con Webpack y TypeScript aprobada; 63 rutas generadas. Se empleó una URL MySQL local ficticia para permitir el análisis de rutas, sin conectar a producción ni ejecutar sus consultas.
 - Revisión en Chromium de componentes reales renderizados con datos ficticios a 375, 768, 1280 y 1440 px: sin desbordamiento horizontal del contenido. Se incluyeron nombres y direcciones largos, precio por definir, histórico y varios pendientes. Capturas y mediciones privadas en `output/diseno-20261025/`. Se revisó la composición aislada de lateral, contexto de zona, carpetas, tarjetas y lista; no una sesión autenticada con toda la navegación por zona.
-- Publicación: pendiente de registrar el despliegue final y sus comprobaciones.
+- Producción: commit funcional `b1d14bc7d4e3694405a3d9070130d88eb5560185`, despliegue `dpl_A1JfjGUZv6JXWJ7csadzAMqf7g5C`, estado **READY** y entorno **production**, comprobados el 25 de octubre a las 21:22 UTC.
+- Dominio https://intranet.inmobiliariaalbertoalfaro.com.pe asignado al despliegue. `/login` y su CSS devuelven 200; el CSS publicado contiene el lateral y margen de contenido de 256 px. Las rutas `/api/portal-web` y `/api/mantenimiento/archivos` devuelven 401 sin autorización.
+- Commit y etiqueta de recuperación enviados a `origin/main` y `origin/recovery/diseno-20261025`, respectivamente. [Evidencia de Vercel y HTTP](evidencia-diseno/PRODUCCION.json).
+- Versión comprobada: https://inmobiliaria-alfarov2-dk47el9n9-puma19.vercel.app. Los commits documentales posteriores conservan el mismo código funcional.
 
 La revisión visual aislada no sustituye una comprobación autenticada de todos los flujos en producción.
