@@ -64,12 +64,49 @@ try {
   assert.ok(result.data.archivos.every(file=>file.zona!=='Inactiva'));
   result=await request('/api/listado-archivos?zona=Chimbote&tipo=tasaciones',admin);assert.equal(result.data.paginacion.total,53);assert.equal(result.data.archivos[0].tipo,'Tasación 1');assert.equal(result.data.archivos[49].tipo,'Tasación 50');assert.equal(result.data.archivos[0].inmueble,'001-venta-local-av meigss c3-lidia chavarria');
   const first=result.data.archivos[0];
+  result=await request('/api/listado-archivos?'+new URLSearchParams({q:'Lidia Meigss',tipo:'tasaciones'}),admin);assert.equal(result.data.paginacion.total,53);
+  result=await request('/api/listado-archivos?'+new URLSearchParams({q:'adicional 49',tipo:'tasaciones'}),admin);assert.equal(result.data.paginacion.total,1);assert.equal(result.data.archivos[0].tipo,'Tasación 53');
+  result=await request('/api/listado-archivos?'+new URLSearchParams({q:'100%_sin_coincidencia'}),admin);assert.equal(result.data.paginacion.total,0);
+  result=await request('/api/listado-archivos?zona=Lima&pagina=999',admin);assert.equal(result.data.paginacion.pagina,1);assert.equal(result.data.archivos.length,2);
+
   result=await request('/api/listado-archivos?zona=Chimbote&tipo=tasaciones&pagina=2',admin);assert.deepEqual(result.data.archivos.map(file=>file.tipo),['Tasación 51','Tasación 52','Tasación 53']);
   result=await request('/api/listado-archivos?zona=Lima&tipo=contratos-alquiler',admin);assert.deepEqual(result.data.archivos.map(file=>file.tipo),['Contrato de alquiler 1','Contrato de alquiler 2']);
   for(const type of ['minutas','escrituras'])assert.equal((await request('/api/listado-archivos?tipo='+type,admin)).data.paginacion.total,1);
   assert.equal((await request('/api/listado-archivos?zona=Inactiva',admin)).data.paginacion.total,0);
   assert.equal((await request('/api/listado-archivos?zona=Lima&tipo=tasaciones',admin)).data.paginacion.total,0);
   assert.equal((await request(first.enlace,admin)).response.status,200);assert.equal((await request(first.enlace)).response.status,401);
+  if (process.argv.includes('--file-list-only')) {
+    const {chromium}=await import(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
+    browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+    const context=await browser.newContext({viewport:{width:1440,height:1000}});
+    await context.addCookies([{name:'aa_session',value:admin,url:origin}]);page=await context.newPage();
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    await page.goto(origin+'/listado-archivos?zona=Chimbote&tipo=tasaciones');
+    await page.getByText('53 archivo(s)',{exact:true}).waitFor();
+    await page.getByRole('searchbox',{name:'Buscar archivos',exact:true}).fill('adicional 49');
+    await page.getByText('1 archivo(s)',{exact:true}).waitFor();await page.getByText('Tasación 53',{exact:true}).waitFor();
+    await page.getByRole('button',{name:/Ver Tasación 53/}).click();
+    await page.getByRole('dialog').locator('object[type="application/pdf"]').waitFor();
+    assert.match(await page.getByRole('dialog').locator('object').getAttribute('data'),/^blob:/);
+    await page.getByRole('button',{name:'Cerrar vista previa'}).click();
+    await page.getByRole('searchbox',{name:'Buscar archivos',exact:true}).fill('');
+    await page.getByText('53 archivo(s)',{exact:true}).waitFor();
+    fs.mkdirSync('output/file-list-search',{recursive:true,mode:0o700});
+    await page.screenshot({path:'output/file-list-search/desktop.png',fullPage:true});
+    await page.setViewportSize({width:375,height:850});
+    await page.waitForFunction(()=>document.getElementById('navigation-panel').getBoundingClientRect().right<=1);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    await page.screenshot({path:'output/file-list-search/mobile.png',fullPage:true});
+    // Show the Word/Excel notice without opening or downloading the mocked file.
+    await page.route('**/api/listado-archivos?**',route=>route.fulfill({json:{archivos:[{id:999,inmuebleId:1,inmueble:'Inmueble de prueba',zona:'Chimbote',tipo:'Tasación 1',nombre:'documento.docx',tipoMime:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',enlace:'/never-download',almacenamiento:'hosting'}],paginacion:{pagina:1,paginas:1,total:1}}}));
+    await page.getByRole('searchbox',{name:'Buscar archivos',exact:true}).fill('word');
+    await page.getByRole('button',{name:'Ver Tasación 1 de Inmueble de prueba',exact:true}).click();
+    await page.getByText('Vista previa no disponible para archivos Word o Excel. Debes descargar el archivo para consultarlo.',{exact:true}).waitFor();
+    assert.equal(await page.getByRole('dialog').getByRole('link',{name:'Descargar archivo'}).count(),1);
+    assert.equal(await page.getByRole('dialog').getByRole('link',{name:'Abrir en otra pestaña'}).count(),0);
+    assert.deepEqual(errors,[]);
+    console.log('PASS listado: permisos, filtros, búsqueda global, numeración estable, paginación, PDF privado, aviso Word/Excel, escritorio y móvil sin errores ni desbordes.');
+  } else {
   assert.equal((await request('/api/liberaciones',admin)).response.status,400);
   assert.equal((await request('/api/liberaciones?zona=*',admin)).response.status,400);
   assert.equal((await request('/api/liberaciones',admin,'POST',{})).response.status,400);
@@ -87,11 +124,13 @@ try {
   await page.goto(origin+'/listado-archivos');await page.getByRole('heading',{name:'Listado de archivos',exact:true}).waitFor();
   await page.getByRole('combobox',{name:'Zona',exact:true}).selectOption('Chimbote');await page.getByRole('combobox',{name:'Tipo de archivo',exact:true}).selectOption('tasaciones');
   await page.getByText('53 archivo(s)',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Buscar',exact:true}).count(),0);assert.equal(await page.locator('tbody td').getByText('Chimbote',{exact:true}).count(),0);assert.equal(await page.locator('tbody td').getByText('TASACION_EXPRESS',{exact:true}).count(),0);
+  await page.getByRole('searchbox',{name:'Buscar archivos',exact:true}).fill('adicional 49');await page.getByText('1 archivo(s)',{exact:true}).waitFor();await page.getByText('Tasación 53',{exact:true}).waitFor();
+  await page.getByRole('searchbox',{name:'Buscar archivos',exact:true}).fill('');await page.getByText('53 archivo(s)',{exact:true}).waitFor();
   await page.getByRole('button',{name:'Siguiente',exact:true}).click();await page.getByText('Tasación 51',{exact:true}).waitFor();
   await page.getByRole('combobox',{name:'Zona',exact:true}).selectOption('Lima');await page.getByText('No hay archivos cargados que coincidan con estos filtros.',{exact:true}).waitFor();
   await page.getByRole('combobox',{name:'Tipo de archivo',exact:true}).selectOption('contratos-alquiler');await page.getByText('Contrato de alquiler 3',{exact:true}).waitFor();
   assert.equal(new URL(page.url()).searchParams.has('pagina'),false,'Filter change resets pagination');
-  await page.getByRole('button',{name:/Ver Contrato de alquiler 1/}).click();await page.getByRole('dialog').waitFor();assert.equal(await page.getByRole('dialog').locator('iframe').count(),1);await page.getByRole('button',{name:'Cerrar vista previa'}).click();
+  await page.getByRole('button',{name:/Ver Contrato de alquiler 1/}).click();await page.getByRole('dialog').waitFor();await page.getByRole('dialog').locator('object[type="application/pdf"]').waitFor();assert.match(await page.getByRole('dialog').locator('object').getAttribute('data'),/^blob:/);await page.getByRole('button',{name:'Cerrar vista previa'}).click();
   assert.equal(await page.locator('nav').getByRole('link',{name:'Contratos de alquiler',exact:true}).count(),0);
   const release=page.locator('nav').getByRole('link',{name:'Liberar inmueble',exact:true});assert.equal(await release.count(),1,'Release action available in a selected zone');assert.ok((await release.getAttribute('href')).includes('zona=Lima'));
   await page.goto(origin+'/liberar-inmuebles');await page.getByRole('heading',{name:'Selecciona una zona para trabajar'}).waitFor();
@@ -190,5 +229,6 @@ try {
   await page.getByRole('button',{name:'Sí, eliminar definitivamente',exact:true}).click();await page.getByText('Inmueble, documentos, fotos e historial eliminados. La posición está disponible.',{exact:true}).waitFor();assert.equal((await db.query('SELECT COUNT(*) total FROM inm_inmuebles WHERE id=7'))[0][0].total,0);
   await page.setViewportSize({width:375,height:850});await page.waitForFunction(()=>document.getElementById('navigation-panel').getBoundingClientRect().right<=1);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:'output/property-delete-local/mobile.png',fullPage:true});
   assert.deepEqual(errors,[]);console.log('PASS eliminación completa: dos confirmaciones cancelables, permisos, zona, caducidad, concurrencia, rollback SQL, borradores, FK antiguas, archivos compartidos, fallo del hosting y reintento durable. Sin tocar producción.');
+  }
 }catch(error){if(page){fs.mkdirSync('output/file-list-local',{recursive:true});await page.screenshot({path:'output/file-list-local/failure.png',fullPage:true}).catch(()=>{});}console.error(logs.slice(-2500));throw error;}
 finally{if(browser)await browser.close();if(app)app.kill('SIGTERM');if(storage)await new Promise(resolve=>storage.close(resolve));await db.end();}
