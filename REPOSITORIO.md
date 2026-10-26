@@ -1,4 +1,4 @@
-Tasaciones sin valores por defecto, 26 de octubre: moneda por seleccionar, campos vacíos y sin símbolos previos a la elección. [Cambio y restauración](docs/tasaciones-sin-valores-defecto-2026-10-26.md).
+Tasaciones sin valores por defecto, 26 de octubre: moneda por seleccionar, campos vacíos y sin símbolos previos a la elección. [Cambio y restauración](docs/tasaciones-sin-valores-defecto-2026-10-26.md). Código `ecb9fd4`, Vercel `dpl_5ufrWNKzJM76jVNUpicihE5Sx8Mz`, **READY** en producción y dominio confirmado.
 
 Rectificación de operación, 26 de octubre: el administrador puede cambiar venta/alquiler en inmuebles activos con tasación aprobada, conservando importes e historial. [Cambio, punto de restauración y publicación](docs/rectificacion-operacion-2026-10-26.md). Código `cec6cef`, Vercel `dpl_8YDdvba7CgfhE9LZiCaPmpMLo72f`, **READY** en producción y dominio confirmado.
 
