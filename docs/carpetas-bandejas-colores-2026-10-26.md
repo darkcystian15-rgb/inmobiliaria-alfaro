@@ -31,3 +31,9 @@ Respaldo previo al conjunto de cambios: revisión `9a8f5ec6595fef1758861b7a41fc2
 ## Verificación
 
 ESLint de los cinco archivos de código modificados y tres pruebas existentes de listado, búsqueda y flujo de publicación aprobados. `git diff --check` correcto. Compilación Next.js 16.3.8 con webpack y TypeScript aprobada, 63 páginas generadas, usando una URL MySQL local de prueba sin conexión a producción. Publicado en `origin/main`: commit funcional `1f05531681a3b77de80eda86dee4a3b0ceacfa91`. Vercel confirmó ese SHA en **Production**, estado **success**, descripción «Deployment has completed». Despliegue GitHub `7333060804`, referencia Vercel `8ZdnDWog81rYvbS8fdfMsBfBiN6Y`. Dominio de la intranet: https://intranet.inmobiliariaalbertoalfaro.com.pe. La actualización documental posterior conserva el mismo código funcional. No se realizó una revisión visual autenticada con datos de producción.
+
+## Botones a la derecha según el espacio del listado
+
+Se elimina la dependencia del ancho de ventana de 1024 px para colocar las acciones. Cada fila mide su propio contenedor: desde 36 rem (576 px) reserva una columna derecha de hasta 14 rem para los botones, centrados verticalmente, y el resto queda para los datos. En listas estrechas los botones siguen debajo. Las dos acciones de tasaciones registradas pueden distribuirse verticalmente dentro de esa columna derecha. El ajuste se aplica a los cinco apartados mediante `PropertyTaskRow` y no cambia datos ni navegación.
+
+ESLint, `git diff --check` y compilación webpack/TypeScript aprobados (63 páginas). Se verificó que el CSS generado contiene la consulta de contenedor y la cuadrícula de tres columnas. No se realizó comprobación visual autenticada. Publicación de este ajuste pendiente de confirmar.

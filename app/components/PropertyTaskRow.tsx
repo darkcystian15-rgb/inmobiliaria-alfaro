@@ -15,13 +15,13 @@ export default function PropertyTaskRow({ position, contact, operation, type, lo
   label: string; color: keyof typeof colors; complete?: boolean; actions: ReactNode; children?: ReactNode;
 }) {
   const tone = colors[color];
-  return <div className={`grid grid-cols-[3.5rem_minmax(0,1fr)] items-start gap-x-3 gap-y-2 border-l-2 px-4 py-3 transition hover:bg-slate-50/70 lg:grid-cols-[3.5rem_minmax(0,1fr)_auto] lg:items-center ${tone.row}`}>
+  return <div className="@container"><div className={`grid grid-cols-[3.5rem_minmax(0,1fr)] items-start gap-x-3 gap-y-2 border-l-2 px-4 py-3 transition hover:bg-slate-50/70 @min-[36rem]:grid-cols-[3.5rem_minmax(0,1fr)_minmax(0,14rem)] @min-[36rem]:gap-x-5 ${tone.row}`}>
     <span className="flex min-h-8 items-center gap-2"><span aria-label={`Posición ${position}`} className="font-mono text-sm font-semibold text-slate-500">{position || '—'}</span><FolderIcon className={`h-5 w-5 shrink-0 ${tone.icon}`} /></span>
     <div className="min-w-0">
       <h3 className="break-words text-sm font-semibold leading-6 text-slate-900">{contact || 'Sin contacto'}</h3>
       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1"><p className="min-w-0 break-words text-xs leading-5 text-slate-600"><PropertySummary operation={operation} type={type} location={location} /></p><span className={`inline-flex rounded-lg border px-2 py-1 text-xs font-semibold ${complete ? colors.emerald.badge : tone.badge}`}>{label}</span></div>
       {children}
     </div>
-    <div className="col-start-2 flex flex-wrap items-center gap-2 lg:col-start-auto lg:justify-end">{actions}</div>
-  </div>;
+    <div className="col-start-2 flex min-w-0 flex-wrap items-center gap-2 [&>a]:max-w-full [&>a]:whitespace-normal @min-[36rem]:col-start-3 @min-[36rem]:row-start-1 @min-[36rem]:self-center @min-[36rem]:justify-end">{actions}</div>
+  </div></div>;
 }
