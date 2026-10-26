@@ -24,8 +24,14 @@ Para restaurar el comportamiento, revertir el commit funcional de esta entrega y
 
 Pruebas de política de edición, registro simplificado y checklist de publicación aprobadas. La política cubre inmuebles activos con/sin tasación o publicación y bloqueo en estados históricos. ESLint de los archivos modificados sin errores.
 
-Compilación y despliegue: ver evidencia final de publicación a continuación.
+Pruebas adicionales de monedas y Portal web aprobadas. Compilación Next.js 16.3.8 con webpack y TypeScript correcta, 63 páginas. La primera compilación encontró el marcador de DATABASE_URL local; se repitió con una URL sintácticamente válida de prueba en 127.0.0.1, sin conexión a producción. No se realizó una prueba autenticada de escritura ni se modificó la ficha real.
 
 ## Publicación
 
-Pendiente de completar tras verificar el despliegue en Vercel.
+Commit funcional `cec6cefcfeb16bc77e87254977920fbd750fc3a6`, publicado en `main`. Referencia de restauración publicada también en `origin`.
+
+Vercel confirmó el despliegue `dpl_8YDdvba7CgfhE9LZiCaPmpMLo72f`, estado **READY**, entorno **production**, con el SHA exacto del commit funcional. Versión: https://inmobiliaria-alfarov2-2b71oak0p-puma19.vercel.app. Dominio asignado confirmado: https://intranet.inmobiliariaalbertoalfaro.com.pe.
+
+Comprobación HTTP del dominio: `/login` devuelve 200, `/cartera` devuelve 307 a `/login` sin sesión y `/api/inmuebles/565` devuelve 401 sin sesión. Estas comprobaciones validan disponibilidad y protección de acceso; no sustituyen una prueba autenticada de edición.
+
+La actualización documental posterior conserva el mismo código funcional.

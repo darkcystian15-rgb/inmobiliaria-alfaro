@@ -1,4 +1,4 @@
-Rectificación de operación, 26 de octubre: el administrador puede cambiar venta/alquiler en inmuebles activos con tasación aprobada, conservando importes e historial. [Cambio, punto de restauración y publicación](docs/rectificacion-operacion-2026-10-26.md).
+Rectificación de operación, 26 de octubre: el administrador puede cambiar venta/alquiler en inmuebles activos con tasación aprobada, conservando importes e historial. [Cambio, punto de restauración y publicación](docs/rectificacion-operacion-2026-10-26.md). Código `cec6cef`, Vercel `dpl_8YDdvba7CgfhE9LZiCaPmpMLo72f`, **READY** en producción y dominio confirmado.
 
 Diseño vigente: se restaura la interfaz anterior al rediseño y se corrigen únicamente textos duplicados. [Alcance y restauración](docs/diseno-original-textos-2026-10-25.md).
 
