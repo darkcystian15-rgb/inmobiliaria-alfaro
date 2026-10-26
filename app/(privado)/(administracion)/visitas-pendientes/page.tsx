@@ -5,7 +5,7 @@ import DeadlineNotice from "@/app/components/DeadlineNotice";
 import PropertyTaskSearch from "@/app/components/PropertyTaskSearch";
 import { filterTaskProperties } from "@/lib/property-task-list.mjs";
 
-import PortfolioPropertyCard from "@/app/components/PortfolioPropertyCard";
+import PropertyTaskRow from "@/app/components/PropertyTaskRow";
 
 import ActiveFilters from "@/app/components/ActiveFilters";
 import ZoneContext from "@/app/components/ZoneContext";
@@ -125,13 +125,12 @@ function VisitInbox() {
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.045)]">
           <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between"><div><h2 className="font-bold text-slate-900">{zona === ALL_ZONES ? "Visitas pendientes" : `Visitas pendientes · ${zona}`}</h2><p className="mt-1 text-xs text-slate-500">{filtrados.length} resultado{filtrados.length === 1 ? "" : "s"}</p></div><div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:w-2/3"><PropertyTaskSearch value={busqueda} onChange={setBusqueda} count={filtrados.length} total={itemsZona.length} disabled={cargando} /><select aria-label="Filtrar antigüedad de visitas" value={filtro} onChange={(e) => setFiltro(e.target.value)} className="h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none"><option>Todas</option><option>Hoy</option><option>1-2 días</option><option>Más de 2 días</option></select></div></div>
           <ActiveFilters labels={[busqueda.trim() && `Búsqueda: ${busqueda}`, filtro !== "Todas" && `Antigüedad: ${filtro}`]} onClear={() => { setBusqueda(""); setFiltro("Todas"); }} />
-          {cargando ? <LoadingCards label="Cargando visitas pendientes…" /> : filtrados.length > 0 ? <div className="property-position-grid grid gap-4 px-4 pt-4 pb-8 sm:px-5">{filtrados.map((item) => <PortfolioPropertyCard key={item.id}
-            property={{ ...item, id: String(item.id), direccion: item.direccion || item.ubicacion, posicion: Number(item.posicion) || null, zona: propertyZone(item), estado: "Activo" }}
-            href={`/registrar-visitas?zona=${encodeURIComponent(propertyZone(item))}&inmueble=${item.id}`}
-            actionLabel="Registrar visita" folderColor="amber" showProgress={false} showPrice={false} showZone={zona === ALL_ZONES}
-            theme={{ label: "Visita pendiente", badge: "bg-amber-50 text-amber-800 ring-amber-200", position: "bg-amber-50 text-amber-800" }}>
-            <div className="mx-4 mb-4 border-t border-amber-100 pt-3">{item.fechaLimite && <DeadlineNotice date={item.fechaLimite} state={item.estadoPlazo} />}<p className="mt-2 text-xs text-slate-600">{item.dias === 0 ? "Registrado hoy" : "Pendiente desde hace " + item.dias + " día" + (item.dias === 1 ? "" : "s")}</p></div>
-          </PortfolioPropertyCard>)}</div> : <div className="px-5 py-12 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">✓</div><p className="mt-3 font-semibold text-slate-900">{error?"No se pudo consultar la bandeja":itemsZona.length?"No hay resultados con estos filtros":`No hay visitas pendientes${zona !== ALL_ZONES ? ` en ${zona}` : ""}`}</p><p className="mt-1 text-sm text-slate-500">{error?"Vuelve a cargar la pantalla para consultar las visitas.":itemsZona.length?"Prueba otra búsqueda o cambia el filtro.":"La bandeja está sincronizada con la base de datos."}</p></div>}
+          {cargando ? <LoadingCards label="Cargando visitas pendientes…" /> : filtrados.length > 0 ? <ul className="divide-y divide-slate-100">{filtrados.map((item) => <li key={item.id}>
+            <PropertyTaskRow position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.direccion || item.ubicacion}
+              color="amber" label="Visita pendiente" actions={<Link href={`/registrar-visitas?zona=${encodeURIComponent(propertyZone(item))}&inmueble=${item.id}`} className="aa-button aa-button-secondary text-xs">Registrar visita →</Link>}>
+              <div className="mt-1">{item.fechaLimite && <DeadlineNotice date={item.fechaLimite} state={item.estadoPlazo} />}<p className="mt-1 text-xs text-slate-500">{item.dias === 0 ? "Registrado hoy" : "Pendiente desde hace " + item.dias + " día" + (item.dias === 1 ? "" : "s")}</p></div>
+            </PropertyTaskRow>
+          </li>)}</ul> : <div className="px-5 py-12 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">✓</div><p className="mt-3 font-semibold text-slate-900">{error?"No se pudo consultar la bandeja":itemsZona.length?"No hay resultados con estos filtros":`No hay visitas pendientes${zona !== ALL_ZONES ? ` en ${zona}` : ""}`}</p><p className="mt-1 text-sm text-slate-500">{error?"Vuelve a cargar la pantalla para consultar las visitas.":itemsZona.length?"Prueba otra búsqueda o cambia el filtro.":"La bandeja está sincronizada con la base de datos."}</p></div>}
         </section>
         </>}
       </div>

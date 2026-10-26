@@ -6,7 +6,7 @@ import { filterTaskProperties } from "@/lib/property-task-list.mjs";
 import { formatPrice } from "@/lib/prices.mjs";
 import { priceLabel, referenceLabel, targetLabel } from "@/lib/operation.mjs";
 import FolderIcon from "@/app/components/FolderIcon";
-import PortfolioPropertyCard from "@/app/components/PortfolioPropertyCard";
+import PropertyTaskRow from "@/app/components/PropertyTaskRow";
 import PropertyTaskSearch from "@/app/components/PropertyTaskSearch";
 import PageHeading from "@/app/components/PageHeading";
 import { ContextLink as Link, ReturnLink } from "@/app/components/NavigationReturn";
@@ -46,22 +46,22 @@ export default function Page() {
         <section aria-label="Listado de tasaciones registradas" className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-emerald-100 bg-emerald-50/60 px-5 py-4"><h2 className="flex items-center gap-2 text-sm font-bold text-emerald-900"><FolderIcon className="h-5 w-5 shrink-0 text-emerald-600" />Tasaciones negociadas registradas</h2><p className="mt-2 text-xs leading-5 text-slate-600">Actualiza los valores desde Tasaciones del inmueble; el texto y la publicación conservan su estado.</p></div>
           <div className="border-b border-slate-100 p-4"><PropertyTaskSearch value={busquedaRegistradas} onChange={setBusquedaRegistradas} count={aprobadasFiltradas.length} total={aprobadas.length} disabled={cargando} /></div>
-          <div className="p-4 sm:p-5">
-            {cargando ? <LoadingCards label="Cargando tasaciones registradas…" /> : aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Esta zona no tiene tasaciones negociadas registradas.</div> : aprobadasFiltradas.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones negociadas que coincidan con la búsqueda.</div> : <ul className="property-position-grid grid gap-4 pb-4">{aprobadasFiltradas.map(item => (
-              <li key={item.inmuebleId} className="min-w-0 pb-4">
-                <PortfolioPropertyCard property={{ ...item, id: String(item.id), nombre: item.propietario, direccion: item.ubicacion || item.direccion, posicion: Number(item.posicion) || null, estado: "Activo" }}
-                  href={`/datos-inmuebles?${new URLSearchParams({ codigo: String(item.inmuebleId), zona: item.zona, carpeta: "precios", editar: "precios" })}`}
-                  folderColor="emerald" showProgress={false} showPrice={false} showZone
-                  theme={{ label: "Tasación registrada", badge: "bg-emerald-50 text-emerald-800 ring-emerald-200", position: "bg-emerald-50 text-emerald-800" }} actionLabel="Actualizar valores">
-                  <dl className="mx-4 mb-3 grid gap-2 rounded-xl border border-emerald-100 bg-white p-3">
+          <div>
+            {cargando ? <LoadingCards label="Cargando tasaciones registradas…" /> : aprobadas.length === 0 ? <div className="p-8 text-center text-sm text-slate-500">Esta zona no tiene tasaciones negociadas registradas.</div> : aprobadasFiltradas.length === 0 ? <div className="p-6 text-sm text-slate-500">No hay tasaciones negociadas que coincidan con la búsqueda.</div> : <ul className="divide-y divide-slate-100">{aprobadasFiltradas.map(item => (
+              <li key={item.inmuebleId}>
+                <PropertyTaskRow position={item.posicion} contact={item.propietario} operation={item.operacion} type={item.tipo} location={item.ubicacion || item.direccion}
+                  color="emerald" label="Tasación registrada" actions={<>
+                    <Link href={`/datos-inmuebles?${new URLSearchParams({ codigo: String(item.inmuebleId), zona: item.zona, carpeta: "precios", editar: "precios" })}`} className="aa-button aa-button-secondary text-xs">Actualizar valores →</Link>
+                    <Link href={`/registrar-textos?${new URLSearchParams({ inmueble: String(item.inmuebleId), zona: item.zona })}`} className="aa-button aa-button-secondary text-xs">Ir a textos →</Link>
+                  </>}>
+                  <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
                     {[
                       [referenceLabel(item.operacion), formatPrice(item.valorReferencia, item.valorReferenciaMoneda)],
                       [targetLabel(item.operacion), formatPrice(item.precioObjetivo, item.precioObjetivoMoneda)],
                       [priceLabel(item.operacion), formatPrice(item.precioVenta, item.precioVentaMoneda)],
-                    ].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-xs leading-5 text-slate-500">{label}</dt><dd className="mt-1 break-words text-sm font-bold text-slate-900">{value}</dd></div>)}
+                    ].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-xs leading-5 text-slate-500">{label}</dt><dd className="break-words text-xs font-semibold text-slate-900">{value}</dd></div>)}
                   </dl>
-                <div className="mx-4 mb-4"><Link href={`/registrar-textos?${new URLSearchParams({ inmueble: String(item.inmuebleId), zona: item.zona })}`} className="aa-button aa-button-secondary w-full text-xs">Ir a textos →</Link></div>
-                </PortfolioPropertyCard>
+                </PropertyTaskRow>
               </li>
             ))}</ul>}
           </div>
