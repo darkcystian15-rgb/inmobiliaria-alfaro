@@ -28,7 +28,11 @@ No se añaden tablas, migraciones ni cambios de documentos existentes. Se mantie
 
 ## Publicación
 
-Solicitada por el usuario en Vercel. Pendiente de completar y confirmar el despliegue.
+Commit funcional `aa1a220f11315000adf9d994a88c8eaf1596c11a`, publicado en `main`.
+
+Vercel confirmó el despliegue `dpl_ZKKbggozZRo6vt73F6FvoFFBCUxT`, estado **Ready**, entorno **production**. Versión: https://inmobiliaria-alfarov2-bcysip8fj-puma19.vercel.app. Alias de producción confirmado: https://intranet.inmobiliariaalbertoalfaro.com.pe.
+
+La comprobación autenticada del buscador y del visor corresponde al entorno local de ensayo; no se crearon cuentas de prueba ni se editaron datos de producción.
 
 ## Recuperación
 
