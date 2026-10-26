@@ -157,9 +157,7 @@ async function updateProperty(request: Request, context: { params: Promise<{ id:
       await assertWritable(tx,current.id);
       if (propertyValues.operacion && propertyValues.operacion !== current.operacion) {
         if (auth.user.rol !== 'administrador') throw new PropertyInputError('Solo el administrador puede cambiar la operación.');
-        const [prices] = await tx.select({ id: inmTasaciones.id }).from(inmTasaciones).where(eq(inmTasaciones.inmuebleId, current.id)).limit(1);
-        const [publication] = await tx.select({ id: inmPublicaciones.id }).from(inmPublicaciones).where(eq(inmPublicaciones.inmuebleId, current.id)).limit(1);
-        if (!canChangeOperation({ estado: current.estado, hasPrices: Boolean(prices), hasPublication: Boolean(publication) })) throw new PropertyInputError('La operación solo se puede cambiar antes de registrar precios o publicación, y mientras el inmueble esté activo.');
+        if (!canChangeOperation({ estado: current.estado })) throw new PropertyInputError('La operación solo se puede cambiar mientras el inmueble esté activo.');
       }
       if (propertyValues.tipo) propertyValues.tipo = await assignedPropertyType(tx, propertyValues.tipo, current.tipo);
       if (propertyValues.direccion !== undefined) propertyValues.referencia = propertyValues.direccion!.slice(0, 255);

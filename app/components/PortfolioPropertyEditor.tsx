@@ -27,7 +27,7 @@ export default function PortfolioPropertyEditor({ propertyId, onSaved, onDirtyCh
     }).catch(failure => { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "No se pudieron consultar los datos."); });
     return () => controller.abort();
   }, [propertyId, reload]);
-  const operationLocked = !details || !canChangeOperation({ estado: details.inmueble.estado, hasPrices: Boolean(details.tasacion), hasPublication: Boolean(details.publicacion) });
+  const operationLocked = !details || !canChangeOperation({ estado: details.inmueble.estado });
   async function save(event: FormEvent) {
     event.preventDefault();
     if (!form || !details || busy) return;
@@ -39,7 +39,7 @@ export default function PortfolioPropertyEditor({ propertyId, onSaved, onDirtyCh
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "No se pudieron guardar los cambios.");
       }
-      setEditing(false); setMessage("Cambios guardados correctamente."); setReload(value => value + 1);
+      setEditing(false); setMessage(changes.operacion ? "Operación actualizada. Se conservaron los montos de la tasación. Revisa los montos y, si existe una publicación, su texto y precio." : "Cambios guardados correctamente."); setReload(value => value + 1);
       await onSaved();
     } catch (failure) { setError(failure instanceof Error ? failure.message : "No se pudieron guardar los cambios."); }
     finally { setBusy(false); }
@@ -47,10 +47,11 @@ export default function PortfolioPropertyEditor({ propertyId, onSaved, onDirtyCh
   const inputClass = "aa-input mt-2 w-full";
   return <section className="mt-5 rounded-2xl border border-slate-200 p-4">
     <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-bold text-slate-900">Datos del inmueble</h4>{!editing && <button type="button" disabled={!details || busy} onClick={() => { setEditing(true); setMessage(""); }} className="text-sm font-semibold text-[#c80000] disabled:opacity-50">Editar datos</button>}</div>
-    <p id="portfolio-operation-note" className="mt-2 text-xs leading-5 text-slate-500">La operación solo puede cambiarse mientras el inmueble esté activo y antes de registrar precios o preparar una publicación.</p>
+    <p id="portfolio-operation-note" className="mt-2 text-xs leading-5 text-slate-500">Puedes cambiar la operación mientras el inmueble esté activo, incluso con tasación aprobada. Los montos se conservan para que puedas editarlos después.</p>
     {editing && form && <form onSubmit={save} className="mt-4 space-y-4">
       <label className="block text-xs font-semibold text-slate-600">Tipo de operación<OperationSelect value={form.operacion} disabled={busy || operationLocked} onChange={operacion => setForm({ ...form, operacion })} className={inputClass} /></label>
-      {operationLocked && <p className="text-xs text-amber-800">Operación bloqueada: el inmueble es histórico o ya tiene precios o publicación registrados.</p>}
+      {form.operacion !== details?.inmueble.operacion && <p role="status" className="text-xs text-amber-800">Al cambiar la operación se conservan los montos de la tasación. Revisa los montos y, si existe una publicación, su texto y precio.</p>}
+      {operationLocked && <p className="text-xs text-amber-800">Operación bloqueada: el inmueble es histórico.</p>}
       <label className="block text-xs font-semibold text-slate-600">Tipo de inmueble<PropertyTypeSelect value={form.tipo} preserveCurrent disabled={busy} onChange={tipo => setForm({ ...form, tipo })} className={inputClass} /></label>
       <label className="block text-xs font-semibold text-slate-600">Dirección referencial<input required maxLength={350} value={form.direccion} disabled={busy} onChange={event => setForm({ ...form, direccion: event.target.value })} className={inputClass} /></label>
       <label className="block text-xs font-semibold text-slate-600">Nombre de contacto<input required maxLength={281} value={form.nombreContacto} disabled={busy} onChange={event => setForm({ ...form, nombreContacto: event.target.value })} className={inputClass} /></label>

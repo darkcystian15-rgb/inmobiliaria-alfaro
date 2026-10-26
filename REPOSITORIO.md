@@ -1,3 +1,5 @@
+Rectificación de operación, 26 de octubre: el administrador puede cambiar venta/alquiler en inmuebles activos con tasación aprobada, conservando importes e historial. [Cambio, punto de restauración y publicación](docs/rectificacion-operacion-2026-10-26.md).
+
 Diseño vigente: se restaura la interfaz anterior al rediseño y se corrigen únicamente textos duplicados. [Alcance y restauración](docs/diseno-original-textos-2026-10-25.md).
 
 > Actualización de integridad: [eliminación completa, archivos y expedientes cerrados](docs/integridad-datos-eliminacion-2026-10-25.md). Las referencias históricas siguientes conservan su fecha.

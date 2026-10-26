@@ -17,8 +17,8 @@ test('Cartera permite dirección referencial y conserva las restricciones de los
     assert.throws(() => validatePropertyEditFields({ nombreContacto: 'Ana', [key]: 'Cambio' }, true), /solo se editan/);
   }
 });
-test('Operación solo cambia en activo sin precios ni publicación', () => {
-  for (const estado of ['activo', 'inactivo']) for (const hasPrices of [false, true]) for (const hasPublication of [false, true]) {
-    assert.equal(canChangeOperation({ estado, hasPrices, hasPublication }), estado === 'activo' && !hasPrices && !hasPublication);
+test('Operación cambia en activo incluso con tasación o publicación y se bloquea en histórico', () => {
+  for (const estado of ['activo', 'inactivo', 'vendido', 'alquilado', 'suspendido']) for (const hasPrices of [false, true]) for (const hasPublication of [false, true]) {
+    assert.equal(canChangeOperation({ estado, hasPrices, hasPublication }), estado === 'activo');
   }
 });
