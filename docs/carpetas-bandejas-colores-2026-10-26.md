@@ -44,3 +44,12 @@ La API directa de Vercel rechazó el token local con 403 (`invalidToken`); la co
 
 La actualización documental posterior conserva el mismo código funcional.
 
+## Corrección: reutilizar las carpetas de Cartera
+
+La primera entrega usaba dos columnas fijas y una composición distinta, por lo que algunas carpetas se veían demasiado anchas. Se sustituye esa composición por el componente real `PortfolioPropertyCard` y la misma cuadrícula `property-position-grid` que usa Cartera. La cuadrícula distribuye columnas según el espacio disponible, con un mínimo de 14 rem (224 px); en móvil mantiene una columna. No se cambia la cuadrícula existente de Cartera.
+
+Visitas pendientes, tasaciones pendientes, textos pendientes, publicaciones pendientes y tasaciones negociadas registradas comparten ahora la forma, pestaña, posición, contacto y resumen de Cartera. Se conservan los cinco colores de esta entrega. Las bandejas sin precio consultado no muestran un importe supuesto ni un bloque vacío de precio; las tasaciones registradas conservan los tres valores con sus monedas y el acceso a textos. Los plazos y la antigüedad de las visitas se mantienen.
+
+El componente permite navegar a la tarea mediante enlace, mientras Cartera conserva su botón para abrir el detalle. Se preservan los datos, filtros, enlaces y estados. La referencia anterior a esta corrección es `7683d25`.
+
+Verificación de la corrección: ESLint de los cuatro archivos y tres pruebas existentes de listado, búsqueda y flujo de publicación aprobados. Compilación webpack y TypeScript aprobada, con 63 páginas generadas y la misma URL local de prueba sin conexión a producción. No se realizó revisión visual autenticada. Despliegue de la corrección pendiente de confirmar.
