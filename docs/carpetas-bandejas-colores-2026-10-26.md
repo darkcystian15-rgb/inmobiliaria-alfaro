@@ -30,4 +30,17 @@ ESLint de los tres archivos modificados, TypeScript y pruebas existentes de bús
 
 Compilación Next.js 16.3.8 con webpack y TypeScript aprobada: 63 páginas generadas. Se utilizó una URL MySQL local de prueba sintácticamente válida, sin conexión a producción. La ejecución en el sandbox no pudo leer la salida de configuración de TypeScript; la compilación fuera del sandbox terminó correctamente.
 
-Publicación pendiente de confirmar. No se ha realizado una comprobación visual autenticada con datos actuales de producción.
+No se ha realizado una comprobación visual autenticada con datos actuales de producción.
+
+## Publicación
+
+Commit funcional `309c4ff214172e2f7874a3054395e0f390544cea`, publicado en `origin/main`.
+
+GitHub confirmó el despliegue de Vercel para ese SHA exacto, entorno **Production**, estado **success**, descripción «Deployment has completed», el 26 de octubre de 2026 a las 12:58:43 UTC. Despliegue GitHub `7332412506`; referencia Vercel `BPXYLHRxXMoqwiUVvRUbBAtd22WQ`. Versión: https://inmobiliaria-alfarov2-omjj17maz-puma19.vercel.app.
+
+Dominio comprobado: https://intranet.inmobiliariaalbertoalfaro.com.pe. `/login` responde 200; `/cartera` responde 307 hacia `/login` sin sesión; `/api/tasaciones` responde 401 sin sesión. Estas comprobaciones validan disponibilidad y protección de acceso, no una revisión visual autenticada.
+
+La API directa de Vercel rechazó el token local con 403 (`invalidToken`); la confirmación del despliegue procede de los estados publicados por Vercel en GitHub, incluido el entorno Production y el SHA correspondiente.
+
+La actualización documental posterior conserva el mismo código funcional.
+
