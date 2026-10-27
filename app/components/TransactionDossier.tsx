@@ -88,6 +88,7 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
             uploaded++;
           } catch (error) {
             await requestJson(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel', token: authorization.token }) }).catch(() => undefined);
+            if (error instanceof TypeError) throw Error('No se pudo conectar con el servidor de documentos. Comprueba tu conexión y que este dominio esté autorizado para subir copias literales de más de 4 MB.');
             throw error;
           }
           continue;

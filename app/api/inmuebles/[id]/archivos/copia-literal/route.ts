@@ -35,6 +35,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       endpoint.searchParams.set('capabilities', '1');
       const capabilities = await fetch(endpoint, { headers: { Authorization: `Bearer ${secret}` }, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000) });
       if (!capabilities.ok || (await capabilities.json()).literalUploadVersion !== 1) return NextResponse.json({ error: 'Falta actualizar el servicio de documentos en cPanel para habilitar copias literales de hasta 50 MB. Los archivos de hasta 4 MB siguen disponibles.' }, { status: 503 });
+      // Check the browser's actual origin before reserving storage or signing a token.
+      const origin = request.headers.get('origin') || new URL(request.url).origin;
+      const preflight = await fetch(endpoint, { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'PUT', 'Access-Control-Request-Headers': 'authorization,content-type' }, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000) });
+      if (!preflight.ok || preflight.headers.get('access-control-allow-origin') !== origin) return NextResponse.json({ error: 'Este dominio no está autorizado para subir copias literales de más de 4 MB. Abre el mismo inmueble en https://intranet.inmobiliariaalbertoalfaro.com.pe o solicita al administrador que autorice este dominio en el servidor de documentos.' }, { status: 403 });
       const [position] = await db.select({ numero: inmPosiciones.numero }).from(inmAsignacionesPosicion).innerJoin(inmPosiciones, eq(inmPosiciones.id, inmAsignacionesPosicion.posicionId)).where(eq(inmAsignacionesPosicion.inmuebleId, property.id)).limit(1);
       const path = documentPath({ position: position?.numero ?? null, propertyId: property.id, propertyCode: property.codigo, type: 'COPIA_LITERAL_CRI', name: input.filename.toLowerCase(), uniqueId: randomUUID() });
       await db.transaction(async tx=>{await tx.select({id:inmInmuebles.id}).from(inmInmuebles).where(eq(inmInmuebles.id,property.id)).for('update');await assertWritable(tx,property.id);});
