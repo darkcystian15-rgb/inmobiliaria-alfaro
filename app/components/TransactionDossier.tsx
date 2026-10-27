@@ -5,6 +5,7 @@ import { dossierDefaults, dossierClosureStatus, dossierStatus, dossierDocumentTy
 import { documentByteLimit, MAX_DOCUMENT_BYTES } from '@/lib/document-limits.mjs';
 import { requestJson } from '@/lib/client-request';
 import { compressImage, isImageFile } from '@/lib/client-images';
+import { readUploadFile } from '@/lib/client-upload-file.mjs';
 import FileViewer from './FileViewer';
 import ConfirmDialog from './ConfirmDialog';
 import WorkspaceFileIcon from './WorkspaceFileIcon';
@@ -75,8 +76,9 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     let uploaded = 0;
     try {
       for (const entry of selected) {
-        const file = isImageFile(entry.file) ? await compressImage(entry.file) : entry.file;
         const limit = documentByteLimit(category);
+        if (!isImageFile(entry.file) && entry.file.size > limit) throw Error(`${entry.name}: el archivo supera ${limit / 1048576} MB.`);
+        const file = isImageFile(entry.file) ? await compressImage(entry.file) : await readUploadFile(entry.file);
         if (file.size > limit) throw Error(`${entry.name}: el archivo supera ${limit / 1048576} MB.`);
         if (category === 'COPIA_LITERAL_CRI' && file.size > MAX_DOCUMENT_BYTES) {
           const endpoint = `${fileUrl}/copia-literal`;
@@ -98,7 +100,7 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
         await requestJson(fileUrl, { method: 'POST', body }); uploaded++;
       }
       setObservation(''); setMessage(`${uploaded} archivo${uploaded === 1 ? '' : 's'} guardado${uploaded === 1 ? '' : 's'}.`);
-    } catch (e) { setError(`${e instanceof Error ? e.message : 'No se pudo subir.'}${uploaded ? ` ${uploaded} archivo(s) ya se guardaron; solo quedan los pendientes.` : ''}`); }
+    } catch (e) { setError(`${e instanceof TypeError ? 'No se pudo enviar el archivo desde este navegador. Comprueba la conexión y vuelve a seleccionar el PDF desde Descargas de tu celular.' : e instanceof Error ? e.message : 'No se pudo subir.'}${uploaded ? ` ${uploaded} archivo(s) ya se guardaron; solo quedan los pendientes.` : ''}`); }
     finally {
       setSelected(previous => previous.slice(uploaded));
       if (uploaded) await onChanged();

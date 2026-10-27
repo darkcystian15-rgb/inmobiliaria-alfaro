@@ -43,7 +43,10 @@ export default function FileDropZone({ label, accept, help, subdued = false, dis
     <p className="text-sm font-semibold text-slate-700">{dragging && !disabled ? 'Suelta los archivos aquí' : 'Arrastra y suelta los archivos aquí'}</p>
     <p id={helpId} className="mt-1 text-xs leading-5 text-slate-500">{help} También puedes seleccionarlos con el botón.</p>
     <label className="mt-3 block text-sm font-semibold text-slate-700">{label}<input ref={inputRef} type="file" multiple accept={accept} disabled={disabled} aria-describedby={helpId}
-      onChange={event => { select(Array.from(event.target.files || [])); event.target.value = ''; }}
+      // Keep the selection alive until the next picker opens: some mobile
+      // providers revoke access to the file when the input is cleared.
+      onClick={event => { event.currentTarget.value = ''; }}
+      onChange={event => { select(Array.from(event.target.files || [])); }}
       className={`mt-2 block w-full min-w-0 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:font-semibold ${subdued ? 'file:text-slate-700' : 'file:text-red-700'} disabled:cursor-not-allowed`} /></label>
   </div>;
 }
