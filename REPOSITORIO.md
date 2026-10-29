@@ -1,3 +1,5 @@
+Otros documentos por carpeta, 29 de octubre: cada carpeta numerada de FASE 2 en venta y alquiler permite archivos especiales opcionales, con nombre y descripción por archivo. [Cambio, pruebas y publicación](docs/documentos-especiales-por-carpeta-2026-10-29.md).
+
 Personas naturales y jurídicas en alquiler, 29 de octubre: selección independiente de arrendador y arrendatario en DNI y poderes, con documentos por tipo y conservación de archivos. [Cambio, verificación y publicación](docs/alquiler-personas-naturales-juridicas-2026-10-29.md).
 
 Tasaciones sin valores por defecto, 26 de octubre: moneda por seleccionar, campos vacíos y sin símbolos previos a la elección. [Cambio y restauración](docs/tasaciones-sin-valores-defecto-2026-10-26.md). Código `ecb9fd4`, Vercel `dpl_5ufrWNKzJM76jVNUpicihE5Sx8Mz`, **READY** en producción y dominio confirmado.

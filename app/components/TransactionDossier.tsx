@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
-import { dossierDefaults, dossierClosureStatus, dossierStatus, dossierDocumentType } from '@/lib/transaction-dossier.mjs';
+import { dossierDefaults, dossierClosureStatus, dossierStatus, dossierDocumentType, isSectionExtraDocument, validateExtraDocumentDescription } from '@/lib/transaction-dossier.mjs';
 import { documentByteLimit, MAX_DOCUMENT_BYTES } from '@/lib/document-limits.mjs';
 import { requestJson } from '@/lib/client-request';
 import { compressImage, isImageFile } from '@/lib/client-images';
@@ -38,7 +38,8 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
   const [editing, setEditing] = useState<DossierFile | null>(null);
   const [editName, setEditName] = useState('');
   const [editType, setEditType] = useState('');
-  const [selected, setSelected] = useState<{ file: File; name: string }[]>([]);
+  const [editObservation, setEditObservation] = useState('');
+  const [selected, setSelected] = useState<{ file: File; name: string; description: string }[]>([]);
   const [category, setCategory] = useState('');
   const [observation, setObservation] = useState('');
   const dirty = !!record && JSON.stringify(config) !== JSON.stringify(record.config);
@@ -75,6 +76,7 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     working(true); setError(''); setMessage('');
     let uploaded = 0;
     try {
+      for (const entry of selected) validateExtraDocumentDescription(category, entry.description);
       for (const entry of selected) {
         const limit = documentByteLimit(category);
         if (!isImageFile(entry.file) && entry.file.size > limit) throw Error(`${entry.name}: el archivo supera ${limit / 1048576} MB.`);
@@ -96,7 +98,7 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
           continue;
         }
         const body = new FormData();
-        body.set('archivo', file); body.set('nombre', entry.name.trim()); body.set('tipoDocumento', category); body.set('observacion', observation);
+        body.set('archivo', file); body.set('nombre', entry.name.trim()); body.set('tipoDocumento', category); body.set('observacion', isSectionExtraDocument(category) ? entry.description.trim() : observation);
         await requestJson(fileUrl, { method: 'POST', body }); uploaded++;
       }
       setObservation(''); setMessage(`${uploaded} archivo${uploaded === 1 ? '' : 's'} guardado${uploaded === 1 ? '' : 's'}.`);
@@ -118,15 +120,16 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     event.preventDefault(); if (!editing) return;
     working(true); setError(''); setMessage('');
     try {
-      await requestJson(fileUrl, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ archivoId: editing.id, nombre: editName, tipoDocumento: editType, observacion: editing.observacion || '' }) });
-      setEditing(null); await onChanged(); setMessage('Nombre y categoría actualizados.');
+      validateExtraDocumentDescription(editType, editObservation);
+      await requestJson(fileUrl, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ archivoId: editing.id, nombre: editName, tipoDocumento: editType, observacion: editObservation }) });
+      setEditing(null); await onChanged(); setMessage('Documento actualizado.');
     } catch (e) { setError(e instanceof Error ? e.message : 'No se pudo actualizar.'); }
     finally { working(false); }
   }
   function renderFile(file: DossierFile) {
     return <article key={file.id} className="mt-3 flex flex-wrap items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
       <div className="flex min-w-0 flex-1 items-start gap-2"><WorkspaceFileIcon name={file.nombreOriginal || file.nombre} /><div className="min-w-0"><p className="break-words text-sm font-semibold">{file.nombre}</p><p className="mt-1 break-words text-xs text-slate-500">{file.nombreOriginal}{file.tamanoBytes ? ` · ${Math.ceil(file.tamanoBytes / 1024)} KB` : ''}</p>{file.observacion && <p className="mt-1 whitespace-pre-wrap break-words text-xs">{file.observacion}</p>}{file.almacenamiento !== 'hosting' && <p className="mt-1 text-xs text-amber-800">Enlace anterior: sube el archivo para completar este requisito.</p>}</div></div>
-      <div className="flex flex-wrap gap-2"><button type="button" onClick={() => setViewer(file)} className={action}>Ver archivo</button>{file.almacenamiento === 'hosting' && <a href={`${file.enlace}?download=1`} className={action}>Descargar</a>}<button type="button" disabled={readOnly || busy} onClick={() => { setEditing(file); setEditName(file.nombre); setEditType(status.items.find(item => item.key === file.tipoDocumento)?.applies ? file.tipoDocumento : ''); }} className={action}>Editar nombre / categoría</button>{administrator && !readOnly && <button type="button" disabled={busy} onClick={() => setDeleting(file)} className="aa-button aa-button-secondary text-red-700">Eliminar</button>}</div>
+      <div className="flex flex-wrap gap-2"><button type="button" onClick={() => setViewer(file)} className={action}>Ver archivo</button>{file.almacenamiento === 'hosting' && <a href={`${file.enlace}?download=1`} className={action}>Descargar</a>}<button type="button" disabled={readOnly || busy} onClick={() => { setEditing(file); setEditName(file.nombre); setEditObservation(file.observacion || ''); setEditType(status.items.find(item => item.key === file.tipoDocumento)?.applies ? file.tipoDocumento : ''); }} className={action}>Editar nombre / categoría</button>{administrator && !readOnly && <button type="button" disabled={busy} onClick={() => setDeleting(file)} className="aa-button aa-button-secondary text-red-700">Eliminar</button>}</div>
     </article>;
   }
   function renderRentaConditions() {
@@ -139,16 +142,19 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     </fieldset>;
   }
   function renderDocumentItem(item: ReturnType<typeof dossierStatus>['items'][number]) {
-    return <div key={item.key} data-document-type={item.key} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"><div className="flex flex-wrap items-start justify-between gap-2"><h5 className="font-semibold">{item.label}{item.party !== 'inmueble' && <span className="ml-2 text-sm font-normal capitalize text-slate-500">· {item.party}</span>}</h5><span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.state === 'pendiente' ? 'bg-amber-100 text-amber-900' : item.state === 'completo' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>{item.key === 'VENDEDOR_EXONERACION_RENTA' ? config.renta === 'afecto' ? 'Paga' : config.renta === 'exonerado' ? 'No paga' : 'Por definir' : stateLabels[item.state as keyof typeof stateLabels]}</span></div>{item.key === 'VENDEDOR_EXONERACION_RENTA' && renderRentaConditions()}{item.key === 'VENDEDOR_BUSQUEDA_NACIONAL' && config.renta === 'exonerado' && <p className="mt-2 text-xs text-slate-600">Documento sustentatorio de que el vendedor no paga impuesto a la renta.</p>}{item.key === 'COPIA_LITERAL_CRI' && <p className="mt-2 text-xs text-slate-600">Basta con uno de los dos documentos.</p>}{!item.applies && item.party === 'vendedor' && item.section === 'identificacion' && <p className="mt-2 text-xs text-slate-600">Carga bloqueada para las condiciones seleccionadas. Los archivos existentes se conservan.</p>}{item.note && <p className="mt-2 whitespace-pre-wrap text-sm">Nota: {item.note}</p>}{item.documents.map(file => renderFile(file as DossierFile))}{!readOnly && item.applies && <div className="mt-3 space-y-3">{item.key === 'VENDEDOR_EXONERACION_RENTA' && <p className="text-sm font-semibold">Documento de exoneración · {stateLabels[item.state as keyof typeof stateLabels]}</p>}
+    return <div key={item.key} data-document-type={item.key} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4"><div className="flex flex-wrap items-start justify-between gap-2"><h5 className="font-semibold">{item.label}{item.party !== 'inmueble' && <span className="ml-2 text-sm font-normal capitalize text-slate-500">· {item.party}</span>}</h5><span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.state === 'pendiente' ? 'bg-amber-100 text-amber-900' : item.state === 'completo' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'}`}>{isSectionExtraDocument(item.key) ? 'Opcional' : item.key === 'VENDEDOR_EXONERACION_RENTA' ? config.renta === 'afecto' ? 'Paga' : config.renta === 'exonerado' ? 'No paga' : 'Por definir' : stateLabels[item.state as keyof typeof stateLabels]}</span></div>{item.key === 'VENDEDOR_EXONERACION_RENTA' && renderRentaConditions()}{item.key === 'VENDEDOR_BUSQUEDA_NACIONAL' && config.renta === 'exonerado' && <p className="mt-2 text-xs text-slate-600">Documento sustentatorio de que el vendedor no paga impuesto a la renta.</p>}{isSectionExtraDocument(item.key) && <p className="mt-2 text-sm text-slate-600">Carga opcional para documentos especiales de esta carpeta. Puedes agregar varios archivos, cada uno con su nombre y una breve descripción. No afecta los requisitos de cierre.</p>}{item.key === 'COPIA_LITERAL_CRI' && <p className="mt-2 text-xs text-slate-600">Basta con uno de los dos documentos.</p>}{!item.applies && item.party === 'vendedor' && item.section === 'identificacion' && <p className="mt-2 text-xs text-slate-600">Carga bloqueada para las condiciones seleccionadas. Los archivos existentes se conservan.</p>}{item.note && <p className="mt-2 whitespace-pre-wrap text-sm">Nota: {item.note}</p>}{item.documents.map(file => renderFile(file as DossierFile))}{!readOnly && item.applies && <div className="mt-3 space-y-3">{item.key === 'VENDEDOR_EXONERACION_RENTA' && <p className="text-sm font-semibold">Documento de exoneración · {stateLabels[item.state as keyof typeof stateLabels]}</p>}
         {!uploadReady && <p role="status" className="text-sm text-amber-800">La subida no está disponible. Consulta al administrador.</p>}
         <FileDropZone subdued label={`Archivos: ${item.party === 'inmueble' ? '' : item.party + ' · '}${item.label}`} accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp" help={`PDF, Word, Excel, JPG, PNG o WebP. Hasta ${documentByteLimit(item.key) / 1048576} MB por archivo; las imágenes se comprimen.`}
           inputRef={{ current: null }} disabled={busy || dirty || !uploadReady || (selected.length > 0 && category !== item.key) || editing !== null}
-          onFiles={files => { setError(''); setMessage(''); setCategory(item.key); setSelected(files.map(file => ({ file, name: file.name.replace(/\.[^.]+$/, '').slice(0, 255) }))); }} onRejected={setError} />
+          onFiles={files => { setError(''); setMessage(''); setCategory(item.key); setSelected(files.map(file => ({ file, name: file.name.replace(/\.[^.]+$/, '').slice(0, 255), description: '' }))); }} onRejected={setError} />
         {category === item.key && selected.length > 0 && <form aria-label={`Subir archivos: ${item.party === 'inmueble' ? '' : item.party + ' · '}${item.label}`} onSubmit={event => void upload(event)} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
           <h6 className="text-sm font-bold">Confirmar archivos de {item.label.toLowerCase()}</h6>
           <fieldset disabled={readOnly || busy || dirty || !uploadReady} className="space-y-3">
-            {selected.map((entry, index) => <label key={`${entry.file.name}-${index}`} className="block text-sm font-semibold">Nombre del archivo {index + 1}<input required maxLength={255} value={entry.name} onChange={event => setSelected(old => old.map((value, i) => i === index ? { ...value, name: event.target.value } : value))} className={field} /><span className="mt-1 block break-words text-xs font-normal">{entry.file.name}</span></label>)}
-            <label className="block text-sm font-semibold">Observación opcional<textarea maxLength={500} value={observation} onChange={event => setObservation(event.target.value)} className={field} /></label>
+            {selected.map((entry, index) => <div key={`${entry.file.name}-${index}`} className="space-y-3">
+              <label className="block text-sm font-semibold">Nombre del archivo {index + 1}<input required maxLength={255} value={entry.name} onChange={event => setSelected(old => old.map((value, i) => i === index ? { ...value, name: event.target.value } : value))} className={field} /><span className="mt-1 block break-words text-xs font-normal">{entry.file.name}</span></label>
+              {isSectionExtraDocument(item.key) && <label className="block text-sm font-semibold">Descripción breve del archivo {index + 1}<textarea required rows={2} maxLength={500} value={entry.description} onChange={event => setSelected(old => old.map((value, i) => i === index ? { ...value, description: event.target.value } : value))} className={field} /><span className="mt-1 block text-xs font-normal text-slate-600">Describe para qué se adjunta este documento. Máximo 500 caracteres.</span></label>}
+            </div>)}
+            {!isSectionExtraDocument(item.key) && <label className="block text-sm font-semibold">Observación opcional<textarea maxLength={500} value={observation} onChange={event => setObservation(event.target.value)} className={field} /></label>}
             <div className="flex flex-wrap gap-2"><button type="submit" className={saveAction}>{busy ? 'Subiendo…' : 'Subir archivos'}</button><button type="button" onClick={() => { setSelected([]); setCategory(''); setObservation(''); }} className={action}>Quitar selección</button></div>
           </fieldset>
         </form>}
@@ -225,23 +231,24 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     </fieldset>)}
     {(view === 'inmueble' || (view === 'carpeta' && section === 'cargas')) && !rental && <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm"><input type="checkbox" disabled={busy || selected.length > 0 || editing !== null} checked={config.cargas} onChange={event => changeConfig(old => ({ ...old, cargas: event.target.checked }))} className="mt-1 h-4 w-4" /><span>Incluir levantamiento de cargas<span className="mt-1 block text-xs text-slate-600">Sección opcional. Al activarla puedes subir varios archivos con nombres individuales.</span></span></label>}
     {view !== 'estado' && status.sections.map(({key: section, label}) => {
-      const items = visible.filter(item => item.section === section && (item.applies || item.documents.length || (section === 'impuestos' && item.party === 'vendedor')) && !(section === 'impuestos' && item.key === 'VENDEDOR_BUSQUEDA_NACIONAL'));
-      if (!items.length) return null;
+      const extras = visible.filter(item => item.section === section && isSectionExtraDocument(item.key));
+      const items = visible.filter(item => !isSectionExtraDocument(item.key) && item.section === section && (item.applies || item.documents.length || (section === 'impuestos' && item.party === 'vendedor')) && !(section === 'impuestos' && item.key === 'VENDEDOR_BUSQUEDA_NACIONAL'));
+      if (!items.length && !extras.length) return null;
       return <section key={section} className="space-y-4">{view !== 'carpeta' && <h4 className="font-bold">{label}</h4>}{section === 'impuestos' ? ['vendedor','comprador'].map(party => {
         const partyItems = items.filter(item => item.party === party);
         if (!partyItems.length) return null;
         return <section key={party} aria-label={`Impuestos y constancias del ${party}`} className="space-y-3"><h4 className="border-b border-slate-200 pb-2 text-sm font-bold uppercase text-slate-700">Impuestos y constancias del {party}</h4>{partyItems.map(renderDocumentItem)}</section>;
-      }) : section === 'identificacion' && naturalSeller && items.some(item => item.party === 'vendedor') ? <>{renderSellerIdentification()}{items.filter(item => item.party !== 'vendedor').map(renderDocumentItem)}</> : items.map(renderDocumentItem)}</section>;
+      }) : section === 'identificacion' && naturalSeller && items.some(item => item.party === 'vendedor') ? <>{renderSellerIdentification()}{items.filter(item => item.party !== 'vendedor').map(renderDocumentItem)}</> : items.map(renderDocumentItem)}{extras.map(renderDocumentItem)}</section>;
     })}
     {(view === 'estado' || view === 'inmueble' || (view === 'carpeta' && section === 'otros')) && unknown.length > 0 && <section className="rounded-xl border border-amber-200 p-4"><h4 className="font-bold">Otros archivos conservados</h4><p className="mt-2 text-sm">Estos archivos no pertenecen a los requisitos actuales de esta operación. Puedes consultarlos y, si corresponde, asignarles una categoría vigente.</p>{unknown.map(renderFile)}</section>}
     {view === 'carpeta' && section === 'otros' && unknown.length === 0 && <p className="rounded-xl bg-slate-50 p-5 text-sm text-slate-500">No hay otros archivos por clasificar.</p>}
-    {view === 'carpeta' && section === 'cargas' && !config.cargas && <p className="text-sm text-slate-600">Esta carpeta no tiene requisitos obligatorios mientras no se declaren cargas. Los archivos existentes se conservan.</p>}
+    {view === 'carpeta' && section === 'cargas' && !config.cargas && <p className="text-sm text-slate-600">Esta carpeta no tiene requisitos obligatorios mientras no se declaren cargas. Puedes adjuntar otros documentos opcionales. Los archivos existentes se conservan.</p>}
     {dirty && <div aria-label="Cambios de condiciones" className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-md">
       <p role={error ? "alert" : "status"} className={`text-xs leading-5 ${error ? "text-red-800" : "text-slate-600"}`}>{error || "Condiciones sin guardar. Guarda para habilitar la subida de archivos."}</p>
       <div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => { setConfig(record.config); setError(''); }} className={conditionAction}>Descartar</button><button type="button" disabled={busy} onClick={() => void saveConfig()} className={conditionSave}>{busy ? 'Guardando…' : 'Guardar condiciones'}</button></div>
     </div>}
     {viewer && <FileViewer file={viewer} onClose={() => setViewer(null)} />}
     {deleting && <ConfirmDialog title="Eliminar archivo" confirmLabel="Eliminar" busy={busy} onCancel={() => setDeleting(null)} onConfirm={() => void remove()}><p>Se eliminará «{deleting.nombre}». Esta acción no se puede deshacer y el requisito volverá a figurar pendiente si no hay otro archivo.</p>{error && <p role="alert" className="mt-3 text-red-700">{error}</p>}</ConfirmDialog>}
-    {editing && <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4"><form onSubmit={event => void rename(event)} className="space-y-3"><h4 className="font-bold">Editar documento: {editing.nombre}</h4><label className="block text-sm">Nombre<input required maxLength={255} value={editName} disabled={busy} onChange={event => setEditName(event.target.value)} className={field} /></label><label className="block text-sm">Categoría<select required disabled={busy || dirty} value={editType} onChange={event => setEditType(event.target.value)} className={field}><option value="">Seleccionar</option>{status.items.filter(item => item.applies && (!editing.tamanoBytes || editing.tamanoBytes <= documentByteLimit(item.key))).map(item => <option key={item.key} value={item.key}>{item.party} · {item.label}</option>)}</select></label><button disabled={busy || dirty} className={saveAction}>Guardar documento</button><button type="button" disabled={busy} onClick={() => setEditing(null)} className="aa-button aa-button-secondary ml-2">Cancelar edición</button></form></div>}
+    {editing && <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4"><form onSubmit={event => void rename(event)} className="space-y-3"><h4 className="font-bold">Editar documento: {editing.nombre}</h4><label className="block text-sm">Nombre<input required maxLength={255} value={editName} disabled={busy} onChange={event => setEditName(event.target.value)} className={field} /></label><label className="block text-sm">Categoría<select required disabled={busy || dirty} value={editType} onChange={event => setEditType(event.target.value)} className={field}><option value="">Seleccionar</option>{status.items.filter(item => item.applies && (!editing.tamanoBytes || editing.tamanoBytes <= documentByteLimit(item.key))).map(item => <option key={item.key} value={item.key}>{status.sections.find(section => section.key === item.section)?.label} · {item.party} · {item.label}</option>)}</select></label><label className="block text-sm">{isSectionExtraDocument(editType) ? 'Descripción breve' : 'Observación opcional'}<textarea required={isSectionExtraDocument(editType)} rows={2} maxLength={500} value={editObservation} disabled={busy} onChange={event => setEditObservation(event.target.value)} className={field} /></label><button disabled={busy || dirty} className={saveAction}>Guardar documento</button><button type="button" disabled={busy} onClick={() => setEditing(null)} className="aa-button aa-button-secondary ml-2">Cancelar edición</button></form></div>}
   </div>;
 }

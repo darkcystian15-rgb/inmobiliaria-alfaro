@@ -18,7 +18,7 @@ import { inmArchivos, inmInmuebles, inmAsignacionesPosicion, inmPosiciones, inmV
 import { DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, documentPath, storageConfigured, storeDocument, validateDocument } from '@/lib/document-files.mjs';
 import { documentByteLimit } from '@/lib/document-limits.mjs';
 import { readDossier } from '@/lib/dossier-record';
-import { dossierDocuments, documentApplies, dossierDocumentType } from '@/lib/transaction-dossier.mjs';
+import { dossierDocuments, documentApplies, dossierDocumentType, validateExtraDocumentDescription } from '@/lib/transaction-dossier.mjs';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -62,6 +62,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const requestedType = String(body.tipoDocumento ?? '').trim();
     const tipoDocumento = dossierDocumentType(requestedType, inmueble.operacion), nombre = String(body.nombre ?? '').trim(), observacion = String(body.observacion ?? '').trim();
     if (!DOCUMENT_TYPES.has(tipoDocumento) || !nombre || nombre.length > 255 || observacion.length > 500) return NextResponse.json({ error: 'Revisa el tipo, nombre (máximo 255 caracteres) y observación (máximo 500).' }, { status: 400 });
+    try { validateExtraDocumentDescription(tipoDocumento, observacion); }
+    catch (error) { return NextResponse.json({ error: (error as Error).message }, { status: 400 }); }
     if (!canWritePropertyFile(auth.user, tipoDocumento)) return NextResponse.json({ error: 'La FASE 1 es de solo consulta para el operador.' }, { status: 403 });
     const definition = dossierDocuments.find(item => item.key === tipoDocumento);
     if (definition && !documentApplies(definition, (await readDossier(inmueble.id)).config, inmueble.operacion)) return NextResponse.json({ error: 'Guarda primero el tipo de persona y las condiciones de esta sección del expediente.' }, { status: 409 });
@@ -184,6 +186,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (body.tipoDocumento !== undefined) {
       const definition = dossierDocuments.find(item => item.key === body.tipoDocumento);
       if (!definition || body.esPortada !== undefined) return NextResponse.json({ error: 'Categoría del expediente no válida.' }, { status: 400 });
+      try { validateExtraDocumentDescription(definition.key, observacion); }
+      catch (error) { return NextResponse.json({ error: (error as Error).message }, { status: 400 }); }
       const result = await db.transaction(async tx => {
         await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, inmueble.id)).for('update');
       await assertWritable(tx, inmueble.id);
