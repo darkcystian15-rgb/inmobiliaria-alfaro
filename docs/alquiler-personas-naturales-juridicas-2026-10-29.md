@@ -33,4 +33,10 @@ Para recuperar el comportamiento anterior, revertir el commit funcional de esta 
 
 ## Publicación
 
-Pendiente de confirmar el despliegue automático de Vercel desde `main` y la respuesta del dominio oficial.
+Código funcional: `3e194ecfcc2a4f7b6b6c1773481a1e11dc71fcb7`, subido a `main`.
+
+Vercel confirmó «Deployment has completed», estado **success**, entorno **Production**, el 29 de octubre de 2026 a las 12:16:40 UTC. Despliegue GitHub `7411927553`, asociado al mismo SHA. [Panel de Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/GWQRbhp21cAHF6f2Buzg2BymmFzZ). [Versión desplegada](https://inmobiliaria-alfarov2-fnc1ygiss-puma19.vercel.app).
+
+Comprobación HTTP del dominio oficial a las 12:17 UTC: `/login` responde 200 y `/datos-inmuebles` responde 307 hacia `/login` sin sesión, conforme a la protección existente. No se comprobó la interfaz autenticada en producción. La consulta directa de la API de Vercel con la sesión local devolvió 403; el estado de publicación y la correspondencia con el commit se verificaron mediante la integración de Vercel en GitHub.
+
+La actualización documental posterior conserva exactamente el mismo código funcional y se publica por la misma integración automática.
