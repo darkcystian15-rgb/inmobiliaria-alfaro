@@ -36,4 +36,10 @@ Para volver al comportamiento anterior, revertir el commit funcional de esta ent
 
 ## Publicación
 
-Pendiente de confirmar el despliegue automático de Vercel desde `main`.
+Código funcional `a4c475d4f9c0b164338c79568ce22c301bebf0a6`, subido a `main`.
+
+Vercel confirmó «Deployment has completed», estado **success**, entorno **Production**, el 29 de octubre de 2026 a las 12:35:37 UTC. Despliegue GitHub `7412339125`, asociado al mismo SHA. [Panel de Vercel](https://vercel.com/puma19/inmobiliaria-alfarov2/6reKRo1XatnNRjaemTjhmjb5UJc7). [Versión desplegada](https://inmobiliaria-alfarov2-2dwmusfbk-puma19.vercel.app).
+
+Después del despliegue, el dominio oficial responde 200 en `/login` y 307 hacia `/login` en `/datos-inmuebles` sin sesión. La comprobación funcional de esta entrega se realizó en el navegador local con la API simulada; no se hicieron subidas reales en producción.
+
+La actualización documental posterior conserva exactamente este código funcional y se publica por la misma integración automática.
