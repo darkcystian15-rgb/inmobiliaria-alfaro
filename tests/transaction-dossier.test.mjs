@@ -107,7 +107,7 @@ test('configuration rejects malformed input and validates the single buyer type'
 });
 
 test('rental has five groups and powers depend independently on representation', () => {
-  const base = {...dossierDefaults(),arrendadorRepresentante:'no',arrendatarioRepresentante:'no'};
+  const base = {...dossierDefaults(),arrendadorTipo:'natural',arrendatarioTipo:'natural',arrendadorRepresentante:'no',arrendatarioRepresentante:'no'};
   const status = dossierStatus(base, [], 'alquiler');
   assert.deepEqual(status.sections.map(item => item.key), ['identificacion','inmueble','contratos','servicios','tasaciones']);
   assert.deepEqual(status.alerts, []);
@@ -127,15 +127,15 @@ test('rental has five groups and powers depend independently on representation',
 test('rental recognizes old party files without rewriting and keeps named contracts independently', () => {
   const files = ['VENDEDOR_DNI', 'COMPRADOR_DNI_GERENTE', 'VENDEDOR_PODER', 'COMPRADOR_PODER', 'COPIA_LITERAL', 'CONTRATO', 'CONTRATO_ALQUILER', 'VENDEDOR_RECIBO_AGUA', 'TASACION'].map(file);
   files[5].nombre = 'Contrato inicial'; files[6].nombre = 'Adenda de renovación';
-  const status = dossierStatus({arrendadorRepresentante:'si',arrendatarioRepresentante:'si'}, files, 'alquiler');
-  for (const key of ['ARRENDADOR_DNI', 'ARRENDATARIO_DNI', 'ARRENDADOR_PODER', 'ARRENDATARIO_PODER', 'COPIA_LITERAL_CRI', 'RECIBO_SERVICIO', 'TASACION_EXPRESS']) assert.equal(status.items.find(item => item.key === key).state, 'completo', key);
+  const status = dossierStatus({arrendadorTipo:'natural',arrendatarioTipo:'juridica',arrendadorRepresentante:'si',arrendatarioRepresentante:'si'}, files, 'alquiler');
+  for (const key of ['ARRENDADOR_DNI', 'ARRENDATARIO_DNI_GERENTE', 'ARRENDADOR_PODER', 'COPIA_LITERAL_CRI', 'RECIBO_SERVICIO', 'TASACION_EXPRESS']) assert.equal(status.items.find(item => item.key === key).state, 'completo', key);
   assert.deepEqual(status.items.find(item => item.key === 'CONTRATO_ALQUILER').documents.map(item => item.nombre), ['Contrato inicial', 'Adenda de renovación']);
   assert.equal(files[0].tipoDocumento, 'VENDEDOR_DNI');
 });
 test('file categories are restricted by operation for upload and reclassification', () => {
   assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'ARRENDADOR_DNI'), natural(), 'venta'), false);
   assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'VENDEDOR_FORMULARIO_RENTA'), natural(), 'alquiler'), false);
-  assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'ARRENDATARIO_PODER'), {...dossierDefaults(),arrendatarioRepresentante:'si'}, 'alquiler'), true);
+  assert.equal(documentApplies(dossierDocuments.find(item => item.key === 'ARRENDATARIO_PODER'), {...dossierDefaults(),arrendatarioTipo:'natural',arrendatarioRepresentante:'si'}, 'alquiler'), true);
 });
 
 test('municipal voucher preserves existing uploads and adds a separate no-debt certificate', () => {
@@ -259,4 +259,47 @@ test('closing needs all applicable uploads, party conditions and an assigned buy
  assert.equal(dossierStatus(config,noteOnly).complete,true);
  assert.equal(dossierClosureStatus(config,noteOnly).complete,false);
  assert.equal(dossierClosureStatus(config,uploads.map(row=>({...row,almacenamiento:'enlace'}))).complete,false);
+});
+
+
+test('rental types are independent, validated and compatible with previously saved conditions', () => {
+  const old = dossierDefaults();
+  delete old.arrendadorTipo;
+  delete old.arrendatarioTipo;
+  assert.equal(dossierInput(old).arrendadorTipo, '');
+  for (const party of ['arrendador', 'arrendatario']) {
+    assert.throws(() => dossierInput({ ...dossierDefaults(), [party + 'Tipo']: 'otra' }));
+  }
+  for (const arrendadorTipo of ['natural', 'juridica']) for (const arrendatarioTipo of ['natural', 'juridica']) {
+    const config = { ...dossierDefaults(), arrendadorTipo, arrendatarioTipo, arrendadorRepresentante: 'no', arrendatarioRepresentante: 'no' };
+    assert.deepEqual(dossierInput(config), config);
+    const status = dossierStatus(config, [], 'alquiler');
+    assert.deepEqual(status.alerts, []);
+    for (const party of ['arrendador', 'arrendatario']) {
+      const keys = status.items.filter(item => item.party === party && item.applies).map(item => item.key);
+      const prefix = party.toUpperCase();
+      assert.deepEqual(keys, config[party + 'Tipo'] === 'natural' ? [prefix + '_DNI'] : [prefix + '_FICHA_RUC', prefix + '_DNI_GERENTE', prefix + '_VIGENCIA_GERENTE']);
+    }
+    const files = status.items.filter(item => item.applies && item.required).map(item => file(item.key));
+    assert.equal(dossierClosureStatus(config, files, 'alquiler').complete, true);
+    for (const uploaded of files) {
+      assert.equal(dossierClosureStatus(config, files.filter(item => item !== uploaded), 'alquiler').complete, false);
+    }
+  }
+});
+
+test('rental requires choosing both person types and preserves documents when types change', () => {
+  const config = { ...dossierDefaults(), arrendadorRepresentante: 'no', arrendatarioRepresentante: 'no' };
+  const status = dossierStatus(config, [], 'alquiler');
+  assert.ok(status.alerts.includes('Seleccionar el tipo de persona del arrendador.'));
+  assert.ok(status.alerts.includes('Seleccionar el tipo de persona del arrendatario.'));
+  assert.equal(dossierClosureStatus(config, [], 'alquiler').complete, false);
+  const files = [file('ARRENDADOR_DNI'), file('VENDEDOR_FICHA_RUC')];
+  for (const type of ['natural', 'juridica']) {
+    const changed = dossierStatus({ ...config, arrendadorTipo: type }, files, 'alquiler');
+    assert.equal(changed.items.find(item => item.key === 'ARRENDADOR_DNI').documents.length, 1);
+    assert.equal(changed.items.find(item => item.key === 'ARRENDADOR_FICHA_RUC').documents.length, 1);
+  }
+  const represented = dossierStatus({ ...config, arrendadorTipo: 'natural', arrendadorRepresentante: 'si' }, [], 'alquiler');
+  assert.equal(represented.items.find(item => item.key === 'ARRENDADOR_VIGENCIA_PODER').state, 'pendiente');
 });
