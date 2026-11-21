@@ -378,8 +378,9 @@ test('plans and catalogue are independently optional and require an uploaded fil
 test('contracts follow the agreed sale and rental order and closing requirements', () => {
   const sale = dossierStatus(dossierDefaults()).items.filter(item => item.section === 'contratos');
   assert.deepEqual(sale.map(item => [item.label, item.required]), [
-    ['Contrato de Intervención Inmobiliaria', true], ['Estructura de Contrato Promesa-Venta', false],
-    ['Estructura de Minuta', true], ['Contrato de Promesa de Venta', false], ['Minuta', true], ['Escritura Pública', true], ['Otros documentos', false],
+    ['Contrato de Intervención Inmobiliaria', true], ['Estructura de Contrato de Intermediación Inmobiliaria', false],
+    ['3.3 Estructura de Contrato Promesa Venta', false], ['3.4 Contrato de Promesa de Venta', false],
+    ['3.5 Estructura Minuta', true], ['3.6 Minuta', true], ['3.7 Escritura Pública', true], ['Otros documentos', false],
   ]);
   const rental = dossierStatus(dossierDefaults(), [], 'alquiler').items.filter(item => item.section === 'contratos');
   assert.deepEqual(rental.map(item => [item.label, item.required]), [
