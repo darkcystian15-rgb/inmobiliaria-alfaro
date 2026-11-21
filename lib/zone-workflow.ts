@@ -5,6 +5,7 @@ export const zoneWorkflowPaths = new Set([
   '/tasaciones-pendientes', '/registrar-tasaciones', '/tasaciones-negociadas-registradas',
   '/textos-pendientes', '/registrar-textos',
   '/publicaciones-pendientes', '/registrar-publicaciones',
+  '/documentos-contratos',
   '/tasaciones-textos-pendientes',
 ]);
 

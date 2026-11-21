@@ -16,38 +16,44 @@ export type PortfolioProperty = {
   estado: string;
   tipoHistorico?: string | null;
   precioVenta?: string | null; precioVentaMoneda?: string;
+  precioObjetivo?: string | null; precioObjetivoMoneda?: string;
   visitaPendiente?: boolean;
   tasacionPendiente?: boolean;
-  materialPendiente?: boolean; difusionPendiente?: boolean;
+  textoPorRevisar?: boolean; materialPendiente?: boolean; difusionPendiente?: boolean;
   negociacionEnCurso?: boolean;
   actividades?: { publicacion: { publicado: boolean }; tasacion: { situacion: string | null } };
 };
 
 const tones = {
+  review: "border-amber-200 bg-amber-50 text-amber-900",
   neutral: "border-slate-200 bg-slate-50 text-slate-700",
   visit: "border-amber-200 bg-amber-50 text-amber-900",
   valuation: "border-violet-200 bg-violet-50 text-violet-900",
   material: "border-blue-200 bg-blue-50 text-blue-900",
+  publication: "border-red-200 bg-red-50 text-[#c80000]",
   published: "border-emerald-200 bg-emerald-50 text-emerald-900",
 };
 
-export default function PortfolioLabelRow({ property: x, onOpen, actionLabel = "Ver detalle", statusMode = "progress" }: {
-  property: PortfolioProperty; onOpen: () => void; actionLabel?: string; statusMode?: "progress" | "lifecycle";
+export default function PortfolioLabelRow({ property: x, onOpen, actionLabel = "Ver detalle", statusMode = "progress", priceField = "precioVenta" }: {
+  property: PortfolioProperty; onOpen: () => void; actionLabel?: string; statusMode?: "progress" | "lifecycle"; priceField?: "precioVenta" | "precioObjetivo";
 }) {
   const states: { label: string; tone: keyof typeof tones }[] = [];
   if (statusMode === "lifecycle") states.push({ label: x.estado === "Histórico" ? "Histórico" : "Activo", tone: x.estado === "Histórico" ? "neutral" : "published" });
   else if (x.estado === "Histórico") states.push({ label: x.tipoHistorico || "Histórico", tone: "neutral" });
   else {
+    if (x.textoPorRevisar) states.push({label:"Texto por revisar",tone:"review"});
     if (x.visitaPendiente) states.push({ label: "Visita pendiente", tone: "visit" });
     if (x.tasacionPendiente) states.push({ label: "Tasación pendiente", tone: "valuation" });
-    if (x.difusionPendiente) states.push({ label:"Publicación pendiente",tone:"material" });
+    if (x.difusionPendiente) states.push({ label:"Publicación pendiente",tone:"publication" });
     if (x.materialPendiente) states.push({ label: "Texto pendiente", tone: "material" });
     if (x.actividades?.publicacion.publicado) states.push({ label: "Publicación registrada", tone: "published" });
     if (x.actividades?.tasacion.situacion === "pendiente_aprobacion") states.push({ label: "Tasación anterior por revisar", tone: "valuation" });
     if (x.negociacionEnCurso) states.push({ label: "Seguimiento anterior", tone: "material" });
     if (!states.length) states.push({ label: "En seguimiento", tone: "material" });
   }
-  const price = x.precioVenta ? formatPrice(x.precioVenta, x.precioVentaMoneda) : "Por definir";
+  const amount = x[priceField];
+  const currency = priceField === "precioObjetivo" ? x.precioObjetivoMoneda : x.precioVentaMoneda;
+  const price = amount ? formatPrice(amount, currency) : "Por definir";
 
   return <button type="button" onClick={onOpen} aria-label={`${actionLabel} de ${x.propietario || "Sin contacto"}, ${x.posicion ? `posición ${x.posicion}` : "sin posición"}`} className="group grid w-full grid-cols-[4rem_minmax(0,1fr)] items-start gap-3 px-4 py-4 text-left transition hover:bg-red-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#c80000] sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:items-center">
     <span className="flex min-h-8 items-center gap-2"><span className="font-mono text-sm font-semibold text-slate-500">{x.posicion ? String(x.posicion).padStart(2, "0") : "—"}</span><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" /></span>

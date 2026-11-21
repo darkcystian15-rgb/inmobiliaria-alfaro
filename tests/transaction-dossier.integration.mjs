@@ -117,7 +117,7 @@ try {
   // Rental files, independent requirements and contract names on disposable local fixtures.
   const rentalUrl = '/api/inmuebles/3/expediente';
   result = await request(rentalUrl, operator);
-  assert.equal(result.data.status.sections.length, 5);
+  assert.equal(result.data.status.sections.length, 10);
   assert.deepEqual(result.data.status.alerts, []);
   assert.equal((await upload('VENDEDOR_FORMULARIO_RENTA', 'No pertenece al alquiler', pdf, operator, 'pdf', 3)).response.status, 409);
   assert.equal((await upload('ARRENDADOR_DNI', 'No pertenece a venta', pdf, operator)).response.status, 409);
@@ -252,9 +252,9 @@ try {
   await page.getByText('2 archivos guardados.', { exact: true }).waitFor();
   assert.equal((await db.query("SELECT COUNT(*) n FROM inm_archivos WHERE tipo_documento='COMPRADOR_DNI' AND nombre IN ('DNI comprador desde carpeta','imagen-arrastrada')"))[0][0].n, 2);
   assert.equal((await request(url, admin)).data.config.compradorBusquedaNota, 'Nota de búsqueda registrada desde la carpeta');
-  await dropFiles(directBuyerDrop, [{ name: 'grande.pdf', type: 'application/pdf', bytes: Buffer.alloc(4 * 1024 * 1024 + 1) }]);
+  await dropFiles(directBuyerDrop, [{ name: 'grande.pdf', type: 'application/pdf', bytes: Buffer.alloc(100 * 1024 * 1024 + 1) }]);
   await page.getByRole('button', { name: 'Subir archivos', exact: true }).click();
-  await page.getByRole('alert').filter({ hasText: 'supera 4 MB' }).waitFor();
+  await page.getByRole('alert').filter({ hasText: 'supera 100 MB' }).waitFor();
   await page.getByRole('button', { name: 'Quitar selección', exact: true }).click();
   // A condition can deactivate a previous document without hiding or deleting it.
   await buyerConditions.getByRole('combobox', { name: /^Tipo de persona/ }).selectOption('juridica');

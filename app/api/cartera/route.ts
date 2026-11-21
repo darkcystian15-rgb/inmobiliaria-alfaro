@@ -1,3 +1,4 @@
+import {textNeedsReview} from '@/lib/publication-review.mjs';
 import { propertyZoneName, zoneCondition, positionZoneCondition } from "@/lib/zone-scope";
 import { propertyAddress } from "@/lib/property-address.mjs";
 import { publicationReadiness } from "@/lib/publication-readiness";
@@ -271,6 +272,8 @@ export async function GET(request: Request) {
       number,
       {
         tieneTexto: boolean;
+        textoPorRevisar: boolean;
+        texto: string;
         publicado: boolean;
         fechaPublicacion: Date | null;
       }
@@ -278,7 +281,9 @@ export async function GET(request: Request) {
 
     for (const publicacion of publicaciones) {
       publicacionPorInmueble.set(publicacion.inmuebleId, {
+        textoPorRevisar: textNeedsReview(publicacion),
         tieneTexto: Boolean(publicacion.texto?.trim() && publicacion.textoRealizado),
+        texto: publicacion.texto ?? "",
         publicado: publicacion.publicado,
         fechaPublicacion: publicacion.fechaPublicacion,
       });
@@ -378,6 +383,7 @@ const materialPendiente =
             textoPendiente,
         difusionPendiente: materialHabilitado && Boolean(publicacion?.tieneTexto) && !publicacion?.publicado,
         textoRealizado: Boolean(publicacion?.tieneTexto),
+        textoPorRevisar: publicacion?.textoPorRevisar ?? false,
           },
 
           negociacion: {
@@ -389,6 +395,7 @@ const materialPendiente =
             existe: Boolean(publicacion),
             publicado: publicacion?.publicado ?? false,
             tieneTexto: publicacion?.tieneTexto ?? false,
+            texto: publicacion?.texto ?? "",
             fechaPublicacion: publicacion?.fechaPublicacion ?? null,
           },
         },
@@ -406,6 +413,7 @@ const materialPendiente =
         textoPendiente,
         difusionPendiente: materialHabilitado && Boolean(publicacion?.tieneTexto) && !publicacion?.publicado,
         textoRealizado: Boolean(publicacion?.tieneTexto),
+        textoPorRevisar: publicacion?.textoPorRevisar ?? false,
         negociacionEnCurso: negociacion?.enCurso ?? false,
 
         fechaRegistro: row.fechaRegistro,

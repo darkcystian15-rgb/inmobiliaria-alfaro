@@ -1,5 +1,6 @@
 "use client";
 
+import {textNeedsReview} from '@/lib/publication-review.mjs';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { requestJson } from '@/lib/client-request';
@@ -22,7 +23,7 @@ type Screen = keyof typeof workflowScreens;
 type Item = PropertyPrices & PublicationWorkflow & {
   inmuebleId: number; id: number | null; codigo: string; zona: string; posicion: string;
   propietario: string; tipo: string; operacion: string; direccion: string | null;
-  ubicacion?: string; texto: string; etapa: string;
+  ubicacion?: string; modeloTexto?: string; texto: string; etapa: string;
 };
 export default function PublicationWorkflowWorkspace({ screen }: { screen: Screen }) {
   return <Suspense fallback={<LoadingCards label="Cargando inmuebles…" />}><Workspace screen={screen} /></Suspense>;
@@ -33,7 +34,7 @@ function Workspace({ screen }: { screen: Screen }) {
   const selected = params.get('inmueble'), zone = params.get('zona');
   const [items, setItems] = useState<Item[]>([]), [loading, setLoading] = useState(true), [error, setError] = useState('');
   const [dirty, setDirty] = useState(false), [busy, setBusy] = useState(false);
-  const [search, setSearch] = useState(''), [registered, setRegistered] = useState(false);
+  const [search, setSearch] = useState(''), [registered, setRegistered] = useState(false), [reviewOnly,setReviewOnly] = useState(false);
   const load = useCallback(async (signal?: AbortSignal) => {
     if (!zone || zone === '*') return;
     try {
@@ -52,7 +53,8 @@ function Workspace({ screen }: { screen: Screen }) {
   }, [load]);
   const reload = useCallback(async () => { await load(); window.dispatchEvent(new Event('workflow-updated')); }, [load]);
   const scoped = useMemo(() => items.filter(item => Boolean(zone && inZone(item, zone))), [items, zone]);
-  const eligible = scoped.filter(item => matchesWorkflowScreen(item, config.stage, registration && registered));
+  const reviewCount = scoped.filter(item=>textNeedsReview(item)).length;
+  const eligible = scoped.filter(item => reviewOnly && config.stage === 'texto' ? textNeedsReview(item) : matchesWorkflowScreen(item, config.stage, registration && registered));
   const visible = filterTaskProperties(eligible, search);
   const chosen = selected ? scoped.find(item => String(item.inmuebleId) === selected) : null;
   const pendingPath = config.stage === 'texto' ? '/textos-pendientes' : '/publicaciones-pendientes';
@@ -69,14 +71,15 @@ function Workspace({ screen }: { screen: Screen }) {
         <div className="flex flex-wrap items-center justify-between gap-3"><nav aria-label="Ruta de la carpeta" className="flex min-w-0 flex-wrap items-center gap-3"><Link className="cartera-folder-navigation inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-amber-100" href="/cartera"><FolderIcon className="h-5 w-5 shrink-0 text-amber-500" />← Todas las zonas</Link><span aria-hidden="true" className="text-slate-400">/</span><ZoneContext name={zone || ""} tone="folder" /></nav>{registration ? <Link href={`${pendingPath}?zona=${encodeURIComponent(zone || '')}`} className="aa-button aa-button-secondary">Ver pendientes</Link> : <Link href={`${config.register}?zona=${encodeURIComponent(zone || '')}`} className="aa-button aa-button-primary">{config.stage === 'tasacion' ? 'Registrar tasaciones' : config.stage === 'texto' ? 'Registrar textos' : 'Registrar publicaciones'}</Link>}</div>
         {registration && selected ? chosen ? <article className="aa-card space-y-5 p-5 sm:p-6">
           <PropertyListIdentity code={chosen.codigo} position={chosen.posicion} contact={chosen.propietario} operation={chosen.operacion} type={chosen.tipo} location={chosen.ubicacion || chosen.direccion} positionClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-sm font-bold" />
-          {config.stage === 'publicacion' && chosen.etapa === 'texto_pendiente' ? <Feedback tone="error">Primero completa el texto comercial.<Link href={workflowPropertyHref('/registrar-textos', chosen)} className="aa-button aa-button-primary mt-3">Registrar texto</Link></Feedback> : <PropertyPublicationEditor key={`${screen}:${chosen.inmuebleId}`} propertyId={chosen.inmuebleId} text={chosen.texto} exists={Boolean(chosen.id)} publication={chosen} onSaved={reload} onDirtyChange={setDirty} onBusyChange={setBusy} mode={config.stage === 'texto' ? 'text' : 'publication'} initialEditing={config.stage === 'texto' && chosen.etapa === 'texto_pendiente'} initialEditingDiffusion={config.stage === 'publicacion' && chosen.etapa === 'difusion_pendiente'} />}
-          {config.stage === 'texto' && chosen.etapa !== 'texto_pendiente' && <Feedback tone="success">Texto realizado. {chosen.etapa === 'completada' ? 'La publicación registrada se conserva.' : 'Continúa con el registro de la publicación.'}<Link href={workflowPropertyHref('/registrar-publicaciones', chosen)} className="aa-button aa-button-primary mt-3">{chosen.etapa === 'completada' ? 'Consultar publicación' : 'Registrar publicación'}</Link></Feedback>}
-          {config.stage === 'publicacion' && chosen.etapa === 'completada' && <Feedback tone="success">Publicación registrada. Todas las acciones elegidas están confirmadas.</Feedback>}
+          {config.stage === 'publicacion' && chosen.etapa === 'texto_pendiente' ? <Feedback tone="error">Primero completa el texto comercial.<Link href={workflowPropertyHref('/registrar-textos', chosen)} className="aa-button aa-button-primary mt-3">Registrar texto</Link></Feedback> : <PropertyPublicationEditor key={`${screen}:${chosen.inmuebleId}`} propertyId={chosen.inmuebleId} text={chosen.texto} textModel={chosen.modeloTexto} exists={Boolean(chosen.id)} publication={chosen} onSaved={reload} onDirtyChange={setDirty} onBusyChange={setBusy} mode={config.stage === 'texto' ? 'text' : 'publication'} initialEditing={config.stage === 'texto' && (chosen.etapa === 'texto_pendiente'||textNeedsReview(chosen))} initialEditingDiffusion={config.stage === 'publicacion' && chosen.etapa === 'difusion_pendiente'} />}
+          {config.stage === 'texto' && chosen.etapa !== 'texto_pendiente' && !textNeedsReview(chosen) && <Feedback tone="success">Texto realizado. {chosen.etapa === 'completada' ? 'La publicación registrada se conserva.' : 'Continúa con el registro de la publicación.'}<Link href={workflowPropertyHref('/registrar-publicaciones', chosen)} className="aa-button aa-button-primary mt-3">{chosen.etapa === 'completada' ? 'Consultar publicación' : 'Registrar publicación'}</Link></Feedback>}
+          {config.stage === 'publicacion' && chosen.etapa === 'completada' && <Feedback tone="success">Publicación completada en los medios elegidos. El Portal web se gestiona por separado.</Feedback>}
           <Link className="text-sm font-semibold text-red-700" href={`/datos-inmuebles?codigo=${chosen.inmuebleId}&zona=${encodeURIComponent(chosen.zona)}&carpeta=precios`}>Consultar tasaciones →</Link>
           <Link className="text-sm font-semibold text-red-700" href={`/datos-inmuebles?zona=${encodeURIComponent(chosen.zona)}&codigo=${chosen.inmuebleId}&carpeta=${config.stage === 'texto' ? 'textos' : 'publicaciones'}`}>Abrir ficha del inmueble →</Link>
           <Link className="aa-button aa-button-secondary" href={`${path}?zona=${encodeURIComponent(zone || '')}`}>Volver al listado</Link>
         </article> : <Feedback tone="error">El inmueble no está disponible en esta etapa o zona. Consulta el listado o revisa primero su tasación.</Feedback> : <>
-          {registration && <div className="flex flex-wrap gap-2" role="group" aria-label="Estado de los registros"><button type="button" aria-pressed={!registered} onClick={() => setRegistered(false)} className={`aa-button ${!registered ? 'aa-button-primary' : 'aa-button-secondary'}`}>Pendientes ({scoped.filter(item => matchesWorkflowScreen(item, config.stage)).length})</button><button type="button" aria-pressed={registered} onClick={() => setRegistered(true)} className={`aa-button ${registered ? 'aa-button-primary' : 'aa-button-secondary'}`}>{config.stage === 'texto' ? 'Textos registrados' : 'Publicaciones registradas'} ({scoped.filter(item => matchesWorkflowScreen(item, config.stage, true)).length})</button></div>}
+          {registration && <div className="flex flex-wrap gap-2" role="group" aria-label="Estado de los registros"><button type="button" aria-pressed={!registered} onClick={() => {setRegistered(false);setReviewOnly(false);}} className={`aa-button ${!registered ? 'aa-button-primary' : 'aa-button-secondary'}`}>Pendientes ({scoped.filter(item => matchesWorkflowScreen(item, config.stage)).length})</button><button type="button" aria-pressed={registered} onClick={() => {setRegistered(true);setReviewOnly(false);}} className={`aa-button ${registered ? 'aa-button-primary' : 'aa-button-secondary'}`}>{config.stage === 'texto' ? 'Textos registrados' : 'Publicaciones registradas'} ({scoped.filter(item => matchesWorkflowScreen(item, config.stage, true)).length})</button></div>}
+          {config.stage === 'texto' && (reviewCount > 0 || reviewOnly) && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4"><p className="text-sm text-amber-900">{reviewCount ? `Hay ${reviewCount} texto(s) registrado(s) con datos por confirmar. Las publicaciones existentes se conservan.` : 'No quedan textos por revisar en esta zona.'}</p><button type="button" aria-pressed={reviewOnly} onClick={()=>{setReviewOnly(!reviewOnly);setRegistered(false);}} className="aa-button aa-button-secondary mt-3">{reviewOnly ? 'Ver todos los pendientes' : `Solo textos por revisar (${reviewCount})`}</button></div>}
           <div className="aa-card p-4"><PropertyTaskSearch value={search} onChange={setSearch} count={visible.length} total={eligible.length} /></div>
           {!visible.length ? <div className="aa-card p-6 text-sm text-slate-500">{search ? 'No hay inmuebles que coincidan con la búsqueda.' : registered ? 'No hay registros completados en esta selección.' : 'No hay pendientes en esta selección.'}</div> : <WorkflowPropertyList items={visible} stage={config.stage} title={config.title} register={config.register} action={config.action} registered={registered} />}
         </>}

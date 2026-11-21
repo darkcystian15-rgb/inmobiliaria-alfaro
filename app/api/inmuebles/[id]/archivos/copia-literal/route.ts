@@ -1,3 +1,7 @@
+import { readDossier, writeSaneamiento } from '@/lib/dossier-record';
+import { dossierDocuments, documentApplies, validateExtraDocumentDescription } from '@/lib/transaction-dossier.mjs';
+import { isSaneamientoType, saneamientoInput } from '@/lib/saneamiento-folders.mjs';
+import { canWritePropertyFile } from '@/lib/phase-one-access.mjs';
 import { assertWritable } from '@/lib/data-integrity-service';
 import { prepareUpload } from '@/lib/data-integrity.mjs';
 import { pool } from '@/lib/db';
@@ -27,23 +31,34 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const [property] = await db.select().from(inmInmuebles).where(propertyIdentifierCondition((await context.params).id)).limit(1);
     if (!property) return NextResponse.json({ error: 'Inmueble no encontrado.' }, { status: 404 });
     const secret = process.env.DOCUMENT_HOSTING_TOKEN;
+    async function validateAccess(input: { type: string; observacion: string; subcarpetaId?: string }, executor: Parameters<typeof readDossier>[1] = db) {
+      if (!canWritePropertyFile(auth.user, input.type)) throw Error('La FASE 1 es de solo consulta para el operador.');
+      validateExtraDocumentDescription(input.type, input.observacion);
+      const record = await readDossier(property.id, executor);
+      const definition = dossierDocuments.find(item => item.key === input.type);
+      if (definition && !documentApplies(definition, record.config, property.operacion)) throw Error('Guarda primero las condiciones de esta sección del expediente.');
+      if (input.subcarpetaId && (!isSaneamientoType(input.type) || property.operacion === 'alquiler' || !record.config.saneamiento.folders.some(folder => folder.id === input.subcarpetaId))) throw Error('Subcarpeta de saneamiento no válida.');
+      return record;
+    }
+
     if (body.action === 'prepare') {
       const input = literalUploadInput(body);
+      await validateAccess(input);
       // Detect an older hosting service before sending a large file from the browser.
       const endpoint = new URL(process.env.DOCUMENT_HOSTING_URL || '');
       if (endpoint.protocol !== 'https:' || !secret) throw Error('Hosting no configurado.');
       endpoint.searchParams.set('capabilities', '1');
       const capabilities = await fetch(endpoint, { headers: { Authorization: `Bearer ${secret}` }, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000) });
-      if (!capabilities.ok || (await capabilities.json()).literalUploadVersion !== 1) return NextResponse.json({ error: 'Falta actualizar el servicio de documentos en cPanel para habilitar copias literales de hasta 50 MB. Los archivos de hasta 4 MB siguen disponibles.' }, { status: 503 });
+      if (!capabilities.ok || (await capabilities.json()).documentUploadVersion !== 2) return NextResponse.json({ error: 'Falta actualizar el servicio de documentos en cPanel para habilitar documentos de hasta 100 MB.' }, { status: 503 });
       // Check the browser's actual origin before reserving storage or signing a token.
       const origin = request.headers.get('origin') || new URL(request.url).origin;
       const preflight = await fetch(endpoint, { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'PUT', 'Access-Control-Request-Headers': 'authorization,content-type' }, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000) });
-      if (!preflight.ok || preflight.headers.get('access-control-allow-origin') !== origin) return NextResponse.json({ error: 'Este dominio no está autorizado para subir copias literales de más de 4 MB. Abre el mismo inmueble en https://intranet.inmobiliariaalbertoalfaro.com.pe o solicita al administrador que autorice este dominio en el servidor de documentos.' }, { status: 403 });
+      if (!preflight.ok || preflight.headers.get('access-control-allow-origin') !== origin) return NextResponse.json({ error: 'Este dominio no está autorizado para subir documentos. Abre el mismo inmueble en https://intranet.inmobiliariaalbertoalfaro.com.pe o solicita al administrador que autorice este dominio en el servidor de documentos.' }, { status: 403 });
       const [position] = await db.select({ numero: inmPosiciones.numero }).from(inmAsignacionesPosicion).innerJoin(inmPosiciones, eq(inmPosiciones.id, inmAsignacionesPosicion.posicionId)).where(eq(inmAsignacionesPosicion.inmuebleId, property.id)).limit(1);
-      const path = documentPath({ position: position?.numero ?? null, propertyId: property.id, propertyCode: property.codigo, type: 'COPIA_LITERAL_CRI', name: input.filename.toLowerCase(), uniqueId: randomUUID() });
+      const path = documentPath({ position: position?.numero ?? null, propertyId: property.id, propertyCode: property.codigo, type: input.type, name: input.filename.toLowerCase(), uniqueId: randomUUID() });
       await db.transaction(async tx=>{await tx.select({id:inmInmuebles.id}).from(inmInmuebles).where(eq(inmInmuebles.id,property.id)).for('update');await assertWritable(tx,property.id);});
       await prepareUpload(pool,property.id,path);
-      const token = signLiteralUpload({ ...input, path, type: 'COPIA_LITERAL_CRI', propertyId: property.id, userId: auth.user.id, expires: Math.floor(Date.now() / 1000) + 1800 }, secret);
+      const token = signLiteralUpload({ ...input, path, propertyId: property.id, userId: auth.user.id, expires: Math.floor(Date.now() / 1000) + 1800 }, secret);
       endpoint.searchParams.delete('capabilities'); endpoint.searchParams.set('path', path);
       return NextResponse.json({ token, uploadUrl: endpoint.toString() }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
@@ -61,11 +76,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (Number(response.headers.get('content-length')) !== claims.size) throw Error('El archivo recibido no tiene el tamaño autorizado.');
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (bytes.length !== claims.size) throw Error('La subida está incompleta.');
-    const { contentType } = validateDocument(claims.filename, bytes, 'COPIA_LITERAL_CRI');
+    const { contentType } = validateDocument(claims.filename, bytes, claims.type);
     const usuarioId = auth.user.id;
     const created = await db.transaction(async tx => {
       await tx.select({ id: inmInmuebles.id }).from(inmInmuebles).where(eq(inmInmuebles.id, property.id)).for('update');
       await assertWritable(tx,property.id);
+      const record = await validateAccess(claims, tx);
       const [job] = await tx.select().from(inmTareasArchivos).where(eq(inmTareasArchivos.ruta,claims.path)).limit(1).for('update');
       const [existing] = await tx.select({ id: inmArchivos.id }).from(inmArchivos).where(and(eq(inmArchivos.inmuebleId, property.id), eq(inmArchivos.rutaAlmacenamiento, claims.path))).limit(1);
       if (existing) return existing;
@@ -75,8 +91,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       const storedSize = Number(stillStored.headers.get('content-length'));
       await stillStored.body?.cancel();
       if (storedSize !== claims.size) throw Error('La subida está incompleta.');
-      const values = { inmuebleId: property.id, tipoDocumento: 'COPIA_LITERAL_CRI', nombre: claims.nombre, enlace: claims.path, almacenamiento: 'hosting', rutaAlmacenamiento: claims.path, nombreOriginal: claims.filename, tipoMime: contentType, tamanoBytes: claims.size, observacion: claims.observacion || null, usuarioId };
+      const values = { inmuebleId: property.id, tipoDocumento: claims.type, nombre: claims.nombre, enlace: claims.path, almacenamiento: 'hosting', rutaAlmacenamiento: claims.path, nombreOriginal: claims.filename, tipoMime: contentType, tamanoBytes: claims.size, observacion: claims.observacion || null, usuarioId };
       const [row] = await tx.insert(inmArchivos).values(values).$returningId();
+      if (claims.subcarpetaId) {
+        const saneamiento = saneamientoInput(record.config.saneamiento);
+        saneamiento.files[String(row.id)] = claims.subcarpetaId;
+        await writeSaneamiento(property.id, record, saneamiento, tx);
+      }
       await tx.insert(securityAudit).values(auditValues(usuarioId, 'file.upload', `file:${row.id}`));
       await tx.insert(inmTimeline).values({ inmuebleId: property.id, usuarioId, evento: 'archivo_subido', observacion: JSON.stringify({ archivo: fileActivitySnapshot({ ...values, id: row.id }, property.operacion) }) });
       await tx.delete(inmTareasArchivos).where(eq(inmTareasArchivos.id,job.id));
@@ -86,7 +107,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     if (/expediente está cerrado|eliminación en curso/.test(message)) return NextResponse.json({error:message},{status:409});
-    const safe = /^(Selecciona|La copia|Revisa|Datos de archivo|Autorización|La autorización|Ruta no válida|El archivo recibido|La subida está)/.test(message);
-    return NextResponse.json({ error: safe ? message : 'No se pudo procesar la copia literal. Comprueba la conexión y la actualización del servicio de documentos.' }, { status: safe ? 400 : 503 });
+    const safe = /^(Selecciona|El documento|La FASE|Guarda primero|Subcarpeta|Revisa|Datos de archivo|Autorización|La autorización|Ruta no válida|El archivo recibido|La subida está)/.test(message);
+    return NextResponse.json({ error: safe ? message : 'No se pudo procesar el documento. Comprueba la conexión y la actualización del servicio de documentos.' }, { status: safe ? 400 : 503 });
   }
 }

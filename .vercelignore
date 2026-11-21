@@ -7,3 +7,12 @@ backup-dinamizacion-*
 *.tsbuildinfo
 
 restore-points/
+tests/info/
+tests/info1/
+tests/info2/
+tests/info3/
+tests/info4/
+tests/info5/
+.aws/
+.codex/
+.agents/

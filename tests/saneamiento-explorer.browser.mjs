@@ -1,0 +1,35 @@
+// Real React UI with isolated, in-memory API responses. No business writes.
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import http from 'node:http';
+import { build } from 'esbuild';
+import { compile } from '@tailwindcss/node';
+import { Scanner } from '@tailwindcss/oxide';
+import { dossierDefaults } from '../lib/transaction-dossier.mjs';
+import { changeSaneamiento } from '../lib/saneamiento-folders.mjs';
+const { chromium } = await import('/home/codespace/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/index.mjs');
+const out='output/saneamiento-explorador';await fs.mkdir(out,{recursive:true});
+const compiled=await compile(await fs.readFile('app/globals.css','utf8'),{base:new URL('../app/',import.meta.url).pathname,onDependency(){}});
+const scanner=new Scanner({sources:[{base:process.cwd(),pattern:'app/**/*.{tsx,ts}',negated:false}]});const css=compiled.build(scanner.scan());
+await build({stdin:{contents:`import React from 'react';import {createRoot} from 'react-dom/client';import Dossier from './app/components/TransactionDossier';const noop=()=>{};function App(){const [files,setFiles]=React.useState([]);const load=React.useCallback(async()=>setFiles(await (await fetch('/fixture-files')).json()),[]);React.useEffect(()=>{load()},[load]);return <main className="mx-auto max-w-4xl p-4"><Dossier propertyId={1} operation="venta" view="carpeta" section="cargas" showHeading={false} readOnly={location.search.includes('readonly')} files={files} uploadReady administrator onChanged={load} onBusyChange={noop} onDirtyChange={noop}/></main>}createRoot(document.getElementById('root')).render(<App/>);`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,jsx:'automatic',outfile:`${out}/workspace.js`,define:{'process.env.NODE_ENV':'"production"'}});
+const script=await fs.readFile(`${out}/workspace.js`);const server=http.createServer((req,res)=>{res.setHeader('content-type',req.url==='/workspace.js'?'text/javascript':'text/html');res.end(req.url==='/workspace.js'?script:`<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><script src="/workspace.js"></script>`)});
+await new Promise(resolve=>server.listen(3144,'127.0.0.1',resolve));
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+try{for(const width of [375,1440]){
+const context=await browser.newContext({viewport:{width,height:1000}}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+let record={config:{...dossierDefaults(),cargas:true},version:1},files=[],nextId=10;
+await page.route('**/fixture-files',r=>r.fulfill({json:files}));
+await page.route('**/api/inmuebles/1/expediente',r=>r.fulfill({json:record}));
+await page.route('**/api/inmuebles/1/saneamiento',async r=>{const body=r.request().postDataJSON();record={config:{...record.config,saneamiento:changeSaneamiento(record.config.saneamiento,body,files,'folder-test')},version:record.version+1};await r.fulfill({json:record})});
+await page.route('**/api/inmuebles/1/archivos',async r=>{assert.equal(r.request().method(),'POST');const data=r.request().postDataBuffer().toString();assert.match(data,/name="subcarpetaId"/);const folder=record.config.saneamiento.folders[0];assert.ok(data.includes(folder.id));const id=nextId++;files.push({id,nombre:'Documento con nombre largo para comprobar distribución en móvil y escritorio',nombreOriginal:'prueba.pdf',tipoDocumento:data.includes('OTROS_CARGAS')?'OTROS_CARGAS':'LEVANTAMIENTO_CARGAS',almacenamiento:'hosting',enlace:'/fixture.pdf',tipoMime:'application/pdf',tamanoBytes:100,observacion:null});record.config.saneamiento.files[id]=folder.id;record.version++;await r.fulfill({json:{ok:true}})});
+await page.goto('http://127.0.0.1:3144');await page.getByRole('button',{name:'Nueva subcarpeta'}).click();await page.getByLabel('Nombre de la subcarpeta').fill('Independización');await page.getByRole('button',{name:'Crear subcarpeta',exact:true}).click();await page.getByText('Independización',{exact:true}).waitFor();
+await page.getByRole('button',{name:'↑ Subir archivos',exact:true}).click();assert.match(await page.getByLabel('Subir a esta ubicación').innerText(),/Destino: Independización/);
+await page.locator('input[type=file]').setInputFiles({name:'prueba.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4\nfixture')});assert.equal(await page.getByRole('button',{name:'📁 Saneamiento',exact:true}).isDisabled(),true);assert.equal(await page.getByText('Agregar descripción (opcional)',{exact:true}).isVisible(),true);assert.equal(await page.getByLabel('Descripción del archivo 1').isVisible(),false);
+await page.getByRole('button',{name:'Subir archivos',exact:true}).click();await page.locator('article').waitFor();await page.getByRole('button',{name:'Cerrar carga'}).click();await page.screenshot({path:`${out}/archivos-${width}.png`,fullPage:true});
+await page.locator('article summary').click();await page.getByLabel(/Ubicación de Documento/).selectOption('');await page.getByRole('button',{name:'📁 Saneamiento',exact:true}).click();await page.locator('article').waitFor();
+await page.getByRole('button',{name:/Independización.*0 archivo/}).click();await page.getByRole('button',{name:'↑ Subir archivos',exact:true}).click();await page.getByLabel('Tipo de documento').selectOption('OTROS_CARGAS');await page.locator('input[type=file]').setInputFiles({name:'otro.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4\nfixture')});assert.equal(await page.getByLabel('Descripción del archivo 1').isVisible(),true);await page.getByRole('button',{name:'Subir archivos',exact:true}).click();assert.equal(files.length,1);await page.getByLabel('Descripción del archivo 1').fill('Sustento adicional');await page.getByRole('button',{name:'Subir archivos',exact:true}).click();await page.locator('article').waitFor();await page.getByRole('button',{name:'Cerrar carga'}).click();
+await page.getByText('Opciones de subcarpeta',{exact:true}).click();assert.equal(await page.getByRole('button',{name:'Eliminar subcarpeta vacía'}).isDisabled(),true);await page.getByRole('button',{name:'Renombrar subcarpeta',exact:true}).click();await page.getByLabel('Nombre de la subcarpeta').fill('Sustentos revisados');await page.getByRole('button',{name:'Guardar nombre'}).click();await page.getByRole('navigation',{name:'Ubicación en saneamiento'}).getByText('Sustentos revisados',{exact:true}).waitFor();
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
+await page.goto('http://127.0.0.1:3144?readonly');await page.getByRole('button',{name:/Sustentos revisados/}).click();assert.equal(await page.getByRole('button',{name:'↑ Subir archivos',exact:true}).count(),0);assert.equal(await page.getByText('Más acciones',{exact:true}).count(),0);await page.screenshot({path:`${out}/cerrado-${width}.png`,fullPage:true});
+await context.close();console.log(`Crear, navegar, subir, descripción obligatoria, mover, renombrar y solo lectura: ${width}px correcto`);
+}}finally{await browser.close();server.close()}

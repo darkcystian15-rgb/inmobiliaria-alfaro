@@ -43,6 +43,7 @@ export default function PhotoUploader({ propertyId, visitaId, photos, onUploaded
   }
   return <div className="space-y-3">
     <FileDropZone label="Agregar fotografías" accept={IMAGE_ACCEPT} inputRef={input} disabled={busy || disabled}
+      limits="20 fotos por carga"
       help="JPG, PNG o WebP. Hasta 25 MB por imagen original y 20 fotos por carga. Se comprimen automáticamente."
       onFiles={files => { void upload(files); }} onRejected={setError} />
     {progress && <Feedback tone={busy ? "info" : "success"}>{progress}</Feedback>}

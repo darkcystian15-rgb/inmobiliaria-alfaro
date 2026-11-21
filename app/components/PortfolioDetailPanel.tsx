@@ -10,6 +10,7 @@ import WorkflowNavigationGuard from './WorkflowNavigationGuard';
 import PropertySummary from './PropertySummary';
 import StatusBadge from './StatusBadge';
 import FolderIcon from './FolderIcon';
+import { unconfirmedCount } from '@/lib/publication-text-model.mjs';
 import { formatPrice } from '@/lib/prices.mjs';
 import { referenceLabel, targetLabel, priceLabel } from '@/lib/operation.mjs';
 import { propertyPanelContactId } from '@/lib/property-panel-id.mjs';
@@ -23,7 +24,7 @@ type Property = {
   precioObjetivo?: string | null; precioObjetivoMoneda?: string;
   precioVenta: string | null; precioVentaMoneda?: string;
   fechaActualizacionTasacion?: string | Date | null;
-  actividades: { visita: { estado: string; realizada: boolean }; tasacion: { situacion: string | null; estado: string }; publicacion: { tieneTexto: boolean; publicado: boolean } };
+  actividades: { visita: { estado: string; realizada: boolean }; tasacion: { situacion: string | null; estado: string }; publicacion: { tieneTexto: boolean; publicado: boolean; texto?: string } };
 };
 export default function PortfolioDetailPanel({ property: p, positions, onClose, onSaved, onPhotos }: {
   property: Property; positions: ComponentProps<typeof ResumeSale>['positions'];
@@ -32,6 +33,22 @@ export default function PortfolioDetailPanel({ property: p, positions, onClose, 
   const dialog = useRef<HTMLDialogElement>(null);
   const [dirty, setDirty] = useState(false), [busy, setBusy] = useState(false), [confirmClose, setConfirmClose] = useState(false);
   useEffect(() => { const element = dialog.current; element?.showModal(); return () => element?.close(); }, []);
+  const [showText, setShowText] = useState(false);
+  const [copyMessage, setCopyMessage] = useState('');
+  const textArea = useRef<HTMLTextAreaElement>(null);
+  const savedText = p.actividades.publicacion.texto ?? '';
+  async function copyText() {
+    setCopyMessage('');
+    try {
+      await navigator.clipboard.writeText(savedText);
+      setCopyMessage('Texto copiado. Ya puedes pegarlo en tus redes sociales.');
+    } catch {
+      setShowText(true);
+      setCopyMessage('Selecciona el texto y usa Copiar en tu dispositivo.');
+      window.requestAnimationFrame(() => { textArea.current?.focus(); textArea.current?.select(); });
+    }
+  }
+  const review = Boolean(p.textoRealizado && unconfirmedCount(savedText)>0) || Boolean(p.actividades.publicacion.publicado && unconfirmedCount(savedText)>0);
   const active = p.estado === 'Activo', valued = p.actividades.tasacion.situacion === 'aprobado';
   const done = p.actividades.publicacion.publicado;
   const updated = p.fechaActualizacionTasacion ? new Date(p.fechaActualizacionTasacion) : null;
@@ -60,9 +77,22 @@ export default function PortfolioDetailPanel({ property: p, positions, onClose, 
           {active && <div className="mt-4 flex flex-wrap items-center gap-3">{valued ? <Link href={information('precios', 'precios')} className="aa-button aa-button-primary">Actualizar valores →</Link> : p.visitaPendiente ? <p className="text-xs text-slate-500">Registra primero la visita para continuar con la tasación.</p> : <Link href={register('/registrar-tasaciones')} className="aa-button aa-button-primary">Registrar tasación →</Link>}<p className="text-xs leading-5 text-slate-500">Los cambios conservan el texto y las confirmaciones de publicación.</p></div>}
         </section>
         <div className="grid gap-3 sm:grid-cols-2">
-          <section aria-label="Texto" className="rounded-2xl border border-slate-200 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-bold">Texto</h4><StatusBadge tone={p.textoRealizado ? 'complete' : 'pending'}>{p.textoRealizado ? 'Texto realizado' : p.actividades.publicacion.tieneTexto ? 'Borrador' : 'Texto pendiente'}</StatusBadge></div><p className="mt-2 text-xs leading-5 text-slate-500">Prepara o actualiza el texto comercial del inmueble.</p>{active && valued ? <Link href={information('textos', 'texto')} className="aa-button aa-button-secondary mt-3">{p.actividades.publicacion.tieneTexto ? 'Editar texto' : 'Registrar texto'} →</Link> : <Link href={information('textos')} className="aa-button aa-button-secondary mt-3">Consultar texto →</Link>}</section>
-          <section aria-label="Publicaciones" className="rounded-2xl border border-slate-200 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-bold">Publicaciones</h4><StatusBadge tone={done ? 'complete' : 'pending'}>{done ? 'Publicación registrada' : p.textoRealizado ? 'Publicación pendiente' : 'Texto por completar'}</StatusBadge></div><div className="mt-2 flex flex-wrap items-center justify-between gap-3"><p className="text-xs leading-5 text-slate-500">Confirma cartel y redes después de completar el texto. Portal web conserva su autorización propia.</p><Link href={active && p.textoRealizado ? register('/registrar-publicaciones') : information('publicaciones')} className="aa-button aa-button-secondary">{active && p.textoRealizado && !done ? 'Registrar publicación' : 'Consultar publicación'} →</Link></div></section>
+          <section aria-label="Texto Redes Sociales" className="min-w-0 rounded-2xl border border-slate-200 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-bold">Texto Redes Sociales</h4><StatusBadge tone={review ? 'pending' : p.textoRealizado ? 'complete' : 'text'}>{review ? 'Texto por revisar' : p.textoRealizado ? 'Texto registrado' : savedText.trim() ? 'Borrador' : 'Texto pendiente'}</StatusBadge></div>
+            <p className="mt-2 text-xs leading-5 text-slate-500">Consulta, edita o copia el texto para tus redes sociales.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {savedText.trim() && <button type="button" onClick={() => setShowText(value => !value)} className="aa-button aa-button-secondary" aria-expanded={showText} aria-controls="portfolio-saved-text">{showText ? 'Ocultar texto' : 'Ver texto'}</button>}
+              {active && valued && <Link href={information('textos', 'texto')} className="aa-button aa-button-secondary">{review ? 'Revisar texto' : savedText.trim() ? 'Editar texto' : 'Registrar texto'} →</Link>}
+              {p.textoRealizado && savedText.trim() && <button type="button" onClick={() => void copyText()} className="aa-button aa-button-secondary">Copiar texto</button>}
+              {!savedText.trim() && !(active && valued) && <Link href={information('textos')} className="aa-button aa-button-secondary">Consultar texto →</Link>}
+            </div>
+            {showText && <div id="portfolio-saved-text" className="mt-3"><label className="sr-only" htmlFor="portfolio-text-content">Texto guardado para redes sociales</label><textarea id="portfolio-text-content" ref={textArea} readOnly value={savedText} rows={12} className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm leading-6" /></div>}
+            {unconfirmedCount(savedText)>0 && <p className="mt-3 text-xs text-amber-900">El texto tiene datos por confirmar. Revísalos antes de copiar para publicar.</p>}
+            {copyMessage && <p role="status" className="mt-3 text-sm text-slate-700">{copyMessage}</p>}
+          </section>
+          <section aria-label="Publicaciones" className="rounded-2xl border border-slate-200 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-bold">Publicaciones</h4><StatusBadge tone={done ? 'complete' : p.textoRealizado ? 'publication' : 'text'}>{done ? 'Publicación registrada' : p.textoRealizado ? 'Publicación pendiente' : 'Texto por completar'}</StatusBadge></div><div className="mt-2 flex flex-wrap items-center justify-between gap-3"><p className="text-xs leading-5 text-slate-500">Confirma cartel y redes después de completar el texto. Portal web conserva su autorización propia.</p><Link href={active && p.textoRealizado ? register('/registrar-publicaciones') : information('publicaciones')} className="aa-button aa-button-secondary">{active && p.textoRealizado && !done ? 'Registrar publicación' : 'Consultar publicación'} →</Link></div></section>
         </div>
+        {active && p.zona && <section aria-label="Documentos y contratos con IA" className="rounded-2xl border border-red-100 bg-red-50/40 p-4"><h4 className="text-sm font-bold">Documentos y contratos con IA</h4><p className="mt-2 text-sm leading-6 text-slate-600">Completa los datos del expediente, confirma los acuerdos y prepara un borrador para revisión antes de cerrar la operación.</p><Link href={`/documentos-contratos?zona=${encodeURIComponent(p.zona)}&inmueble=${p.inmuebleId}`} className="aa-button aa-button-secondary mt-3">Preparar documento →</Link></section>}
         <PortfolioPropertyEditor propertyId={p.inmuebleId} onSaved={onSaved} onDirtyChange={setDirty} onBusyChange={setBusy} />
         <section aria-label="Documentos y expediente"><h3 className="text-base font-extrabold tracking-wide text-slate-800">FASE 2</h3><PortfolioDocumentChecklist propertyId={p.inmuebleId} operation={p.operacion} zone={p.zona} /></section>
         <section aria-label="Fotos, seguimiento y ficha" className="grid gap-2 sm:grid-cols-3"><button type="button" onClick={onPhotos} disabled={!p.tieneFotos || busy} className="aa-button aa-button-secondary">{p.tieneFotos ? 'Ver fotos del inmueble' : 'Fotos pendientes'}</button><Link href={information('seguimiento')} className="aa-button aa-button-secondary">Seguimiento e historial →</Link><Link href={information('')} className="aa-button aa-button-secondary">Ver ficha →</Link></section>

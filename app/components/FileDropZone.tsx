@@ -2,8 +2,8 @@
 
 import { useId, useRef, useState, type DragEvent, type RefObject } from 'react';
 
-export default function FileDropZone({ label, accept, help, subdued = false, disabled = false, inputRef, onFiles, onRejected }: {
-  label: string; accept: string; help: string; subdued?: boolean; disabled?: boolean;
+export default function FileDropZone({ label, accept, help, limits, subdued = false, disabled = false, inputRef, onFiles, onRejected }: {
+  label: string; accept: string; help: string; limits?: string; subdued?: boolean; disabled?: boolean;
   inputRef: RefObject<HTMLInputElement | null>;
   onFiles: (files: File[]) => void; onRejected: (message: string) => void;
 }) {
@@ -39,14 +39,23 @@ export default function FileDropZone({ label, accept, help, subdued = false, dis
   return <div role="group" aria-label={`Carga: ${label}`} aria-disabled={disabled}
     onDragEnter={enter} onDragLeave={leave} onDragOver={event => { event.preventDefault(); event.stopPropagation(); event.dataTransfer.dropEffect = disabled ? 'none' : 'copy'; }} onDrop={drop}
     data-file-drop-zone="true" data-dragging={dragging && !disabled ? 'true' : 'false'}
-    className={`rounded-2xl border-2 border-dashed p-4 transition-colors ${disabled ? 'border-slate-200 bg-slate-100 opacity-60' : dragging ? 'border-red-500 bg-red-50 ring-2 ring-red-100' : subdued ? 'border-slate-200 bg-white' : 'border-red-200 bg-red-50/30'}`}>
-    <p className="text-sm font-semibold text-slate-700">{dragging && !disabled ? 'Suelta los archivos aquí' : 'Arrastra y suelta los archivos aquí'}</p>
-    <p id={helpId} className="mt-1 text-xs leading-5 text-slate-500">{help} También puedes seleccionarlos con el botón.</p>
-    <label className="mt-3 block text-sm font-semibold text-slate-700">{label}<input ref={inputRef} type="file" multiple accept={accept} disabled={disabled} aria-describedby={helpId}
-      // Keep the selection alive until the next picker opens: some mobile
-      // providers revoke access to the file when the input is cleared.
-      onClick={event => { event.currentTarget.value = ''; }}
-      onChange={event => { select(Array.from(event.target.files || [])); }}
-      className={`mt-2 block w-full min-w-0 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-2 file:font-semibold ${subdued ? 'file:text-slate-700' : 'file:text-red-700'} disabled:cursor-not-allowed`} /></label>
+    className={`min-w-0 rounded-xl border border-dashed p-3 transition-colors ${disabled ? 'border-slate-200 bg-slate-100 opacity-60' : dragging ? 'border-red-500 bg-red-50 ring-2 ring-red-100' : subdued ? 'border-slate-200 bg-white' : 'border-red-200 bg-red-50/30'}`}>
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+      <label className={`relative inline-flex min-h-11 shrink-0 items-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 focus-within:ring-2 focus-within:ring-red-700 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+        Seleccionar archivos<span className="sr-only">: {label}</span>
+        <input ref={inputRef} type="file" multiple accept={accept} disabled={disabled} aria-describedby={helpId}
+          onClick={event => { event.currentTarget.value = ''; }}
+          onChange={event => { select(Array.from(event.target.files || [])); }}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed" />
+      </label>
+      <span className="text-xs text-slate-500">{dragging && !disabled ? 'Suelta los archivos aquí' : 'o arrástralos aquí'}</span>
+    </div>
+    <div id={helpId} className="mt-2 flex flex-wrap items-start gap-x-3 gap-y-1 text-xs text-slate-500">
+      {limits && <span className="rounded-md bg-slate-100 px-2 py-1 font-semibold text-slate-700">{limits}</span>}
+      <details className="min-w-0">
+        <summary className="min-h-8 cursor-pointer py-1 underline decoration-slate-300 underline-offset-4">Formatos y ayuda</summary>
+        <p className="max-w-prose pb-1 leading-5">{help}</p>
+      </details>
+    </div>
   </div>;
 }

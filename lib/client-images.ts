@@ -4,7 +4,7 @@ export function isImageFile(file: File) {
 }
 export async function compressImage(file: File): Promise<File> {
   if (!isImageFile(file)) throw new Error('Selecciona imágenes JPG, PNG o WebP.');
-  if (file.size > 25 * 1024 * 1024) throw new Error('La imagen original debe pesar como máximo 25 MB.');
+  if (file.size > 100 * 1024 * 1024) throw new Error('La imagen original debe pesar como máximo 100 MB.');
   const bitmap = await createImageBitmap(file);
   try {
     if (bitmap.width * bitmap.height > 40000000) throw new Error('La imagen supera las dimensiones permitidas.');

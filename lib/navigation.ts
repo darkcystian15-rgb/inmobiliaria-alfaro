@@ -22,6 +22,7 @@ export const menuGroups = [
       { href: "/registrar-textos", label: "Registrar textos", icon: "write" },
       { href: "/publicaciones-pendientes", label: "Publicaciones pendientes", icon: "publicationPending" },
       { href: "/registrar-publicaciones", label: "Registrar publicaciones", icon: "publish" },
+      { href: "/documentos-contratos", label: "Documentos y contratos con IA", icon: "agreement" },
     ],
   },
   {

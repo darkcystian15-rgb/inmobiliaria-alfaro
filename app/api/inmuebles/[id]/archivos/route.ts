@@ -1,3 +1,4 @@
+import { isSaneamientoType, saneamientoInput } from '@/lib/saneamiento-folders.mjs';
 import { assertWritable } from '@/lib/data-integrity-service';
 import { inmTareasArchivos } from '@/db/schema';
 import { pool } from '@/lib/db';
@@ -17,7 +18,7 @@ import { db } from '@/lib/db';
 import { inmArchivos, inmInmuebles, inmAsignacionesPosicion, inmPosiciones, inmVisitas, inmTimeline, securityAudit } from '@/db/schema';
 import { DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, documentPath, storageConfigured, storeDocument, validateDocument } from '@/lib/document-files.mjs';
 import { documentByteLimit } from '@/lib/document-limits.mjs';
-import { readDossier } from '@/lib/dossier-record';
+import { readDossier, writeSaneamiento } from '@/lib/dossier-record';
 import { dossierDocuments, documentApplies, dossierDocumentType, validateExtraDocumentDescription } from '@/lib/transaction-dossier.mjs';
 
 export const runtime = 'nodejs';
@@ -48,7 +49,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (!auth.user) return NextResponse.json({ error: 'Usuario no disponible.' }, { status: 401 });
     const usuarioId = auth.user.id;
     const multipart = request.headers.get('content-type')?.startsWith('multipart/form-data');
-    if (Number(request.headers.get('content-length')) > MAX_DOCUMENT_BYTES + 65536) return NextResponse.json({ error: 'El archivo debe pesar como máximo 4 MB.' }, { status: 413 });
+    if (Number(request.headers.get('content-length')) > MAX_DOCUMENT_BYTES + 65536) return NextResponse.json({ error: 'El archivo debe pesar como máximo 100 MB.' }, { status: 413 });
     let body: Record<string, unknown>;
     let file: File | null = null;
     try {
@@ -67,6 +68,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (!canWritePropertyFile(auth.user, tipoDocumento)) return NextResponse.json({ error: 'La FASE 1 es de solo consulta para el operador.' }, { status: 403 });
     const definition = dossierDocuments.find(item => item.key === tipoDocumento);
     if (definition && !documentApplies(definition, (await readDossier(inmueble.id)).config, inmueble.operacion)) return NextResponse.json({ error: 'Guarda primero el tipo de persona y las condiciones de esta sección del expediente.' }, { status: 409 });
+    if (body.subcarpetaId !== undefined && typeof body.subcarpetaId !== 'string') return NextResponse.json({ error: 'Subcarpeta de saneamiento no válida.' }, { status: 400 });
+    const subcarpetaId = typeof body.subcarpetaId === 'string' ? body.subcarpetaId : '';
+    if (subcarpetaId && (!isSaneamientoType(tipoDocumento) || !(await readDossier(inmueble.id)).config.saneamiento.folders.some(folder => folder.id === subcarpetaId))) return NextResponse.json({ error: 'Subcarpeta de saneamiento no válida.' }, { status: 400 });
     const visitaId = body.visitaId === undefined ? null : Number(body.visitaId);
     if (visitaId !== null) {
       if (!multipart || tipoDocumento !== 'FOTO_INMUEBLE' || !Number.isSafeInteger(visitaId) || visitaId < 1) return NextResponse.json({ error: 'La visita seleccionada no es válida.' }, { status: 400 });
@@ -75,6 +79,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
     // Compatibility for previously registered external links and existing API clients.
     if (!multipart) {
+      if (subcarpetaId) return NextResponse.json({ error: 'Sube un archivo para usar una subcarpeta.' }, { status: 400 });
       const enlace = String(body.enlace ?? '').trim();
       if (tipoDocumento === 'FOTO_INMUEBLE') return NextResponse.json({ error: 'Sube una imagen directamente; no se admiten enlaces para fotos.' }, { status: 400 });
       if (!/^https?:\/\//i.test(enlace) || enlace.length > 1000) return NextResponse.json({ error: 'Enlace no válido.' }, { status: 400 });
@@ -85,13 +90,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         const [row]=await tx.insert(inmArchivos).values({inmuebleId:inmueble.id,tipoDocumento,nombre,enlace,observacion:observacion||null,usuarioId}).$returningId();
         await tx.insert(securityAudit).values(auditValues(usuarioId,'file.link',`file:${row.id}`));
         await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId,evento:'archivo_enlazado',observacion:JSON.stringify({archivo:fileActivitySnapshot({...row,tipoDocumento,nombre,observacion},inmueble.operacion)})});
-      await tx.delete(inmTareasArchivos).where(eq(inmTareasArchivos.id, uploadJob));
       return row;
       });
       return NextResponse.json({ ok: true, id: created.id }, { status: 201 });
     }
     if (!file) return NextResponse.json({ error: 'Selecciona un archivo.' }, { status: 400 });
-    if (file.size > MAX_DOCUMENT_BYTES) return NextResponse.json({ error: 'El archivo debe pesar como máximo 4 MB.' }, { status: 413 });
+    if (file.size > MAX_DOCUMENT_BYTES) return NextResponse.json({ error: 'El archivo debe pesar como máximo 100 MB.' }, { status: 413 });
     if (file.name.length > 255) return NextResponse.json({ error: 'El nombre del archivo es demasiado largo.' }, { status: 400 });
     let bytes = Buffer.from(await file.arrayBuffer());
     let storedName = file.name;
@@ -126,6 +130,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       const [jobs] = await tx.execute(sql`SELECT id FROM inm_tareas_archivos WHERE id=${uploadJob} FOR UPDATE`);
       if (!(jobs as unknown as {id:string}[]).length) throw new Error('La autorización de subida venció.');
       const [row] = await tx.insert(inmArchivos).values({ inmuebleId: inmueble.id, visitaId, tipoDocumento, nombre, enlace: stored.pathname, almacenamiento: 'hosting', rutaAlmacenamiento: stored.pathname, nombreOriginal: originalName, tamanoBytes: bytes.length, tipoMime: contentType, observacion: observacion || null, usuarioId }).$returningId();
+      if (subcarpetaId) {
+        const record = await readDossier(inmueble.id, tx);
+        const saneamiento = saneamientoInput(record.config.saneamiento);
+        saneamiento.files[String(row.id)] = subcarpetaId;
+        await writeSaneamiento(inmueble.id, record, saneamientoInput(saneamiento), tx);
+      }
       await tx.insert(securityAudit).values(auditValues(usuarioId,"file.upload",`file:${row.id}`));
       await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId,evento:'archivo_subido',observacion:JSON.stringify({archivo:fileActivitySnapshot({...row,tipoDocumento,nombre,nombreOriginal:originalName,tipoMime:contentType,tamanoBytes:bytes.length,visitaId,observacion},inmueble.operacion)})});
       await tx.delete(inmTareasArchivos).where(eq(inmTareasArchivos.id, uploadJob));
@@ -153,6 +163,14 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       if (file.almacenamiento === 'hosting') {
         if (!file.rutaAlmacenamiento) throw new Error('Ruta no disponible.');
         await tx.insert(inmTareasArchivos).values({id:jobId,inmuebleId:inmueble.id,archivoId:file.id,ruta:file.rutaAlmacenamiento,tipo:'borrado',usuarioId:auth.user.id,expira:new Date()});
+      }
+      if (isSaneamientoType(file.tipoDocumento)) {
+        const record = await readDossier(inmueble.id, tx);
+        if (record.config.saneamiento.files[String(file.id)]) {
+          const saneamiento = saneamientoInput(record.config.saneamiento);
+          delete saneamiento.files[String(file.id)];
+          await writeSaneamiento(inmueble.id, record, saneamiento, tx);
+        }
       }
       await tx.delete(inmArchivos).where(condition);
       await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId:auth.user.id,evento:'archivo_eliminado',observacion:JSON.stringify({archivo:fileActivitySnapshot(file,inmueble.operacion)})});
@@ -198,12 +216,20 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         if (!canWritePropertyFile(auth.user, file.tipoDocumento)) return 'forbidden';
         if (file.tamanoBytes && file.tamanoBytes > documentByteLimit(definition.key)) return 'size';
         if(file.nombre===nombre&&(file.observacion||null)===(observacion||null)&&file.tipoDocumento===definition.key)return 'ok';
+        if (isSaneamientoType(file.tipoDocumento) && !isSaneamientoType(definition.key)) {
+          const record = await readDossier(inmueble.id, tx);
+          if (record.config.saneamiento.files[String(file.id)]) {
+            const saneamiento = saneamientoInput(record.config.saneamiento);
+            delete saneamiento.files[String(file.id)];
+            await writeSaneamiento(inmueble.id, record, saneamiento, tx);
+          }
+        }
         await tx.update(inmArchivos).set({ nombre, observacion: observacion || null, tipoDocumento: definition.key }).where(condition);
         await tx.insert(securityAudit).values(auditValues(auth.user.id, 'dossier.file.update', `file:${archivoId}`));
         await tx.insert(inmTimeline).values({inmuebleId:inmueble.id,usuarioId:auth.user.id,evento:'archivo_actualizado',observacion:JSON.stringify({anterior:fileActivitySnapshot(file,inmueble.operacion),nuevo:fileActivitySnapshot({...file,nombre,observacion:observacion||null,tipoDocumento:definition.key},inmueble.operacion)})});
         return 'ok';
       });
-      if (result !== 'ok') return NextResponse.json({ error: result === 'forbidden' ? 'La FASE 1 es de solo consulta para el operador.' : result === 'missing' ? 'Documento no encontrado.' : result === 'size' ? 'Los documentos de más de 4 MB solo pueden permanecer en Copia literal o CRI.' : 'Guarda primero las condiciones de esta categoría.' }, { status: result === 'forbidden' ? 403 : result === 'missing' ? 404 : 409 });
+      if (result !== 'ok') return NextResponse.json({ error: result === 'forbidden' ? 'La FASE 1 es de solo consulta para el operador.' : result === 'missing' ? 'Documento no encontrado.' : result === 'size' ? 'El documento supera el tamaño permitido.' : 'Guarda primero las condiciones de esta categoría.' }, { status: result === 'forbidden' ? 403 : result === 'missing' ? 404 : 409 });
       return NextResponse.json({ ok: true });
     }
     if (!isAdministrator(auth.user)) return NextResponse.json({ error: 'La FASE 1 es de solo consulta para el operador.' }, { status: 403 });

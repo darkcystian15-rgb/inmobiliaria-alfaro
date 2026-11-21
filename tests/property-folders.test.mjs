@@ -26,12 +26,13 @@ assert.deepEqual(sale.impuestos.map(file => file.id), [8]);
 assert.deepEqual(Object.values(sale).flat().map(file => file.id).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 8]);
 const rental = filesByInformationFolder(files, dossierStatus(dossierDefaults(), files, 'alquiler'), 'alquiler');
 assert.deepEqual(rental.identificacion.map(file => file.id), [1, 2]);
-assert.deepEqual(rental.otros.map(file => file.id), [3, 6, 8]);
+assert.deepEqual(rental.otros.map(file => file.id), [6, 8]);
 assert.deepEqual(Object.values(rental).flat().map(file => file.id).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 8]);
 assert.deepEqual(files, original, 'No record, category, name or storage link changes');
 assert.ok(Object.values(sale).flat().every(file => files.includes(file)), 'Keep the same record objects');
 assert.equal(informationFolders('venta', false).some(item => item.key === 'seguimiento'), false);
-assert.equal(informationFolders('alquiler', true).some(item => item.key === 'impuestos' || item.key === 'cargas'), false);
+assert.equal(informationFolders('alquiler', true).some(item => item.key === 'impuestos' || item.key === 'cargas'), true);
+assert.deepEqual(rental.cargas.map(file => file.id), [3]);
 assert.equal(folderForLegacyTab('Resumen'), '');
 assert.equal(informationFolders('venta', true).some(item => item.key === 'resumen' || item.key === 'otros'), false);
 assert.equal(informationFolders('venta', true, sale.otros.length).some(item => item.key === 'otros'), true);
@@ -41,7 +42,7 @@ console.log('PASS: archivos conservados una sola vez, categorías anteriores, co
 const searchFile = {id:99,tipoDocumento:'VENDEDOR_BUSQUEDA_NACIONAL',almacenamiento:'hosting'};
 for (const renta of ['afecto','exonerado']) {
   const grouped = filesByInformationFolder([searchFile],dossierStatus({...dossierDefaults(),vendedorTipo:'natural',renta},[searchFile]),'venta');
-  assert.equal(grouped[renta==='exonerado'?'impuestos':'identificacion'][0],searchFile);
+  assert.equal(grouped.impuestos[0],searchFile);
   assert.equal(Object.values(grouped).flat().length,1,'Same search file is presented exactly once');
 }
 
@@ -51,11 +52,32 @@ for(const operation of ['venta','alquiler']) {
     assert.deepEqual(folders.filter(item=>item.phase===1).map(item=>item.key),['visitas','precios','textos','publicaciones']);
     const phaseTwo=folders.filter(item=>item.phase===2);
     const numbered=phaseTwo.filter(item=>/^\d+\./.test(item.label));
-    assert.equal(numbered.length,operation==='venta'?7:5);
+    assert.equal(numbered.length,10);
+    assert.equal(numbered.at(-1).label, '10. Cartas');
+    const empty = dossierStatus({}, [], operation);
+    const letter = { id: 201, tipoDocumento: 'CARTA', almacenamiento: 'hosting' };
+    const withLetter = dossierStatus({}, [letter], operation);
+    assert.equal(empty.items.find(item => item.key === 'CARTA').state, 'opcional');
+    assert.equal(empty.total, withLetter.total);
+    assert.deepEqual(filesByInformationFolder([letter], withLetter, operation).cartas, [letter]);
     assert.deepEqual(phaseTwo.slice(numbered.length).map(item=>item.key),administrator?['estado','seguimiento','otros']:['estado','otros']);
     assert.ok(phaseTwo.slice(numbered.length).every(item=>!/^\d+\./.test(item.label)));
     assert.equal(new Set(folders.map(item=>item.key)).size,folders.length);
     assert.equal(informationFolderPhase('estado'),2);
     assert.equal(informationFolderPhase('seguimiento'),2);
   }
+}
+
+const technicalFiles = [
+  { id: 101, tipoDocumento: 'PLANO', nombre: 'Plano de distribución', almacenamiento: 'hosting' },
+  { id: 102, tipoDocumento: 'CATALOGO_DIAGNOSTICO_FISICO_LEGAL', nombre: 'Diagnóstico del inmueble', almacenamiento: 'hosting' },
+];
+const technicalGroups = filesByInformationFolder(technicalFiles, dossierStatus(dossierDefaults(), technicalFiles), 'venta');
+assert.deepEqual(technicalGroups.planos, [technicalFiles[0]]);
+assert.deepEqual(technicalGroups.catalogo, [technicalFiles[1]]);
+for (const key of ['planos', 'catalogo']) {
+  const folder = informationFolders('venta', false).find(row => row.key === key);
+  assert.equal(folder.phase, 2);
+  assert.equal(folder.tab, 'Inmueble');
+  assert.ok(folder.description);
 }

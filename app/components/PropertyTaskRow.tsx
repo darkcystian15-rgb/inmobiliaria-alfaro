@@ -6,6 +6,8 @@ const colors = {
   amber: { icon: 'text-amber-500', badge: 'border-amber-200 bg-amber-50 text-amber-900', row: 'border-l-amber-300' },
   orange: { icon: 'text-orange-500', badge: 'border-orange-200 bg-orange-50 text-orange-900', row: 'border-l-orange-300' },
   violet: { icon: 'text-violet-500', badge: 'border-violet-200 bg-violet-50 text-violet-900', row: 'border-l-violet-300' },
+  blue: { icon: 'text-blue-500', badge: 'border-blue-200 bg-blue-50 text-blue-900', row: 'border-l-blue-300' },
+  red: { icon: 'text-[#c80000]', badge: 'border-red-200 bg-red-50 text-[#c80000]', row: 'border-l-red-300' },
   sky: { icon: 'text-sky-500', badge: 'border-sky-200 bg-sky-50 text-sky-900', row: 'border-l-sky-300' },
   emerald: { icon: 'text-emerald-500', badge: 'border-emerald-200 bg-emerald-50 text-emerald-900', row: 'border-l-emerald-300' },
 };
