@@ -1,0 +1,213 @@
+// Real React UI with isolated, in-memory API responses. No business writes.
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import http from 'node:http';
+import { build } from 'esbuild';
+import { compile } from '@tailwindcss/node';
+import { Scanner } from '@tailwindcss/oxide';
+import { changeSaneamiento } from '../lib/saneamiento-folders.mjs';
+import { dossierDefaults } from '../lib/transaction-dossier.mjs';
+const { chromium } = await import('/home/codespace/.npm/_npx/e41f203b7505f1fb/node_modules/playwright/index.mjs');
+const out='output/fase-2-paneles';await fs.mkdir(out,{recursive:true});
+const compiled=await compile(await fs.readFile('app/globals.css','utf8'),{base:new URL('../app/',import.meta.url).pathname,onDependency(){}});
+const scanner=new Scanner({sources:[{base:process.cwd(),pattern:'app/**/*.{tsx,ts}',negated:false}]});const css=compiled.build(scanner.scan());
+await build({stdin:{contents:`import React from 'react';import {createRoot} from 'react-dom/client';import Dossier from './app/components/TransactionDossier';const noop=()=>{};function App(){const [files,setFiles]=React.useState([]);const load=React.useCallback(async()=>setFiles(await (await fetch('/fixture-files')).json()),[]);React.useEffect(()=>{load()},[load]);return <main className="mx-auto max-w-4xl p-4"><Dossier propertyId={1} operation={new URLSearchParams(location.search).get('operation') || 'venta'} view="carpeta" section={new URLSearchParams(location.search).get('section') || 'inmueble'} showHeading={false} readOnly={location.search.includes('readonly')} files={files} uploadReady administrator onChanged={load} onBusyChange={noop} onDirtyChange={noop}/></main>}createRoot(document.getElementById('root')).render(<App/>);`,resolveDir:process.cwd(),loader:'tsx'},bundle:true,jsx:'automatic',outfile:`${out}/workspace.js`,define:{'process.env.NODE_ENV':'"production"'}});
+const script=await fs.readFile(`${out}/workspace.js`);const server=http.createServer((req,res)=>{res.setHeader('content-type',req.url==='/workspace.js'?'text/javascript':'text/html');res.end(req.url==='/workspace.js'?script:`<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><div id="root"></div><script src="/workspace.js"></script>`)});
+await new Promise(resolve=>server.listen(3146,'127.0.0.1',resolve));
+const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+try {
+  for (const width of [375, 1440]) {
+    const context = await browser.newContext({ viewport: { width, height: 1000 } });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    let record = { config: { ...dossierDefaults(), vendedorTipo: 'natural', vendedorPropietarios: 'uno' }, version: 1 };
+    const files = [];
+    await page.route('**/fixture-files', route => route.fulfill({ json: files }));
+    await page.route('**/api/inmuebles/1/expediente', async route => {
+      if (route.request().method() === 'PUT') {
+        const body = route.request().postDataJSON();
+        record = { config: body.config, version: record.version + 1 };
+        return route.fulfill({ json: { version: record.version } });
+      }
+      return route.fulfill({ json: record });
+    });
+    await page.route('**/api/inmuebles/1/saneamiento', async route => {
+      const action = route.request().postDataJSON();
+      assert.equal(action.version, record.version);
+      record = { config: { ...record.config, saneamiento: changeSaneamiento(record.config.saneamiento, action, files, 'rental-folder') }, version: record.version + 1 };
+      return route.fulfill({json:record});
+    });
+    await page.route('**/api/inmuebles/1/archivos', async route => {
+      assert.equal(route.request().method(), 'POST');
+      const body = route.request().postDataBuffer().toString();
+      assert.match(body, /COPIA_LITERAL_CRI/);
+      files.push({ id: 1, nombre: 'Copia literal de prueba', nombreOriginal: 'literal.pdf', tipoDocumento: 'COPIA_LITERAL_CRI', almacenamiento: 'hosting', enlace: '/fixture.pdf', tipoMime: 'application/pdf', tamanoBytes: 100, observacion: null });
+      return route.fulfill({ json: { ok: true } });
+    });
+    const block = key => page.locator(`[data-document-type="${key}"]`);
+    const go = async (section, operation = 'venta', readonly = false) => {
+      await page.goto(`http://127.0.0.1:3146?section=${section}&operation=${operation}${readonly ? '&readonly' : ''}`);
+      await page.locator('[data-document-type], [aria-label="Explorador de saneamiento"], input[type=checkbox]').first().waitFor({ state: 'attached' });
+    };
+    const save = async () => {
+      await page.getByRole('button', { name: 'Guardar condiciones', exact: true }).click();
+      await page.locator('[aria-label="Cambios de condiciones"]').waitFor({ state: 'detached' });
+      await page.getByText('Condiciones del expediente guardadas.', { exact: true }).waitFor();
+    };
+    await go('inmueble');
+    const literal = block('COPIA_LITERAL_CRI');
+    assert.match(await literal.getAttribute('class'), /border-red-200/);
+    assert.doesNotMatch(await literal.innerText(), /Tamaño máximo/);
+    assert.equal(await literal.getByText(/PDF, Word/).isVisible(), false);
+    await literal.locator('input[type=file]').setInputFiles({ name: 'literal.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\nfixture') });
+    assert.match(await literal.getAttribute('class'), /border-red-400/);
+    assert.equal(await literal.getByLabel('Observación del archivo').isVisible(), false);
+    await literal.getByRole('button', { name: 'Subir archivos', exact: true }).click();
+    await page.getByText('1 archivo guardado.', { exact: true }).waitFor();
+    assert.equal(files.length, 1);
+    assert.equal(await literal.getByRole('button', { name: 'Editar datos del archivo' }).isVisible(), false);
+    await literal.getByText('Más acciones', { exact: true }).click();
+    assert.equal(await literal.getByRole('button', { name: 'Editar datos del archivo' }).isVisible(), true);
+    await page.getByText('Otros documentos (opcional)', { exact: true }).click();
+    assert.equal(await block('OTROS_INMUEBLE').isVisible(), true);
+    await block('OTROS_INMUEBLE').locator('input[type=file]').setInputFiles({ name: 'adicional.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\nfixture') });
+    assert.equal(await page.getByLabel('Descripción del archivo 1').isVisible(), true);
+    await page.getByRole('button', { name: 'Cancelar selección' }).click();
+    for (const [section, type] of [['contratos','ESTRUCTURA_MINUTA'], ['servicios','VENDEDOR_RECIBO_LUZ'], ['tasaciones','TASACION_EXPRESS']]) {
+      await go(section);
+      assert.equal(await block(type).isVisible(), true);
+      assert.match(await block(type).getAttribute('class'), /border-red-200/);
+      assert.doesNotMatch(await block(type).innerText(), /Tamaño máximo/);
+      assert.equal(await page.locator('[data-document-type^="OTROS_"]').isVisible(), false);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    }
+    record.config.vendedorBusquedaNota = 'Nota anterior conservada';
+    await go('impuestos');
+    assert.equal(await page.getByLabel('Tipo de persona del vendedor').inputValue(), 'natural');
+    await page.getByLabel('Tipo de persona del vendedor').selectOption('juridica');
+    await save();
+    await go('identificacion');
+    assert.equal(await page.getByLabel('Tipo de persona del vendedor').inputValue(), 'juridica');
+    await page.getByLabel('Tipo de persona del vendedor').selectOption('natural');
+    await save();
+    await go('impuestos');
+    assert.equal(await page.getByLabel('Tipo de persona del vendedor').inputValue(), 'natural');
+    await page.getByLabel('Tipo de persona del vendedor').selectOption('juridica');
+    await page.getByRole('button', {name:'Descartar',exact:true}).click();
+    assert.equal(await page.getByLabel('Tipo de persona del vendedor').inputValue(), 'natural');
+    const buyerCheck = page.getByLabel('Asignar comprador para preparar el cierre.');
+    assert.equal(await buyerCheck.isChecked(), false);
+    assert.equal(await block('COMPRADOR_LIQUIDACION').count(), 0);
+    await buyerCheck.check();
+    await page.getByLabel('Tipo de persona del comprador').selectOption('juridica');
+    assert.equal(await block('COMPRADOR_LIQUIDACION').locator('input[type=file]').isDisabled(), true);
+    assert.equal(await block('COMPRADOR_BUSQUEDA_NACIONAL').count(), 0);
+    await save();
+    assert.equal(record.config.compradorAsignado, true);
+    assert.equal(record.config.compradorTipo, 'juridica');
+    await go('identificacion');
+    assert.equal(await page.getByLabel('Asignar comprador para preparar el cierre.').isChecked(), true);
+    assert.equal(await page.getByLabel('Tipo de persona del comprador').inputValue(), 'juridica');
+    await page.getByLabel('Tipo de persona del comprador').selectOption('natural'); await save();
+    await go('impuestos');
+    assert.equal(await page.getByLabel('Tipo de persona del comprador').inputValue(), 'natural');
+    await buyerCheck.uncheck();
+    assert.equal(await block('COMPRADOR_LIQUIDACION').count(), 0);
+    await page.getByRole('button', {name:'Descartar',exact:true}).click();
+    assert.equal(await buyerCheck.isChecked(), true);
+    await page.screenshot({path:`${out}/comprador-desde-impuestos-${width}.png`,fullPage:true});
+    assert.equal(await block('VENDEDOR_BUSQUEDA_NACIONAL').count(), 0);
+    assert.equal(await block('COMPRADOR_BUSQUEDA_NACIONAL').count(), 0);
+    await page.getByLabel('Tipo de persona del comprador').selectOption('juridica');
+    assert.equal(await block('COMPRADOR_BUSQUEDA_NACIONAL').count(), 0);
+    await save();
+    assert.equal(record.config.vendedorBusquedaNota, 'Nota anterior conservada');
+    assert.equal(record.config.compradorBusquedaNota, '');
+    await go('identificacion');
+    assert.equal(await block('VENDEDOR_BUSQUEDA_NACIONAL').count(), 0);
+    assert.equal(await block('COMPRADOR_BUSQUEDA_NACIONAL').count(), 0);
+    assert.equal(await page.getByText('3. Búsqueda nacional', {exact:true}).count(), 0);
+    await go('impuestos');
+    assert.equal(await page.getByLabel('Nota de búsqueda nacional del vendedor', {exact:true}).count(), 0);
+    assert.equal(await page.getByLabel('Nota de búsqueda nacional del comprador', {exact:true}).count(), 0);
+    assert.equal(await block('VENDEDOR_EXONERACION_RENTA').count(), 0);
+    assert.equal(await block('VENDEDOR_FORMULARIO_RENTA').count(), 0);
+    await page.getByRole('combobox', { name: /^Impuesto a la renta/ }).selectOption('afecto');
+    assert.equal(await block('VENDEDOR_BUSQUEDA_NACIONAL').count(), 0);
+    assert.equal(await block('VENDEDOR_FORMULARIO_RENTA').isVisible(), true);
+    assert.equal(await block('VENDEDOR_VOUCHER_RENTA').isVisible(), true);
+    await page.getByLabel('Observación: ¿por qué paga impuesto a la renta?').fill('Sustento de prueba');
+    await save();
+    files.push({ id: 2, nombre: 'Pago anterior conservado', nombreOriginal: 'pago.pdf', tipoDocumento: 'VENDEDOR_VOUCHER_RENTA', almacenamiento: 'hosting', enlace: '/fixture.pdf', tipoMime: 'application/pdf', tamanoBytes: 100, observacion: null });
+    await page.reload();
+    await page.getByRole('combobox', { name: /^Impuesto a la renta/ }).selectOption('exonerado');
+    assert.equal(await block('VENDEDOR_FORMULARIO_RENTA').count(), 0);
+    assert.equal(await block('VENDEDOR_EXONERACION_RENTA').isVisible(), true);
+    assert.equal(await block('VENDEDOR_BUSQUEDA_NACIONAL').isVisible(), true);
+    await page.getByLabel('Tipo de persona del vendedor').selectOption('');
+    assert.equal(await block('VENDEDOR_BUSQUEDA_NACIONAL').count(), 0);
+    assert.equal(await page.getByText('Selecciona el tipo de persona del vendedor para habilitar Búsqueda nacional.', {exact:true}).isVisible(), true);
+    await page.getByLabel('Tipo de persona del vendedor').selectOption('juridica');
+    assert.equal(await block('VENDEDOR_BUSQUEDA_NACIONAL').isVisible(), true);
+    await page.getByLabel('Tipo de persona del vendedor').selectOption('natural');
+    assert.equal(await block('VENDEDOR_BUSQUEDA_NACIONAL').isVisible(), true);
+    assert.equal(await page.getByText('Adjunta exoneración y búsqueda nacional por separado.', {exact:true}).isVisible(), true);
+    assert.equal(await page.getByText('Pago anterior conservado').isVisible(), false);
+    await page.getByText('Documentos anteriores (1)', { exact: true }).click();
+    assert.equal(await page.getByText('Pago anterior conservado').isVisible(), true);
+    await save();
+    await page.getByRole('combobox', { name: /^Impuesto a la renta/ }).selectOption('afecto');
+    assert.equal(await block('VENDEDOR_VOUCHER_RENTA').getByText('Pago anterior conservado').isVisible(), true);
+    await save();
+    for (const [section, label, type] of [['planos','Incluir planos','PLANO'], ['catalogo','Incluir catálogo y diagnóstico físico legal','CATALOGO_DIAGNOSTICO_FISICO_LEGAL']]) {
+      await page.goto(`http://127.0.0.1:3146?section=${section}`);
+      await page.getByLabel(label).waitFor();
+      assert.equal(await block(type).count(), 0);
+      await page.getByLabel(label).check();
+      assert.equal(await block(type).isVisible(), true);
+      assert.equal(await block(type).locator('input[type=file]').isDisabled(), true);
+      await save();
+      assert.equal(await block(type).locator('input[type=file]').isDisabled(), false);
+      await page.getByLabel(label).uncheck();
+      assert.equal(await block(type).count(), 0);
+      await save();
+    }
+    for (const [section, type] of [['contratos','CONTRATO_ALQUILER'], ['servicios','RECIBO_SERVICIO'], ['tasaciones','TASACION_EXPRESS']]) {
+      await go(section, 'alquiler');
+      assert.equal(await block(type).isVisible(), true);
+      assert.match(await block(type).getAttribute('class'), /border-red-200/);
+    }
+    await go('impuestos', 'alquiler');
+    assert.equal(await page.getByText('Condiciones del impuesto a la renta', {exact:true}).count(), 0);
+    for (const key of ['VENDEDOR_ALCABALA','COMPRADOR_ALCABALA','VENDEDOR_FORMULARIO_RENTA']) assert.equal(await block(key).count(), 0);
+    await page.getByText('Otros documentos (opcional)', {exact:true}).click();
+    assert.equal(await block('OTROS_IMPUESTOS').locator('input[type=file]').isVisible(), true);
+    for (const [section, type, label] of [['planos','PLANO','Incluir planos'], ['catalogo','CATALOGO_DIAGNOSTICO_FISICO_LEGAL','Incluir catálogo y diagnóstico físico legal']]) {
+      await go(section, 'alquiler');
+      await page.getByLabel(label).check(); await save();
+      assert.equal(await block(type).locator('input[type=file]').isDisabled(), false);
+      assert.equal(await block(type).getByText('Opcional', {exact:true}).count(), 1);
+      await page.getByLabel(label).uncheck(); await save();
+    }
+    await go('cargas', 'alquiler');
+    await page.getByLabel('Incluir saneamiento físico legal').check(); await save();
+    await page.getByRole('button', {name:'Subir primeros archivos',exact:true}).click();
+    assert.equal(await page.getByLabel('Tipo de documento').isVisible(), true);
+    await page.getByRole('button', {name:'＋ Nueva subcarpeta',exact:true}).click();
+    await page.getByLabel('Nombre de la subcarpeta').fill('Área por alquilar');
+    await page.getByRole('button', {name:'Crear subcarpeta',exact:true}).click();
+    await page.getByText('Área por alquilar', {exact:true}).waitFor();
+    assert.equal(record.config.saneamiento.folders[0].nombre, 'Área por alquilar');
+    await page.screenshot({path:`${out}/alquiler-saneamiento-${width}.png`,fullPage:true});
+    await go('impuestos');
+    await page.screenshot({ path: `${out}/impuestos-${width}.png`, fullPage: true });
+    await go('contratos', 'venta', true);
+    assert.equal(await page.locator('input[type=file]').count(), 0);
+    await go('inmueble', 'venta', true);
+    assert.equal(await page.getByRole('button', { name: 'Editar datos del archivo' }).count(), 0);
+    assert.deepEqual(errors, []);
+    await context.close();
+    console.log(`Carpetas fase 2, carga real simulada, impuestos, activación, alquiler y solo lectura: ${width}px correcto`);
+  }
+} finally { await browser.close(); server.close(); }

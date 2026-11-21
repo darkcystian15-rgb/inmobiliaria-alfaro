@@ -36,10 +36,11 @@ export default function PortfolioPropertyCard({ property: x, onOpen, actionLabel
         <p className="mt-2 text-xs font-semibold text-slate-700"><PropertySummary operation={x.operacion} type={x.tipo} location={x.direccion} /></p>
         <span className="sr-only">ID: {propertyPanelId(x)}</span>
         {showProgress && <div className="mt-3 flex min-h-12 content-start flex-wrap gap-1.5">
+          {x.textoPorRevisar && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Texto por revisar</span>}
           {x.visitaPendiente && tone.label !== "Visita pendiente" && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-800">Visita pendiente</span>}
-          {x.tasacionPendiente && tone.label !== "Tasación pendiente" && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Tasación pendiente</span>}
-          {x.difusionPendiente && tone.label !== "Publicación pendiente" && <span className="rounded-md bg-blue-50 px-1.5 py-1 text-xs font-semibold text-blue-900">Publicación pendiente</span>}
-          {x.materialPendiente && tone.label !== "Texto pendiente" && <span className="rounded-md bg-amber-50 px-1.5 py-1 text-xs font-semibold text-amber-900">Texto pendiente</span>}
+          {x.tasacionPendiente && tone.label !== "Tasación pendiente" && <span className="rounded-md bg-violet-50 px-1.5 py-1 text-xs font-semibold text-violet-900">Tasación pendiente</span>}
+          {x.difusionPendiente && tone.label !== "Publicación pendiente" && <span className="rounded-md bg-red-50 px-1.5 py-1 text-xs font-semibold text-[#c80000]">Publicación pendiente</span>}
+          {x.materialPendiente && tone.label !== "Texto pendiente" && <span className="rounded-md bg-blue-50 px-1.5 py-1 text-xs font-semibold text-blue-900">Texto pendiente</span>}
         </div>}
         <div className="mt-auto pt-4">
           <div className="border-t border-slate-100 pt-3"><p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{priceLabel(x.operacion)}</p><p className={`mt-1 break-words text-base font-bold tracking-tight ${x.precioVenta ? "text-slate-900" : "text-slate-500"}`}>{formatPrice(x.precioVenta, x.precioVentaMoneda)}{x.operacion === "alquiler" ? " / mes" : ""}</p></div>

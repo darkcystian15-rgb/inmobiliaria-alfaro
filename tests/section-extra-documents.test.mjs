@@ -7,12 +7,13 @@ import { fileActivitySnapshot } from '../lib/file-activity.mjs';
 
 const config = operation => operation === 'alquiler'
   ? { ...dossierDefaults(), arrendadorTipo: 'natural', arrendatarioTipo: 'juridica', arrendadorRepresentante: 'no' }
-  : { ...dossierDefaults(), vendedorTipo: 'juridica', compradorAsignado: true, compradorTipo: 'natural', compradorBusquedaNota: 'En trámite', renta: 'exonerado', cargas: false };
+  : { ...dossierDefaults(), vendedorTipo: 'juridica', compradorAsignado: true, compradorTipo: 'natural', compradorComposicion:'uno', compradorRepresentante:'no', compradorBusquedaNota: 'En trámite', renta: 'exonerado', cargas: false };
 
 for (const operation of ['venta', 'alquiler']) {
-  test(`${operation}: each numbered folder has independent optional uploads, including unconfigured parties and charges`, () => {
+  test(`${operation}: each extra-document folder has independent optional uploads, including unconfigured parties and charges`, () => {
     const extras = documentsForOperation(operation).filter(item => isSectionExtraDocument(item.key));
-    assert.deepEqual(extras.map(item => item.section), sectionsForOperation(operation).map(([key]) => key));
+    // Plans, catalog and letters have no extra-document/description form.
+    assert.deepEqual(extras.map(item => item.section), sectionsForOperation(operation).map(([key]) => key).filter(key => !['planos', 'catalogo', 'cartas'].includes(key)));
     const defaultStatus = dossierStatus(dossierDefaults(), [], operation);
     for (const item of extras) {
       assert.equal(item.required, false);
@@ -36,9 +37,9 @@ for (const operation of ['venta', 'alquiler']) {
     assert.equal(Object.values(groups).flat().length, files.length);
     assert.deepEqual(files, original);
     if (operation === 'alquiler') for (const key of ['OTROS_CARGAS', 'OTROS_IMPUESTOS']) {
-      assert.equal(extras.some(item => item.key === key), false);
+      assert.equal(extras.some(item => item.key === key), true);
       const previous = { tipoDocumento: key, almacenamiento: 'hosting' };
-      assert.deepEqual(filesByInformationFolder([previous], status, operation).otros, [previous]);
+      assert.deepEqual(filesByInformationFolder([previous], status, operation)[key === 'OTROS_CARGAS' ? 'cargas' : 'impuestos'], [previous]);
     }
   });
 

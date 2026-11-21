@@ -11,32 +11,33 @@ $config = require $configPath;
 $token = $config['token'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowedOrigin = $config['upload_origin'] ?? 'https://intranet.inmobiliariaalbertoalfaro.com.pe';
-if ($origin === $allowedOrigin) {
-    header('Access-Control-Allow-Origin: ' . $allowedOrigin);
+$allowedOrigins = $config['upload_origins'] ?? [$config['upload_origin'] ?? 'https://intranet.inmobiliariaalbertoalfaro.com.pe'];
+$originAllowed = $origin !== '' && is_array($allowedOrigins) && in_array($origin, $allowedOrigins, true);
+if ($originAllowed) {
+    header('Access-Control-Allow-Origin: ' . $origin);
     header('Vary: Origin');
     header('Access-Control-Allow-Methods: PUT, OPTIONS');
     header('Access-Control-Allow-Headers: Authorization, Content-Type');
     header('Access-Control-Max-Age: 600');
 }
 if ($method === 'OPTIONS') {
-    if ($origin !== $allowedOrigin) fail_request(403);
+    if (!$originAllowed) fail_request(403);
     http_response_code(204); exit;
 }
 $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 $claims = null;
 if (strlen($token) < 32) fail_request(401);
 if (!hash_equals('Bearer ' . $token, $auth)) {
-    if ($method !== 'PUT' || $origin !== $allowedOrigin || strlen($auth) > 8000 || !preg_match('/^Bearer literal-v1\.([A-Za-z0-9_-]+)\.([a-f0-9]{64})$/D', $auth, $matches)) fail_request(401);
+    if ($method !== 'PUT' || !$originAllowed || strlen($auth) > 8000 || !preg_match('/^Bearer literal-v1\.([A-Za-z0-9_-]+)\.([a-f0-9]{64})$/D', $auth, $matches)) fail_request(401);
     if (!hash_equals(hash_hmac('sha256', 'literal-v1.' . $matches[1], $token), $matches[2])) fail_request(401);
     $claims = json_decode(base64_decode(strtr($matches[1], '-_', '+/')), true);
-    if (!is_array($claims) || ($claims['type'] ?? '') !== 'COPIA_LITERAL_CRI' || !is_int($claims['expires'] ?? null) || $claims['expires'] < time() || !is_int($claims['size'] ?? null) || $claims['size'] < 1 || $claims['size'] > 50 * 1024 * 1024) fail_request(401);
-    if (($claims['path'] ?? '') !== ($_GET['path'] ?? '') || strpos($claims['path'], '/copia-literal-cri/') === false || !preg_match('/\.(pdf|doc|docx|xls|xlsx)$/iD', $claims['path'])) fail_request(403);
+    if (!is_array($claims) || !is_string($claims['type'] ?? null) || !preg_match('/^[A-Z][A-Z0-9_]*$/D', $claims['type']) || !is_int($claims['expires'] ?? null) || $claims['expires'] < time() || !is_int($claims['size'] ?? null) || $claims['size'] < 1 || $claims['size'] > 100 * 1024 * 1024) fail_request(401);
+    if (($claims['path'] ?? '') !== ($_GET['path'] ?? '') || strpos($claims['path'], '/' . strtolower(str_replace('_', '-', $claims['type'])) . '/') === false || !preg_match('/\.(pdf|doc|docx|xls|xlsx)$/iD', $claims['path'])) fail_request(403);
 }
 if (isset($_GET['capabilities'])) {
     if ($claims !== null || $method !== 'GET') fail_request(403);
     header('Content-Type: application/json');
-    echo '{"literalUploadVersion":1,"maxLiteralBytes":52428800}'; exit;
+    echo '{"literalUploadVersion":1,"maxLiteralBytes":104857600,"documentUploadVersion":2,"maxDocumentBytes":104857600}'; exit;
 }
 $path = $_GET['path'] ?? '';
 // Accept both the new code/position folders and the previous layout.
@@ -51,7 +52,7 @@ $file = $root . '/' . $path;
 $cursor = $root;
 foreach (explode('/', $path) as $part) { $cursor .= '/' . $part; if (is_link($cursor)) fail_request(400); }
 if ($method === 'PUT') {
-    $limit = $claims !== null ? $claims['size'] : 4 * 1024 * 1024;
+    $limit = $claims !== null ? $claims['size'] : 100 * 1024 * 1024;
     if (isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > $limit) fail_request(413);
     $input = fopen('php://input', 'rb');
     $bytes = stream_get_contents($input, $limit + 1);

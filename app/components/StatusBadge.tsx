@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 
-export type StatusTone = "complete" | "pending" | "progress" | "neutral";
+export type StatusTone = "complete" | "pending" | "progress" | "neutral" | "text" | "publication";
 export const statusStyles: Record<StatusTone, string> = {
+  text: "border-blue-200 bg-blue-50 text-blue-900",
+  publication: "border-red-200 bg-red-50 text-[#c80000]",
   complete: "border-emerald-200 bg-emerald-50 text-emerald-800",
   pending: "border-amber-200 bg-amber-50 text-amber-900",
   progress: "border-blue-200 bg-blue-50 text-blue-800",

@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
     // datos-inmuebles. Allow the configured upload host from every entry page.
     if (endpoint.protocol === 'https:' && !endpoint.username && !endpoint.password) uploadOrigin = ` ${endpoint.origin}`;
   } catch {}
-  const csp = `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'${uploadOrigin}; frame-src 'self'${request.nextUrl.pathname.startsWith('/portal-web/')?" https://maps.google.com https://www.google.com":''}; frame-ancestors ${documentPreview ? "'self'" : "'none'"}; object-src 'none'; base-uri 'self'; form-action 'self'`;
+  const csp = `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'${uploadOrigin}; frame-src 'self'${request.nextUrl.pathname.startsWith('/portal-web/')?" https://maps.google.com https://www.google.com":''}; frame-ancestors ${documentPreview ? "'self'" : "'none'"}; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`;
   const headers = new Headers(request.headers);
   headers.set('Content-Security-Policy', csp);
   headers.set('x-nonce', nonce);
@@ -34,5 +34,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|branding/|favicon.ico|.*\\.svg$).*)"],
+  matcher: ["/((?!_next/static|_next/image|branding/|pdfjs/|favicon.ico|.*\\.svg$).*)"],
 };

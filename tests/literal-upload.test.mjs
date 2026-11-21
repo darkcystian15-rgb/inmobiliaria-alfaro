@@ -6,14 +6,15 @@ import { validateDocument } from '../lib/document-files.mjs';
 const secret = 'test-secret-'.repeat(6);
 const claims = { filename: 'literal.pdf', nombre: 'Literal', size: 5 * 1048576, observacion: '', path: 'inmuebles/TEST-posicion-1/copia-literal-cri/uuid-literal.pdf', type: 'COPIA_LITERAL_CRI', propertyId: 3, userId: 8, expires: 2000000000 };
 const context = { propertyId: 3, userId: 8, now: 1900000000 * 1000 };
-test('only literal/CRI supports 50 MB and validates actual bytes at the boundary', () => {
+test('all document categories support 100 MB and validates actual bytes at the boundary', () => {
   assert.equal(documentByteLimit('COPIA_LITERAL_CRI'), MAX_LITERAL_BYTES);
   assert.equal(documentByteLimit('COPIA_LITERAL'), MAX_LITERAL_BYTES);
   for (const type of ['VENDEDOR_DNI','COMPRADOR_ALCABALA','FOTO_INMUEBLE','OTRO','']) assert.equal(documentByteLimit(type), MAX_DOCUMENT_BYTES);
   const bytes = Buffer.alloc(MAX_LITERAL_BYTES); bytes.write('%PDF-1.7');
   assert.equal(validateDocument('literal.pdf', bytes, 'COPIA_LITERAL_CRI').contentType, 'application/pdf');
-  assert.throws(() => validateDocument('dni.pdf', bytes, 'VENDEDOR_DNI'), /4 MB/);
-  assert.throws(() => validateDocument('literal.pdf', Buffer.alloc(MAX_LITERAL_BYTES + 1), 'COPIA_LITERAL_CRI'), /50 MB/);
+  assert.equal(validateDocument('dni.pdf', bytes, 'VENDEDOR_DNI').contentType, 'application/pdf');
+  assert.equal(MAX_DOCUMENT_BYTES, 100 * 1048576);
+  assert.throws(() => validateDocument('literal.pdf', Buffer.alloc(MAX_LITERAL_BYTES + 1), 'COPIA_LITERAL_CRI'), /100 MB/);
   assert.throws(() => validateDocument('literal.pdf', Buffer.from('MZ invalid'), 'COPIA_LITERAL_CRI'));
 });
 test('temporary authorization is scoped to the exact user, property, category, expiry and signed metadata', () => {
@@ -24,4 +25,11 @@ test('temporary authorization is scoped to the exact user, property, category, e
   assert.throws(() => verifyLiteralUpload(token, 'other-secret'.repeat(5), context));
   for (const invalid of [{ ...claims, type: 'VENDEDOR_DNI' }, { ...claims, path: '../outside/copia-literal-cri/x.pdf' }]) assert.throws(() => verifyLiteralUpload(signLiteralUpload(invalid, secret), secret, context));
   for (const change of [{ size: MAX_LITERAL_BYTES + 1 }, { size: 0 }, { filename: 'literal.exe' }, { nombre: '' }]) assert.throws(() => literalUploadInput({ ...claims, ...change }));
+});
+
+test('large uploads support other categories while binding the category to the path', () => {
+  const dni = { ...claims, type: 'VENDEDOR_DNI', size: MAX_DOCUMENT_BYTES, path: 'inmuebles/TEST-posicion-1/vendedor-dni/uuid-dni.pdf' };
+  assert.equal(literalUploadInput(dni).type, 'VENDEDOR_DNI');
+  assert.deepEqual(verifyLiteralUpload(signLiteralUpload(dni, secret), secret, context), dni);
+  assert.throws(() => verifyLiteralUpload(signLiteralUpload({ ...dni, type: 'OTRO' }, secret), secret, context));
 });

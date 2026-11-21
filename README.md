@@ -1,3 +1,5 @@
+Documentos del expediente de hasta 100 MB y formularios sin aviso permanente de límite. [Entrega, verificación y activación en cPanel](docs/documentos-100mb-sin-aviso-2026-11-09.md).
+
 Carpetas compactas con colores por actividad en visitas, tasaciones, textos y publicaciones. [Entrega y verificación](docs/carpetas-bandejas-colores-2026-10-26.md).
 
 Diseño vigente: se restaura la interfaz anterior al rediseño y se corrigen únicamente textos duplicados. [Alcance y restauración](docs/diseno-original-textos-2026-10-25.md).
@@ -134,3 +136,25 @@ Operación, tipo, contacto y dirección referencial se editan desde Cartera. El 
 Proyecto Vercel: `puma19/inmobiliaria-alfarov2`. Dominio: https://intranet.inmobiliariaalbertoalfaro.com.pe.
 
 Las migraciones de registro simplificado y zonas ya constan como aplicadas. No repetir `--apply` ni instaladores para desplegar actualizaciones de interfaz. Revisar siempre las referencias de recuperación y el estado de la base antes de cualquier adaptación de datos.
+
+- [Liquidaciones editables dentro de FASE 2](docs/liquidaciones-editor-2026-11-09.md): plantillas para venta y alquiler, borradores, conceptos organizables y generación de Excel/PDF con adjunto automático.
+
+- [Estructura base única para venta y alquiler](docs/estructura-base-unica-produccion-2026-11-09.md): modelo basado en el documento real aportado, editor con protección de texto existente, extracción de Word y entrega de PDF con encabezado, pie y resaltados.
+
+- [Negrita y tamaño de letra en estructuras](docs/negrita-tamanos-estructuras-2026-11-09.md): formato del texto seleccionado, editor visual y conservación de estilos en el PDF final.
+
+- [Editor de estructuras con secuencia simplificada](docs/editor-estructuras-flujo-intuitivo-2026-11-10.md): contenido protagonista, presentación desplegable, barra compacta y acciones de entrega fijas, conservando todas las funciones.
+
+- [Orden de comprador y vendedor en DNI y poderes y búsqueda nacional en Impuestos](docs/orden-identificacion-impuestos-2026-11-10.md).
+
+- [Búsqueda nacional solo para vendedor: regla final](docs/busqueda-nacional-solo-vendedor-2026-11-10.md).
+
+- [Tipo de persona del vendedor compartido entre puntos 1 y 4](docs/vendedor-tipo-compartido-puntos-1-4-2026-11-10.md).
+
+- [Liquidaciones: hoja editable y formato como Estructura de minuta](docs/liquidaciones-hoja-formato-2026-11-10.md).
+- [Liquidaciones: modelos Excel con edición libre, fórmulas y descargas](docs/liquidaciones-modelos-excel-edicion-libre-2026-11-12.md).
+- [Liquidaciones: encabezado, horizontal y campos sin importes de ejemplo](docs/liquidaciones-encabezado-horizontal-sin-montos-2026-11-12.md).
+
+- [Liquidaciones con descarga directa](docs/liquidaciones-descarga-directa.md).
+
+- [Vista previa HTML y descarga Word en Contratos](docs/contratos-vista-html-descarga-word.md).

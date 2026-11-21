@@ -80,7 +80,7 @@ type Inmueble = {
   actividades: Actividades;
   visitaPendiente: boolean;
   tasacionPendiente: boolean;
-  materialPendiente: boolean; difusionPendiente?: boolean; textoRealizado?: boolean;
+  textoPorRevisar?: boolean; materialPendiente: boolean; difusionPendiente?: boolean; textoRealizado?: boolean;
   fotosPendientes: boolean;
   tieneFotos: boolean;
   textoPendiente: boolean;
@@ -230,8 +230,9 @@ function Icon({
 
 const cardThemes = {
   visita: { label: "Visita pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-800 ring-amber-200", position: "bg-amber-50 text-amber-800", border: "hover:border-amber-300" },
-  tasacion: { label: "Tasación pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-900 ring-amber-200", position: "bg-amber-50 text-amber-900", border: "hover:border-amber-300" },
-  material: { label: "Texto pendiente", stripe: "bg-amber-400", badge: "bg-amber-50 text-amber-900 ring-amber-200", position: "bg-amber-50 text-amber-900", border: "hover:border-amber-300" },
+  tasacion: { label: "Tasación pendiente", stripe: "bg-violet-400", badge: "bg-violet-50 text-violet-900 ring-violet-200", position: "bg-violet-50 text-violet-900", border: "hover:border-violet-300" },
+  material: { label: "Texto pendiente", stripe: "bg-blue-400", badge: "bg-blue-50 text-blue-900 ring-blue-200", position: "bg-blue-50 text-blue-900", border: "hover:border-blue-300" },
+  publicacion: { label: "Publicación pendiente", stripe: "bg-[#c80000]", badge: "bg-red-50 text-[#c80000] ring-red-200", position: "bg-red-50 text-[#c80000]", border: "hover:border-red-300" },
   publicado: { label: "Publicación registrada", stripe: "bg-emerald-400", badge: "bg-emerald-50 text-emerald-800 ring-emerald-200", position: "bg-emerald-50 text-emerald-800", border: "hover:border-emerald-300" },
   seguimiento: { label: "En seguimiento", stripe: "bg-blue-400", badge: "bg-blue-50 text-blue-800 ring-blue-200", position: "bg-blue-50 text-blue-800", border: "hover:border-blue-300" },
 };
@@ -239,11 +240,11 @@ const cardThemes = {
 function cardTheme(item: Inmueble) {
   if (item.estado === "Histórico") return { ...cardThemes.seguimiento, label: "Histórico", stripe: "bg-slate-300", badge: "bg-slate-100 text-slate-700 ring-slate-200" };
   if (item.actividades.publicacion.publicado) return cardThemes.publicado;
-  if (item.actividades.tasacion.situacion === "pendiente_aprobacion") return { ...cardThemes.visita, label: "Tasación anterior por revisar" };
+  if (item.actividades.tasacion.situacion === "pendiente_aprobacion") return { ...cardThemes.tasacion, label: "Tasación anterior por revisar" };
   if (item.negociacionEnCurso) return { ...cardThemes.seguimiento, label: "Seguimiento anterior" };
   if (item.visitaPendiente) return cardThemes.visita;
   if (item.tasacionPendiente) return cardThemes.tasacion;
-  if (item.difusionPendiente) return {...cardThemes.material,label:"Publicación pendiente"};
+  if (item.difusionPendiente) return cardThemes.publicacion;
   if (item.materialPendiente) return cardThemes.material;
   return cardThemes.seguimiento;
 }
@@ -464,17 +465,13 @@ export default function CarteraPage() {
     tipo !== "Todos" ||
     operacion !== "Todos";
 
-  const leyenda = vista === "posiciones" && estado !== "Histórico" ? [
-    ["Pendiente", "Pendientes", "bg-amber-400"],
-    ["Seguimiento", "Seguimiento o publicación pendiente", "bg-blue-400"],
-    ["Registrada", "Publicación registrada", "bg-emerald-400"],
-    ["Histórico/libre", "Histórico o posición libre", "bg-slate-400"],
-  ] : [
+  const leyenda = [
     ["Visita", "Visita pendiente", "bg-amber-400"],
     ["Tasación", "Tasación pendiente o por revisar", "bg-violet-400"],
-    ["Seguimiento", "Texto/publicación pendiente o seguimiento", "bg-blue-400"],
+    ["Texto / seguimiento", "Texto pendiente o seguimiento", "bg-blue-400"],
+    ["Publicación", "Publicación pendiente", "bg-[#c80000]"],
     ["Registrada", "Publicación registrada", "bg-emerald-400"],
-    ["Histórico", "Histórico", "bg-slate-400"],
+    ["Histórico/libre", "Histórico o posición libre", "bg-slate-400"],
   ];
 
   return (
@@ -641,9 +638,9 @@ export default function CarteraPage() {
           </div>
         ) : (
           <section aria-label="Lista compacta de inmuebles" className="aa-card mt-3 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500"><span>Inmueble</span><span className="hidden sm:block">Precio</span></div>
+            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500"><span>Inmueble</span><span className="hidden sm:block">Precio de Cierre</span></div>
             <ul className="divide-y divide-slate-100">
-              {filtrados.map(x => <li key={x.id}><PortfolioLabelRow property={x} onOpen={() => setSeleccionado(x)} /></li>)}
+              {filtrados.map(x => <li key={x.id}><PortfolioLabelRow property={x} priceField="precioObjetivo" onOpen={() => setSeleccionado(x)} /></li>)}
             </ul>
           </section>
         )}

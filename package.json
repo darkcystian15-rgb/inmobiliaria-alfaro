@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prebuild": "node scripts/verify-contract-ai.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -26,15 +27,24 @@
     "db:portal-web": "node scripts/install-portal-web.mjs"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.100",
+    "@tesseract.js-data/spa": "^1.0.0",
+    "ai": "^7.0.164",
+    "docx-preview": "^0.4.1",
     "drizzle-orm": "^0.45.2",
     "exceljs": "^4.4.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
+    "jszip": "^3.10.2",
     "mysql2": "^3.23.2",
     "next": "^16.3.8",
+    "pdfjs-dist": "^5.7.284",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "tesseract.js": "^7.0.0",
+    "unpdf": "^1.4.0",
+    "word-extractor": "^1.0.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

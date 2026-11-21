@@ -38,6 +38,8 @@ export async function PUT(request: Request, context: Context) {
       await assertWritable(tx,property.id);
       const current = await readDossier(property.id, tx);
       if (current.version !== version) return { error: 'Otra persona actualizó el expediente. Recarga antes de guardar.', status: 409 };
+      // Folder metadata is managed separately under the same property lock.
+      config.saneamiento = current.config.saneamiento;
       // Never silently hide a buyer or documents when changing person/conditions.
       const nextVersion = version + 1;
       if (version) await tx.update(inmExpedientes).set({ configuracion: JSON.stringify(config), version: nextVersion }).where(eq(inmExpedientes.inmuebleId, property.id));
