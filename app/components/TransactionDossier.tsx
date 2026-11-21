@@ -241,13 +241,13 @@ export default function TransactionDossier({ propertyId, operation, view, sectio
     const editorKind = documentEditorForCategory(item.key, operation);
     const editorConfig = editorKind ? documentEditorConfig(editorKind, operation) : null;
     const heading = contractHeadings[item.key] ?? item.label;
-    const showEditorDescription = operation !== 'alquiler' && editorKind !== 'intermediation-structure';
+    const showEditorDescription = editorKind === 'promise-contract';
     const minuteEditor = editorKind && editorConfig && (
       <section className="my-4 rounded-xl border border-red-100 bg-red-50/40 p-4">
         {showEditorDescription && <>
           <h6 className="font-semibold">Documento editable</h6>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            {editorKind === 'promise-contract' ? 'Edita las cláusulas, incorpora los comprobantes y genera el PDF.' : 'Prepara la estructura y genera el PDF de entrega.'}
+            Edita las cláusulas, incorpora los comprobantes y genera el PDF.
           </p>
         </>}
         <button type="button" className={showEditorDescription ? 'aa-button aa-button-primary mt-3' : 'aa-button aa-button-primary'}
